@@ -156,8 +156,16 @@
  #menu-toggle::after{content:'☰';font-size:18px}
 }
 @media(max-width:374px){.title-mark small{display:none}.title-mark strong{font-size:11px}.top-buttons .ui-button.small{flex-basis:29px;width:29px}}
+
+/* Large world / custom seed home-screen panel */
+.seed-panel{margin:12px auto 20px;text-align:left;padding:15px;border:1px solid #87aa85;background:#0b211ae6;border-radius:12px;max-width:475px}
+.seed-panel label{display:block;font-size:11px;letter-spacing:.12em;color:#d7f3bb;font-weight:900;margin-bottom:8px}
+.seed-row{display:flex;gap:7px}.seed-row input{flex:1;min-width:0;border:1px solid #8dba89;background:#172d21;border-radius:7px;color:#f7ffed;padding:12px;font-size:15px;touch-action:manipulation;-webkit-user-select:text;user-select:text}
+.seed-row button{font-size:12px;white-space:nowrap}.seed-actions{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap}.seed-actions span{flex:1;color:#d2e3bc;font-size:11px;word-break:break-word}.seed-actions button{font-size:11px;padding:9px 10px}
+.seed-panel small{display:block;color:#abc5b0;font-size:10px;line-height:1.5;margin-top:9px}
+@media(max-width:520px){.seed-panel{padding:10px}.seed-row button{padding:8px}.seed-actions{gap:5px}}
 </style>
-<title>MineWorld — Build Your Own World</title>
+<title>MineWorld 3.0 — 10,000 × 10,000 Seeded Worlds</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -185,7 +193,13 @@
     <section class="modal home-modal" aria-label="MineWorld main menu">
       <div class="kicker">✦ BUILD · EXPLORE · SURVIVE ✦</div>
       <h1>MINE<span>WORLD</span></h1>
-      <p class="home-subtitle">Explore 36 biome zones, diverse trees and generated landmarks — on phone, tablet or desktop.</p>
+      <p class="home-subtitle">Explore 100 million columns across a 10,000 × 10,000-block seeded world — on phone, tablet or desktop.</p>
+          <div class="seed-panel">
+            <label for="seed-input">WORLD SEED · text or number</label>
+            <div class="seed-row"><input id="seed-input" maxlength="64" spellcheck="false" autocomplete="off" inputmode="text" placeholder="Type a seed, or leave the current seed" aria-label="World generation seed"><button type="button" id="random-seed" class="ui-button">🎲 Random</button></div>
+            <div class="seed-actions"><span id="seed-current">Current seed: 85721</span><button type="button" id="copy-seed" class="ui-button small">Copy</button><button type="button" id="apply-seed" class="ui-button small">New World</button></div>
+            <small>Same seed = same biomes, trees and structures. New World replaces your private save (a backup is kept).</small>
+          </div>
       <div class="mode-cards" role="group" aria-label="Choose a game mode">
         <div class="mode-card creative"><div class="mode-illustration" aria-hidden="true"></div>
           <div class="mode-caption">Unlimited building</div><h2>✦ Creative</h2>
@@ -216,7 +230,7 @@
       <div class="menu-actions"><button id="mode-btn" class="ui-button">⚒ Mode: Creative</button><button id="craft-btn" class="ui-button">⚒ Crafting & Gear</button></div>
       <label class="difficulty-label" for="pause-difficulty">Survival difficulty</label><select id="pause-difficulty" class="difficulty-select"><option value="peaceful">Peaceful</option><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select>
       <button id="new-btn" class="ui-button danger">↻ Create New World</button>
-      <p class="note">This world saves on this device and browser. Clearing browser data can erase it.</p>
+      <p class="note">Your seed and edited blocks save to this browser. Full 100 million columns are procedurally regenerated as you explore.</p>
     </section>
   </div>
   <div id="gear-panel" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Inventory and crafting">
@@ -268,14 +282,14 @@
       <div class="kicker">EXPLORE THE WORLD</div>
       <h2>World Atlas</h2>
       <p>Explore all 36 themed regions in this miniature Overworld, with distinct trees, terrain and generated structures. Tap a biome to travel there.</p>
-      <div class="atlas-counts"><span>🌲 36 Surface Zones</span><span>🏛 24 Landmarks</span><span>🕳 3 Underground Types</span></div>
+      <div class="atlas-counts"><span>🌲 36 Biome Types</span><span>🏛 Seeded Structures</span><span>🕳 3 Underground Types</span></div>
       <div id="atlas-grid" class="atlas-grid" role="list" aria-label="Travel to a biome"></div>
-      <p class="atlas-note">Each region is condensed so everything fits in one shared world. Nether and End dimensions, and many official Minecraft sub-biomes and structures, aren't implemented yet.</p>
+      <p class="atlas-note">The atlas finds real regions across a 10,000 × 10,000 world. The same seed produces the same world for every player. Nether and End dimensions remain future updates.</p>
       <button id="close-atlas" class="main-button" type="button">Back to World</button>
     </section>
   </div>
   <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD · 36 BIOMES + LANDMARKS · v2.5</div>
+  <div class="version">MINEWORLD v3.0 · 10,000 × 10,000 · SEEDED CHUNKS</div>
 </div>
 <script>
 /* MineWorld original procedural 16x16 voxel pixel-art atlas. No external assets. */
@@ -402,270 +416,7 @@
 })();
 
 </script>
-<script>
-/* MineWorld Atlas — original procedurally generated environments and structures.
-   No Minecraft game textures, world-generation code, or assets are used.
-   All content is deterministic from a seed for browser multiplayer. */
-(() => {
-  'use strict';
-  const COLS=6, ROWS=6;
-  const BIOMES=[
-    {name:'Frozen Ocean',top:22,under:4,height:-5,tree:'none',feature:'shipwreck',water:true},
-    {name:'Snowy Plains',top:21,under:2,height:0,tree:'none',feature:'igloo'},
-    {name:'Ice Spikes',top:21,under:3,height:1,tree:'spikes',feature:null},
-    {name:'Snowy Taiga',top:21,under:2,height:1,tree:'spruce',feature:'cabin'},
-    {name:'Snowy Slopes',top:21,under:3,height:5,tree:'sparseSpruce',feature:null},
-    {name:'Frozen Peaks',top:21,under:3,height:8,tree:'none',feature:'peakTower'},
-    {name:'Stony Peaks',top:3,under:3,height:7,tree:'none',feature:'watchtower'},
-    {name:'Grove',top:21,under:2,height:3,tree:'spruce',feature:null},
-    {name:'Taiga',top:28,under:2,height:1,tree:'spruce',feature:null},
-    {name:'Old Growth Pine Taiga',top:28,under:2,height:2,tree:'pine',feature:null},
-    {name:'Old Growth Spruce Taiga',top:28,under:2,height:2,tree:'bigSpruce',feature:null},
-    {name:'Stony Shore',top:3,under:3,height:-2,tree:'none',feature:'shoreRuins'},
-    {name:'Cold Ocean',top:4,under:57,height:-6,tree:'kelp',feature:'oceanRuins',water:true},
-    {name:'Beach',top:4,under:4,height:-3,tree:'palm',feature:'well'},
-    {name:'Birch Forest',top:1,under:2,height:1,tree:'birch',feature:'village'},
-    {name:'Dark Forest',top:1,under:2,height:1,tree:'darkOak',feature:'manor'},
-    {name:'Cherry Grove',top:1,under:2,height:3,tree:'cherry',feature:'pavilion'},
-    {name:'Pale Garden',top:46,under:2,height:1,tree:'paleOak',feature:'shrine'},
-    {name:'Savanna',top:1,under:2,height:0,tree:'acacia',feature:'savannaVillage'},
-    {name:'Meadow',top:1,under:2,height:2,tree:'flowers',feature:null},
-    {name:'Flower Forest',top:1,under:2,height:0,tree:'oak',feature:null},
-    {name:'Plains',top:1,under:2,height:0,tree:'sparseOak',feature:null},
-    {name:'Dappled Forest',top:1,under:2,height:1,tree:'poplar',feature:'abandonedCamp'},
-    {name:'Forest',top:1,under:2,height:0,tree:'oak',feature:'trailRuins'},
-    {name:'Desert',top:4,under:24,height:-1,tree:'cactus',feature:'desertTemple'},
-    {name:'Badlands',top:26,under:25,height:2,tree:'none',feature:'mineshaft'},
-    {name:'Wooded Badlands',top:26,under:25,height:3,tree:'sparseOak',feature:null},
-    {name:'Savanna Plateau',top:1,under:2,height:3,tree:'acacia',feature:'ruinedPortal'},
-    {name:'Windswept Savanna',top:3,under:3,height:4,tree:'acacia',feature:null},
-    {name:'River',top:4,under:57,height:-5,tree:'reeds',feature:'bridge',water:true},
-    {name:'Mangrove Swamp',top:47,under:47,height:-2,tree:'mangrove',feature:'swampHut'},
-    {name:'Swamp',top:1,under:47,height:-2,tree:'swampOak',feature:'witchHut'},
-    {name:'Jungle',top:1,under:2,height:1,tree:'jungle',feature:'jungleTemple'},
-    {name:'Bamboo Jungle',top:1,under:2,height:0,tree:'bamboo',feature:'camp'},
-    {name:'Sparse Jungle',top:1,under:2,height:0,tree:'sparseJungle',feature:null},
-    {name:'Mushroom Fields',top:46,under:2,height:0,tree:'mushroom',feature:'mushroomHut'}
-  ];
-  const STRUCTURE_NAMES={
-    shipwreck:'Shipwreck',igloo:'Igloo',cabin:'Taiga Cabin',peakTower:'Mountain Watchtower',
-    watchtower:'Stone Watchtower',shoreRuins:'Coastal Ruins',oceanRuins:'Underwater Ruins',
-    well:'Sandstone Well',village:'Birch Village',manor:'Woodland Manor',pavilion:'Cherry Pavilion',
-    shrine:'Pale Garden Shrine',savannaVillage:'Savanna Village',abandonedCamp:'Abandoned Camp',
-    trailRuins:'Trail Ruins',desertTemple:'Desert Temple',mineshaft:'Mine Entrance',
-    ruinedPortal:'Ruined Portal',bridge:'Stone Bridge',swampHut:'Mangrove Cabin',
-    witchHut:'Witch Hut',jungleTemple:'Jungle Temple',camp:'Bamboo Camp',mushroomHut:'Mushroom House'
-  };
-  function zone(x,z,W,D){
-    const a=Math.max(0,Math.min(COLS-1,Math.floor(x/(W/COLS))));
-    const b=Math.max(0,Math.min(ROWS-1,Math.floor(z/(D/ROWS))));
-    return b*COLS+a;
-  }
-  function biomeAt(x,z,W,D){return {...BIOMES[zone(x,z,W,D)],index:zone(x,z,W,D)};}
-  function generate({W,D,H,SEA,seed,set,get,noise,rand,clamp}){
-    const sx=W/COLS,sz=D/ROWS;
-    const elevations=new Int16Array(W*D);
-    const elevationsAt=(x,z)=>elevations[x*D+z];
-    const ground=(x,z)=>biomeAt(x,z,W,D);
-    const worldRand=(x,z,salt=0)=>rand(x*31+salt*13,z*29-salt*11);
-    function terrainAt(x,z){
-      const b=ground(x,z),undulation=(noise(x,z,19)-.5)*4.5+(noise(x+237,z-91,7)-.5)*2.6;
-      let elevation=SEA+2+b.height+undulation;
-      if(b.water)elevation=Math.min(SEA-2,elevation);
-      if(b.name==='Ice Spikes'||b.name==='Frozen Peaks')elevation+=noise(x+73,z+90,9)*2;
-      if(b.name==='Windswept Savanna'||b.name==='Stony Peaks')elevation+=noise(x+10,z+120,5)*3.3;
-      if(b.name==='Badlands'||b.name==='Wooded Badlands')elevation=Math.round(elevation/2)*2;
-      return clamp(Math.floor(elevation),3,H-10);
-    }
-    // Basic climate-zone columns (surface, subsoil, rock, water).
-    for(let x=0;x<W;x++)for(let z=0;z<D;z++){
-      const b=ground(x,z),top=terrainAt(x,z);elevations[x*D+z]=top;
-      for(let y=0;y<=top;y++){
-        let block=3;
-        if(y===top)block=b.top;
-        else if(y>=top-3)block=b.under;
-        if(b.name.includes('Badlands')&&y<top&&y>top-7)block=((y+Math.floor(seed%3))%4===0?27:25);
-        set(x,y,z,block);
-      }
-      for(let y=top+1;y<=SEA;y++)set(x,y,z,b.name==='Frozen Ocean'?22:7);
-    }
-    // 3 miniature subterranean biome environments: dripstone, lush caves and deep dark.
-    for(let x=2;x<W-2;x++)for(let z=2;z<D-2;z++){
-      const biomeZone=(Math.floor(x/31)+Math.floor(z/37)+seed%3)%3;
-      const ceiling=Math.min(elevationsAt(x,z)-4,8);
-      for(let y=3;y<=ceiling;y++){
-        const cave=noise(x+80+y*5,z+41-y*3,11)*.60+noise(x-y*3,z+17+y*4,6)*.40;
-        if(cave>.63){set(x,y,z,0);
-          if(y===3||y===ceiling){
-            if(biomeZone===0)set(x,y,z,63);
-            if(biomeZone===1)set(x,y,z,46);
-            if(biomeZone===2)set(x,y,z,64);
-          }
-        }else if(get(x,y,z)===3){
-          const ore=worldRand(x+y*7,z+y*9,2);
-          if(ore>.965)set(x,y,z,18);
-          else if(ore<.025&&y<7)set(x,y,z,19);
-        }
-      }
-    }
-    function safeSet(x,y,z,id,onlyAir=false){
-      if(x<1||x>=W-1||z<1||z>=D-1||y<1||y>=H-1)return;
-      if(!onlyAir||get(x,y,z)===0)set(x,y,z,id);
-    }
-    function log(x,y,z,id,h){for(let k=0;k<h;k++)safeSet(x,y+k,z,id);}
-    function crown(x,y,z,id,rx=2,ry=2){
-      for(let dx=-rx;dx<=rx;dx++)for(let dz=-rx;dz<=rx;dz++)for(let dy=-1;dy<=ry;dy++){
-        const dist=(dx*dx+dz*dz)/(rx*rx)+(dy*dy)/((ry+.3)*(ry+.3));
-        if(dist>1.35||worldRand(x+dx*3+dy,z+dz*3,9)<.045)continue;
-        safeSet(x+dx,y+dy,z+dz,id,true);
-      }
-    }
-    function plantTree(kind,x,z){
-      let t=elevationsAt(x,z),base=t+1;
-      if(t<=SEA&&kind!=='mangrove'&&kind!=='mushroom'&&kind!=='kelp')return;
-      if(base+9>=H)return;
-      if(kind==='none'||kind==='flowers'||kind==='reeds')return;
-      if(kind==='cactus'){log(x,base,z,44,2+(worldRand(x,z,7)*2|0));return;}
-      if(kind==='bamboo'){log(x,base,z,45,3+(worldRand(x,z,1)*4|0));return;}
-      if(kind==='kelp'){log(x,base,z,45,2);return;}
-      if(kind==='spikes'){const ht=4+(worldRand(x,z,3)*5|0);for(let dy=0;dy<ht;dy++)for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)if((Math.abs(dx)+Math.abs(dz)<2)&&(dy<ht-2||dx===0&&dz===0))safeSet(x+dx,base+dy,z+dz,23);return;}
-      if(kind==='mushroom'){
-        const cap=worldRand(x,z,4)>.48?48:49;log(x,base,z,57,4);
-        for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)if(Math.abs(dx)+Math.abs(dz)<4)safeSet(x+dx,base+4,z+dz,cap,true);
-        safeSet(x,base+5,z,cap,true);return;
-      }
-      const code={oak:[5,6,4,2],sparseOak:[5,6,4,2],swampOak:[5,6,4,3],birch:[32,33,5,2],
-        darkOak:[5,6,5,3],spruce:[30,31,6,2],sparseSpruce:[30,31,5,2],pine:[30,31,7,2],
-        bigSpruce:[30,31,8,3],acacia:[34,35,4,3],jungle:[36,37,7,3],
-        sparseJungle:[36,37,5,3],mangrove:[38,39,5,3],cherry:[40,41,5,3],
-        paleOak:[42,43,6,3],poplar:[15,[12,13,14][worldRand(x,z,2)*3|0],6,2],palm:[34,35,5,2]}[kind];
-      if(!code)return;
-      const [trunk,leaf,height,radius]=code;
-      log(x,base,z,trunk,height);
-      if(kind==='acacia'||kind==='palm'){log(x+1,base+height-2,z,trunk,2);crown(x+1,base+height,z,leaf,radius,1);}
-      else if(['spruce','pine','bigSpruce','sparseSpruce'].includes(kind)){
-        for(let i=height-1;i>=2;i--){
-          const rad=i>height-3?1:radius;
-          for(let dx=-rad;dx<=rad;dx++)for(let dz=-rad;dz<=rad;dz++){
-            if(Math.abs(dx)+Math.abs(dz)<=rad+1)safeSet(x+dx,base+i,z+dz,leaf,true);
-          }
-        }
-        safeSet(x,base+height,z,leaf,true);
-      }else crown(x,base+height,z,leaf,radius,2);
-      if(kind==='mangrove'){
-        for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){
-          safeSet(x+dx,base,z+dz,38);safeSet(x+dx,base+1,z+dz,38,true);
-        }
-      }
-      if(kind==='darkOak'){
-        for(let k=0;k<height-1;k++)safeSet(x+1,base+k,z,trunk);
-      }
-    }
-    // Trees follow terrain and are kept out of the footprint reserved for structures.
-    for(let x=2;x<W-2;x++)for(let z=2;z<D-2;z++){
-      const b=ground(x,z),kind=b.tree;
-      const cx=Math.floor(x/sx)*sx+sx/2,cz=Math.floor(z/sz)*sz+sz/2;
-      if(b.feature&&Math.abs(x-cx)<6&&Math.abs(z-cz)<6)continue;
-      const vegetation=worldRand(x,z,5);
-      const density=kind==='bamboo'?.18:kind==='jungle'?.075:kind==='bigSpruce'?.054:
-        kind==='paleOak'||kind==='darkOak'?.060:kind==='mangrove'?.065:
-        kind==='spikes'?.027:kind==='cactus'?.04:kind==='flowers'?.02:
-        kind==='none'?0:kind.startsWith('sparse')?.018:.047;
-      if(vegetation<density)plantTree(kind,x,z);
-      else if(kind==='flowers'&&vegetation<.13&&get(x,elevationsAt(x,z)+1,z)===0)safeSet(x,elevationsAt(x,z)+1,z,16);
-      else if(kind==='reeds'&&vegetation<.06)plantTree('bamboo',x,z);
-    }
-    function structureAt(feature,cx,cz){
-      const b=ground(cx,cz),base=Math.max(SEA+1,elevationsAt(cx,cz)+1);
-      const water=b.water;
-      const floor=water?SEA+1:base;
-      const put=(dx,dy,dz,id)=>safeSet(cx+dx,floor+dy,cz+dz,id);
-      const room=(w,d,h,wall,roof)=>{
-        for(let dx=-w;dx<=w;dx++)for(let dz=-d;dz<=d;dz++){
-          for(let dy=0;dy<=h+1;dy++)put(dx,dy,dz,0);
-          put(dx,-1,dz,wall===24?24:61);
-          for(let dy=0;dy<=h;dy++)if(Math.abs(dx)===w||Math.abs(dz)===d)put(dx,dy,dz,dy===2&&dx===0&&dz===-d?0:wall);
-          put(dx,h+1,dz,roof);
-        }
-        put(0,1,0,59);
-      };
-      const pillar=(dx,dz,h,block)=>{for(let y=0;y<=h;y++)put(dx,y,dz,block)};
-      switch(feature){
-        case 'igloo':room(3,3,2,21,21);put(0,1,-3,0);break;
-        case 'cabin':room(3,3,3,30,31);put(0,1,-3,0);break;
-        case 'peakTower':case 'watchtower':
-          for(const p of [[-2,-2],[2,-2],[-2,2],[2,2]])pillar(...p,6,53);
-          for(let x=-3;x<=3;x++)for(let z=-3;z<=3;z++){put(x,5,z,11);if(Math.abs(x)===3||Math.abs(z)===3)put(x,6,z,53)}
-          put(0,0,0,53);put(0,1,0,53);break;
-        case 'shipwreck':case 'shoreRuins':case 'oceanRuins':
-          for(let x=-4;x<=4;x++)for(let z=-2;z<=2;z++){
-            if(Math.abs(x)===4||Math.abs(z)===2)put(x,0,z,feature==='shipwreck'?11:55);
-            else if(worldRand(cx+x,cz+z,20)>.52)put(x,0,z,feature==='shipwreck'?5:53);
-          }
-          if(feature==='shipwreck')pillar(0,0,6,5);else for(const x of [-3,3])pillar(x,0,2,53);
-          break;
-        case 'well':
-          for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++){put(x,0,z,24);if(Math.abs(x)===2||Math.abs(z)===2)put(x,1,z,24);else put(x,1,z,7)}
-          for(const x of [-2,2])for(const z of [-2,2])pillar(x,z,4,54);
-          for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++)put(x,4,z,24);
-          break;
-        case 'village':case 'savannaVillage':
-          room(3,3,3,feature==='village'?11:34,feature==='village'?53:35);
-          for(let x=-2;x<=2;x++)put(x,0,-5,61);
-          for(let x=-2;x<=2;x++)for(let z=4;z<=6;z++)put(x,0,z,60);
-          break;
-        case 'manor':room(4,4,5,52,31);for(const x of [-3,3])for(const z of [-3,3])pillar(x,z,5,5);break;
-        case 'pavilion':
-          for(const x of [-3,3])for(const z of [-3,3])pillar(x,z,4,40);
-          for(let x=-4;x<=4;x++)for(let z=-4;z<=4;z++)put(x,4,z,41);
-          for(let x=-3;x<=3;x++)for(let z=-3;z<=3;z++)put(x,0,z,11);break;
-        case 'shrine':
-          for(const x of [-2,2])for(const z of [-2,2])pillar(x,z,4,42);
-          for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++)put(x,4,z,43);
-          put(0,1,0,10);break;
-        case 'abandonedCamp':case 'camp':
-          for(let x=-3;x<=3;x++)for(let z=-3;z<=3;z++)if(Math.abs(x)===3||Math.abs(z)===3)put(x,0,z,11);
-          for(const x of [-3,3])for(const z of [-3,3])pillar(x,z,3,15);
-          for(let x=-3;x<=3;x++)for(let z=-3;z<=3;z++)if(Math.abs(x)+Math.abs(z)<5)put(x,3,z,feature==='camp'?31:13);
-          put(0,0,0,10);break;
-        case 'trailRuins':
-          for(let x=-4;x<=4;x++)for(let z=-3;z<=3;z++)if(worldRand(cx+x,cz+z,10)>.64)put(x,0,z,53);
-          for(const x of [-3,3])for(const z of [-2,2])pillar(x,z,worldRand(cx+x,cz+z,11)>.5?2:4,53);
-          break;
-        case 'desertTemple':case 'jungleTemple':
-          room(4,4,4,feature==='desertTemple'?24:53,feature==='desertTemple'?54:46);
-          for(const x of [-4,4])for(const z of [-4,4])pillar(x,z,6,feature==='desertTemple'?54:61);
-          put(0,0,0,10);break;
-        case 'mineshaft':
-          for(let x=-3;x<=3;x++)for(let z=-3;z<=3;z++)put(x,0,z,61);
-          for(let y=1;y<=4;y++)for(const x of [-3,3])put(x,y,0,5);
-          for(let x=-3;x<=3;x++)put(x,4,0,5);
-          for(let y=1;y<=4;y++)put(0,y,0,0);
-          break;
-        case 'ruinedPortal':
-          for(const x of [-2,2])for(let y=0;y<7;y++)if(y!==4)put(x,y,0,51);
-          for(let x=-2;x<=2;x++){put(x,0,0,51);if(x%2===0)put(x,6,0,51)}
-          put(0,1,2,10);break;
-        case 'bridge':
-          for(let x=-5;x<=5;x++)for(let z=-1;z<=1;z++)put(x,0,z,53);
-          for(let x=-5;x<=5;x++){put(x,1,-2,61);put(x,1,2,61)}break;
-        case 'swampHut':case 'witchHut':room(3,3,3,feature==='swampHut'?38:5,feature==='swampHut'?39:31);break;
-        case 'mushroomHut':room(3,3,3,57,48);break;
-      }
-    }
-    const structures=[];
-    for(let zoneId=0;zoneId<BIOMES.length;zoneId++){
-      const b=BIOMES[zoneId];if(!b.feature)continue;
-      const cx=Math.floor((zoneId%COLS+.5)*sx),cz=Math.floor((Math.floor(zoneId/COLS)+.5)*sz);
-      structureAt(b.feature,cx,cz);
-      structures.push({name:STRUCTURE_NAMES[b.feature],biome:b.name,x:cx,z:cz});
-    }
-    return {biomes:BIOMES,structures,elevations,terrainAt,columns:COLS,rows:ROWS};
-  }
-  window.MineWorldBiomes={COLS,ROWS,BIOMES,STRUCTURE_NAMES,zone,biomeAt,generate};
-})();
-
-</script>
+<script src="./world-chunks.js"></script>
 <script>
 /* MineWorld — original browser voxel sandbox; no Minecraft game code or third-party runtime. */
 (() => {
@@ -678,8 +429,11 @@
     $('start-btn').disabled = true;
     return;
   }
-  const W=96, D=96, H=36, SEA=9, SPAWN=56, STORAGE='mineworld-selfhost-v1';
-  const voxels = new Uint8Array(W*D*H);
+  const W=10000, D=10000, H=48, SEA=14, SPAWN=5000, CHUNK=16, STORAGE='mineworld-selfhost-v1';
+  const chunkCache=new Map(), visibleChunks=[];
+  let lastChunkX=-1,lastChunkZ=-1,streamQueue=[],streamClock=0;
+  const renderRadius=matchMedia('(pointer: coarse)').matches?1:2;
+  const MAX_CHUNKS=matchMedia('(pointer: coarse)').matches?42:70;
   const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace','Snow','Ice','Packed Ice','Sandstone','Terracotta','Red Sand','Red Terracotta','Podzol','Coarse Dirt','Spruce Log','Spruce Leaves','Birch Log','Birch Leaves','Acacia Log','Acacia Leaves','Jungle Log','Jungle Leaves','Mangrove Log','Mangrove Leaves','Cherry Log','Cherry Leaves','Pale Oak Log','Pale Oak Leaves','Cactus','Bamboo','Moss','Mud','Red Mushroom Cap','Brown Mushroom Cap','Netherrack','Obsidian','Dark Planks','Stone Bricks','Chiseled Sandstone','Prismarine','Copper','Clay','Deepslate','Lantern','Hay Bale','Cobblestone','Glow Lichen','Dripstone','Sculk'];
   const HOT=[1,2,3,5,12,13,14,15,11];
   const HOTSETS=[
@@ -726,32 +480,85 @@
   const isTouch=matchMedia('(pointer: coarse)').matches;
   let sky=[.57,.78,.91];
   const idx=(x,y,z)=>(x*D+z)*H+y;
-  const inside=(x,y,z)=>x>=0&&x<W&&z>=0&&z<D&&y>=0&&y<H;
-  const get=(x,y,z)=>inside(x,y,z)?voxels[idx(x,y,z)]:0;
-  const set=(x,y,z,b)=>{if(inside(x,y,z))voxels[idx(x,y,z)]=b};
+  const inside=(x,y,z)=>Number.isInteger(x)&&Number.isInteger(y)&&Number.isInteger(z)&&x>=0&&x<W&&z>=0&&z<D&&y>=0&&y<H;
+  const chunkKey=(cx,cz)=>cx+','+cz;
+  const chunkIndex=(x,y,z)=>((x%CHUNK)*CHUNK+(z%CHUNK))*H+y;
+  function loadChunk(cx,cz){
+    if(cx<0||cz<0||cx>=Math.ceil(W/CHUNK)||cz>=Math.ceil(D/CHUNK))return null;
+    const key=chunkKey(cx,cz);let chunk=chunkCache.get(key);
+    if(chunk){chunk.last=performance.now();return chunk;}
+    const data=window.MineWorldBiomes.generateChunk({cx,cz,H,SEA,edits:savedEdits});
+    chunk={cx,cz,data,vbo:null,count:0,dirty:true,last:performance.now()};
+    chunkCache.set(key,chunk);return chunk;
+  }
+  const get=(x,y,z)=>{
+    if(!inside(x,y,z))return 0;
+    const chunk=loadChunk(Math.floor(x/CHUNK),Math.floor(z/CHUNK));
+    return chunk?chunk.data[chunkIndex(x,y,z)]:0;
+  };
+  const set=(x,y,z,b)=>{
+    if(!inside(x,y,z))return;
+    const chunk=loadChunk(Math.floor(x/CHUNK),Math.floor(z/CHUNK));
+    chunk.data[chunkIndex(x,y,z)]=b;chunk.dirty=true;
+  };
+  function dirtyAround(x,z){
+    const cx=Math.floor(x/CHUNK),cz=Math.floor(z/CHUNK);
+    for(const dx of (x%CHUNK===0?[-1,0]:x%CHUNK===CHUNK-1?[0,1]:[0]))
+    for(const dz of (z%CHUNK===0?[-1,0]:z%CHUNK===CHUNK-1?[0,1]:[0])){
+      const c=chunkCache.get(chunkKey(cx+dx,cz+dz));if(c)c.dirty=true;
+    }
+  }
+  function unloadAllChunks(){
+    for(const c of chunkCache.values())if(c.vbo)gl.deleteBuffer(c.vbo);
+    chunkCache.clear();visibleChunks.length=0;lastChunkX=-1;lastChunkZ=-1;streamQueue=[];
+  }
+  function scheduleChunks(force=false){
+    const cx=Math.floor(player.x/CHUNK),cz=Math.floor(player.z/CHUNK);
+    if(!force&&cx===lastChunkX&&cz===lastChunkZ)return;
+    lastChunkX=cx;lastChunkZ=cz;
+    const list=[];
+    for(let dx=-renderRadius;dx<=renderRadius;dx++)for(let dz=-renderRadius;dz<=renderRadius;dz++){
+      const nx=cx+dx,nz=cz+dz;
+      if(nx<0||nz<0||nx>=Math.ceil(W/CHUNK)||nz>=Math.ceil(D/CHUNK))continue;
+      list.push({cx:nx,cz:nz,dist:dx*dx+dz*dz});
+    }
+    list.sort((a,b)=>a.dist-b.dist);
+    streamQueue=list.filter(c=>!chunkCache.has(chunkKey(c.cx,c.cz)));
+    visibleChunks.length=0;
+    for(const desc of list){const c=chunkCache.get(chunkKey(desc.cx,desc.cz));if(c)visibleChunks.push(c);}
+  }
+  function streamChunks(max=2){
+    for(let i=0;i<max&&streamQueue.length;i++){
+      const c=streamQueue.shift();const chunk=loadChunk(c.cx,c.cz);if(chunk&&!visibleChunks.includes(chunk))visibleChunks.push(chunk);
+    }
+    if(chunkCache.size>MAX_CHUNKS){
+      const active=new Set(visibleChunks);const removable=[...chunkCache.values()].filter(c=>!active.has(c)&&!(Math.abs(c.cx-lastChunkX)<=1&&Math.abs(c.cz-lastChunkZ)<=1));
+      removable.sort((a,b)=>a.last-b.last);
+      for(const c of removable){if(chunkCache.size<=MAX_CHUNKS)break;if(c.vbo)gl.deleteBuffer(c.vbo);chunkCache.delete(chunkKey(c.cx,c.cz));}
+    }
+  }
   const solid=b=>b!==0&&b!==7;
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const rand=(x,z,s=seed)=>{let n=Math.imul(x+307,374761393)^Math.imul(z+811,668265263)^Math.imul(s,1274126177);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295};
   const lerp=(a,b,t)=>a+(b-a)*t;
   function noise(x,z,scale){let px=x/scale,pz=z/scale,ix=Math.floor(px),iz=Math.floor(pz),fx=px-ix,fz=pz-iz;fx=fx*fx*(3-2*fx);fz=fz*fz*(3-2*fz);return lerp(lerp(rand(ix,iz),rand(ix+1,iz),fx),lerp(rand(ix,iz+1),rand(ix+1,iz+1),fx),fz)}
-  // The Atlas module owns the 36-biome, seed-deterministic world-generation pass.
-  let worldGeneration=null;
-  function terrain(x,z){return worldGeneration?.terrainAt(x,z)??SEA+2}
+  // A 10,000-block-wide world is never allocated at once. Every chunk is deterministic.
+  function terrain(x,z){return window.MineWorldBiomes.terrainAt(x,z,SEA,H)}
   function generate(){
-    voxels.fill(0);savedEdits=new Map();
-    worldGeneration=window.MineWorldBiomes.generate({W,D,H,SEA,seed,set,get,noise,rand,clamp});
+    window.MineWorldBiomes.setSeed(seed);unloadAllChunks();savedEdits.clear();
     const top=terrain(SPAWN,SPAWN);
     player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=top+2.5;
     player.vy=0;player.pitch=-.14;player.yaw=.6;player.fly=false;selection=0;
-    mobs=[];mobSerial=0;mobSpawnClock=0;spawnWildlife();
-    buildMesh();updateHotbar();updateFlyButton();markSave();
+    mobs=[];mobSerial=0;mobSpawnClock=0;
+    scheduleChunks(true);streamChunks(5);spawnWildlife();updateHotbar();updateFlyButton();markSave();
+    updateSeedLabel();
   }
   function blockAtFeet(x,y,z){let xa=Math.floor(x-.27),xb=Math.floor(x+.27),za=Math.floor(z-.27),zb=Math.floor(z+.27),ya=Math.floor(y+.02),yb=Math.floor(y+1.72);if(xa<0||xb>=W||za<0||zb>=D||ya<0)return true;for(let i=xa;i<=xb;i++)for(let k=za;k<=zb;k++)for(let j=ya;j<=yb;j++)if(solid(get(i,j,k)))return true;return false}
   function setBlock(x,y,z,b,remote=false){
     if(!inside(x,y,z)||y===0)return false;
     if(b!==0&&solid(b)&&x>=Math.floor(player.x-.3)&&x<=Math.floor(player.x+.3)&&z>=Math.floor(player.z-.3)&&z<=Math.floor(player.z+.3)&&y<player.y+1.9&&y+1>player.y)return false;
     const before=get(x,y,z);if(before===b)return false;
-    set(x,y,z,b);savedEdits.set(idx(x,y,z),b);buildMesh();markSave();if(!remote)window.MineWorldMultiplayer?.localEdit(idx(x,y,z),b);return true;
+    set(x,y,z,b);savedEdits.set(idx(x,y,z),b);dirtyAround(x,z);markSave();if(!remote)window.MineWorldMultiplayer?.localEdit(idx(x,y,z),b);return true;
   }
   function pushFace(a,x,y,z,b,f){
     const face=f.n[1]===1?0:(f.n[1]===-1?2:1);
@@ -762,14 +569,27 @@
       a.push(x+v[0],y+v[1],z+v[2],shade,shade,shade,uv[0],uv[1]);
     }
   }
-  function buildMesh(){
-    let a=[];
-    for(let x=0;x<W;x++)for(let z=0;z<D;z++)for(let y=0;y<H;y++){
-      const b=get(x,y,z);if(!b)continue;
-      for(const f of FACE){const v=get(x+f.n[0],y+f.n[1],z+f.n[2]);if(v&&!(b!==7&&v===7)&&!(b===9&&v!==9))continue;if(b===7&&v===7)continue;pushFace(a,x,y,z,b,f)}
+  function buildChunkMesh(chunk){
+    const {cx,cz,data}=chunk,ax=cx*CHUNK,az=cz*CHUNK;
+    const faces=[];
+    for(let dx=0;dx<CHUNK;dx++)for(let dz=0;dz<CHUNK;dz++)for(let y=0;y<H;y++){
+      const x=ax+dx,z=az+dz,b=data[(dx*CHUNK+dz)*H+y];if(!b)continue;
+      for(const face of FACE){
+        const nx=x+face.n[0],ny=y+face.n[1],nz=z+face.n[2];
+        // Outside a chunk, read adjacent terrain without forcing an entire world mesh.
+        const near=nx>=ax&&nx<ax+CHUNK&&nz>=az&&nz<az+CHUNK&&ny>=0&&ny<H?
+          data[((nx-ax)*CHUNK+(nz-az))*H+ny]:get(nx,ny,nz);
+        if(near&&!(b!==7&&near===7)&&!(b===9&&near!==9))continue;
+        if(b===7&&near===7)continue;
+        pushFace(faces,x,y,z,b,face);
+      }
     }
-    gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.STATIC_DRAW);meshCount=a.length/8;
+    if(!chunk.vbo)chunk.vbo=gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER,chunk.vbo);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(faces),gl.STATIC_DRAW);
+    chunk.count=faces.length/8;chunk.dirty=false;
   }
+  function buildMesh(){for(const c of visibleChunks)c.dirty=true;}
   const vs=`attribute vec3 aPos;attribute vec3 aColor;attribute vec2 aUV;uniform mat4 uVP;varying vec3 vColor;varying vec3 vPos;varying vec2 vUV;void main(){vColor=aColor;vPos=aPos;vUV=aUV;gl_Position=uVP*vec4(aPos,1.0);}`;
   const fs=`precision mediump float;varying vec3 vColor;varying vec3 vPos;varying vec2 vUV;uniform vec3 uEye;uniform vec3 uSky;uniform sampler2D uAtlas;uniform float uTextured;void main(){
     float d=distance(vPos,uEye);float fog=smoothstep(25.0,83.0,d);
@@ -829,14 +649,47 @@
   }
   function performPlace(){if(paused||!aim||!aim.previous)return;let p=aim.previous,b=HOT9[selection];if(!inside(p.x,p.y,p.z)||get(p.x,p.y,p.z)!==0)return;if(gameMode==='survival'&&inventory[b]===0){toast('Mine resources to collect '+NAMES[b]);return;}if(setBlock(p.x,p.y,p.z,b)){if(gameMode==='survival'){inventory[b]--;updateHotbar();}toast('Placed '+NAMES[b]);timers.place=.2}}
   function markSave(){dirtySave=true}
-  function save(){if(window.MineWorldMultiplayer?.isShared())return;try{const edits=[...savedEdits.entries()];localStorage.setItem(STORAGE,JSON.stringify({seed,edits,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,version:4}));dirtySave=false;$('status').textContent='● Saved locally'}catch(e){$('status').textContent='● Storage unavailable'}}
-  function load(){try{let data=localStorage.getItem(STORAGE);if(!data)return false;let s=JSON.parse(data);if(!s||!Number.isInteger(s.seed)||!Array.isArray(s.edits))return false;
-      if((s.version||0)<4&&!localStorage.getItem('mineworld-backup-before-biomes'))localStorage.setItem('mineworld-backup-before-biomes',data);
-      seed=s.seed;generate();savedEdits.clear();for(let [i,b] of s.edits){
-      if((s.version||0)<4){const oldX=Math.floor(i/(64*27)),oldZ=Math.floor(i/27)%64,oldY=i%27;
-        if(oldX<0||oldX>=64||oldZ<0||oldZ>=64||oldY<0||oldY>=27)continue;
-        i=idx(oldX,oldY,oldZ);
-      }if(Number.isInteger(i)&&i>=0&&i<voxels.length&&Number.isInteger(b)&&b>=0&&b<NAMES.length){voxels[i]=b;savedEdits.set(i,b)}}if(s.gameMode==='survival')gameMode='survival';if(['peaceful','easy','normal','hard'].includes(s.difficulty))difficulty=s.difficulty;if(Number.isFinite(s.dayClock))dayClock=s.dayClock; if(s.bag&&typeof s.bag==='object')for(const k of Object.keys(bag))bag[k]=clamp(Math.floor(Number(s.bag[k])||0),0,999);if(s.tools){for(const k of ['pickaxe','sword'])if(Object.hasOwn(toolLevels,s.tools[k]))tools[k]=s.tools[k]}if(['pickaxe','sword','none'].includes(s.equipped))equipped=s.equipped;if(Number.isFinite(s.health))health=clamp(s.health,1,20);if(Number.isFinite(s.hunger))hunger=clamp(s.hunger,0,20);if(Array.isArray(s.inventory))for(let i=0;i<inventory.length;i++)inventory[i]=Math.min(999,Math.max(0,Number(s.inventory[i])||0));updateModeButton();updateHotbar();updateSurvivalHUD();if(s.player){for(let k of ['x','y','z','yaw','pitch'])if(Number.isFinite(s.player[k]))player[k]=s.player[k];player.fly=gameMode==='creative'&&!!s.player.fly;player.x=clamp(player.x,.7,W-.7);player.z=clamp(player.z,.7,D-.7);player.y=clamp(player.y,3,H-3)}buildMesh();updateFlyButton();dirtySave=false;return true}catch(e){return false}}
+  function save(){
+    if(window.MineWorldMultiplayer?.isShared())return;
+    try{
+      const edits=[...savedEdits.entries()];
+      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,version:5});
+      localStorage.setItem(STORAGE,payload);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';
+    }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';}
+  }
+  function load(){
+    try{
+      const data=localStorage.getItem(STORAGE);if(!data)return false;
+      const s=JSON.parse(data);if(!s||!Number.isInteger(s.seed)||!Array.isArray(s.edits))return false;
+      if((s.version||0)<5&&!localStorage.getItem('mineworld-backup-before-10k'))localStorage.setItem('mineworld-backup-before-10k',data);
+      seed=s.seed;seedLabel=String(s.seedLabel||s.seed);generate();savedEdits.clear();
+      const legacy=(s.version||0)<5,oldW=(s.version||0)<4?64:96,oldH=(s.version||0)<4?27:36;
+      for(let [i,b] of s.edits){
+        if(legacy){const oldX=Math.floor(i/(oldW*oldH)),oldZ=Math.floor(i/oldH)%oldW,oldY=i%oldH;
+          i=idx(oldX+SPAWN-56,oldY,oldZ+SPAWN-56);
+        }
+        if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)savedEdits.set(i,b);
+      }
+      // Regenerate nearby chunks with saved block edits so even older worlds survive migration.
+      unloadAllChunks();scheduleChunks(true);streamChunks(5);
+      if(s.gameMode==='survival')gameMode='survival';
+      if(['peaceful','easy','normal','hard'].includes(s.difficulty))difficulty=s.difficulty;
+      if(Number.isFinite(s.dayClock))dayClock=s.dayClock;
+      if(s.bag&&typeof s.bag==='object')for(const k of Object.keys(bag))bag[k]=clamp(Math.floor(Number(s.bag[k])||0),0,999);
+      if(s.tools)for(const k of ['pickaxe','sword'])if(Object.hasOwn(toolLevels,s.tools[k]))tools[k]=s.tools[k];
+      if(['pickaxe','sword','none'].includes(s.equipped))equipped=s.equipped;
+      if(Number.isFinite(s.health))health=clamp(s.health,1,20);if(Number.isFinite(s.hunger))hunger=clamp(s.hunger,0,20);
+      if(Array.isArray(s.inventory))for(let i=0;i<inventory.length;i++)inventory[i]=clamp(Math.floor(Number(s.inventory[i])||0),0,999);
+      updateModeButton();updateHotbar();updateSurvivalHUD();
+      if(s.player){for(let k of ['x','y','z','yaw','pitch'])if(Number.isFinite(s.player[k]))player[k]=s.player[k];
+        if(legacy){player.x+=SPAWN-56;player.z+=SPAWN-56;player.y=terrain(Math.floor(player.x),Math.floor(player.z))+2;}
+        player.fly=gameMode==='creative'&&!!s.player.fly;
+        player.x=clamp(player.x,.7,W-.7);player.z=clamp(player.z,.7,D-.7);player.y=clamp(player.y,3,H-3);
+      }
+      scheduleChunks(true);streamChunks(5);updateFlyButton();updateSeedLabel();dirtySave=false;
+      return true;
+    }catch(e){console.warn('World save not loaded:',e);return false;}
+  }
   function toggleInventory(){hotbarPage=(hotbarPage+1)%HOTSETS.length;HOT9.splice(0,HOT9.length,...HOTSETS[hotbarPage]);selection=0;updateHotbar();toast(hotbarPage?'Nature & extras':'Classic blocks');}
   function updateHotbar(){const root=$('hotbar');root.innerHTML='';HOT9.forEach((id,i)=>{const button=document.createElement('button');button.type='button';button.className='hot-item'+(i===selection?' active':'');button.setAttribute('aria-label',NAMES[id]);const tile=id*3,tx=((tile%8)/7*100).toFixed(2),ty=(Math.floor(tile/8)/7*100).toFixed(2),image=window.MineWorldAtlas.dataURL;
     button.innerHTML='<small>'+(gameMode==='survival'?inventory[id]:i+1)+'</small><div class="swatch" style="background-color:'+SWATCH[id]+';background-image:url('+image+');background-size:800% 800%;background-position:'+tx+'% '+ty+'%"></div><span>'+NAMES[id]+'</span>';button.addEventListener('pointerdown',e=>e.stopPropagation());button.addEventListener('click',()=>{selection=i;updateHotbar();toast(NAMES[HOT9[selection]])});root.appendChild(button)})}
@@ -982,7 +835,7 @@
   function spawnWildlife(){
     const types=['cow','pig','sheep','chicken'];
     for(let i=0;i<12;i++){
-      const x=3+rand(i*29,seed+i*3)*(W-6),z=3+rand(i*17,seed+i*11)*(D-6);
+      const x=SPAWN-24+rand(i*29,seed+i*3)*48,z=SPAWN-24+rand(i*17,seed+i*11)*48;
       if(Math.hypot(x-SPAWN,z-SPAWN)>6)spawnOne(types[i%4],x,z);
     }
   }
@@ -1009,7 +862,7 @@
           }
         }
         if(mobs.filter(m=>SPECIES[m.kind].kind==='passive').length<9){
-          spawnOne(['cow','pig','sheep','chicken'][Math.floor(Math.random()*4)],3+Math.random()*(W-6),3+Math.random()*(D-6));
+          {const nearby=living[Math.floor(Math.random()*living.length)]||player;spawnOne(['cow','pig','sheep','chicken'][Math.floor(Math.random()*4)],clamp(nearby.x+Math.random()*35-17,3,W-4),clamp(nearby.z+Math.random()*35-17,3,D-4));}
         }
       }
     }
@@ -1196,7 +1049,9 @@
   function render(t){requestAnimationFrame(render);let dt=clamp((t-lastTime)/1000,0,.05);lastTime=t;
     if(paused)return;
     dayClock+=dt;
+    scheduleChunks();streamChunks(isTouch?1:2);
     move(dt);
+    scheduleChunks();
     updateSurvival(dt);
     updateMobs(dt);
     attackCooldown=Math.max(0,attackCooldown-dt);playerHitCooldown=Math.max(0,playerHitCooldown-dt);
@@ -1216,12 +1071,12 @@
     gl.clearColor(...sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,vp);gl.uniform3fv(uEye,eye);gl.uniform3fv(uSky,sky);
     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uAtlas,0);
-    gl.bindBuffer(gl.ARRAY_BUFFER,vbo);setAttribs(true);gl.drawArrays(gl.TRIANGLES,0,meshCount);
+    for(const chunk of visibleChunks){if(chunk.dirty)buildChunkMesh(chunk);gl.bindBuffer(gl.ARRAY_BUFFER,chunk.vbo);setAttribs(true);gl.drawArrays(gl.TRIANGLES,0,chunk.count);}
     drawRemotePlayers();
     drawMobs();
     drawHighlight(aimMob?null:aim);
     $('target-name').textContent=aimMob?'⚔ '+SPECIES[aimMob.kind].name+' · ♥ '+Math.ceil(aimMob.hp):aimPlayer?'⚔ '+aimPlayer.name+' · PvP enabled':aim?'⛏ '+NAMES[aim.b]+'  ·  '+aim.x+', '+aim.y+', '+aim.z:'Aim at a block or creature';
-    if((frameCount++%18)===0){$('coord-readout').textContent='🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z,W,D).name+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
+    if((frameCount++%18)===0){$('coord-readout').textContent='🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
     saveTimer+=dt;if(saveTimer>8){saveTimer=0;if(dirtySave)save()}
   }
   // Biome travel stays deterministic and works in the same peer-to-peer world.
@@ -1234,9 +1089,8 @@
     const landmark=document.createElement('small');landmark.textContent=b.feature?'🏛 '+window.MineWorldBiomes.STRUCTURE_NAMES[b.feature]:b.tree==='none'?'⛰ Explore landscape':'🌳 '+b.tree.replace(/[A-Z]/g,c=>' '+c.toLowerCase());
     tile.appendChild(landmark);
     tile.addEventListener('click',()=>{
-      const zID=Math.floor(i/window.MineWorldBiomes.COLS),xID=i%window.MineWorldBiomes.COLS;
-      const x=Math.floor((xID+.22)*W/window.MineWorldBiomes.COLS),z=Math.floor((zID+.22)*D/window.MineWorldBiomes.ROWS);
-      player.x=x+.5;player.z=z+.5;player.y=topAt(x,z)+3;player.vy=0;player.fly=false;
+      const {x,z}=window.MineWorldBiomes.atlasDestination(i);
+      player.x=x+.5;player.z=z+.5;scheduleChunks(true);streamChunks(5);player.y=topAt(x,z)+3;player.vy=0;player.fly=false;
       updateFlyButton();markSave();$('atlas-modal').classList.add('hidden');
       start();toast('🧭 '+b.name+(b.feature?' · '+window.MineWorldBiomes.STRUCTURE_NAMES[b.feature]:''));
     });
@@ -1245,7 +1099,7 @@
   function openAtlas(){
     atlasWasPlaying=started&&!paused;paused=true;keys.clear();movement.x=movement.y=0;
     if(document.pointerLockElement)document.exitPointerLock();
-    const current=window.MineWorldBiomes.zone(player.x,player.z,W,D);
+    const current=window.MineWorldBiomes.zone(player.x,player.z);
     for(const [i,t] of [...atlasGrid.children].entries())t.classList.toggle('current',i===current);
     $('atlas-modal').classList.remove('hidden');
   }
@@ -1256,8 +1110,36 @@
   for(const id of ['atlas-toggle','atlas-from-home','atlas-from-pause'])$(id).addEventListener('click',openAtlas);
   $('close-atlas').addEventListener('click',closeAtlas);
   $('inventory-toggle').addEventListener('click',toggleInventory);
-  $('start-btn').addEventListener('click',()=>{setGameMode('creative');start()});
-  $('survival-start').addEventListener('click',()=>{setGameMode('survival');start()});
+  let seedLabel='85721';
+  function updateSeedLabel(){
+    $('seed-current').textContent='Current seed: '+seedLabel+' · terrain ID '+seed;
+    $('seed-input').value=seedLabel;
+  }
+  function createSeededWorld(raw){
+    if(window.MineWorldMultiplayer?.isShared()){toast('Leave multiplayer to change your world seed');return false;}
+    const text=String(raw||Math.floor(Math.random()*99999998)+1).trim().slice(0,64);
+    try{const previous=localStorage.getItem(STORAGE);if(previous)localStorage.setItem('mineworld-previous-seed-backup',previous);}catch(_){}
+    seed=window.MineWorldBiomes.seedFrom(text);seedLabel=text;
+    inventory.fill(0);for(const k of Object.keys(bag))bag[k]=0;tools.pickaxe=tools.sword='none';equipped='pickaxe';health=20;hunger=20;
+    generate();setGameMode(gameMode);save();updateSeedLabel();return true;
+  }
+  function playMode(mode){
+    const typed=$('seed-input').value.trim();
+    if(typed&&typed!==seedLabel){
+      if(window.MineWorldMultiplayer?.isShared()){toast('Leave your multiplayer world to change seeds');return;}
+      if(!confirm('Start a NEW world with seed "'+typed+'"? Your current private world will be backed up.'))return;
+      createSeededWorld(typed);
+    }
+    setGameMode(mode);start();
+  }
+  $('start-btn').addEventListener('click',()=>playMode('creative'));
+  $('survival-start').addEventListener('click',()=>playMode('survival'));
+  $('random-seed').addEventListener('click',()=>{$('seed-input').value=String(Math.floor(Math.random()*99999998)+1)});
+  $('copy-seed').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(seedLabel);toast('Seed copied')}catch(_){toast('Seed: '+seedLabel)}});
+  $('apply-seed').addEventListener('click',()=>{
+    if(!confirm('Create a new world from this seed? Your existing private world will be backed up.'))return;
+    if(createSeededWorld($('seed-input').value))toast('New seeded world created');
+  });
   $('home-btn').addEventListener('click',()=>{paused=true;$('pause').classList.add('hidden');$('welcome').classList.remove('hidden');save();});
   $('eat-btn').addEventListener('click',eatFood);
   $('resume-btn').addEventListener('click',start);
@@ -1266,7 +1148,12 @@
   $('mode-btn').addEventListener('click',()=>{setGameMode(gameMode==='creative'?'survival':'creative');toast('Mode: '+gameMode)});
   $('craft-btn').addEventListener('click',openGear);$('bag-toggle').addEventListener('click',openGear);$('close-gear').addEventListener('click',closeGear);for(const [btn,tool] of [['gear-pickaxe','pickaxe'],['gear-sword','sword'],['gear-none','none']])$(btn).addEventListener('click',()=>{equipped=tool;updateSurvivalHUD();renderGear();markSave()});$('home-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));$('pause-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));
   $('fly-btn').addEventListener('click',()=>{if(gameMode==='survival'){toast('Flying is only available in Creative');return;}player.fly=!player.fly;player.vy=0;updateFlyButton();markSave();toast(player.fly?'Flying enabled':'Flying disabled')});
-  $('new-btn').addEventListener('click',()=>{if(window.MineWorldMultiplayer?.isShared()){toast('Leave the shared world to generate a private world');return;}if(!confirm('Generate a new world? Your previous world will be replaced.'))return;seed=Math.floor(Math.random()*90000000)+1;inventory.fill(0);for(const k of Object.keys(bag))bag[k]=0;tools.pickaxe=tools.sword='none';equipped='pickaxe';health=20;hunger=20;generate();setGameMode(gameMode);save();window.MineWorldMultiplayer?.broadcastWorld();$('pause').classList.add('hidden');start();toast('A new world begins!')});
+  $('new-btn').addEventListener('click',()=>{
+    if(window.MineWorldMultiplayer?.isShared()){toast('Leave multiplayer before creating a private world');return;}
+    if(!confirm('Create a new 10,000 x 10,000 world? Your current save will be backed up, then replaced.'))return;
+    createSeededWorld(String($('seed-input').value||Math.floor(Math.random()*99999998)+1));
+    $('pause').classList.add('hidden');start();toast('New world: '+seedLabel);
+  });
   document.addEventListener('keydown',e=>{
     if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab'].includes(e.code))e.preventDefault();
     if(e.target instanceof HTMLInputElement)return;
@@ -1314,36 +1201,39 @@
     b.addEventListener('lostpointercapture',()=>touchHold[verb]=false);
   }
   updateModeButton();updateSurvivalHUD();
-  if(!load())generate();else $('status').textContent='● Previous world restored';setDifficulty(difficulty);
+  if(!load())generate();else $('status').textContent='● Previous world restored';setDifficulty(difficulty);updateSeedLabel();
   window.MineWorldBridge={
     getPlayer:()=>({x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly,mode:gameMode}),
     getCombatProfile:()=>({mode:gameMode,equipped,weapon:equipped==='sword'?tools.sword:equipped==='pickaxe'?tools.pickaxe:'none'}),
     getMobs:mobSnapshot, setMobs:syncMobs, applyMobHit, grantLoot,
     applyDamage:(n,cause)=>{if(Number.isInteger(n)&&n>0&&n<=20)damage(n,String(cause||'Combat').slice(0,40))},
     getMode:()=>gameMode,
-    getSnapshot:()=>({seed,version:4,edits:[...savedEdits.entries()],dayClock,mobs:mobSnapshot()}),
+    getSnapshot:()=>({seed,version:5,worldSize:W,edits:[...savedEdits.entries()],dayClock,mobs:mobSnapshot()}),
     resetPublicWorld:(newSeed)=>{
       if(!Number.isInteger(newSeed)||newSeed<1||newSeed>99999999)return false;
-      seed=newSeed;generate();dirtySave=false;return true;
+      seed=newSeed;seedLabel=String(newSeed);generate();dirtySave=false;return true;
     },
     acceptSnapshot:(snapshot)=>{
-      if(!snapshot||!Number.isInteger(snapshot.seed)||!Array.isArray(snapshot.edits)||snapshot.edits.length>voxels.length)return false;
-      seed=snapshot.seed;generate();savedEdits.clear();
+      if(!snapshot||!Number.isInteger(snapshot.seed)||!Array.isArray(snapshot.edits)||snapshot.edits.length>250000)return false;
+      seed=snapshot.seed;seedLabel=String(seed);generate();savedEdits.clear();
       for(const pair of snapshot.edits){
         if(!Array.isArray(pair)||pair.length!==2)continue;
         const [i,b]=pair;
-        if(Number.isInteger(i)&&i>=0&&i<voxels.length&&Number.isInteger(b)&&b>=0&&b<NAMES.length){voxels[i]=b;savedEdits.set(i,b)}
+        if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)savedEdits.set(i,b);
       }
+      unloadAllChunks();scheduleChunks(true);streamChunks(5);
       if(Number.isFinite(snapshot.dayClock))dayClock=snapshot.dayClock;
       if(Array.isArray(snapshot.mobs))syncMobs(snapshot.mobs);
-      buildMesh();dirtySave=false;
-      return true;
+      dirtySave=false;updateSeedLabel();return true;
     },
     remoteEdit:(i,b)=>{
-      if(!Number.isInteger(i)||i<0||i>=voxels.length||!Number.isInteger(b)||b<0||b>=NAMES.length)return false;
+      if(!Number.isSafeInteger(i)||i<0||i>=W*D*H||!Number.isInteger(b)||b<0||b>=NAMES.length)return false;
       const x=Math.floor(i/(D*H)),z=Math.floor(i/H)%D,y=i%H;
-      if(y===0||voxels[i]===b)return false;
-      voxels[i]=b;savedEdits.set(i,b);buildMesh();markSave();return true;
+      if(y===0)return false;
+      savedEdits.set(i,b);
+      const chunk=chunkCache.get(chunkKey(Math.floor(x/CHUNK),Math.floor(z/CHUNK)));
+      if(chunk){chunk.data[chunkIndex(x,y,z)]=b;dirtyAround(x,z);}
+      markSave();return true;
     },
     isStarted:()=>started,
     start:()=>{if(!started)start()},
