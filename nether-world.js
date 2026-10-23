@@ -108,19 +108,29 @@
       put(gxX,y,gzZ,10);
       if(type==='fortress')for(let a=-3;a<=3;a++)put(gxX+a,y+1,gzZ+3,73);
       if(type==='bastion')for(let a=-2;a<=2;a++)put(gxX+a,y+1,gzZ+2,84);
+      put(gxX+2,y,gzZ+2,119);
+      if(type==='bastion')put(gxX-2,y,gzZ-2,119);
+      put(gxX+2,y,gzZ+2,119);
+      if(type==='bastion')put(gxX-2,y,gzZ-2,119);
     }else if(type==='portal'){
       for(let dx=-3;dx<=3;dx++)for(let dy=0;dy<=6;dy++){
         const border=Math.abs(dx)===3||dy===0||dy===6;
         put(gxX+dx,y+dy,gzZ,border?51:dy>0&&dy<6?0:65);
       }
       put(gxX-1,y+6,gzZ,65);put(gxX+3,y+5,gzZ,65);
+      put(gxX+4,y,gzZ+1,119);
+      put(gxX+4,y,gzZ+1,119);
     }else if(type==='fossil'){
       for(let i=-7;i<=7;i++)put(gxX+i,y+1,gzZ,86);
       for(let i=-6;i<=6;i+=3){for(let dy=0;dy<4;dy++)put(gxX+i,y+dy,gzZ-2,86);put(gxX+i,y+3,gzZ+2,86);}
+      put(gxX+2,y,gzZ+2,119);
+      put(gxX+2,y,gzZ+2,119);
     }else{
       for(let dx=-3;dx<=3;dx++)for(let dz=-3;dz<=3;dz++){
         if(Math.abs(dx)===3||Math.abs(dz)===3)put(gxX+dx,y,gzZ+dz,69);
         else put(gxX+dx,y,gzZ+dz,66);
+      put(gxX+4,y,gzZ+1,119);
+      put(gxX+4,y,gzZ+1,119);
       }
     }
   }
