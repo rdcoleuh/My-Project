@@ -64,6 +64,18 @@
 #online-hud{pointer-events:none;z-index:3;position:absolute;top:90px;left:16px;border-radius:8px;padding:7px 10px;background:#15351bba;color:#d8f3cb;font-size:11px}
 @media(pointer:coarse){#chatbox{bottom:calc(242px + env(safe-area-inset-bottom));width:min(245px,50vw)}#chat-log{max-height:70px}#online-hud{top:70px;left:9px;font-size:10px}}
 @media(max-width:520px){#inventory-toggle{font-size:11px;padding:10px 9px}#friends-toggle{font-size:11px;padding:10px 9px}.lobby-modal .menu-actions{gap:6px}.lobby-modal .ui-button{padding:11px 8px}.lobby-modal .main-button{font-size:12px}.lobby-modal>p{font-size:11px}}
+
+/* public multiplayer world selector */
+.public-worlds{background:#173524;border:1px solid #5f9c69;border-radius:12px;padding:13px;margin:13px 0 10px}
+.public-label{color:#c0f494;font-size:11px;letter-spacing:.09em;font-weight:900}
+.lobby-modal .public-help{text-align:left;font-size:11px;line-height:1.45;color:#d5e5d4;margin:7px 0 12px}
+.public-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.public-world{display:flex;flex-direction:column;gap:5px;align-items:start;min-height:107px;text-align:left;border:1px solid #80b37e;border-radius:9px;padding:12px 9px;background:linear-gradient(145deg,#376a43,#24422d);color:#f4ffe6}
+.public-world:hover,.public-world:focus-visible{background:#487e50}
+.public-world strong{font-size:12px}.public-world small{font-size:10px;line-height:1.25;color:#c6e4c8}.public-world span{font-size:10px;color:#cbff9c;margin-top:auto;font-weight:800}
+.public-world[disabled]{opacity:.6}
+@media(max-width:540px){.public-worlds{padding:9px}.public-cards{grid-template-columns:1fr;gap:7px}.public-world{min-height:60px;display:grid;grid-template-columns:1fr auto;align-items:center}.public-world strong{grid-column:1}.public-world small{grid-column:1}.public-world span{grid-column:2;grid-row:1/3}.lobby-modal{max-height:93dvh;overflow:auto}}
+
 </style>
 <title>MineWorld — Build Your Own World</title>
 </head>
@@ -94,9 +106,9 @@
       <div class="kicker">YOUR WORLD · YOUR RULES</div>
       <h1>Welcome to <span>MineWorld</span></h1>
       <p>Explore rolling hills, forests and water. Mine blocks, build anything, and return to your saved world. Everything runs from <strong>this website's own original game code.</strong></p>
-      <div class="features"><span>✦ Autumn forests</span><span>⛏ Mining &amp; building</span><span>👥 Online rooms</span><span>☁ Autosave</span></div>
+      <div class="features"><span>✦ Autumn forests</span><span>⛏ Mining &amp; building</span><span>🌐 Public multiplayer</span><span>☁ Autosave</span></div>
       <button id="start-btn" class="main-button">▶ &nbsp; PLAY NOW</button>
-      <button id="welcome-friends" class="ui-button" style="width:100%;margin-top:12px">👥 Play online with friends</button>
+      <button id="welcome-friends" class="ui-button" style="width:100%;margin-top:12px">🌐 Play on public servers</button>
       <p class="note">Original Minecraft-inspired game — not Minecraft Java Edition 26.3 or an official Mojang product. No Eaglercraft, external game iframe, account or demo timer.</p>
     </section>
   </div>
@@ -105,7 +117,7 @@
       <div class="kicker">MINEWORLD</div><h2>Game menu</h2>
       <p>Pick up where you left off, switch flying mode, or generate a brand new world.</p>
       <button class="main-button" id="resume-btn">▶ &nbsp; Resume Game</button>
-      <button id="pause-friends" class="ui-button" style="width:100%;margin-top:10px">👥 Invite friends / Join a room</button>
+      <button id="pause-friends" class="ui-button" style="width:100%;margin-top:10px">🌐 Public servers / Friends</button>
       <div class="menu-actions"><button id="fly-btn" class="ui-button">✦ Flying: Off</button><button id="save-btn" class="ui-button">↓ Save World</button></div>
       <div class="menu-actions"><button id="mode-btn" class="ui-button">⚒ Mode: Creative</button><button id="craft-btn" class="ui-button">🪵 Craft 4 Planks</button></div>
       <button id="new-btn" class="ui-button danger">↻ Create New World</button>
@@ -115,18 +127,28 @@
   <div id="lobby" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Multiplayer lobby">
     <section class="modal lobby-modal">
       <div class="kicker">MINEWORLD TOGETHER</div>
-      <h2>Play with friends</h2>
-      <p>Host a shared world, then send your friends a link. Blocks, positions and chat sync live while the host stays online.</p>
+      <h2>Public multiplayer</h2>
+      <p>Join an open public world or host a private game. Live multiplayer shares blocks, player movement and chat on iPhone, iPad and desktop.</p>
       <label for="player-name">Your name</label>
       <input id="player-name" class="lobby-field" maxlength="16" autocomplete="nickname" value="Builder" placeholder="Builder">
-      <div class="menu-actions"><button id="host-room" class="main-button">🌐 Create Room</button><button id="join-room" class="main-button">➡ Join Room</button></div>
+      <div class="public-worlds" role="group" aria-label="Public online worlds">
+        <div class="public-label">🌐 PUBLIC WORLDS · OPEN TO EVERYONE</div>
+        <p class="public-help">Choose a world to join others online. First visitor hosts it; other visitors join automatically. Keep a device in the world to keep the session alive.</p>
+        <div class="public-cards">
+          <button type="button" class="public-world" data-public="evergreen"><strong>🌲 Evergreen</strong><small>Forest builders · up to 7</small><span>Join public world →</span></button>
+          <button type="button" class="public-world" data-public="sunset"><strong>🌅 Sunset Valley</strong><small>Explore together · up to 7</small><span>Join public world →</span></button>
+          <button type="button" class="public-world" data-public="highlands"><strong>⛰ Highlands</strong><small>Mountains &amp; projects · up to 7</small><span>Join public world →</span></button>
+        </div>
+      </div>
+      <div class="public-label" style="margin-top:15px">OR CREATE A PRIVATE ROOM</div>
+      <div class="menu-actions"><button id="host-room" class="main-button">🔒 Create Private Room</button><button id="join-room" class="main-button">➡ Join With Code</button></div>
       <label for="room-code">Room code or invitation link</label>
       <input id="room-code" class="lobby-field" autocomplete="off" spellcheck="false" placeholder="Paste your friend's link or room code">
       <div class="menu-actions"><button id="copy-room" class="ui-button">📋 Copy Invite Link</button><button id="leave-room" class="ui-button danger">Leave Room</button></div>
       <p id="room-status" role="status">Offline — your world is saved on this device.</p>
       <div id="roster">Players in room: You</div>
       <button id="close-lobby" class="ui-button" style="width:100%;margin-top:15px">Back to Game</button>
-      <p class="note">Experimental peer-to-peer multiplayer uses PeerJS Cloud to introduce browsers. A friend may be unable to connect on restrictive networks. Rooms aren't private accounts or dedicated 24/7 servers. Maximum 6 guests.</p>
+      <p class="note">Public worlds are live browser-hosted sessions, not 24/7 dedicated servers. They reset when all players leave; anyone can edit, and there is no moderation. Connections use PeerJS Cloud and WebRTC and may fail on restrictive networks. Maximum 7 players per world.</p>
     </section>
   </div>
   <div id="chatbox" class="hidden" aria-label="Multiplayer chat">
@@ -134,7 +156,7 @@
     <div class="chat-row"><input id="chat-entry" maxlength="160" autocomplete="off" placeholder="Message friends…"><button id="chat-send" type="button">Send</button></div>
   </div>
   <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD TOGETHER · v2.0</div>
+  <div class="version">MINEWORLD · PUBLIC WORLDS · v2.1</div>
 </div>
 <script>
 /* MineWorld — original browser voxel sandbox; no Minecraft game code or third-party runtime. */
@@ -280,7 +302,7 @@ vec3 c=mix(textureColor,uSky,fog);gl_FragColor=vec4(c,1.0);}`;
   function performMine(){if(paused||!aim)return; if(setBlock(aim.x,aim.y,aim.z,0)){if(gameMode==='survival'&&aim.b!==7){const found=(aim.b===1?2:aim.b);inventory[found]=Math.min(inventory[found]+1,999);updateHotbar();}toast('Mined '+NAMES[aim.b]);timers.mine=.2}}
   function performPlace(){if(paused||!aim||!aim.previous)return;let p=aim.previous,b=HOT9[selection];if(!inside(p.x,p.y,p.z)||get(p.x,p.y,p.z)!==0)return;if(gameMode==='survival'&&inventory[b]===0){toast('Mine resources to collect '+NAMES[b]);return;}if(setBlock(p.x,p.y,p.z,b)){if(gameMode==='survival'){inventory[b]--;updateHotbar();}toast('Placed '+NAMES[b]);timers.place=.2}}
   function markSave(){dirtySave=true}
-  function save(){if(window.MineWorldMultiplayer?.isGuest())return;try{const edits=[...savedEdits.entries()];localStorage.setItem(STORAGE,JSON.stringify({seed,edits,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},version:1}));dirtySave=false;$('status').textContent='● Saved locally'}catch(e){$('status').textContent='● Storage unavailable'}}
+  function save(){if(window.MineWorldMultiplayer?.isShared())return;try{const edits=[...savedEdits.entries()];localStorage.setItem(STORAGE,JSON.stringify({seed,edits,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},version:1}));dirtySave=false;$('status').textContent='● Saved locally'}catch(e){$('status').textContent='● Storage unavailable'}}
   function load(){try{let data=localStorage.getItem(STORAGE);if(!data)return false;let s=JSON.parse(data);if(!s||!Number.isInteger(s.seed)||!Array.isArray(s.edits))return false;seed=s.seed;generate();savedEdits.clear();for(let [i,b] of s.edits){if(Number.isInteger(i)&&i>=0&&i<voxels.length&&Number.isInteger(b)&&b>=0&&b<NAMES.length){voxels[i]=b;savedEdits.set(i,b)}}if(s.gameMode==='survival')gameMode='survival';if(Array.isArray(s.inventory))for(let i=0;i<inventory.length;i++)inventory[i]=Math.min(999,Math.max(0,Number(s.inventory[i])||0));updateModeButton();updateHotbar();if(s.player){for(let k of ['x','y','z','yaw','pitch'])if(Number.isFinite(s.player[k]))player[k]=s.player[k];player.fly=!!s.player.fly;player.x=clamp(player.x,.7,W-.7);player.z=clamp(player.z,.7,D-.7);player.y=clamp(player.y,3,H-3)}buildMesh();updateFlyButton();dirtySave=false;return true}catch(e){return false}}
   function toggleInventory(){hotbarPage=(hotbarPage+1)%HOTSETS.length;HOT9.splice(0,HOT9.length,...HOTSETS[hotbarPage]);selection=0;updateHotbar();toast(hotbarPage?'Nature & extras':'Classic blocks');}
   function updateHotbar(){const root=$('hotbar');root.innerHTML='';HOT9.forEach((id,i)=>{const button=document.createElement('button');button.type='button';button.className='hot-item'+(i===selection?' active':'');button.setAttribute('aria-label',NAMES[id]);button.innerHTML='<small>'+(gameMode==='survival'?inventory[id]:i+1)+'</small><div class="swatch" style="background:'+SWATCH[id]+'"></div><span>'+NAMES[id]+'</span>';button.addEventListener('pointerdown',e=>e.stopPropagation());button.addEventListener('click',()=>{selection=i;updateHotbar();toast(NAMES[HOT9[selection]])});root.appendChild(button)})}
@@ -376,7 +398,7 @@ vec3 c=mix(textureColor,uSky,fog);gl_FragColor=vec4(c,1.0);}`;
   $('mode-btn').addEventListener('click',()=>{gameMode=gameMode==='creative'?'survival':'creative';if(gameMode==='survival'&&!inventory.some(v=>v>0)){inventory[2]=16;inventory[5]=6;inventory[11]=8;}updateModeButton();updateHotbar();markSave();toast('Mode: '+gameMode)});
   $('craft-btn').addEventListener('click',()=>{if(gameMode==='creative'){toast('Crafting is for Survival mode');return}const raw=inventory[5]>0?5:15;if(!inventory[raw]){toast('You need a Wood or Poplar Log');return}inventory[raw]--;inventory[11]=Math.min(999,inventory[11]+4);updateHotbar();markSave();toast('Crafted 4 Planks')});
   $('fly-btn').addEventListener('click',()=>{player.fly=!player.fly;player.vy=0;updateFlyButton();markSave();toast(player.fly?'Flying enabled':'Flying disabled')});
-  $('new-btn').addEventListener('click',()=>{if(window.MineWorldMultiplayer?.isGuest()){toast('Only the host can generate a new room world');return;}if(!confirm('Generate a new world? Your previous world will be replaced.'))return;seed=Math.floor(Math.random()*90000000)+1;generate();save();window.MineWorldMultiplayer?.broadcastWorld();$('pause').classList.add('hidden');start();toast('A new world begins!')});
+  $('new-btn').addEventListener('click',()=>{if(window.MineWorldMultiplayer?.isShared()){toast('Leave the shared world to generate a private world');return;}if(!confirm('Generate a new world? Your previous world will be replaced.'))return;seed=Math.floor(Math.random()*90000000)+1;generate();save();window.MineWorldMultiplayer?.broadcastWorld();$('pause').classList.add('hidden');start();toast('A new world begins!')});
   document.addEventListener('keydown',e=>{
     if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab'].includes(e.code))e.preventDefault();
     if(e.target instanceof HTMLInputElement)return;
@@ -426,6 +448,10 @@ vec3 c=mix(textureColor,uSky,fog);gl_FragColor=vec4(c,1.0);}`;
   window.MineWorldBridge={
     getPlayer:()=>({x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly}),
     getSnapshot:()=>({seed,edits:[...savedEdits.entries()],dayClock}),
+    resetPublicWorld:(newSeed)=>{
+      if(!Number.isInteger(newSeed)||newSeed<1||newSeed>99999999)return false;
+      seed=newSeed;generate();dirtySave=false;return true;
+    },
     acceptSnapshot:(snapshot)=>{
       if(!snapshot||!Number.isInteger(snapshot.seed)||!Array.isArray(snapshot.edits)||snapshot.edits.length>voxels.length)return false;
       seed=snapshot.seed;generate();savedEdits.clear();
