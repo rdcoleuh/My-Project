@@ -1,12 +1,12 @@
 {
-  "name": "Minecraft Web — Browser Experiment",
-  "short_name": "Minecraft Web",
-  "description": "Unofficial launcher for experimental Minecraft browser clients on iPhone, iPad and desktop.",
+  "name": "MineWorld — Independent Block Sandbox",
+  "short_name": "MineWorld",
+  "description": "Original self-hosted 3D block sandbox with building and mining.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0e1711",
-  "theme_color": "#172a1b",
+  "background_color": "#102919",
+  "theme_color": "#102919",
   "orientation": "any",
   "icons": [
     {
@@ -19,7 +19,7 @@
       "src": "./favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
