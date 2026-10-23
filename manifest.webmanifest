@@ -1,7 +1,7 @@
 {
-  "name": "MineWorld Together — Multiplayer Block Sandbox",
+  "name": "MineWorld 2.0 — Public Multiplayer",
   "short_name": "MineWorld",
-  "description": "Original voxel building and multiplayer rooms on your own website",
+  "description": "Build and explore original voxel worlds in live, browser-hosted public sessions.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -9,7 +9,17 @@
   "background_color": "#102919",
   "theme_color": "#102919",
   "icons": [
-    {"src": "./apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any"},
-    {"src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
+    {
+      "src": "./apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
   ]
 }
