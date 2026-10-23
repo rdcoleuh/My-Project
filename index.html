@@ -227,37 +227,37 @@ body.in-nether #game-wrap{background:#290f19}
           </div>
       <div class="mode-cards" role="group" aria-label="Choose a game mode">
         <div class="mode-card creative"><div class="mode-illustration" aria-hidden="true"></div>
-          <div class="mode-caption">Unlimited building</div><h2>✦ Creative</h2>
-          <p>Build anything with unlimited blocks, explore freely and fly around your world.</p>
+          <div class="mode-caption">Independent building world</div><h2>✦ Creative</h2>
+          <p>Build freely in a separate Creative world. No Survival inventory, treasures, recipes, or progression carry over.</p>
           <button id="end-from-home" class="ui-button" style="width:100%;margin-bottom:10px">✦ Explore the End</button><button id="village-from-home" class="ui-button" style="width:100%;margin-bottom:10px">🏘 Villages, Trades & Farming</button><button id="nether-from-home" class="ui-button nether-accent" style="width:100%;margin-bottom:10px">🔥 Enter the Nether · New dimension</button>
           <button id="atlas-from-home" class="ui-button" style="width:100%;margin-bottom:12px">🧭 Explore biome atlas &amp; structures</button>
       <button id="start-btn" class="main-button" type="button">▶ PLAY CREATIVE</button>
         </div>
         <div class="mode-card survival"><div class="mode-illustration" aria-hidden="true"></div>
-          <div class="mode-caption">Gather and survive</div><h2>♥ Survival</h2>
-          <p>Gather ores, craft tools, hunt or protect animals, fight night creatures, and manage health and hunger.</p>
+          <div class="mode-caption">A separate world, earned progression</div><h2>♥ Survival</h2>
+          <p>Start with empty pockets. Gather resources, farm, trade, fight mobs, open treasure chests and earn passage to the Nether and End without Creative shortcuts.</p>
           <button id="survival-start" class="main-button" type="button">▶ PLAY SURVIVAL</button>
         </div>
       </div>
       <label class="difficulty-label" for="home-difficulty">Survival difficulty</label><select id="home-difficulty" class="difficulty-select"><option value="peaceful">Peaceful · animals only</option><option value="easy">Easy · fewer monsters</option><option value="normal" selected>Normal · hostile nights</option><option value="hard">Hard · tougher monsters</option></select>
       <button id="welcome-friends" class="ui-button" style="width:100%;margin-top:10px">🌐 Public multiplayer / Friends</button>
-      <p class="note">An independent voxel sandbox with original pixel-art textures. Not the official Minecraft game. World changes save in this browser; public worlds are live peer-hosted sessions.</p>
+      <p class="note"><strong>Survival and Creative are separate save files.</strong> Survival does not get Creative inventory, teleporting or flight. This is an independent voxel game, not Minecraft. Public worlds are peer-hosted and do not provide secure server-side anti-cheat.</p>
     </section>
   </div>
   <div id="pause" class="modal-backdrop hidden">
     <section class="modal menu-modal" aria-label="Game menu">
       <div class="kicker">MINEWORLD</div><h2>Game menu</h2>
-      <p>Resume exploring, switch between Creative and Survival, or return to the home screen.</p>
+      <p>Survival and Creative have independent saves. Return Home to open the other world; changing modes never transfers items or progress.</p>
       <button class="main-button" id="resume-btn">▶ &nbsp; Resume Game</button>
       <button id="home-btn" class="ui-button" style="width:100%;margin-top:10px">⌂ Home Screen · Choose Mode</button>
       <button id="end-from-pause" class="ui-button" style="width:100%;margin-top:10px">✦ End Portal & Dragon</button><button id="village-from-pause" class="ui-button" style="width:100%;margin-top:10px">🏘 Villagers & Farming</button><button id="nether-from-pause" class="ui-button nether-accent" style="width:100%;margin-top:10px">🔥 Nether Portals &amp; Biomes</button>
       <button id="atlas-from-pause" class="ui-button" style="width:100%;margin-top:10px">🧭 Biomes, Trees &amp; Structures</button>
       <button id="pause-friends" class="ui-button" style="width:100%;margin-top:10px">🌐 Public servers / Friends</button>
       <div class="menu-actions"><button id="fly-btn" class="ui-button">✦ Flying: Off</button><button id="save-btn" class="ui-button">↓ Save World</button></div>
-      <div class="menu-actions"><button id="mode-btn" class="ui-button">⚒ Mode: Creative</button><button id="craft-btn" class="ui-button">⚒ Crafting & Gear</button></div>
+      <div class="menu-actions"><button id="mode-btn" class="ui-button" disabled title="World modes are separate saves. Return Home to choose another world.">World: Creative</button><button id="craft-btn" class="ui-button">⚒ Crafting & Gear</button></div>
       <label class="difficulty-label" for="pause-difficulty">Survival difficulty</label><select id="pause-difficulty" class="difficulty-select"><option value="peaceful">Peaceful</option><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select>
       <button id="new-btn" class="ui-button danger">↻ Create New World</button>
-      <p class="note">Your seed and edited blocks save to this browser. Full 100 million columns are procedurally regenerated as you explore.</p>
+      <p class="note">Survival progress, inventory, dimension unlocks and edits save separately from Creative. Your 10,000 × 10,000 terrain regenerates from its seed as you explore.</p>
     </section>
   </div>
   <div id="gear-panel" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Inventory and crafting">
@@ -311,19 +311,19 @@ body.in-nether #game-wrap{background:#290f19}
       <p>Explore all 36 themed regions in this miniature Overworld, with distinct trees, terrain and generated structures. Tap a biome to travel there.</p>
       <div class="atlas-counts"><span>🌲 36 Biome Types</span><span>🏛 Seeded Structures</span><span>🕳 3 Underground Types</span></div>
       <div id="atlas-grid" class="atlas-grid" role="list" aria-label="Travel to a biome"></div>
-      <p class="atlas-note">The atlas finds real regions across a 10,000 × 10,000 world. The same seed produces the same world for every player. The Nether and End are accessible in the main and pause menus.</p>
+      <p class="atlas-note">Survival: use the Atlas as a coordinate guide, then explore on foot — no teleporting. Creative: tap a biome for fast travel. The same seed generates the same world.</p>
       <button id="close-atlas" class="main-button" type="button">Back to World</button>
     </section>
   </div>
   <div id="nether-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Nether dimension and travel">
     <section class="modal nether-page">
       <div class="kicker">🔥 NETHER EXPEDITION</div><h2>Beyond the Portal</h2>
-      <p>Cross to a volcanic underworld, or return to the Overworld. Your original world, inventory and progress are preserved. Each seed builds both dimensions.</p>
-      <button id="cross-portal" class="main-button nether-accent" type="button">🔥 Enter the Nether</button>
+      <p>In Survival, craft Flint &amp; Steel and collect 10 obsidian to build and light a Nether portal. Your inventory and progress stay in this Survival world.</p>
+      <button id="cross-portal" class="main-button nether-accent" type="button">🔥 Enter the Nether</button><button id="craft-nether-portal" class="ui-button" type="button" style="width:100%;margin-top:9px">🧱 Build Portal · 10 Obsidian + Flint &amp; Steel</button>
       <h3 style="margin:22px 0 4px">Explore all five Nether biomes</h3>
       <div id="nether-biome-grid" class="nether-biomes"></div>
       <h3 style="margin:13px 0 7px">Nether Creatures &amp; Combat</h3>
-      <p style="font-size:12px">Creatures wander, chase, attack and drop loot. In Creative, select any species to spawn it near you. Survival uses natural biome spawning and structure encounters.</p>
+      <p style="font-size:12px">Survival mobs spawn naturally and can drop loot when fought. The creature summon list is a Creative-only testing tool.</p>
       <div id="nether-mob-grid" role="group" aria-label="Nether creature roster"></div>
       <div class="nether-tools"><button type="button" id="nether-barter" class="ui-button">🪙 Piglin Barter · 5 gold</button><button type="button" id="nether-wither" class="ui-button nether-accent">☠ Summon Wither Boss</button></div>
       <p id="nether-info">Nether Wastes · Crimson Forest · Warped Forest · Soul Sand Valley · Basalt Deltas. Find lava seas, glowing fungus forests, ancient ruins, nether fortresses, bastion remnants, fossils and obsidian portal remnants.</p>
@@ -337,7 +337,7 @@ body.in-nether #game-wrap{background:#290f19}
   <p>Find the stronghold, craft Eyes of Ender, fill the twelve-frame portal and face the dragon. Explore seed-generated End islands, cities, ships, crystals and shulkers.</p>
   <p id="end-portal-status">0/12 eyes placed</p><div class="menu-actions"><button id="find-stronghold" class="ui-button">🧭 Find Stronghold</button><button id="place-eyes" class="ui-button">👁 Place Eyes</button></div>
   <button id="end-cross" class="main-button" type="button">✦ Enter the End</button><div id="end-biome-grid" class="nether-biomes"></div>
-  <p class="note">Survival requires an activated stronghold portal to enter the End. Creative can visit directly. The dragon and End structures are original simplified simulations.</p>
+  <p class="note">Survival: find the stronghold, craft 12 Eyes of Ender, activate the portal and fight the dragon. You cannot teleport between End islands or leave via the exit portal before defeating the dragon. Creative can travel freely.</p>
   <button id="close-end" class="ui-button" style="width:100%;margin-top:12px">Close End Menu</button>
 </section></div>
 <div id="village-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Villages, trading and farming"><section class="modal village-page">
@@ -571,6 +571,11 @@ body.in-nether #game-wrap{background:#290f19}
     return;
   }
   const W=10000, D=10000, H=48, SEA=14, SPAWN=5000, CHUNK=16, STORAGE='mineworld-selfhost-v1';
+  const slotKey=mode=>STORAGE+'-slot-'+(mode==='survival'?'survival':'creative')+'-v1';
+  const LAST_SLOT=STORAGE+'-active-mode-v1';
+  function migrateLegacySave(){
+    try{const legacy=localStorage.getItem(STORAGE);if(!legacy)return;const data=JSON.parse(legacy);const key=slotKey(data?.gameMode==='survival'?'survival':'creative');if(!localStorage.getItem(key))localStorage.setItem(key,legacy);if(!localStorage.getItem(LAST_SLOT))localStorage.setItem(LAST_SLOT,data?.gameMode==='survival'?'survival':'creative')}catch(e){console.warn('Legacy world migration unavailable:',e)}
+  }
   const chunkCache=new Map(), visibleChunks=[];
   let lastChunkX=-1,lastChunkZ=-1,streamQueue=[],streamClock=0;
   const renderRadius=matchMedia('(pointer: coarse)').matches?1:2;
@@ -607,7 +612,7 @@ body.in-nether #game-wrap{background:#290f19}
   const player={x:SPAWN+.5,y:18,z:SPAWN+.5,vy:0,yaw:.4,pitch:-.12,ground:false,fly:false};
   const keys=new Set(); let seed=85721, started=false, paused=true, selection=0, frameCount=0, lastTime=0, meshCount=0, vbo=null, savedEdits=new Map(), dirtySave=false, saveTimer=0, aim=null, notifications=0, dayClock=0, deltaViewX=0, deltaViewY=0;
   let gameMode='creative',health=20,hunger=20,hungerDrain=0,hungerPulse=0,healPulse=0;
-  let dimension='overworld',overworldEdits=savedEdits,netherEdits=new Map(),endEdits=new Map(),overworldPosition=null,netherPosition=null,endPosition=null,lavaCooldown=0,dragonDefeated=false,eyesPlaced=0;
+  let dimension='overworld',overworldEdits=savedEdits,netherEdits=new Map(),endEdits=new Map(),overworldPosition=null,netherPosition=null,endPosition=null,lavaCooldown=0,dragonDefeated=false,eyesPlaced=0,netherPortalBuilt=false,netherPortalPosition=null;
   const villagerProgress=Object.create(null);let aimVillager=null,nearbyVillagers=[],villageUpdateClock=0,farmClock=0,farmerClock=0;
   const inventory=new Uint16Array(NAMES.length);
   const bag={coal:0,iron:0,rawIron:0,raw:0,cooked:0,bone:0,string:0,powder:0,sticks:0,quartz:0,gold:0,rawCopper:0,copper:0,rawGold:0,redstone:0,lapis:0,diamond:0,emerald:0,blazeRod:0,magmaCream:0,enderPearl:0,witherSkull:0,netheriteScrap:0,netheriteIngot:0,netheriteUpgrade:0,ancientDebris:0,elytra:0,dragonBreath:0,eyeOfEnder:0,shulkerShell:0,chorusFruit:0,dragonEgg:0,experience:0};
@@ -722,7 +727,7 @@ body.in-nether #game-wrap{background:#290f19}
   // A 10,000-block-wide world is never allocated at once. Every chunk is deterministic.
   function terrain(x,z){return dimension==='nether'?window.MineWorldNether.surfaceAt(x,z):dimension==='end'?Math.max(1,window.MineWorldEnd.surfaceAt(x,z)):window.MineWorldBiomes.terrainAt(x,z,SEA,H)}
   function generate(){
-    window.MineWorldBiomes.setSeed(seed);window.MineWorldNether.setSeed(seed);window.MineWorldEnd.setSeed(seed);dimension='overworld';document.body.classList.remove('in-nether','in-end');overworldEdits=new Map();netherEdits=new Map();endEdits=new Map();savedEdits=overworldEdits;overworldPosition=netherPosition=endPosition=null;dragonDefeated=false;eyesPlaced=0;for(const k of Object.keys(villagerProgress))delete villagerProgress[k];unloadAllChunks();
+    window.MineWorldBiomes.setSeed(seed);window.MineWorldNether.setSeed(seed);window.MineWorldEnd.setSeed(seed);dimension='overworld';document.body.classList.remove('in-nether','in-end');overworldEdits=new Map();netherEdits=new Map();endEdits=new Map();savedEdits=overworldEdits;overworldPosition=netherPosition=endPosition=null;dragonDefeated=false;eyesPlaced=0;netherPortalBuilt=false;netherPortalPosition=null;for(const k of Object.keys(villagerProgress))delete villagerProgress[k];unloadAllChunks();
     const top=terrain(SPAWN,SPAWN);
     player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=top+2.5;
     player.vy=0;player.pitch=-.14;player.yaw=.6;player.fly=false;selection=0;
@@ -845,7 +850,7 @@ body.in-nether #game-wrap{background:#290f19}
           else if(kind==='Diamond')bag.diamond++;
           else if(kind==='Emerald')bag.emerald++;
         }
-        else if(found===83)bag.quartz++;else if(found===84)bag.gold++;else if(found===124)toast('Crystal destroyed');else inventory[found]=Math.min(inventory[found]+1,999);
+        else if(found===91){if(Math.random()<.25){bag.flint++;toast('Found flint!')}else inventory[91]++;}else if(found===83)bag.quartz++;else if(found===84)bag.gold++;else if(found===124)toast('Crystal destroyed');else inventory[found]=Math.min(inventory[found]+1,999);
         updateHotbar();updateSurvivalHUD();markSave();
       }
       toast('Mined '+NAMES[aim.b]);
@@ -858,13 +863,13 @@ body.in-nether #game-wrap{background:#290f19}
     if(window.MineWorldMultiplayer?.isShared())return;
     try{
       const edits=[...savedEdits.entries()];
-      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,villagerProgress,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,version:7});
-      localStorage.setItem(STORAGE,payload);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';
+      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,version:7});
+      localStorage.setItem(slotKey(gameMode),payload);localStorage.setItem(LAST_SLOT,gameMode);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';
     }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';}
   }
-  function load(){
+  function load(slot=gameMode){
     try{
-      const data=localStorage.getItem(STORAGE);if(!data)return false;
+      const data=localStorage.getItem(slotKey(slot));if(!data)return false;
       const s=JSON.parse(data);if(!s||!Number.isInteger(s.seed)||!Array.isArray(s.edits))return false;
       if((s.version||0)<5&&!localStorage.getItem('mineworld-backup-before-10k'))localStorage.setItem('mineworld-backup-before-10k',data);
       if((s.version||0)<6&&!localStorage.getItem('mineworld-backup-before-nether'))localStorage.setItem('mineworld-backup-before-nether',data);
@@ -878,14 +883,14 @@ body.in-nether #game-wrap{background:#290f19}
       }
       if(Array.isArray(s.netherEdits))for(const pair of s.netherEdits){if(!Array.isArray(pair)||pair.length!==2)continue;const [i,b]=pair;if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)netherEdits.set(i,b)}
       if(Array.isArray(s.endEdits))for(const pair of s.endEdits){if(!Array.isArray(pair)||pair.length!==2)continue;const [i,b]=pair;if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)endEdits.set(i,b)}
-      dragonDefeated=!!s.dragonDefeated;eyesPlaced=clamp(Number(s.eyesPlaced)||0,0,12);
+      dragonDefeated=!!s.dragonDefeated;eyesPlaced=clamp(Number(s.eyesPlaced)||0,0,12);netherPortalBuilt=!!s.netherPortalBuilt;netherPortalPosition=s.netherPortalPosition&&Number.isFinite(s.netherPortalPosition.x)&&Number.isFinite(s.netherPortalPosition.z)?{x:s.netherPortalPosition.x,z:s.netherPortalPosition.z}:null;
       if(s.villagerProgress&&typeof s.villagerProgress==='object')for(const [k,v] of Object.entries(s.villagerProgress).slice(0,500)){if(/^-?\d+,-?\d+:\d+$/.test(k)&&v&&typeof v==='object'){villagerProgress[k]={xp:clamp(Number(v.xp)||0,0,99999),uses:(v.uses&&typeof v.uses==='object'?v.uses:{}),restock:Number(v.restock)||0}}}
       if(s.overworldPosition&&Number.isFinite(s.overworldPosition.x))overworldPosition=s.overworldPosition;
       if(s.netherPosition&&Number.isFinite(s.netherPosition.x))netherPosition=s.netherPosition;
       if(s.endPosition&&Number.isFinite(s.endPosition.x))endPosition=s.endPosition;
       // Regenerate nearby chunks with saved block edits so even older worlds survive migration.
       unloadAllChunks();scheduleChunks(true);streamChunks(5);
-      if(s.gameMode==='survival')gameMode='survival';
+      gameMode=slot==='survival'?'survival':'creative';
       if(['peaceful','easy','normal','hard'].includes(s.difficulty))difficulty=s.difficulty;
       if(Number.isFinite(s.dayClock))dayClock=s.dayClock;
       if(s.bag&&typeof s.bag==='object')for(const k of Object.keys(bag))bag[k]=clamp(Math.floor(Number(s.bag[k])||0),0,999);
@@ -941,6 +946,8 @@ body.in-nether #game-wrap{background:#290f19}
     toast(next==='end'?'✦ You entered the End!':next==='nether'?'🔥 You entered the Nether!':'🌿 Returned to the Overworld');
   }
   function updatePortalUI(){
+    const portalControl=$('craft-nether-portal');
+    if(portalControl){portalControl.classList.toggle('hidden',gameMode!=='survival'||dimension==='nether'||netherPortalBuilt);portalControl.disabled=gameMode!=='survival'||netherPortalBuilt;}
     const nether=dimension==='nether',inEnd=dimension==='end';
     document.body.classList.toggle('in-nether',nether);document.body.classList.toggle('in-end',inEnd);
     $('dimension-indicator').classList.toggle('hidden',!nether&&!inEnd);
@@ -969,12 +976,11 @@ body.in-nether #game-wrap{background:#290f19}
     if(gameMode==='survival'){
       if(!mobs.length)spawnWildlife();
       player.fly=false;player.vy=0;
-      if(!inventory.some(v=>v>0)){inventory[2]=8;inventory[5]=4;inventory[11]=8;inventory[17]=3;}
       health=clamp(health,1,20);hunger=clamp(hunger,1,20);
     }
     updateModeButton();updateFlyButton();updateHotbar();updateSurvivalHUD();markSave();
   }
-  function updateModeButton(){$('mode-btn').textContent='⚒ Mode: '+(gameMode==='creative'?'Creative':'Survival');}
+  function updateModeButton(){$('mode-btn').textContent='World: '+(gameMode==='creative'?'Creative':'Survival');$('mode-btn').disabled=true;$('craft-btn').textContent=gameMode==='survival'?'⚒ Crafting & Gear':'▣ Creative Blocks';$('bag-toggle').textContent=gameMode==='survival'?'🎒 Gear':'▣ Blocks';}
   function eatFood(){
     if(gameMode!=='survival')return;
     if(hunger>=20){toast('You are already full');return;}
@@ -1018,6 +1024,7 @@ body.in-nether #game-wrap{background:#290f19}
     {name:'📜 Copy upgrade template',cost:{netheriteUpgrade:1,diamond:7,'block:65':1},give:{netheriteUpgrade:2},tip:'Upgrade template + 7 diamonds + netherrack'},
     {name:'⬛ Netherite block',cost:{netheriteIngot:9},give:{'block:135':1},tip:'9 Netherite ingots'},
     {name:'👁 Eye of Ender',cost:{enderPearl:1,blazeRod:1},give:{eyeOfEnder:1},tip:'Ender pearl + blaze rod (simplified blaze powder)'},
+    {name:'🔥 Flint & Steel',cost:{iron:1,flint:1},give:{flintSteel:1},tip:'1 iron ingot + 1 flint · light a Nether portal'},
     {name:'🌾 Wooden Hoe',cost:{'block:11':2,sticks:2},tool:['hoe','wood'],tip:'2 wooden planks + 2 sticks · till dirt for crop farming'},
     {name:'🌾 Stone Hoe',cost:{'block:3':2,sticks:2},tool:['hoe','stone'],tip:'2 stone + 2 sticks · farming'},
     {name:'🌾 Iron Hoe',cost:{iron:2,sticks:2},tool:['hoe','iron'],tip:'2 iron ingots + 2 sticks · farming'},
@@ -1114,6 +1121,7 @@ body.in-nether #game-wrap{background:#290f19}
   function villagerTier(xp){return xp>=130?4:xp>=70?3:xp>=32?2:xp>=10?1:0;}
   let tradingWith=null,tradeFromBoard=false;
   function openVillagerTrade(v,fromBoard=false){
+    if(gameMode!=='survival'){toast('Trading is part of Survival progression');return;}
     if(!v)return;
     if(!v.job.offers?.length){toast(v.job.name+' has no trades');return;}
     if(gameMode==='survival'&&Math.hypot(player.x-v.x,player.z-v.z)>8){toast('Approach the '+v.job.name+' to trade');return;}
@@ -1161,6 +1169,7 @@ body.in-nether #game-wrap{background:#290f19}
     return sites[0]||null;
   }
   function updateVillageMenu(){
+    $('travel-village').textContent=gameMode==='survival'?'🧭 Village Coordinates':'🏘 Visit Village (Creative)';
     const site=nearestVillage();
     $('village-location').textContent=site?'Nearest village: '+Math.round(site.x)+', '+Math.round(site.z)+' · '+Math.round(Math.hypot(site.x-player.x,site.z-player.z))+' blocks away':'No village found in this search radius';
     const board=$('village-professions');board.replaceChildren();
@@ -1194,6 +1203,7 @@ body.in-nether #game-wrap{background:#290f19}
     return best;
   }
   function tillSoil(){
+    if(gameMode!=='survival'){toast('Farming tools are in Survival');return false;}
     if(dimension!=='overworld'){toast('Farming is available in the Overworld');return false;}
     if(gameMode==='survival'&&tools.hoe==='none'){toast('Craft a hoe first');return false;}
     let target=aim&&[1,2].includes(aim.b)?{x:aim.x,y:aim.y,z:aim.z}:null;
@@ -1208,6 +1218,7 @@ body.in-nether #game-wrap{background:#290f19}
     return false;
   }
   function plantCrop(kind){
+    if(gameMode!=='survival'){toast('Grow crops in Survival');return false;}
     if(dimension!=='overworld'){toast('Plant crops in the Overworld');return false;}
     const info=window.MineWorldVillages.CROPS[kind],p=getFarmlandTarget();
     if(!info||!p){toast('Till dirt with a hoe or find an empty farm plot');return false;}
@@ -1219,6 +1230,7 @@ body.in-nether #game-wrap{background:#290f19}
     return false;
   }
   function harvestCrop(x,y,z,crop,byFarmer=false){
+    if(gameMode!=='survival'&&!byFarmer){toast('Farm resources are part of Survival');return false;}
     if(crop.stage===3&&!byFarmer){
       addResource(crop.produce,crop.key==='wheat'?2:crop.key==='potato'?3:2);
       if(crop.key==='wheat'||crop.key==='beetroot')addResource(crop.seed,2);
@@ -1288,6 +1300,7 @@ body.in-nether #game-wrap{background:#290f19}
     return 'village';
   }
   function openTreasureChest(x,y,z){
+    if(gameMode!=='survival'){toast('Treasure rewards are earned in Survival');return;}
     if(get(x,y,z)!==119)return;
     const kind=chestKindAt(x,z);
     const contents=window.MineWorldLoot.roll(kind,seed,x,y,z);
@@ -1333,7 +1346,7 @@ body.in-nether #game-wrap{background:#290f19}
     $('end-modal').classList.add('hidden');if(started)start();else $('welcome').classList.remove('hidden');
   }
   function travelEnd(){
-    if(dimension==='end'){switchDimension('overworld');closeEnd();return;}
+    if(dimension==='end'){if(gameMode==='survival'&&!dragonDefeated){toast('Defeat the Ender Dragon to unlock the exit portal');return;}switchDimension('overworld');closeEnd();return;}
     if(gameMode==='survival'&&eyesPlaced<12){toast('First fill the 12 stronghold portal frames');return;}
     if(gameMode==='survival'&&dimension!=='overworld'){toast('Return to Overworld and find the stronghold');return;}
     if(gameMode==='survival'&&Math.hypot(player.x-window.MineWorldEnd.STRONGHOLD.x,player.z-window.MineWorldEnd.STRONGHOLD.z)>20){toast('Stand at the stronghold to enter');return;}
@@ -1360,7 +1373,7 @@ body.in-nether #game-wrap{background:#290f19}
       player.x=place.x+.5;player.z=place.z+12.5;
       scheduleChunks(true);streamChunks(5);player.y=topAt(player.x,player.z)+3;
       $('end-modal').classList.add('hidden');start();toast('🧭 Stronghold located · '+place.x+', '+place.z);
-    }else toast('Stronghold at X '+place.x+', Z '+place.z+' · follow your compass');
+    }else if(bag.eyeOfEnder<1){toast('Craft an Eye of Ender to locate the stronghold');}else toast('An Eye of Ender points toward X '+place.x+', Z '+place.z);
   });
   $('place-eyes').addEventListener('click',()=>{
     if(dimension!=='overworld'){toast('Stronghold portals are in the Overworld');return;}
@@ -1379,6 +1392,7 @@ body.in-nether #game-wrap{background:#290f19}
     const b=document.createElement('button');b.className='nether-biome';b.type='button';
     b.innerHTML='<span>'+endIcons[i]+'</span><strong>'+bi.name+'</strong><small>Explore →</small>';
     b.addEventListener('click',()=>{
+      if(gameMode==='survival'){const place=window.MineWorldEnd.destination(i);toast('✦ '+bi.name+' · X '+place.x+' Z '+place.z+' · no teleport in Survival');return;}
       if(dimension!=='end'){
         if(gameMode==='survival'&&eyesPlaced<12){toast('Activate the stronghold portal first');return;}
         switchDimension('end');
@@ -1828,6 +1842,7 @@ body.in-nether #game-wrap{background:#290f19}
     const landmark=document.createElement('small');landmark.textContent=b.feature?'🏛 '+window.MineWorldBiomes.STRUCTURE_NAMES[b.feature]:b.tree==='none'?'⛰ Explore landscape':'🌳 '+b.tree.replace(/[A-Z]/g,c=>' '+c.toLowerCase());
     tile.appendChild(landmark);
     tile.addEventListener('click',()=>{
+      if(gameMode==='survival'){const place=window.MineWorldBiomes.atlasDestination(i);toast('🧭 '+b.name+' · X '+place.x+' Z '+place.z+' · travel on foot');return;}
       if(dimension!=='overworld')switchDimension('overworld');const {x,z}=window.MineWorldBiomes.atlasDestination(i);
       player.x=x+.5;player.z=z+.5;scheduleChunks(true);streamChunks(5);player.y=topAt(x,z)+3;player.vy=0;player.fly=false;
       updateFlyButton();markSave();$('atlas-modal').classList.add('hidden');
@@ -1836,6 +1851,7 @@ body.in-nether #game-wrap{background:#290f19}
     atlasGrid.appendChild(tile);
   });
   function openAtlas(){
+    $('atlas-modal').querySelector('.atlas-note').textContent=gameMode==='survival'?'Survival is exploration on foot: tap any biome for coordinates, then walk there. Creative can teleport.':'Creative exploration: tap a biome to fast-travel instantly.';
     atlasWasPlaying=started&&!paused;paused=true;keys.clear();movement.x=movement.y=0;
     if(document.pointerLockElement)document.exitPointerLock();
     const current=window.MineWorldBiomes.zone(player.x,player.z);
@@ -1856,6 +1872,7 @@ body.in-nether #game-wrap{background:#290f19}
     const icon=document.createElement('span');icon.textContent=icons[i];const name=document.createElement('strong');name.textContent=b.name;
     const tip=document.createElement('small');tip.textContent='Explore →';button.append(icon,name,tip);
     button.addEventListener('click',()=>{
+      if(gameMode==='survival'){const place=window.MineWorldNether.destination(i);toast('🔥 '+b.name+' · X '+place.x+' Z '+place.z+' · explore on foot');return;}
       if(dimension!=='nether')switchDimension('nether');
       const pos=window.MineWorldNether.destination(i);player.x=pos.x+.5;player.z=pos.z+.5;
       unloadAllChunks();scheduleChunks(true);streamChunks(5);player.y=terrain(pos.x,pos.z)+3;player.vy=0;
@@ -1885,6 +1902,7 @@ body.in-nether #game-wrap{background:#290f19}
     });netherGrid.parentElement.querySelector('#nether-mob-grid').append(button);
   }
   $('nether-barter').addEventListener('click',()=>{
+    if(gameMode!=='survival'){toast('Bartering is available in Survival');return;}
     if(dimension!=='nether'){toast('Enter the Nether to barter');return}
     if(gameMode==='survival'&&bag.gold<5){toast('Need 5 gold from Nether ore or piglins');return}
     if(gameMode==='survival')bag.gold-=5;
@@ -1892,6 +1910,7 @@ body.in-nether #game-wrap{background:#290f19}
     updateSurvivalHUD();markSave();toast('Bartered 5 gold for 2 '+reward);
   });
   $('nether-wither').addEventListener('click',()=>{
+    if(gameMode!=='survival'){toast('The Wither progression is in Survival');return;}
     if(dimension!=='nether'){toast('Enter the Nether before summoning the boss');return}
     if(window.MineWorldMultiplayer?.isGuest()){toast('Only the host may summon the boss');return}
     if(gameMode==='survival'){
@@ -1903,18 +1922,37 @@ body.in-nether #game-wrap{background:#290f19}
     if(m){window.MineWorldMultiplayer?.flushMobs();$('nether-modal').classList.add('hidden');start();toast('☠ Wither Boss has awakened!')}
     else toast('Find an open space to summon the Wither');
   });
-  function openNether(){netherWasPlaying=started&&!paused;paused=true;keys.clear();movement.x=movement.y=0;
+  function openNether(){updatePortalUI();netherWasPlaying=started&&!paused;paused=true;keys.clear();movement.x=movement.y=0;
     if(document.pointerLockElement)document.exitPointerLock();updatePortalUI();$('nether-modal').classList.remove('hidden');}
   function closeNether(){$('nether-modal').classList.add('hidden');if(netherWasPlaying)start();else if(started)$('pause').classList.remove('hidden');else $('welcome').classList.remove('hidden');}
   for(const id of ['portal-toggle','nether-from-home','nether-from-pause'])$(id).addEventListener('click',openNether);
   $('close-nether').addEventListener('click',closeNether);
-  $('cross-portal').addEventListener('click',()=>{switchDimension(dimension==='nether'?'overworld':'nether');$('nether-modal').classList.add('hidden');start()});
+  $('craft-nether-portal').addEventListener('click',()=>{
+    if(gameMode!=='survival'||dimension!=='overworld')return;
+    if(netherPortalBuilt){toast('Your Nether portal is already built');return;}
+    if(inventory[51]<10||bag.flintSteel<1){toast('Gather 10 obsidian and craft Flint & Steel first');return;}
+    let x=Math.floor(player.x)+5,z=Math.floor(player.z)+5;
+    x=clamp(x,5,W-8);z=clamp(z,5,D-8);
+    const y=clamp(Math.max(topAt(x,z),topAt(x+3,z))+1,4,H-7);
+    inventory[51]-=10;
+    for(let dx=0;dx<4;dx++)for(let dy=0;dy<5;dy++){
+      const frame=(dx===0||dx===3)?dy>=1&&dy<=3:(dy===0||dy===4);
+      if(frame||((dx===1||dx===2)&&dy>0&&dy<4))setBlock(x+dx,y+dy,z,frame?51:86);
+    }
+    netherPortalBuilt=true;netherPortalPosition={x:x+1.5,z:z+.5};
+    markSave();updateHotbar();updatePortalUI();toast('🔥 Nether portal lit! Open the Nether menu to enter.');
+  });
+  $('cross-portal').addEventListener('click',()=>{
+    if(gameMode==='survival'&&dimension==='overworld'&&!netherPortalBuilt){toast('Build a Nether portal from 10 obsidian and Flint & Steel first');return;}
+    switchDimension(dimension==='nether'?'overworld':'nether');$('nether-modal').classList.add('hidden');start();
+  });
 
   for(const id of ['village-toggle','village-from-home','village-from-pause'])$(id).addEventListener('click',openVillage);
   $('close-village').addEventListener('click',closeVillage);
   $('close-trade').addEventListener('click',closeTrade);
   $('locate-village').addEventListener('click',()=>{const site=nearestVillage();toast(site?'Village X '+site.x+' Z '+site.z:'No village located');updateVillageMenu()});
   $('travel-village').addEventListener('click',()=>{
+    if(gameMode==='survival'){const site=nearestVillage();toast(site?'🏘 Village at X '+site.x+' Z '+site.z+' · walk there to trade':'No village located nearby');return;}
     if(dimension!=='overworld')switchDimension('overworld');
     const site=nearestVillage();if(!site){toast('No village found');return;}
     player.x=site.x+.5;player.z=site.z-13+.5;
@@ -1931,17 +1969,38 @@ body.in-nether #game-wrap{background:#290f19}
   function createSeededWorld(raw){
     if(window.MineWorldMultiplayer?.isShared()){toast('Leave multiplayer to change your world seed');return false;}
     const text=String(raw||Math.floor(Math.random()*99999998)+1).trim().slice(0,64);
-    try{const previous=localStorage.getItem(STORAGE);if(previous)localStorage.setItem('mineworld-previous-seed-backup',previous);}catch(_){}
+    try{const previous=localStorage.getItem(slotKey(gameMode));if(previous)localStorage.setItem('mineworld-previous-seed-backup-'+gameMode,previous);}catch(_){}
     seed=window.MineWorldBiomes.seedFrom(text);seedLabel=text;
-    inventory.fill(0);for(const k of Object.keys(bag))bag[k]=0;tools.pickaxe=tools.sword='none';equipped='pickaxe';health=20;hunger=20;
+    resetWorldInventory();
     generate();setGameMode(gameMode);save();updatePortalUI();updateSeedLabel();return true;
   }
+  function resetWorldInventory(){
+    inventory.fill(0);
+    for(const k of Object.keys(bag))bag[k]=0;
+    tools.pickaxe=tools.sword=tools.hoe='none';equipped='none';
+    health=20;hunger=20;hungerDrain=hungerPulse=healPulse=0;
+    dayClock=0;hotbarPage=0;HOT9.splice(0,HOT9.length,...HOTSETS[0]);selection=0;
+  }
+  function switchWorldSlot(next){
+    if(next===gameMode)return true;
+    if(window.MineWorldMultiplayer?.isShared()){toast('Leave multiplayer before changing worlds');return false;}
+    save();
+    gameMode=next;try{localStorage.setItem(LAST_SLOT,next)}catch(_){};resetWorldInventory();seed=85721;seedLabel='85721';generate();
+    if(!load(next)){setGameMode(next);save();}
+    else {setGameMode(next);dirtySave=false;}
+    updateSeedLabel();updatePortalUI();updateVillagers();
+    $('home-difficulty').value=difficulty;$('pause-difficulty').value=difficulty;
+    toast((next==='survival'?'♥ Survival':'✦ Creative')+' world opened — separate inventory and progress');
+    return true;
+  }
   function playMode(mode){
-    const typed=$('seed-input').value.trim();
-    if(typed&&typed!==seedLabel){
+    const previousLabel=seedLabel,typed=$('seed-input').value.trim();
+    if(!switchWorldSlot(mode))return;
+    const requestedSeed=typed!==previousLabel?typed:'';
+    if(requestedSeed&&requestedSeed!==seedLabel){
       if(window.MineWorldMultiplayer?.isShared()){toast('Leave your multiplayer world to change seeds');return;}
-      if(!confirm('Start a NEW world with seed "'+typed+'"? Your current private world will be backed up.'))return;
-      createSeededWorld(typed);
+      if(!confirm('Start a NEW '+mode+' world with seed "'+requestedSeed+'"? Your current '+mode+' world will be backed up.'))return;
+      createSeededWorld(requestedSeed);
     }
     setGameMode(mode);start();
   }
@@ -1958,7 +2017,7 @@ body.in-nether #game-wrap{background:#290f19}
   $('resume-btn').addEventListener('click',start);
   $('menu-toggle').addEventListener('click',menu);
   $('save-btn').addEventListener('click',()=>{save();toast('Saved to this browser')});
-  $('mode-btn').addEventListener('click',()=>{setGameMode(gameMode==='creative'?'survival':'creative');toast('Mode: '+gameMode)});
+  $('mode-btn').addEventListener('click',()=>toast('World modes have separate saves. Use Home Screen to switch worlds.'));
   $('craft-btn').addEventListener('click',openGear);$('bag-toggle').addEventListener('click',openGear);$('close-gear').addEventListener('click',closeGear);for(const [btn,tool] of [['gear-pickaxe','pickaxe'],['gear-sword','sword'],['gear-hoe','hoe'],['gear-none','none']])$(btn).addEventListener('click',()=>{equipped=tool;updateSurvivalHUD();renderGear();markSave()});$('home-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));$('pause-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));
   $('fly-btn').addEventListener('click',()=>{if(gameMode==='survival'){toast('Flying is only available in Creative');return;}player.fly=!player.fly;player.vy=0;updateFlyButton();markSave();toast(player.fly?'Flying enabled':'Flying disabled')});
   $('new-btn').addEventListener('click',()=>{
@@ -2013,22 +2072,22 @@ body.in-nether #game-wrap{background:#290f19}
     b.addEventListener('pointercancel',()=>touchHold[verb]=false);
     b.addEventListener('lostpointercapture',()=>touchHold[verb]=false);
   }
-  updateModeButton();updateSurvivalHUD();
-  if(!load())generate();else $('status').textContent='● Previous world restored';setDifficulty(difficulty);updatePortalUI();updateSeedLabel();updateVillagers();
+  migrateLegacySave();const activeSlot=(()=>{try{return localStorage.getItem(LAST_SLOT)==='survival'?'survival':'creative'}catch(_){return 'creative'}})();gameMode=activeSlot;updateModeButton();updateSurvivalHUD();
+  if(!load(activeSlot)){generate();setGameMode(activeSlot);}else $('status').textContent='● '+(activeSlot==='survival'?'Survival':'Creative')+' world restored';setDifficulty(difficulty);updatePortalUI();updateSeedLabel();updateVillagers();
   window.MineWorldBridge={
     getPlayer:()=>({x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly,mode:gameMode,dimension}),
     getCombatProfile:()=>({mode:gameMode,equipped,weapon:equipped==='sword'?tools.sword:equipped==='pickaxe'?tools.pickaxe:'none'}),
     getMobs:mobSnapshot, setMobs:syncMobs, applyMobHit, grantLoot,
     applyDamage:(n,cause)=>{if(Number.isInteger(n)&&n>0&&n<=20)damage(n,String(cause||'Combat').slice(0,40))},
     getMode:()=>gameMode,
-    getSnapshot:()=>({seed,version:7,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dragonDefeated,eyesPlaced,dayClock,mobs:mobSnapshot(),hostDimension:dimension}),
+    getSnapshot:()=>({seed,version:7,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,dayClock,mobs:mobSnapshot(),hostDimension:dimension}),
     resetPublicWorld:(newSeed)=>{
       if(!Number.isInteger(newSeed)||newSeed<1||newSeed>99999999)return false;
       seed=newSeed;seedLabel=String(newSeed);generate();dirtySave=false;return true;
     },
     acceptSnapshot:(snapshot)=>{
       if(!snapshot||!Number.isInteger(snapshot.seed)||!Array.isArray(snapshot.edits)||snapshot.edits.length>250000||!Array.isArray(snapshot.netherEdits||[])||(snapshot.netherEdits||[]).length>250000||!Array.isArray(snapshot.endEdits||[])||(snapshot.endEdits||[]).length>250000)return false;
-      seed=snapshot.seed;seedLabel=String(seed);generate();overworldEdits.clear();netherEdits.clear();endEdits.clear();dragonDefeated=!!snapshot.dragonDefeated;eyesPlaced=clamp(Number(snapshot.eyesPlaced)||0,0,12);
+      seed=snapshot.seed;seedLabel=String(seed);generate();overworldEdits.clear();netherEdits.clear();endEdits.clear();dragonDefeated=!!snapshot.dragonDefeated;eyesPlaced=clamp(Number(snapshot.eyesPlaced)||0,0,12);netherPortalBuilt=!!snapshot.netherPortalBuilt;netherPortalPosition=snapshot.netherPortalPosition&&Number.isFinite(snapshot.netherPortalPosition.x)?snapshot.netherPortalPosition:null;
       for(const pair of snapshot.edits){
         if(!Array.isArray(pair)||pair.length!==2)continue;
         const [i,b]=pair;
