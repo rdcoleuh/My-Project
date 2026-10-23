@@ -1,19 +1,30 @@
-# Minecraft Web — Java Edition 26.3 experiment
+# Minecraft Web — iPhone, iPad & Desktop (Java 26.3 experiment)
 
-This repository's `gh-pages` branch contains an unofficial browser **launch page** for Minecraft Java Edition **26.3**.
+**Live site:** https://rdcoleuh.github.io/My-Project/
 
-**Play:** https://rdcoleuh.github.io/My-Project/
+This repository's `gh-pages` branch provides a **mobile-friendly web app / launcher** for experimental browser Minecraft clients. It does **not** distribute Minecraft Java game code.
 
-## How it works
-- The primary launch option opens the independently hosted Eagler26 beta at https://client.goldhq.net/.
-- There is an optional iframe view to try the game inside this website, but the provider may block embedding and it may not work.
-- This website imposes **no countdown or session time limit**, but the third-party provider may be unavailable, crash, or limit access.
-- Minecraft Classic is offered separately as a clearly labeled fallback; it is not 26.3.
-- Desktop Chrome or Edge with a keyboard and mouse is recommended. Phones and tablets are not supported by Eagler26.
-- The provider gathers technical diagnostics during its beta. Review https://client.goldhq.net/privacy and https://client.goldhq.net/terms before starting.
+## On iPhone or iPad
 
-## Why did the previous page show 404?
-The earlier Gaius Minecraft 26.3 repository was blocked on GitHub following a DMCA notice on October 20, 2026. This website no longer links to that version.
+1. Open https://rdcoleuh.github.io/My-Project/ in **Safari**.
+2. Tap **Share → Add to Home Screen**.
+3. Enable **Open as Web App** and tap **Add**.
+4. Open Minecraft Web from the Home Screen and try the 26.3 mobile link.
 
-## Important limitations
-This site is not an independent Minecraft 26.3 port or a redistribution of Minecraft game files. It cannot guarantee gameplay, save data, or compatibility, and its embedded option may not work. Minecraft is owned by Mojang Studios / Microsoft; neither they nor GoldHQ endorse this unofficial page.
+The website has responsive touch-friendly navigation, a Home Screen icon, a manifest and an offline-cached **launcher shell only**. Minecraft gameplay itself remains online.
+
+## What runs where
+
+- **Java 26.3 mobile experiment:** https://dev.eaglercraft.com/play?version=26.3 — listed as 26.3 on a provider that advertises mobile browsers, but **we have not verified actual 26.3 gameplay on iOS**.
+- **Java 26.3 desktop beta:** https://client.goldhq.net/ — its own published terms say phones and tablets are unsupported and blocked.
+- **Mobile-friendly fallback:** https://dev.eaglercraft.com/play?version=1.8.8 — older Minecraft version; its provider describes touch controls on compatible devices.
+
+External sites may disallow iframe embedding; direct launch links are the recommended approach. This website imposes no timed demo cutoff, but external beta availability, data saving and play duration cannot be guaranteed.
+
+## Downloadable iOS Xcode project
+
+An iOS SwiftUI + WKWebView **source project ZIP** has been generated for the user separately. It can be compiled and signed by Xcode on a Mac. It is **not** a pre-signed `.ipa`. An app wrapper does not supply or unlock 26.3 gameplay, and cross-origin game pages open in Safari.
+
+## Licensing / disclaimer
+
+Unofficial experimental fan launcher, not endorsed or approved by Mojang Studios, Microsoft, Eaglercraft, GoldHQ or Apple. Minecraft belongs to Mojang Studios / Microsoft. No proprietary game files or assets are distributed in this repository.
