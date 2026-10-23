@@ -2,146 +2,331 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#172a1b">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#102919">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Minecraft Web">
-<meta name="description" content="An unofficial mobile-friendly launcher to try Minecraft 26.3 browser clients on iPhone, iPad and desktop.">
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="icon" href="./favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
-<title>Minecraft 26.3 · iPhone and Browser</title>
+<meta name="apple-mobile-web-app-title" content="MineWorld">
+<meta name="description" content="MineWorld is a self-hosted original 3D voxel building game, playable in desktop browsers and on iPhone and iPad.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
+<link rel="manifest" href="manifest.webmanifest">
 <style>
-:root{color-scheme:dark;--bg:#0e1711;--panel:#1d3022;--border:#3d6549;--text:#f4faef;--muted:#c0d1bc;--green:#b4eb80}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 40% -25%,#3d6243,transparent 58%),var(--bg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}
-button,a{font:inherit}a{color:inherit}
-a:focus-visible,button:focus-visible{outline:3px solid #fff7b5;outline-offset:3px}
-button{cursor:pointer}
-.wrap{max-width:1340px;margin:auto;padding:clamp(12px,3vw,40px)}
-header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:25px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:15px}
-.voxel{width:48px;height:48px;background:linear-gradient(#7fc454 0 32%,#76553c 32%);border:3px solid #293924;transform:rotate(-5deg);box-shadow:inset -8px -5px #0004,4px 4px #0006;flex-shrink:0}
-h1{margin:0;font-size:clamp(24px,3.5vw,36px);letter-spacing:-.05em}
-.brand small{display:block;margin-top:3px;text-transform:uppercase;letter-spacing:.10em;color:#b8cbb5;font-size:10px}
-.chip{border:1px solid #5a8664;border-radius:30px;background:#233b29;padding:9px 13px;color:#d0e5c8;font-size:12px}
-.hero{border:1px solid var(--border);border-radius:18px;overflow:hidden;background:linear-gradient(125deg,#284531,#14221a);box-shadow:0 26px 85px #0007}
-.copy{padding:clamp(22px,5vw,58px);background:radial-gradient(ellipse at 90% 0%,#3a7549,transparent 50%)}
-.eyebrow{font-weight:800;text-transform:uppercase;letter-spacing:.17em;color:var(--green);font-size:11px}
-h2{font-size:clamp(38px,6.5vw,78px);letter-spacing:-.055em;line-height:1.02;margin:15px 0 20px}
-.sub{font-size:clamp(15px,1.7vw,18px);line-height:1.55;color:#d3e6ce;max-width:830px}
-.buttons{display:flex;flex-wrap:wrap;gap:11px;margin-top:24px}
-.btn{min-height:49px;display:inline-flex;align-items:center;justify-content:center;text-align:center;gap:9px;text-decoration:none;padding:13px 21px;border-radius:9px;border:1px solid #749276;background:#314f38;color:var(--text);font-weight:800;font-size:14px}
-.btn.primary{background:var(--green);color:#142711;border-color:#d4ffae;box-shadow:inset 0 -3px #75b54b}
-.btn:hover{filter:brightness(1.09)}
-.note{color:#b6c9b2;font-size:12px;line-height:1.6;margin:22px 0 0}
-.launchpad{padding:clamp(17px,3vw,28px);border-top:1px solid var(--border);background:#15261a}
-.launchpad h3{font-size:17px;margin:0 0 14px}
-.choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.choice{display:flex;flex-direction:column;gap:11px;background:#1f3525;border:1px solid #3a6044;padding:16px;border-radius:12px}
-.choice strong{font-size:15px}
-.choice p{font-size:12px;line-height:1.6;color:var(--muted);margin:0;flex-grow:1}
-.choice .btn{width:100%;font-size:13px;min-height:44px;padding:10px 11px}
-.label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#a8f187;font-weight:900}
-.important{background:#3b321c;border:1px solid #89794b;color:#f9e9ae;padding:12px 15px;border-radius:9px;font-size:13px;line-height:1.5;margin-top:16px}
-.install{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;align-items:center;margin-top:19px;padding:23px;border:1px solid #4c754f;border-radius:13px;background:#1c3321}
-.install h3{margin:0 0 7px;font-size:20px}
-.install p{line-height:1.55;font-size:13px;color:#cfddcc;margin:0}
-.install aside{border-left:1px solid #5b785b;padding-left:17px;font-size:13px;line-height:1.75;color:#d0e5ce}
-.install aside strong{color:var(--green)}
-.player{display:none;margin-top:19px;border:1px solid var(--border);border-radius:13px;overflow:hidden;background:#080c09}
-.player.visible{display:block}
-.player-bar{padding:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;background:#1d3524}
-.player-bar p{margin:0;color:#d2e5cc;font-size:12px}
-iframe{width:100%;height:min(73vh,850px);min-height:480px;background:#0a0f0b;border:0;display:block}
-.player footer{text-align:left;background:#213b27;padding:12px 16px;margin:0}
-footer{font-size:11px;line-height:1.7;color:#9cb39e;text-align:center;margin:27px auto 5px;max-width:900px}
-footer a{text-decoration:underline}
-@media(max-width:870px){.choices{grid-template-columns:1fr 1fr}.install{grid-template-columns:1fr}}
-@media(max-width:600px){
-body{padding-bottom:env(safe-area-inset-bottom)}
-.wrap{padding:12px}.voxel{width:39px;height:39px}
-header{margin-bottom:18px}.chip{font-size:11px}.copy{padding:24px 18px}
-h2{font-size:43px}.buttons{display:grid;grid-template-columns:1fr}.btn{width:100%}
-.choices{grid-template-columns:1fr}.install{padding:19px;gap:12px}
-.install aside{border-left:0;border-top:1px solid #5b785b;padding-left:0;padding-top:10px}
-iframe{min-height:360px}.player-bar .btn{width:auto}
-}
-@media(max-height:510px) and (orientation:landscape){.copy{padding:19px}h2{font-size:40px}.choices{grid-template-columns:repeat(3,minmax(0,1fr))}iframe{height:78vh;min-height:280px}}
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#f1f9eb;background:#89c8df;touch-action:none;-webkit-user-select:none;user-select:none}
+*{box-sizing:border-box}html,body{margin:0;overflow:hidden;width:100%;height:100%;height:100dvh}button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}button:focus-visible{outline:3px solid #ffe78e;outline-offset:4px}
+#game-wrap{width:100%;height:100%;height:100dvh;position:relative;overflow:hidden;background:linear-gradient(#73c9f4,#d8f0fb);isolation:isolate}
+#world{display:block;position:absolute;inset:0;width:100%;height:100%;outline:none;touch-action:none;z-index:1}
+#sky-decor{position:absolute;inset:0;pointer-events:none;z-index:0}.sun{position:absolute;right:15%;top:15%;width:80px;height:80px;border-radius:50%;background:#fff5c0;box-shadow:0 0 100px #fff3af}.cloud{position:absolute;width:180px;height:22px;border-radius:50px;background:#ffffffe0;opacity:.6;box-shadow:40px -14px #fff9,90px -7px #fff8}.cloud1{top:16%;left:12%}.cloud2{top:27%;left:55%;transform:scale(.65)}
+#top-ui{z-index:6;position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:start;gap:10px;padding:max(env(safe-area-inset-top),16px) max(env(safe-area-inset-right),16px) 8px max(env(safe-area-inset-left),16px);pointer-events:none}
+.title-mark{display:flex;align-items:center;gap:10px;padding:9px 13px;background:#112719c9;border:1px solid #d9eadf54;border-radius:11px;box-shadow:0 6px 22px #10331f45;backdrop-filter:blur(10px)}
+.title-mark strong{display:block;letter-spacing:.085em;font-size:18px;line-height:1.1;font-weight:1000;color:#f1ffd9;text-shadow:1px 2px #102718}.title-mark small{display:block;letter-spacing:.13em;color:#c4e4b8;font-size:8px;margin-top:4px;font-weight:700}
+.block-symbol{width:32px;height:32px;background:linear-gradient(to bottom,#7bcb60 0 30%,#6c9b43 30% 40%,#916444 40%);border:2px solid #315334;box-shadow:inset -4px -4px #0003}
+.top-buttons{display:flex;gap:8px;align-items:center}.ui-button{border:1px solid #b6e2ba7d;border-radius:9px;background:#142c20e6;box-shadow:0 4px 12px #10231850;color:#f7fff0;font-weight:750;padding:13px 17px;pointer-events:auto}.ui-button:hover{background:#2a4c36}.ui-button.small{font-size:13px;padding:11px 14px}
+.status{color:#ddf5ce;font-size:11px;padding:11px 12px;background:#183524b3;border:1px solid #a3d3b74f;border-radius:10px;backdrop-filter:blur(6px)}
+#crosshair{pointer-events:none;position:absolute;z-index:3;left:50%;top:50%;transform:translate(-50%,-50%);width:23px;height:23px;filter:drop-shadow(0px 1px 2px #000b)}#crosshair:before,#crosshair:after{content:'';position:absolute;background:#fff;border-radius:2px}#crosshair:before{width:18px;height:3px;left:2.5px;top:10px}#crosshair:after{width:3px;height:18px;left:10px;top:2.5px}
+#target-name{position:absolute;z-index:3;left:50%;top:calc(50% + 23px);transform:translateX(-50%);font-size:11px;padding:4px 8px;background:#1227189c;border-radius:5px;text-align:center;white-space:nowrap;opacity:.9;pointer-events:none}
+#hud-bottom{z-index:5;position:absolute;bottom:max(env(safe-area-inset-bottom),14px);left:50%;transform:translateX(-50%);display:flex;align-items:center;flex-direction:column;gap:10px;pointer-events:none;max-width:100vw}
+#hotbar{display:flex;gap:5px;padding:7px;background:#15261bca;border:1px solid #e0f2da69;border-radius:11px;backdrop-filter:blur(7px);box-shadow:0 5px 20px #0006;pointer-events:auto;max-width:calc(100vw - 15px);overflow-x:auto;scrollbar-width:none}#hotbar::-webkit-scrollbar{display:none}
+.hot-item{width:59px;height:63px;flex:0 0 auto;background:#334536d9;border:2px solid #66836b;border-radius:7px;color:#e9f5e8;position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;padding:4px 2px;box-shadow:inset 0 2px #ffffff0c}
+.hot-item.active{border-color:#dfff90;box-shadow:0 0 0 2px #e9ffb9,inset 0 2px #ffffff24;background:#44623d}.hot-item span{font-size:10px;text-align:center;white-space:nowrap;letter-spacing:.015em}.hot-item small{position:absolute;right:4px;top:2px;font-size:9px;color:#bde0b6}.swatch{width:25px;height:24px;border:2px solid #0004;box-shadow:inset -6px -5px #0002,inset 4px 3px #ffffff24;image-rendering:pixelated;transform:rotate(-4deg)}
+#hints{font-size:10px;color:#f4fff3;text-shadow:0 1px 4px #07170c;background:#1024177d;padding:5px 10px;border-radius:6px;white-space:nowrap}
+#coord-readout{position:absolute;z-index:3;left:16px;bottom:16px;background:#122a1bb5;padding:8px 11px;border-radius:8px;font-size:11px;color:#d7efd2;pointer-events:none}
+#mobile-controls{display:none;pointer-events:none;position:absolute;inset:0;z-index:4}
+#joystick{position:absolute;bottom:calc(110px + env(safe-area-inset-bottom));left:25px;width:127px;height:127px;border-radius:100%;border:2px solid #eef9ec74;background:#28442e72;box-shadow:inset 0 3px 20px #0014;pointer-events:auto;touch-action:none;display:grid;place-items:center}
+#joystick-knob{width:63px;height:63px;border-radius:100%;background:#e1f7ca8a;border:2px solid #f9fffbc4;box-shadow:0 3px 12px #0006;transform:translate(0,0)}
+#touch-buttons{position:absolute;right:16px;bottom:calc(114px + env(safe-area-inset-bottom));display:flex;gap:9px;align-items:end;pointer-events:auto}
+.touch-btn{touch-action:none;pointer-events:auto;border-radius:17px;width:65px;height:67px;background:#1c352ad1;border:2px solid #d7f4d19c;box-shadow:0 6px 16px #0006;color:#effff0;font-size:29px;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}.touch-btn small{font-size:9px;letter-spacing:.08em}.touch-btn.mine{background:#7e3d30df;border-color:#ffc9a9}.touch-btn.place{background:#376f40eb;border-color:#d4f4ba}.touch-btn:active{transform:scale(.95)}
+.version{position:absolute;right:13px;bottom:10px;font-size:9px;color:#eff8eeaf;text-shadow:0 1px #0008;pointer-events:none;z-index:3}
+.modal-backdrop{position:absolute;inset:0;z-index:12;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0b2017d9,#0b1c1be8);padding:18px;backdrop-filter:blur(9px);overflow-y:auto}.hidden{display:none!important}
+.modal{width:min(100%,510px);padding:clamp(24px,5vw,45px);text-align:center;background:linear-gradient(140deg,#26432e,#14291d);border:1px solid #7d9d75;border-radius:17px;box-shadow:0 25px 100px #000b}
+.emblem{font-size:40px;color:#d1ffab;margin:0 auto 14px;display:grid;place-items:center;height:68px;width:68px;border:2px solid #bbdf96;border-radius:13px;transform:rotate(-5deg);background:#517e40}
+.kicker{font-size:11px;color:#b4ed80;letter-spacing:.22em;font-weight:900}.modal h1{font-size:clamp(31px,6vw,47px);margin:9px 0 13px;letter-spacing:-.06em}.modal h1 span{color:#c1f398}.modal h2{font-size:33px;margin:8px 0}.modal p{line-height:1.65;color:#cfe0cb;font-size:13px}.features{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:22px 0}.features span{border:1px solid #577655;background:#1c3824;border-radius:40px;font-size:11px;padding:7px 9px;color:#edffe4}
+.main-button{background:#b5ed84;border:1px solid #e0ffb5;box-shadow:inset 0 -4px #7ab75a;border-radius:8px;width:100%;min-height:56px;color:#173319;font-weight:900;font-size:17px}.main-button:hover{background:#ceff9c}
+.modal .note{font-size:10px;color:#a7c5a1;margin:18px auto 0}.menu-actions{display:flex;gap:10px;margin:12px 0}.menu-actions .ui-button{flex:1;font-size:12px}.ui-button.danger{display:block;width:100%;background:#693f35;border-color:#bf7461;color:#ffdfd5}
+#toast{position:absolute;z-index:20;bottom:31%;left:50%;transform:translateX(-50%) translateY(10px);padding:11px 18px;border-radius:9px;background:#132c1eeb;border:1px solid #a4d78a;color:#e9ffdd;font-size:13px;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none}#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(pointer:coarse){#mobile-controls{display:block}#hints{display:none}#coord-readout{bottom:calc(270px + env(safe-area-inset-bottom))}#hud-bottom{bottom:calc(9px + env(safe-area-inset-bottom))}#hotbar{gap:3px;padding:5px}.hot-item{width:clamp(35px,10.2vw,54px);height:55px}.hot-item span{font-size:8px}.hot-item small{display:none}.swatch{width:20px;height:20px}}
+@media(max-width:520px){#top-ui{padding:12px 9px}.title-mark{padding:8px}.title-mark strong{font-size:14px}.title-mark small{font-size:7px}.block-symbol{height:27px;width:27px}.status{display:none}.ui-button.small{font-size:12px}#joystick{width:111px;height:111px;left:13px;bottom:calc(86px + env(safe-area-inset-bottom))}#joystick-knob{width:57px;height:57px}#touch-buttons{bottom:calc(94px + env(safe-area-inset-bottom));right:10px;gap:6px}.touch-btn{width:52px;height:58px;border-radius:13px;font-size:24px}.touch-btn small{font-size:8px}#coord-readout{bottom:calc(206px + env(safe-area-inset-bottom));left:9px;font-size:9px}.version{display:none}}
+@media(pointer:coarse) and (orientation:landscape){#top-ui{padding:8px 12px}.title-mark{padding:5px 8px}.title-mark small{display:none}#joystick{bottom:35px;left:max(env(safe-area-inset-left),14px);width:100px;height:100px}#touch-buttons{right:max(env(safe-area-inset-right),12px);bottom:44px}.touch-btn{width:52px;height:52px}#hud-bottom{bottom:6px}#hotbar{transform:scale(.78);transform-origin:center bottom}#coord-readout{left:12px;bottom:145px}#crosshair{width:18px;height:18px}#target-name{display:none}}
+
 </style>
+<title>MineWorld — Build Your Own World</title>
 </head>
 <body>
-<div class="wrap">
-<header>
- <div class="brand"><div class="voxel" aria-hidden="true"></div><div><h1>MINECRAFT WEB</h1><small>iPhone · iPad · Desktop browser experiment</small></div></div>
- <span class="chip">26.3 browser experiment · No timer on this page</span>
-</header>
-<main>
-<section class="hero">
-<div class="copy">
- <span class="eyebrow">Unofficial web launcher · Apple-ready website</span>
- <h2>Minecraft 26.3<br>on your device.</h2>
- <p class="sub">Try a Minecraft Java Edition 26.3 browser client on iPhone, iPad, Mac or PC. Install this launcher to your iPhone Home Screen for an app-like shortcut. The game itself is provided by third-party projects and iPhone compatibility is experimental.</p>
- <div class="buttons">
-  <a class="btn primary" href="https://dev.eaglercraft.com/play?version=26.3" target="_blank" rel="noopener noreferrer" id="mobile-play">▶ Try 26.3 on iPhone / iPad ↗</a>
-  <a class="btn" href="https://client.goldhq.net/" target="_blank" rel="noopener noreferrer">26.3 Desktop Beta ↗</a>
-  <button class="btn" id="show-player" type="button">Try game inside this page</button>
- </div>
- <p class="note">The external Eaglercraft site advertises mobile browser support and lists 26.3; it has not been verified on this iPhone. The separate GoldHQ 26.3 beta explicitly blocks phones and tablets. The website imposes no three-minute cutoff, but can't guarantee external games remain available.</p>
-</div>
-<div class="launchpad">
- <h3>Choose a game client</h3>
- <div class="choices">
-  <div class="choice">
-   <span class="label">Mobile 26.3 experiment</span>
-   <strong>Try Java 26.3</strong>
-   <p>Use the Eaglercraft 26.3 browser listing. This is the best experimental mobile version target we found, but actual iOS play is unverified.</p>
-   <a class="btn primary" href="https://dev.eaglercraft.com/play?version=26.3" target="_blank" rel="noopener noreferrer">Launch mobile 26.3 ↗</a>
+<div id="game-wrap">
+  <canvas id="world" aria-label="Playable 3D block world"></canvas>
+  <div id="sky-decor" aria-hidden="true"><div class="sun"></div><div class="cloud cloud1"></div><div class="cloud cloud2"></div></div>
+  <div id="top-ui">
+    <div class="title-mark"><div class="block-symbol"></div><div><strong>MINEWORLD</strong><small>INDEPENDENT BLOCK SANDBOX</small></div></div>
+    <div class="top-buttons"><div id="status" class="status">● World loaded</div><button id="menu-toggle" class="ui-button small" aria-label="Open game menu">☰ Menu</button></div>
   </div>
-  <div class="choice">
-   <span class="label">Desktop 26.3 · Limited devices</span>
-   <strong>Eagler26 Beta</strong>
-   <p>GoldHQ's beta targets Java 26.3 but requires a computer with a keyboard and mouse. It blocks mobile devices, including iPhones.</p>
-   <a class="btn" href="https://client.goldhq.net/" target="_blank" rel="noopener noreferrer">Open desktop client ↗</a>
+  <div id="crosshair" aria-hidden="true"></div>
+  <div id="target-name">Aim at a block to mine</div>
+  <div id="hud-bottom">
+    <div id="hotbar" role="toolbar" aria-label="Choose a building block"></div>
+    <div id="hints">WASD move · Mouse look · Left click mine · Right click place · Space jump · F fly · 1–9 select</div>
   </div>
-  <div class="choice">
-   <span class="label">Mobile-friendly older release</span>
-   <strong>EaglercraftX 1.8.8</strong>
-   <p>Lower Minecraft version that advertises automatic touch controls and iOS audio support. Use this if 26.3 cannot launch on your phone.</p>
-   <a class="btn" href="https://dev.eaglercraft.com/play?version=1.8.8" target="_blank" rel="noopener noreferrer">Try touch-friendly version ↗</a>
+  <div id="coord-readout">X 0 · Y 0 · Z 0</div>
+  <div id="mobile-controls" aria-label="Touch game controls">
+    <div id="joystick" aria-label="Movement joystick"><div id="joystick-knob"></div></div>
+    <div id="touch-buttons"><button id="jump-btn" class="touch-btn" aria-label="Jump">↑<small>JUMP</small></button><button id="mine-btn" class="touch-btn mine" aria-label="Mine block">⛏<small>MINE</small></button><button id="place-btn" class="touch-btn place" aria-label="Place block">▣<small>PLACE</small></button></div>
   </div>
- </div>
- <div class="important"><strong>iPhone limits:</strong> Adding this website to your Home Screen does not make the 26.3 game itself a native iOS app. A native app wrapper also cannot force a third-party Minecraft port to support touch or bypass mobile blocking.</div>
-</div>
-</section>
-<section class="install" id="install">
- <div>
-  <h3>📱 Put Minecraft Web on your iPhone Home Screen</h3>
-  <p>In <strong>Safari</strong>, open this website, tap the page menu or Share icon, select <strong>Add to Home Screen</strong>, turn on <strong>Open as Web App</strong>, then tap <strong>Add</strong>. The Minecraft Web icon will appear on your Home Screen. The game still needs an internet connection.</p>
- </div>
- <aside><strong>Apple-compatible launcher</strong><div>✓ Touch-friendly buttons</div><div>✓ Portrait and landscape layouts</div><div>✓ Home Screen web app manifest</div><div>✓ No timer imposed by this site</div><div>⚠ 26.3 mobile gameplay not guaranteed</div></aside>
-</section>
-<section class="player" id="player">
- <div class="player-bar"><p>Experimental embedded client · External provider may block frames</p><div class="buttons"><a class="btn primary" href="https://dev.eaglercraft.com/play?version=26.3" target="_blank" rel="noopener noreferrer">Open directly ↗</a><button class="btn" id="close-player" type="button">Close</button></div></div>
- <iframe id="game" title="Experimental Minecraft 26.3 iframe" allow="fullscreen; pointer-lock; autoplay; gamepad" allowfullscreen></iframe>
- <footer>If the embedded game displays a blank page or an error, launch 26.3 in its own browser tab. Browser cross-origin protections prevent this website from injecting touch controls into a third-party game.</footer>
-</section>
-</main>
-<footer>Minecraft belongs to Mojang Studios / Microsoft. This is an independent experiment and launcher, not an official Minecraft product. It includes no proprietary Minecraft code and cannot guarantee the external clients' availability or compatibility. <a href="https://www.minecraft.net/" target="_blank" rel="noopener noreferrer">Minecraft official website</a>.</footer>
+  <div id="welcome" class="modal-backdrop">
+    <section class="modal" aria-label="Game introduction">
+      <div class="emblem" aria-hidden="true">▧</div>
+      <div class="kicker">YOUR WORLD · YOUR RULES</div>
+      <h1>Welcome to <span>MineWorld</span></h1>
+      <p>Explore rolling hills, forests and water. Mine blocks, build anything, and return to your saved world. Everything runs from <strong>this website's own original game code.</strong></p>
+      <div class="features"><span>✦ Generated worlds</span><span>⛏ Mining &amp; building</span><span>▣ 9 block types</span><span>☁ Autosave</span></div>
+      <button id="start-btn" class="main-button">▶ &nbsp; PLAY NOW</button>
+      <p class="note">Original Minecraft-inspired game — not Minecraft Java Edition 26.3 or an official Mojang product. No Eaglercraft, external game iframe, account or demo timer.</p>
+    </section>
+  </div>
+  <div id="pause" class="modal-backdrop hidden">
+    <section class="modal menu-modal" aria-label="Game menu">
+      <div class="kicker">MINEWORLD</div><h2>Game menu</h2>
+      <p>Pick up where you left off, switch flying mode, or generate a brand new world.</p>
+      <button class="main-button" id="resume-btn">▶ &nbsp; Resume Game</button>
+      <div class="menu-actions"><button id="fly-btn" class="ui-button">✦ Flying: Off</button><button id="save-btn" class="ui-button">↓ Save World</button></div>
+      <button id="new-btn" class="ui-button danger">↻ Create New World</button>
+      <p class="note">This world saves on this device and browser. Clearing browser data can erase it.</p>
+    </section>
+  </div>
+  <div id="toast" aria-live="polite"></div>
+  <div class="version">ORIGINAL WEB GAME · v1.0</div>
 </div>
 <script>
-(()=>{
- const pane=document.getElementById('player'), frame=document.getElementById('game');
- document.getElementById('show-player').addEventListener('click',()=>{
-  pane.classList.add('visible');
-  if(!frame.hasAttribute('src'))frame.src='https://dev.eaglercraft.com/play?version=26.3';
-  pane.scrollIntoView({behavior:'smooth',block:'start'});
- });
- document.getElementById('close-player').addEventListener('click',()=>{frame.removeAttribute('src');pane.classList.remove('visible')});
- if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+/* MineWorld — original browser voxel sandbox; no Minecraft game code or third-party runtime. */
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const canvas = $('world');
+  const gl = canvas.getContext('webgl', { antialias: true, alpha: false, powerPreference: 'high-performance' });
+  if (!gl) {
+    $('welcome').querySelector('p').textContent = 'This game needs WebGL. Please try Safari, Chrome or Edge with WebGL enabled.';
+    $('start-btn').disabled = true;
+    return;
+  }
+  const W=64, D=64, H=27, SEA=7, STORAGE='mineworld-selfhost-v1';
+  const voxels = new Uint8Array(W*D*H);
+  const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks'];
+  const HOT=[1,2,3,5,6,4,8,9,10,11];
+  const HOT9=HOT.slice(0,9);
+  const COLORS={1:[.36,.69,.28],2:[.52,.34,.22],3:[.52,.56,.57],4:[.85,.76,.50],5:[.48,.32,.18],6:[.28,.55,.23],7:[.26,.56,.82],8:[.72,.34,.25],9:[.62,.85,.90],10:[.93,.79,.33],11:[.65,.47,.27]};
+  const SWATCH={1:'#65aa48',2:'#825332',3:'#8e9297',4:'#d9c180',5:'#8b633b',6:'#388b3a',7:'#368dd3',8:'#ba4b3e',9:'#a4d6e0',10:'#edca57',11:'#bd8d52'};
+  const FACE=[
+    {n:[1,0,0],v:[[1,0,0],[1,1,0],[1,1,1],[1,0,1]],shade:.72},
+    {n:[-1,0,0],v:[[0,0,1],[0,1,1],[0,1,0],[0,0,0]],shade:.72},
+    {n:[0,1,0],v:[[0,1,0],[0,1,1],[1,1,1],[1,1,0]],shade:1.0},
+    {n:[0,-1,0],v:[[0,0,1],[0,0,0],[1,0,0],[1,0,1]],shade:.45},
+    {n:[0,0,1],v:[[1,0,1],[1,1,1],[0,1,1],[0,0,1]],shade:.83},
+    {n:[0,0,-1],v:[[0,0,0],[0,1,0],[1,1,0],[1,0,0]],shade:.80}
+  ];
+  const player={x:32.5,y:16,z:32.5,vy:0,yaw:.4,pitch:-.12,ground:false,fly:false};
+  const keys=new Set(); let seed=85721, started=false, paused=true, selection=0, frameCount=0, lastTime=0, meshCount=0, vbo=null, savedEdits=new Map(), dirtySave=false, saveTimer=0, aim=null, notifications=0, dayClock=0, deltaViewX=0, deltaViewY=0;
+  const movement={x:0,y:0}, touchHold={mine:false,place:false}, timers={mine:0,place:0};
+  const isTouch=matchMedia('(pointer: coarse)').matches;
+  let sky=[.57,.78,.91];
+  const idx=(x,y,z)=>(x*D+z)*H+y;
+  const inside=(x,y,z)=>x>=0&&x<W&&z>=0&&z<D&&y>=0&&y<H;
+  const get=(x,y,z)=>inside(x,y,z)?voxels[idx(x,y,z)]:0;
+  const set=(x,y,z,b)=>{if(inside(x,y,z))voxels[idx(x,y,z)]=b};
+  const solid=b=>b!==0&&b!==7;
+  const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+  const rand=(x,z,s=seed)=>{let n=Math.imul(x+307,374761393)^Math.imul(z+811,668265263)^Math.imul(s,1274126177);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295};
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  function noise(x,z,scale){let px=x/scale,pz=z/scale,ix=Math.floor(px),iz=Math.floor(pz),fx=px-ix,fz=pz-iz;fx=fx*fx*(3-2*fx);fz=fz*fz*(3-2*fz);return lerp(lerp(rand(ix,iz),rand(ix+1,iz),fx),lerp(rand(ix,iz+1),rand(ix+1,iz+1),fx),fz)}
+  function terrain(x,z){let h=5.4+noise(x,z,22)*6.9+noise(x+340,z-70,8)*3.1+noise(x-65,z+200,4)*1.15;return clamp(Math.floor(h),3,H-9)}
+  function generate(){
+    voxels.fill(0);savedEdits=new Map();
+    for(let x=0;x<W;x++)for(let z=0;z<D;z++){
+      let top=terrain(x,z),beach=top<=SEA+1;
+      for(let y=0;y<=top;y++){let id=y===top?(beach?4:1):y>top-3?(beach?4:2):3;set(x,y,z,id)}
+      for(let y=top+1;y<=SEA;y++)set(x,y,z,7);
+    }
+    for(let x=4;x<W-4;x++)for(let z=4;z<D-4;z++){
+      let top=terrain(x,z); if(top<=SEA+1||get(x,top,z)!==1||rand(x*17,z*11)>.018||(Math.abs(x-32)<5&&Math.abs(z-32)<5))continue;
+      let height=3+Math.floor(rand(x*19,z*23)*3);
+      for(let y=top+1;y<=top+height;y++)set(x,y,z,5);
+      for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)for(let dy=-1;dy<=2;dy++){
+        let distance=Math.abs(dx)+Math.abs(dz)+Math.abs(dy)*.65;
+        if(distance>3.6||(Math.abs(dx)===2&&Math.abs(dz)===2)||rand(x+dx*4,z+dz*4)<.07)continue;
+        let xx=x+dx,zz=z+dz,yy=top+height+dy;
+        if(get(xx,yy,zz)===0)set(xx,yy,zz,6);
+      }
+    }
+    const top=terrain(32,32); player.x=32.5;player.z=32.5;player.y=top+2.5;player.vy=0;player.pitch=-.14;player.yaw=.6;player.fly=false;selection=0;
+    buildMesh();updateHotbar();updateFlyButton();markSave();
+  }
+  function blockAtFeet(x,y,z){let xa=Math.floor(x-.27),xb=Math.floor(x+.27),za=Math.floor(z-.27),zb=Math.floor(z+.27),ya=Math.floor(y+.02),yb=Math.floor(y+1.72);if(xa<0||xb>=W||za<0||zb>=D||ya<0)return true;for(let i=xa;i<=xb;i++)for(let k=za;k<=zb;k++)for(let j=ya;j<=yb;j++)if(solid(get(i,j,k)))return true;return false}
+  function setBlock(x,y,z,b){
+    if(!inside(x,y,z)||y===0)return false;
+    if(b!==0&&solid(b)&&x>=Math.floor(player.x-.3)&&x<=Math.floor(player.x+.3)&&z>=Math.floor(player.z-.3)&&z<=Math.floor(player.z+.3)&&y<player.y+1.9&&y+1>player.y)return false;
+    const before=get(x,y,z);if(before===b)return false;
+    set(x,y,z,b);savedEdits.set(idx(x,y,z),b);buildMesh();markSave();return true;
+  }
+  function pushFace(a,x,y,z,b,f){
+    let base=COLORS[b]||[.7,.7,.7];let shade=f.shade;let variant=.89+.2*rand(x*37+f.n[0]*13,z*41+y*23+f.n[2]*11);
+    let c=base.slice();
+    if(b===1&&f.n[1]===0)c=[.43,.39,.24];
+    if(b===5&&f.n[1])c=[.67,.51,.30];
+    if(b===11&&f.n[1])c=[.72,.54,.34];
+    if(b===8)c=[.69+.05*(y%2),.30,.25];
+    if(b===9)c=[.65,.86,.93];
+    if(b===10)c=[1,.91,.54];
+    const r=clamp(c[0]*shade*variant,0,1),g=clamp(c[1]*shade*variant,0,1),blue=clamp(c[2]*shade*variant,0,1);
+    const vs=f.v;
+    for(const i of [0,1,2,0,2,3]){const v=vs[i];a.push(x+v[0],y+v[1],z+v[2],r,g,blue)}
+  }
+  function buildMesh(){
+    let a=[];
+    for(let x=0;x<W;x++)for(let z=0;z<D;z++)for(let y=0;y<H;y++){
+      const b=get(x,y,z);if(!b)continue;
+      for(const f of FACE){const v=get(x+f.n[0],y+f.n[1],z+f.n[2]);if(v&&!(b!==7&&v===7)&&!(b===9&&v!==9))continue;if(b===7&&v===7)continue;pushFace(a,x,y,z,b,f)}
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.STATIC_DRAW);meshCount=a.length/6;
+  }
+  const vs=`attribute vec3 aPos;attribute vec3 aColor;uniform mat4 uVP;varying vec3 vColor;varying vec3 vPos;void main(){vColor=aColor;vPos=aPos;gl_Position=uVP*vec4(aPos,1.0);}`;
+  const fs=`precision mediump float;varying vec3 vColor;varying vec3 vPos;uniform vec3 uEye;uniform vec3 uSky;void main(){float d=distance(vPos,uEye);float fog=smoothstep(25.0,83.0,d);vec3 c=mix(vColor,uSky,fog);gl_FragColor=vec4(c,1.0);}`;
+  function compileShader(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s}
+  const program=gl.createProgram();gl.attachShader(program,compileShader(gl.VERTEX_SHADER,vs));gl.attachShader(program,compileShader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(program);
+  if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
+  const aPos=gl.getAttribLocation(program,'aPos'),aColor=gl.getAttribLocation(program,'aColor'),uVP=gl.getUniformLocation(program,'uVP'),uEye=gl.getUniformLocation(program,'uEye'),uSky=gl.getUniformLocation(program,'uSky');
+  vbo=gl.createBuffer();const aimBuffer=gl.createBuffer();
+  gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
+  function mul(a,b){let o=new Float32Array(16);for(let col=0;col<4;col++)for(let row=0;row<4;row++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+row]*b[col*4+k];o[col*4+row]=s}return o}
+  function vpMatrix(w,h){
+    const yaw=player.yaw,pitch=player.pitch,cp=Math.cos(pitch),sp=Math.sin(pitch),cy=Math.cos(yaw),sy=Math.sin(yaw);
+    const forward=[sy*cp,sp,-cy*cp],right=[cy,0,sy],up=[-sy*sp,cp,cy*sp],eye=[player.x,player.y+1.61,player.z];
+    const view=new Float32Array([right[0],up[0],-forward[0],0,right[1],up[1],-forward[1],0,right[2],up[2],-forward[2],0,-dot(right,eye),-dot(up,eye),dot(forward,eye),1]);
+    const f=1/Math.tan(72*Math.PI/360),aspect=w/h,near=.07,far=140;
+    const proj=new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+near)/(near-far),-1,0,0,2*far*near/(near-far),0]);
+    return {vp:mul(proj,view),eye,forward};
+  }
+  function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]}
+  function pointAtBlock(origin,dir,maxDistance=6){
+    let x=Math.floor(origin[0]),y=Math.floor(origin[1]),z=Math.floor(origin[2]);let last=null;
+    const steps=dir.map(d=>d>0?1:d<0?-1:0);
+    const tD=dir.map(d=>d===0?Infinity:Math.abs(1/d));
+    const bounds=[x,y,z];const tM=dir.map((d,i)=>d>0?(bounds[i]+1-origin[i])/d:d<0?(bounds[i]-origin[i])/d:Infinity);
+    let distance=0;
+    for(let i=0;i<35&&distance<maxDistance;i++){
+      if(get(x,y,z)&&get(x,y,z)!==7)return {x,y,z,b:get(x,y,z),previous:last};
+      last={x,y,z};let axis=0;if(tM[1]<tM[axis])axis=1;if(tM[2]<tM[axis])axis=2;
+      distance=tM[axis];tM[axis]+=tD[axis];if(axis===0)x+=steps[axis];else if(axis===1)y+=steps[axis];else z+=steps[axis];
+    }
+    return null;
+  }
+  function performMine(){if(paused||!aim)return; if(setBlock(aim.x,aim.y,aim.z,0)){toast('Mined '+NAMES[aim.b]);timers.mine=.2}}
+  function performPlace(){if(paused||!aim||!aim.previous)return;let p=aim.previous,b=HOT9[selection];if(!inside(p.x,p.y,p.z)||get(p.x,p.y,p.z)!==0)return;if(setBlock(p.x,p.y,p.z,b)){toast('Placed '+NAMES[b]);timers.place=.2}}
+  function markSave(){dirtySave=true}
+  function save(){try{const edits=[...savedEdits.entries()];localStorage.setItem(STORAGE,JSON.stringify({seed,edits,player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},version:1}));dirtySave=false;$('status').textContent='● Saved locally'}catch(e){$('status').textContent='● Storage unavailable'}}
+  function load(){try{let data=localStorage.getItem(STORAGE);if(!data)return false;let s=JSON.parse(data);if(!s||!Number.isInteger(s.seed)||!Array.isArray(s.edits))return false;seed=s.seed;generate();savedEdits.clear();for(let [i,b] of s.edits){if(Number.isInteger(i)&&i>=0&&i<voxels.length&&Number.isInteger(b)&&b>=0&&b<NAMES.length){voxels[i]=b;savedEdits.set(i,b)}}if(s.player){for(let k of ['x','y','z','yaw','pitch'])if(Number.isFinite(s.player[k]))player[k]=s.player[k];player.fly=!!s.player.fly;player.x=clamp(player.x,.7,W-.7);player.z=clamp(player.z,.7,D-.7);player.y=clamp(player.y,3,H-3)}buildMesh();updateFlyButton();dirtySave=false;return true}catch(e){return false}}
+  function updateHotbar(){const root=$('hotbar');root.innerHTML='';HOT9.forEach((id,i)=>{const button=document.createElement('button');button.type='button';button.className='hot-item'+(i===selection?' active':'');button.setAttribute('aria-label',NAMES[id]);button.innerHTML='<small>'+(i+1)+'</small><div class="swatch" style="background:'+SWATCH[id]+'"></div><span>'+NAMES[id]+'</span>';button.addEventListener('pointerdown',e=>e.stopPropagation());button.addEventListener('click',()=>{selection=i;updateHotbar();toast(NAMES[HOT9[selection]])});root.appendChild(button)})}
+  function toast(s){let x=$('toast');x.textContent=s;x.classList.add('show');notifications++;const n=notifications;setTimeout(()=>{if(n===notifications)x.classList.remove('show')},1250)}
+  function updateFlyButton(){$('fly-btn').textContent='✦ Flying: '+(player.fly?'On':'Off')}
+  function start(){if(!started){started=true;lastTime=performance.now();requestAnimationFrame(render)}paused=false;$('welcome').classList.add('hidden');$('pause').classList.add('hidden');if(!isTouch&&canvas.requestPointerLock)canvas.requestPointerLock()?.catch?.(()=>{});toast('World ready — have fun!')}
+  function menu(){paused=true;keys.clear();movement.x=0;movement.y=0;touchHold.mine=false;touchHold.place=false;$('pause').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock();save()}
+  function jump(){if(paused)return;if(player.fly){player.y+=.7;return}if(player.ground){player.vy=8;player.ground=false}}
+  function move(dt){
+    let fw=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)-movement.y;
+    let strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+movement.x;
+    const len=Math.hypot(fw,strafe);if(len>1){fw/=len;strafe/=len}
+    const speed=(keys.has('ShiftLeft')?7.5:4.8)*(player.fly?1.35:1);
+    const dx=(Math.sin(player.yaw)*fw+Math.cos(player.yaw)*strafe)*speed*dt;
+    const dz=(-Math.cos(player.yaw)*fw+Math.sin(player.yaw)*strafe)*speed*dt;
+    const targetX=clamp(player.x+dx,.5,W-.5),targetZ=clamp(player.z+dz,.5,D-.5);
+    if(player.fly){player.x=targetX;player.z=targetZ;let dy=(keys.has('Space')?1:0)-(keys.has('KeyC')?1:0);player.y=clamp(player.y+dy*speed*dt,2,H-2);return}
+    if(!blockAtFeet(targetX,player.y,player.z))player.x=targetX;
+    if(!blockAtFeet(player.x,player.y,targetZ))player.z=targetZ;
+    player.vy-=22*dt;const nextY=player.y+player.vy*dt;
+    if(!blockAtFeet(player.x,nextY,player.z)){player.y=nextY;player.ground=false}
+    else{
+      if(player.vy<=0)player.ground=true;
+      player.vy=0;
+      if(player.ground){let snap=player.y;for(let i=0;i<40;i++){let low=snap-.025;if(blockAtFeet(player.x,low,player.z))break;snap=low}player.y=snap}
+    }
+    if(player.y<1){player.x=32.5;player.z=32.5;player.y=terrain(32,32)+2;player.vy=0}
+  }
+  function drawHighlight(target){if(!target)return;const {x,y,z}=target;const a=[],e=.004;
+    const p=[[x-e,y-e,z-e],[x+1+e,y-e,z-e],[x+1+e,y+1+e,z-e],[x-e,y+1+e,z-e],[x-e,y-e,z+1+e],[x+1+e,y-e,z+1+e],[x+1+e,y+1+e,z+1+e],[x-e,y+1+e,z+1+e]];
+    for(let [u,v] of [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]]){for(let i of [u,v])a.push(...p[i],1,.96,.72)}
+    gl.bindBuffer(gl.ARRAY_BUFFER,aimBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.DYNAMIC_DRAW);setAttribs();gl.drawArrays(gl.LINES,0,a.length/6);
+  }
+  function setAttribs(){gl.enableVertexAttribArray(aPos);gl.enableVertexAttribArray(aColor);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(aColor,3,gl.FLOAT,false,24,12)}
+  function render(t){requestAnimationFrame(render);let dt=clamp((t-lastTime)/1000,0,.05);lastTime=t;
+    if(paused)return;
+    dayClock+=dt;
+    move(dt);
+    if(touchHold.mine&&timers.mine<=0){performMine();timers.mine=.20}
+    if(touchHold.place&&timers.place<=0){performPlace();timers.place=.25}
+    timers.mine-=dt;timers.place-=dt;
+    let w=canvas.clientWidth,h=canvas.clientHeight;
+    const dpr=Math.min(window.devicePixelRatio||1,isTouch?1.15:1.65);
+    let dw=Math.min(Math.floor(w*dpr),2100),dh=Math.min(Math.floor(h*dpr),1300);
+    if(canvas.width!==dw||canvas.height!==dh){canvas.width=dw;canvas.height=dh;gl.viewport(0,0,dw,dh)}
+    const {vp,eye,forward}=vpMatrix(dw,dh);aim=pointAtBlock(eye,forward,7);
+    const skyTint=.9+.1*Math.sin(dayClock*.014);
+    sky=[.53*skyTint,.76*skyTint,.91*skyTint];
+    gl.clearColor(...sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+    gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,vp);gl.uniform3fv(uEye,eye);gl.uniform3fv(uSky,sky);
+    gl.bindBuffer(gl.ARRAY_BUFFER,vbo);setAttribs();gl.drawArrays(gl.TRIANGLES,0,meshCount);
+    drawHighlight(aim);
+    $('target-name').textContent=aim?'⛏ '+NAMES[aim.b]+'  ·  '+aim.x+', '+aim.y+', '+aim.z:'Aim at a block to mine';
+    if((frameCount++%18)===0){$('coord-readout').textContent='X '+player.x.toFixed(0)+' · Y '+player.y.toFixed(0)+' · Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
+    saveTimer+=dt;if(saveTimer>8){saveTimer=0;if(dirtySave)save()}
+  }
+  $('start-btn').addEventListener('click',start);
+  $('resume-btn').addEventListener('click',start);
+  $('menu-toggle').addEventListener('click',menu);
+  $('save-btn').addEventListener('click',()=>{save();toast('Saved to this browser')});
+  $('fly-btn').addEventListener('click',()=>{player.fly=!player.fly;player.vy=0;updateFlyButton();markSave();toast(player.fly?'Flying enabled':'Flying disabled')});
+  $('new-btn').addEventListener('click',()=>{if(!confirm('Generate a new world? Your previous world will be replaced.'))return;seed=Math.floor(Math.random()*90000000)+1;generate();save();$('pause').classList.add('hidden');start();toast('A new world begins!')});
+  document.addEventListener('keydown',e=>{
+    if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab'].includes(e.code))e.preventDefault();
+    if(e.code==='Escape'){if(!paused)menu();else if(started)start();return}
+    if(paused)return;
+    keys.add(e.code);
+    if(e.code==='Space'&&!e.repeat)jump();
+    if(e.code==='KeyF'&&!e.repeat){player.fly=!player.fly;player.vy=0;updateFlyButton();toast(player.fly?'Fly mode on':'Fly mode off')}
+    if(e.code.startsWith('Digit')){const i=Number(e.code.slice(5))-1;if(i>=0&&i<HOT9.length){selection=i;updateHotbar()}}
+  });
+  document.addEventListener('keyup',e=>keys.delete(e.code));
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&started&&!paused)menu()});
+  window.addEventListener('pagehide',save);
+  window.addEventListener('beforeunload',save);
+  canvas.addEventListener('contextmenu',e=>e.preventDefault());
+  document.addEventListener('mousemove',e=>{
+    if(paused||document.pointerLockElement!==canvas)return;
+    player.yaw+=e.movementX*.0025;player.pitch=clamp(player.pitch-e.movementY*.0025,-1.51,1.51)
+  });
+  canvas.addEventListener('mousedown',e=>{
+    if(paused)return;
+    if(!isTouch&&document.pointerLockElement!==canvas){(canvas.requestPointerLock()?.catch?.(()=>{}));return}
+    if(e.button===0)performMine();else if(e.button===2)performPlace();
+  });
+  canvas.addEventListener('wheel',e=>{if(paused)return;e.preventDefault();selection=(selection+(e.deltaY>0?1:-1)+HOT9.length)%HOT9.length;updateHotbar()},{passive:false});
+  let lookPointer=null,lastLook=null;
+  canvas.addEventListener('pointerdown',e=>{if(paused||e.pointerType==='mouse')return;lookPointer=e.pointerId;lastLook=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);e.preventDefault()});
+  canvas.addEventListener('pointermove',e=>{if(paused||e.pointerId!==lookPointer||!lastLook)return;let dx=e.clientX-lastLook[0],dy=e.clientY-lastLook[1];player.yaw+=dx*.005;player.pitch=clamp(player.pitch-dy*.005,-1.5,1.5);lastLook=[e.clientX,e.clientY]});
+  function endLook(e){if(e.pointerId===lookPointer){lookPointer=null;lastLook=null}}canvas.addEventListener('pointerup',endLook);canvas.addEventListener('pointercancel',endLook);
+  const stick=$('joystick'),knob=$('joystick-knob');let stickPointer=null;
+  const moveStick=e=>{const b=stick.getBoundingClientRect();const radius=b.width/2;const dx=(e.clientX-(b.left+radius))/(radius*.7),dy=(e.clientY-(b.top+radius))/(radius*.7);const length=Math.max(1,Math.hypot(dx,dy));movement.x=dx/length;movement.y=dy/length;knob.style.transform='translate('+(movement.x*radius*.48)+'px,'+(movement.y*radius*.48)+'px)'};
+  stick.addEventListener('pointerdown',e=>{if(paused)return;stickPointer=e.pointerId;stick.setPointerCapture(e.pointerId);moveStick(e);e.preventDefault()});
+  stick.addEventListener('pointermove',e=>{if(e.pointerId===stickPointer){moveStick(e);e.preventDefault()}});
+  const resetStick=e=>{if(e.pointerId===stickPointer){stickPointer=null;movement.x=movement.y=0;knob.style.transform='translate(0,0)'}};
+  stick.addEventListener('pointerup',resetStick);stick.addEventListener('pointercancel',resetStick);
+  $('jump-btn').addEventListener('pointerdown',e=>{e.preventDefault();jump()});
+  for(const [button,verb] of [['mine-btn','mine'],['place-btn','place']]){
+    const b=$(button);
+    b.addEventListener('pointerdown',e=>{if(paused)return;touchHold[verb]=true;if(verb==='mine')performMine();else performPlace();b.setPointerCapture(e.pointerId);e.preventDefault()});
+    b.addEventListener('pointerup',()=>touchHold[verb]=false);
+    b.addEventListener('pointercancel',()=>touchHold[verb]=false);
+    b.addEventListener('lostpointercapture',()=>touchHold[verb]=false);
+  }
+  if(!load())generate();else $('status').textContent='● Previous world restored';
+  if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 })();
+
 </script>
 </body>
 </html>
