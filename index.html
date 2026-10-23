@@ -211,8 +211,25 @@ body.in-nether #game-wrap{background:#290f19}
 @media(max-width:750px){.inventory-grid{grid-template-columns:repeat(6,minmax(0,1fr))}#recipes{grid-template-columns:repeat(2,minmax(0,1fr))}.inventory-slot{min-height:49px}.gear-modal{padding:12px}.inventory-shell{padding:9px}}
 @media(max-width:440px){.inventory-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:3px}.inventory-slot{min-height:48px;padding:2px}.inventory-slot .item-icon{font-size:16px}.inventory-slot .item-name{font-size:7px}.inventory-slot .stack-size{font-size:8px}#ride-btn{bottom:calc(166px + env(safe-area-inset-bottom));right:12px;font-size:12px;min-height:39px;min-width:64px}#mount-readout{top:76px;right:9px;max-width:135px;font-size:9px}.craft-toolbar{gap:4px}}
 @media(pointer:fine){#ride-btn{bottom:102px}}
+
+/* MineWorld 3.7: a functional 2×2 pocket crafting grid and a 3×3 placed workbench. */
+.craft-workspace{margin:16px 0 8px;background:linear-gradient(135deg,#66513a,#332b21);border:3px solid #96866d;border-radius:10px;padding:14px;color:#fff7df}
+.craft-workspace h3{margin:2px 0 6px;color:#fff1ca;font-size:19px}.craft-workspace p{font-size:11px;text-align:left;margin:4px 0 10px;color:#f2d9b3}
+.craft-row{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.craft-grid{display:grid;grid-template-columns:repeat(2,60px);grid-auto-rows:60px;gap:5px;background:#211e1b;border:3px solid #a59681;padding:6px;border-radius:7px}
+.craft-grid.workbench{grid-template-columns:repeat(3,60px)}
+.craft-cell{position:relative;background:#7f837b;border:3px inset #a9ac9f;border-radius:3px;color:#fffbe8;font-size:10px;padding:5px 2px;display:flex;flex-direction:column;gap:2px;justify-content:center;align-items:center;min-width:0;overflow:hidden;line-height:1.05}
+.craft-cell .craft-icon{font-size:20px}.craft-cell .craft-qty{font-size:10px;font-weight:900;position:absolute;bottom:2px;right:3px;color:#fff;text-shadow:1px 1px #111}
+.craft-cell:focus-visible{outline:3px solid #fff4ad;outline-offset:2px}.craft-cell.occupied{background:#454e44}.craft-cell:hover{filter:brightness(1.2)}
+.craft-arrow{font-weight:900;font-size:30px;color:#fbe9bb}
+#craft-output{min-width:105px;min-height:66px;padding:7px;white-space:normal;border:3px solid #98876d;background:#4e4a40;border-radius:5px;color:#fff8dc;font-weight:900;font-size:12px}
+#craft-output:disabled{opacity:.55}.craft-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;align-items:center}
+.craft-actions select{flex:1;min-width:135px;min-height:45px;border:1px solid #d4bd8e;color:#fff;background:#3b362d;padding:8px;border-radius:6px;touch-action:manipulation;user-select:auto;-webkit-user-select:auto}
+.craft-actions button{min-height:43px;background:#766342;color:#fff4d5;border:1px solid #c7a676;border-radius:7px;padding:8px;font-size:12px;font-weight:800}
+.craft-actions button:disabled{opacity:.55}#craft-state{font-size:11px;color:#fbe3bb;min-height:30px;line-height:1.5;margin-top:10px}
+@media(max-width:560px){.craft-workspace{padding:9px}.craft-grid{grid-template-columns:repeat(2,49px);grid-auto-rows:49px;gap:3px}.craft-grid.workbench{grid-template-columns:repeat(3,49px)}.craft-cell .craft-icon{font-size:16px}.craft-cell{font-size:9px}.craft-row{gap:7px}#craft-output{min-width:80px;font-size:10px;min-height:55px}.craft-arrow{font-size:23px}}
 </style>
-<title>MineWorld 3.6 — Backpack, Crafting & Rideables</title>
+<title>MineWorld 3.7 — Pocket Crafting, Workbench & Biomes</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -243,7 +260,7 @@ body.in-nether #game-wrap{background:#290f19}
     <section class="modal home-modal" aria-label="MineWorld main menu">
       <div class="kicker">✦ BUILD · EXPLORE · SURVIVE ✦</div>
       <h1>MINE<span>WORLD</span></h1>
-      <p class="home-subtitle">Explore a massive seeded world with a Survival backpack, 267 crafting recipes, rideable mounts and vehicles — on phone, tablet or desktop.</p>
+      <p class="home-subtitle">Explore seed-generated wilderness with natural biome boundaries, improved block textures, 2×2 pocket crafting and 3×3 workbench crafting — on phone, tablet or desktop.</p>
           <div class="seed-panel">
             <label for="seed-input">WORLD SEED · text or number</label>
             <div class="seed-row"><input id="seed-input" maxlength="64" spellcheck="false" autocomplete="off" inputmode="text" placeholder="Type a seed, or leave the current seed" aria-label="World generation seed"><button type="button" id="random-seed" class="ui-button">🎲 Random</button></div>
@@ -299,6 +316,17 @@ body.in-nether #game-wrap{background:#290f19}
       <div id="resources-list" class="resources-list" aria-live="polite"></div>
       <div class="gear-options"><button id="gear-pickaxe" class="ui-button">⛏ Pickaxe</button><button id="gear-sword" class="ui-button">⚔ Sword</button><button id="gear-hoe" class="ui-button">🌾 Hoe</button><button id="gear-axe" class="ui-button">🪓 Axe</button><button id="gear-shovel" class="ui-button">⛏ Shovel</button><button id="gear-none" class="ui-button">✊ Hands</button></div>
       <div id="gear-current" class="gear-current"></div>
+      <section class="craft-workspace" id="craft-workspace" aria-label="Crafting work area">
+        <h3 id="craft-heading">🪓 Inventory Crafting · 2 × 2</h3>
+        <p id="craft-description">Tap a backpack item, then tap crafting squares to fill them. Select a recipe below to show the correct layout. A placed workbench enables 3 × 3 crafting.</p>
+        <div class="craft-row">
+          <div id="craft-grid" class="craft-grid" role="group" aria-label="2 by 2 crafting input"></div>
+          <span class="craft-arrow" aria-hidden="true">➜</span>
+          <button type="button" id="craft-output" disabled>Choose ingredients</button>
+        </div>
+        <div class="craft-actions"><label for="craft-ingredient" style="font-size:12px">Holding</label><select id="craft-ingredient" aria-label="Selected ingredient for crafting squares"></select><button id="craft-clear" type="button">Clear Grid</button><button id="craft-place-table" type="button">Place Crafting Table</button></div>
+        <div id="craft-state" role="status">Open your backpack to begin crafting.</div>
+      </section>
       <div class="craft-toolbar"><select id="recipe-category" aria-label="Recipe category"></select><input id="recipe-search" placeholder="Search recipes…" aria-label="Search crafting recipes"><label style="font-size:11px;display:flex;align-items:center;gap:4px;color:#ccedbb"><input id="recipe-craftable" type="checkbox"> Craftable</label></div>
       <div id="recipe-stats" role="status"></div>
       <div class="recipes" id="recipes"></div>
@@ -391,7 +419,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v3.6 · BACKPACK, RECIPES & RIDEABLES</div>
+  <div class="version">MINEWORLD v3.7 · 2×2 & 3×3 CRAFTING · BIOME TEXTURES</div>
 </div>
 <script>
 /* MineWorld original procedural 16x16 voxel pixel-art atlas. No external assets. */
@@ -411,9 +439,9 @@ body.in-nether #game-wrap{background:#290f19}
         else if(y<3+(hash(x,0,b)*2|0))c=[83+v*.5,137+v,51+v*.5];
         else c=[115+v,78+v*.73,51+v*.65];
         break;
-      case 2:c=[116+v,79+v*.75,55+v*.54];break;
-      case 3: {let dark=(hash(Math.floor(x/2),Math.floor(y/2),4)>.76)?-28:0;c=[128+v+dark,132+v+dark,137+v+dark];break}
-      case 4:c=[216+v*.62,201+v*.64,151+v*.55];break;
+      case 2:{const clump=hash(Math.floor(x/3),Math.floor(y/3),2)>.77?-18:0;c=[113+v*.8+clump,76+v*.65+clump,49+v*.50+clump];break;}
+      case 3: {const crack=hash(Math.floor(x/3),Math.floor(y/3),4),bright=hash(Math.floor(x/2),Math.floor(y/2),31);let dark=crack>.74?-32:bright>.81?16:0;c=[126+v+dark,130+v+dark,132+v+dark];if((x+y*3)%13===0)c=c.map(q=>q-14);break}
+      case 4:{const grain=hash(Math.floor(x/2),Math.floor(y/2),46),pebble=n>.95?-26:0;c=[218+v*.52+pebble,204+v*.55+pebble,153+v*.50+pebble];if(grain>.88)c=c.map(q=>q+10);break;}
       case 5:case 15:{
         const pale=b===15;
         if(face===0||face===2){
@@ -551,6 +579,14 @@ body.in-nether #game-wrap{background:#290f19}
       case 155:c=[118+v*.5,79+v*.4,49+v*.3];if(x<3||x>12||y<3||y>12)c=[65+v*.3,43+v*.3,29+v*.2];break;
       case 156:case 157:case 158:case 159:case 160:case 161:case 162:case 163:case 164:case 165:case 166:case 167:{const k=b-156;c=[81+k*2+v*.4,88+(k%4)*13+v*.4,75+(k%3)*12+v*.3];if(x%5===0||y%5===0)c=[48+v*.3,43+v*.2,39+v*.2];break;}
 
+      case 168:{ // Original craftbench pixel pattern: timber, tools and inset oak top
+        const border=x<2||x>13||y<2||y>13;
+        const seam=(face===0?(x===8||y===8):(x===4||x===11));
+        c=border?[81+v*.25,55+v*.22,33+v*.19]:seam?[106+v*.34,71+v*.27,42+v*.22]:[175+v*.33,125+v*.29,72+v*.24];
+        if(face===0&&x>4&&x<11&&y>4&&y<11)c=[123+v*.34,81+v*.3,54+v*.25];
+        if(face===1&&y>4&&y<12&&x>3&&x<13)c=[94+v*.31,104+v*.32,110+v*.28];
+        break;
+      }
 
     }
     return [clamp(c[0]),clamp(c[1]),clamp(c[2]),255];
@@ -559,7 +595,7 @@ body.in-nether #game-wrap{background:#290f19}
     const canvas=document.createElement('canvas');canvas.width=SIZE*COLUMNS;canvas.height=SIZE*ROWS;
     const ctx=canvas.getContext('2d',{willReadFrequently:true});if(!ctx)throw Error('2D canvas textures unavailable');
     const img=ctx.createImageData(canvas.width,canvas.height);
-    for(let b=1;b<=118;b++)for(let f=0;f<3;f++){
+    for(let b=1;b<=168;b++)for(let f=0;f<3;f++){
       const tile=b*3+f,col=tile%COLUMNS,row=Math.floor(tile/COLUMNS);
       for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
         const i=((row*SIZE+y)*canvas.width+col*SIZE+x)*4;
@@ -618,7 +654,7 @@ body.in-nether #game-wrap{background:#290f19}
   let lastChunkX=-1,lastChunkZ=-1,streamQueue=[],streamClock=0;
   const renderRadius=matchMedia('(pointer: coarse)').matches?1:2;
   const MAX_CHUNKS=matchMedia('(pointer: coarse)').matches?42:70;
-  const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace','Snow','Ice','Packed Ice','Sandstone','Terracotta','Red Sand','Red Terracotta','Podzol','Coarse Dirt','Spruce Log','Spruce Leaves','Birch Log','Birch Leaves','Acacia Log','Acacia Leaves','Jungle Log','Jungle Leaves','Mangrove Log','Mangrove Leaves','Cherry Log','Cherry Leaves','Pale Oak Log','Pale Oak Leaves','Cactus','Bamboo','Moss','Mud','Red Mushroom Cap','Brown Mushroom Cap','Netherrack','Obsidian','Dark Planks','Stone Bricks','Chiseled Sandstone','Prismarine','Copper','Clay','Deepslate','Lantern','Hay Bale','Cobblestone','Glow Lichen','Dripstone','Sculk','Nether Rock','Lava','Basalt','Blackstone','Polished Blackstone','Soul Sand','Soul Soil','Nether Bricks','Nether Wart','Chiseled Nether Bricks','Crimson Nylium','Warped Nylium','Crimson Roots','Crimson Stem','Nether Wart Block','Warped Stem','Warped Wart Block','Warped Roots','Quartz Ore','Nether Gold Ore','Ancient Debris','Bone Block','Portal','Magma Block','Soul Fire','Shroomlight','Gilded Blackstone','Gravel','Twisting Vines','Weeping Vines','Copper Ore','Gold Ore','Redstone Ore','Lapis Ore','Diamond Ore','Emerald Ore','Deepslate Coal Ore','Deepslate Iron Ore','Deepslate Copper Ore','Deepslate Gold Ore','Deepslate Redstone Ore','Deepslate Lapis Ore','Deepslate Diamond Ore','Deepslate Emerald Ore','Redstone Lamp','Lapis Block','Emerald Block','Diamond Block','Copper Block','Gold Block','Iron Block','Coal Block','Redstone Block','Raw Mineral Crate','Treasure Chest','Opened Chest','End Stone','Chorus Plant','Chorus Flower','End Crystal','End Portal Frame','End Portal','End Gateway','End Rod','Dragon Egg','End Stone Bricks','Purpur Block','Purpur Pillar','Shulker Shell Block','Dragon Head','Netherite Block','Smithing Table','Farmland','Hydrated Farmland','Wheat Sprouts','Wheat Growing','Wheat Tall','Ripe Wheat','Carrot Sprouts','Carrot Growing','Carrot Tall','Ripe Carrots','Potato Sprouts','Potato Growing','Potato Tall','Ripe Potatoes','Beetroot Sprouts','Beetroot Growing','Beetroot Tall','Ripe Beetroot','Composter','Blast Furnace','Smoker','Cartography Table','Brewing Stand','Barrel','Fletching Table','Cauldron','Lectern','Stonecutter','Loom','Toolsmith Smithing Table','Grindstone'];
+  const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace','Snow','Ice','Packed Ice','Sandstone','Terracotta','Red Sand','Red Terracotta','Podzol','Coarse Dirt','Spruce Log','Spruce Leaves','Birch Log','Birch Leaves','Acacia Log','Acacia Leaves','Jungle Log','Jungle Leaves','Mangrove Log','Mangrove Leaves','Cherry Log','Cherry Leaves','Pale Oak Log','Pale Oak Leaves','Cactus','Bamboo','Moss','Mud','Red Mushroom Cap','Brown Mushroom Cap','Netherrack','Obsidian','Dark Planks','Stone Bricks','Chiseled Sandstone','Prismarine','Copper','Clay','Deepslate','Lantern','Hay Bale','Cobblestone','Glow Lichen','Dripstone','Sculk','Nether Rock','Lava','Basalt','Blackstone','Polished Blackstone','Soul Sand','Soul Soil','Nether Bricks','Nether Wart','Chiseled Nether Bricks','Crimson Nylium','Warped Nylium','Crimson Roots','Crimson Stem','Nether Wart Block','Warped Stem','Warped Wart Block','Warped Roots','Quartz Ore','Nether Gold Ore','Ancient Debris','Bone Block','Portal','Magma Block','Soul Fire','Shroomlight','Gilded Blackstone','Gravel','Twisting Vines','Weeping Vines','Copper Ore','Gold Ore','Redstone Ore','Lapis Ore','Diamond Ore','Emerald Ore','Deepslate Coal Ore','Deepslate Iron Ore','Deepslate Copper Ore','Deepslate Gold Ore','Deepslate Redstone Ore','Deepslate Lapis Ore','Deepslate Diamond Ore','Deepslate Emerald Ore','Redstone Lamp','Lapis Block','Emerald Block','Diamond Block','Copper Block','Gold Block','Iron Block','Coal Block','Redstone Block','Raw Mineral Crate','Treasure Chest','Opened Chest','End Stone','Chorus Plant','Chorus Flower','End Crystal','End Portal Frame','End Portal','End Gateway','End Rod','Dragon Egg','End Stone Bricks','Purpur Block','Purpur Pillar','Shulker Shell Block','Dragon Head','Netherite Block','Smithing Table','Farmland','Hydrated Farmland','Wheat Sprouts','Wheat Growing','Wheat Tall','Ripe Wheat','Carrot Sprouts','Carrot Growing','Carrot Tall','Ripe Carrots','Potato Sprouts','Potato Growing','Potato Tall','Ripe Potatoes','Beetroot Sprouts','Beetroot Growing','Beetroot Tall','Ripe Beetroot','Composter','Blast Furnace','Smoker','Cartography Table','Brewing Stand','Barrel','Fletching Table','Cauldron','Lectern','Stonecutter','Loom','Toolsmith Smithing Table','Grindstone','Crafting Table'];
   const HOT=[1,2,3,5,12,13,14,15,11];
   const HOTSETS=[
     [1,2,3,5,6,4,8,9,10],
@@ -633,12 +669,12 @@ body.in-nether #game-wrap{background:#290f19}
     [86,87,88,89,90,91,92,93,94],
     [95,96,97,98,99,100,101,102,103],
     [104,105,106,107,108,109,110,111,112],
-    [113,114,115,116,117,118,18,19,58]
+    [113,114,115,116,117,118,168,19,58]
   ];
   const HOT9=[...HOTSETS[0]];
   let hotbarPage=0;
   const COLORS={1:[.36,.69,.28],2:[.52,.34,.22],3:[.52,.56,.57],4:[.85,.76,.50],5:[.48,.32,.18],6:[.28,.55,.23],7:[.26,.56,.82],8:[.72,.34,.25],9:[.62,.85,.90],10:[.93,.79,.33],11:[.65,.47,.27],12:[.74,.19,.16],13:[.90,.43,.10],14:[.89,.66,.18],15:[.59,.42,.31],16:[.68,.18,.28],17:[.73,.55,.35]};
-  const SWATCH={1:'#65aa48',2:'#825332',3:'#8e9297',4:'#d9c180',5:'#8b633b',6:'#388b3a',7:'#368dd3',8:'#ba4b3e',9:'#a4d6e0',10:'#edca57',11:'#bd8d52',12:'#b94537',13:'#e98419',14:'#f2c34c',15:'#987e62',16:'#ab304c',17:'#bd9070',18:'#777b7c',19:'#a98c70',20:'#7d7872'};
+  const SWATCH={168:'#b48a4e',1:'#65aa48',2:'#825332',3:'#8e9297',4:'#d9c180',5:'#8b633b',6:'#388b3a',7:'#368dd3',8:'#ba4b3e',9:'#a4d6e0',10:'#edca57',11:'#bd8d52',12:'#b94537',13:'#e98419',14:'#f2c34c',15:'#987e62',16:'#ab304c',17:'#bd9070',18:'#777b7c',19:'#a98c70',20:'#7d7872'};
   const FACE=[
     {n:[1,0,0],v:[[1,0,0],[1,1,0],[1,1,1],[1,0,1]],shade:.72},
     {n:[-1,0,0],v:[[0,0,1],[0,1,1],[0,1,0],[0,0,0]],shade:.72},
@@ -792,20 +828,31 @@ body.in-nether #game-wrap{background:#290f19}
     const before=get(x,y,z);if(before===b)return false;
     set(x,y,z,b);savedEdits.set(idx(x,y,z),b);dirtyAround(x,z);markSave();if(!remote)window.MineWorldMultiplayer?.localEdit(idx(x,y,z)+(dimension==='end'?2*W*D*H:dimension==='nether'?W*D*H:0),b);return true;
   }
-  function pushFace(a,x,y,z,b,f){
+  function pushFace(a,x,y,z,b,f,biomeName=''){
     const face=f.n[1]===1?0:(f.n[1]===-1?2:1);
     const shade=f.shade*(.95+rand(x*37,z*41+y*23)*.10);
     const vs=f.v;
+    // Biome-aware grass & oak foliage colors. Textures are original and remain 16-pixel crisp.
+    let tint=[1,1,1];
+    if((b===1||b===6)&&dimension==='overworld'){
+      if(/Savanna|Badlands|Desert/.test(biomeName))tint=[1.08,.95,.68];
+      else if(/Swamp|Mangrove/.test(biomeName))tint=[.72,.86,.72];
+      else if(/Taiga|Grove|Snowy/.test(biomeName))tint=[.80,.95,.85];
+      else if(/Jungle/.test(biomeName))tint=[.71,1.04,.73];
+      else if(/Mushroom/.test(biomeName))tint=[.78,.86,1.05];
+      else if(/Cherry|Flower|Meadow/.test(biomeName))tint=[1.06,1.05,.92];
+    }
     for(const i of [0,1,2,0,2,3]){
       const v=vs[i],uv=window.MineWorldAtlas.uv(b,face,i);
       const crop=window.MineWorldVillages.cropAt(b);
       const px=crop?x+.14+v[0]*.72:x+v[0],py=crop?y+v[1]*(.22+crop.stage*.22):y+v[1],pz=crop?z+.14+v[2]*.72:z+v[2];
-      a.push(px,py,pz,shade,shade,shade,uv[0],uv[1]);
+      a.push(px,py,pz,shade*tint[0],shade*tint[1],shade*tint[2],uv[0],uv[1]);
     }
   }
   function buildChunkMesh(chunk){
     const {cx,cz,data}=chunk,ax=cx*CHUNK,az=cz*CHUNK;
     const faces=[];
+    const tintBiomes=dimension==='overworld'?Array.from({length:CHUNK*CHUNK},(_,i)=>window.MineWorldBiomes.biomeAt(ax+Math.floor(i/CHUNK),az+i%CHUNK).name):null;
     for(let dx=0;dx<CHUNK;dx++)for(let dz=0;dz<CHUNK;dz++)for(let y=0;y<H;y++){
       const x=ax+dx,z=az+dz,b=data[(dx*CHUNK+dz)*H+y];if(!b)continue;
       for(const face of FACE){
@@ -815,7 +862,7 @@ body.in-nether #game-wrap{background:#290f19}
           data[((nx-ax)*CHUNK+(nz-az))*H+ny]:get(nx,ny,nz);
         if(near&&!(b!==7&&near===7)&&!(b===9&&near!==9)&&!(b>=139&&b<=154))continue;
         if(b===7&&near===7)continue;
-        pushFace(faces,x,y,z,b,face);
+        pushFace(faces,x,y,z,b,face,tintBiomes?tintBiomes[dx*CHUNK+dz]:'');
       }
     }
     if(!chunk.vbo)chunk.vbo=gl.createBuffer();
@@ -866,6 +913,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(aimMob){attackMob(aimMob);return;}
     if(aimVillager){openVillagerTrade(aimVillager);return;}
     if(!aim)return;
+    if(aim.b===168&&gameMode==='survival'){openGear();toast('🪵 Crafting Table · 3 × 3 grid');return;}
     const crop=window.MineWorldVillages.cropAt(aim.b);
     if(crop){harvestCrop(aim.x,aim.y,aim.z,crop);return;}
     if(dimension==='overworld'&&equipped==='hoe'&&[1,2].includes(aim.b)){
@@ -913,7 +961,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(window.MineWorldMultiplayer?.isShared())return;
     try{
       const edits=[...savedEdits.entries()];
-      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:8});
+      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:9});
       localStorage.setItem(slotKey(gameMode),payload);localStorage.setItem(LAST_SLOT,gameMode);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';
     }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';}
   }
@@ -923,6 +971,7 @@ body.in-nether #game-wrap{background:#290f19}
       const s=JSON.parse(data);if(!s||!Number.isInteger(s.seed)||!Array.isArray(s.edits))return false;
       if((s.version||0)<5&&!localStorage.getItem('mineworld-backup-before-10k'))localStorage.setItem('mineworld-backup-before-10k',data);
       if((s.version||0)<6&&!localStorage.getItem('mineworld-backup-before-nether'))localStorage.setItem('mineworld-backup-before-nether',data);
+      if((s.version||0)<9){try{const backup='mineworld-backup-before-biome-v37-'+slot;if(!localStorage.getItem(backup))localStorage.setItem(backup,data);}catch(_){/* Backups need available device storage. */}}
       seed=s.seed;seedLabel=String(s.seedLabel||s.seed);generate();overworldEdits.clear();
       const legacy=(s.version||0)<5,oldW=(s.version||0)<4?64:96,oldH=(s.version||0)<4?27:36;
       for(let [i,b] of s.edits){
@@ -944,6 +993,7 @@ body.in-nether #game-wrap{background:#290f19}
       if(['peaceful','easy','normal','hard'].includes(s.difficulty))difficulty=s.difficulty;
       if(Number.isFinite(s.dayClock))dayClock=s.dayClock;
       if(s.bag&&typeof s.bag==='object')for(const k of Object.keys(bag))bag[k]=clamp(Math.floor(Number(s.bag[k])||0),0,999);
+      // Old 3.6 saves stored crafting tables as a non-placeable bag object. Migrate it once.
       if(s.tools)for(const k of ['pickaxe','sword','hoe','axe','shovel'])if(Object.hasOwn(toolLevels,s.tools[k]))tools[k]=s.tools[k];
       if(s.armor&&typeof s.armor==='object')for(const k of Object.keys(armor))armor[k]=typeof s.armor[k]==='string'?s.armor[k].slice(0,35):'';
       inventoryOrder.splice(0,inventoryOrder.length,...(Array.isArray(s.inventoryOrder)?s.inventoryOrder.filter(k=>typeof k==='string').slice(0,2000):[]));
@@ -952,6 +1002,7 @@ body.in-nether #game-wrap{background:#290f19}
       if(['pickaxe','sword','hoe','none'].includes(s.equipped))equipped=s.equipped;
       if(Number.isFinite(s.health))health=clamp(s.health,1,20);if(Number.isFinite(s.hunger))hunger=clamp(s.hunger,0,20);
       if(Array.isArray(s.inventory))for(let i=0;i<inventory.length;i++)inventory[i]=clamp(Math.floor(Number(s.inventory[i])||0),0,999);
+      if(Number(s.bag?.craftingTable)>0){inventory[168]=clamp(inventory[168]+Number(s.bag.craftingTable),0,999);bag.craftingTable=0;}
       updateModeButton();updateHotbar();updateSurvivalHUD();
       if(s.player){for(let k of ['x','y','z','yaw','pitch'])if(Number.isFinite(s.player[k]))player[k]=s.player[k];
         if(legacy){player.x+=SPAWN-56;player.z+=SPAWN-56;player.y=terrain(Math.floor(player.x),Math.floor(player.z))+2;}
@@ -1113,7 +1164,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(recipe.tool&&toolLevels[tools[recipe.tool[0]]] >= toolLevels[recipe.tool[1]]){toast('Already own this tier or better');return;}
     if(recipe.upgradeFrom&&tools[recipe.tool[0]]!==recipe.upgradeFrom){toast('First craft a diamond '+recipe.tool[0]);return;}
     if(recipe.requiresSmithing&&!inventory[136]){toast('Craft and carry a Smithing Table to upgrade');return;}
-    if(recipe.station&&!hasCraftingStation(recipe.station)){toast('Need '+stationName(recipe.station)+' in your inventory');return;}
+    if(recipe.station&&!hasCraftingStation(recipe.station)){toast('Need '+stationName(recipe.station)+' nearby or in inventory');return;}
     if(!Object.entries(cost).every(([key,n])=>amount(key)>=n)){toast('Need more resources');return}
     for(const [key,n]of Object.entries(cost))addResource(key,-n);
     if(recipe.give)for(const [key,n]of Object.entries(recipe.give))addResource(key,n);
@@ -1494,7 +1545,7 @@ body.in-nether #game-wrap{background:#290f19}
         const icon=document.createElement('span');icon.className='item-icon';icon.textContent=stackIcon(stack.key);
         const name=document.createElement('span');name.className='item-name';name.textContent=itemLabel(stack.key);
         const n=document.createElement('span');n.className='stack-size';n.textContent=stack.size;button.append(icon,name,n);
-        button.addEventListener('click',()=>{selectedStackKey=stack.key;renderBackpack()});
+        button.addEventListener('click',()=>{selectedStackKey=stack.key;renderBackpack();if($('craft-ingredient')){ $('craft-ingredient').value=stack.key;}});
         button.addEventListener('dragstart',e=>{e.dataTransfer?.setData('text/plain',stack.key)});
         button.addEventListener('dragover',e=>e.preventDefault());
         button.addEventListener('drop',e=>{e.preventDefault();const from=e.dataTransfer?.getData('text/plain');if(!from||from===stack.key)return;
@@ -1528,9 +1579,149 @@ body.in-nether #game-wrap{background:#290f19}
     addResource(selected.key,-qty);toast('Dropped '+qty+' '+itemLabel(selected.key));if(!amount(selected.key))selectedStackKey='';updateHotbar();updateSurvivalHUD();markSave();renderGear();
   }
   function stationName(station){return {table:'a Crafting Table',furnace:'a Furnace',smithing:'a Smithing Table'}[station]||station}
-  function hasCraftingStation(station){return station==='table'?bag.craftingTable>0:station==='furnace'?inventory[20]>0||inventory[156]>0||inventory[157]>0:station==='smithing'?inventory[136]>0:true}
-  function recipeCanCraft(r){return gameMode==='survival'&&(!r.station||hasCraftingStation(r.station))&&Object.entries(r.cost).every(([key,n])=>amount(key)>=n)&&(!r.tool||toolLevels[tools[r.tool[0]]] < toolLevels[r.tool[1]])&&(!r.upgradeFrom||tools[r.tool[0]]===r.upgradeFrom)&&(!r.requiresSmithing||inventory[136]>0)}
+  function hasCraftingStation(station){return station==='table'?nearbyCraftTable():station==='furnace'?inventory[20]>0||inventory[156]>0||inventory[157]>0:station==='smithing'?inventory[136]>0:true}
+  function recipeCanCraft(r){return gameMode==='survival'&&(r.station==='furnace'||r.station==='smithing'||craftTemplate(r)!==null)&&(!r.station||hasCraftingStation(r.station))&&Object.entries(r.cost).every(([key,n])=>amount(key)>=n)&&(!r.tool||toolLevels[tools[r.tool[0]]] < toolLevels[r.tool[1]])&&(!r.upgradeFrom||tools[r.tool[0]]===r.upgradeFrom)&&(!r.requiresSmithing||inventory[136]>0)}
   const ALL_RECIPES=[...RECIPES.map(r=>({...r,category:'Classic'})),...catalog.recipes];
+
+  // Pocket crafting is always 2×2. A *placed* crafting table near the player opens 3×3.
+  // Craft slots are virtual reservations; ingredients are charged only when output is taken.
+  let craftSize=2,craftCells=Array(9).fill(null),preferredCraft=null;
+  function nearbyCraftTable(){
+    const cx=Math.floor(player.x),cy=Math.floor(player.y),cz=Math.floor(player.z);
+    for(let dx=-4;dx<=4;dx++)for(let dz=-4;dz<=4;dz++)for(let dy=-3;dy<=2;dy++){
+      if(dx*dx+dz*dz>19)continue;
+      if(get(cx+dx,cy+dy,cz+dz)===168)return true;
+    }
+    return false;
+  }
+  function selectedCraftIngredient(){return $('craft-ingredient').value||selectedStackKey||'';}
+  function itemShape(recipe){
+    const cost=recipe.cost||{},name=recipe.name.toLowerCase();
+    const k=Object.keys(cost),mat=k.find(x=>x!=='sticks')||k[0],wood='block:11';
+    const rowsToCells=rows=>({rows,width:Math.max(...rows.map(x=>x.length)),height:rows.length,shaped:true});
+    if(/crafting table/i.test(name))return rowsToCells([[wood,wood],[wood,wood]]);
+    if(/\bsticks\b|^🪄 4 sticks/i.test(name))return rowsToCells([[wood],[wood]]);
+    if(/\bplanks\b/i.test(name)&&k.length===1&&cost[k[0]]===1)return rowsToCells([[k[0]]]);
+    if(/\btorch\b/i.test(name)&&k.includes('sticks')&&k.length===2){const other=k.find(x=>x!=='sticks');return rowsToCells([[other],['sticks']]);}
+    if(/(?:pickaxe)/i.test(name)&&k.includes('sticks')&&cost[mat]===3)return rowsToCells([[mat,mat,mat],[null,'sticks',null],[null,'sticks',null]]);
+    if(/(?:\bsword\b)/i.test(name)&&k.includes('sticks')&&cost[mat]===2)return rowsToCells([[mat],[mat],['sticks']]);
+    if(/(?:\bhoe\b)/i.test(name)&&k.includes('sticks')&&cost[mat]===2)return rowsToCells([[mat,mat],['sticks',null],['sticks',null]]);
+    if(/(?:\bshovel\b)/i.test(name)&&k.includes('sticks')&&cost[mat]===1)return rowsToCells([[mat],['sticks'],['sticks']]);
+    if(/(?:\baxe\b)/i.test(name)&&k.includes('sticks')&&cost[mat]===3)return rowsToCells([[mat,mat],[mat,'sticks'],[null,'sticks']]);
+    if(/\bbread\b/i.test(name)&&k.length===1&&cost[k[0]]===3)return rowsToCells([[k[0],k[0],k[0]]]);
+    if(/\bchest\b/i.test(name)&&cost[wood]===8&&k.length===1)return rowsToCells([[wood,wood,wood],[wood,null,wood],[wood,wood,wood]]);
+    if(/\bfurnace\b/i.test(name)&&k.length===1&&cost[k[0]]===8){const st=k[0];return rowsToCells([[st,st,st],[st,null,st],[st,st,st]]);}
+    if(/\bdoor\b/i.test(name)&&k.length===1&&cost[k[0]]===6){const st=k[0];return rowsToCells([[st,st],[st,st],[st,st]]);}
+    if(/\bboat\b/i.test(name)&&k.length===1&&cost[k[0]]===5){const st=k[0];return rowsToCells([[st,null,st],[st,st,st]]);}
+    if(/\bboots\b/i.test(name)&&k.length===1&&cost[k[0]]===4){const st=k[0];return rowsToCells([[st,null,st],[st,null,st]]);}
+    if(/\bhelmet\b/i.test(name)&&k.length===1&&cost[k[0]]===5){const st=k[0];return rowsToCells([[st,st,st],[st,null,st]]);}
+    if(/\bchestplate\b/i.test(name)&&k.length===1&&cost[k[0]]===8){const st=k[0];return rowsToCells([[st,null,st],[st,st,st],[st,st,st]]);}
+    if(/\bleggings\b/i.test(name)&&k.length===1&&cost[k[0]]===7){const st=k[0];return rowsToCells([[st,st,st],[st,null,st],[st,null,st]]);}
+    // For the larger original MineWorld catalog, preserve its cost-based recipes:
+    // combine large ingredient quantities into compact stack counts inside 3×3 cells.
+    const total=Object.values(cost).reduce((a,b)=>a+b,0);
+    const table=recipe.station==='table'||k.length>4||total>4;
+    const width=table?3:2;
+    const rows=Array.from({length:table?3:2},()=>Array(width).fill(null));
+    let i=0;
+    for(const [key,n] of Object.entries(cost)){
+      const pieces=Math.max(1,Math.min(n,rows.length*width-i-(k.length-1-i))); // best-effort count
+      if(i>=width*rows.length)return {rows,width,height:rows.length,shaped:false,invalid:true};
+      rows[Math.floor(i/width)][i%width]={key,qty:n};i++;
+    }
+    return {rows,width,height:rows.length,shaped:false};
+  }
+  function craftTemplate(recipe,size=craftSize){
+    const shape=itemShape(recipe),cells=Array(size*size).fill(null);
+    if(shape.width>size||shape.height>size||recipe.station==='table'&&size!==3)return null;
+    for(let y=0;y<shape.height;y++)for(let x=0;x<shape.width;x++){
+      const token=shape.rows[y]?.[x];if(token)cells[y*size+x]=typeof token==='string'?{key:token,qty:1}:{key:token.key,qty:token.qty||1};
+    }
+    return cells;
+  }
+  function normalizedCraft(cells,size){
+    const filled=[];for(let i=0;i<cells.length;i++)if(cells[i])filled.push([Math.floor(i/size),i%size,cells[i]]);
+    if(!filled.length)return {width:0,height:0,signature:''};
+    const minY=Math.min(...filled.map(x=>x[0])),maxY=Math.max(...filled.map(x=>x[0])),minX=Math.min(...filled.map(x=>x[1])),maxX=Math.max(...filled.map(x=>x[1]));
+    const width=maxX-minX+1,height=maxY-minY+1;
+    const parts=[];for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+      const hit=filled.find(c=>c[0]===minY+y&&c[1]===minX+x)?.[2];parts.push(hit?hit.key+':'+hit.qty:'_');
+    }return {width,height,signature:parts.join('|')};
+  }
+  function craftCostMatches(recipe){
+    const found=Object.create(null);for(const slot of craftCells.slice(0,craftSize*craftSize))if(slot)found[slot.key]=(found[slot.key]||0)+slot.qty;
+    return Object.keys(found).length===Object.keys(recipe.cost).length&&Object.entries(recipe.cost).every(([k,v])=>found[k]===v);
+  }
+  function gridMatchesRecipe(recipe){
+    if(recipe.station&&recipe.station!=='table')return false;
+    const template=craftTemplate(recipe);if(!template||!craftCostMatches(recipe))return false;
+    const shape=itemShape(recipe);
+    if(!shape.shaped)return true;
+    const a=normalizedCraft(craftCells.slice(0,craftSize*craftSize),craftSize),b=normalizedCraft(template,craftSize);
+    return a.width===b.width&&a.height===b.height&&a.signature===b.signature;
+  }
+  function matchingRecipe(){
+    if(preferredCraft&&gridMatchesRecipe(preferredCraft))return preferredCraft;
+    return ALL_RECIPES.find(r=>gridMatchesRecipe(r))||null;
+  }
+  function enterCraftStation(){
+    const newSize=nearbyCraftTable()?3:2;
+    if(newSize!==craftSize){craftSize=newSize;craftCells=Array(9).fill(null);preferredCraft=null;}
+    renderCraftingGrid();
+  }
+  function renderCraftingGrid(){
+    const table=craftSize===3,root=$('craft-grid');root.className='craft-grid'+(table?' workbench':'');
+    root.setAttribute('aria-label',table?'3 by 3 crafting table input':'2 by 2 inventory crafting input');
+    $('craft-heading').textContent=table?'🧰 Crafting Table · 3 × 3':'🎒 Inventory Crafting · 2 × 2';
+    $('craft-description').textContent=table?'Full workbench crafting. Tap items to place them, or pick a recipe below to arrange its materials.':'Your backpack has 4 crafting squares. Place a crafting table nearby for the 3 × 3 grid.';
+    const selector=$('craft-ingredient'),before=selector.value||selectedStackKey;selector.replaceChildren();
+    selector.add(new Option('Choose an ingredient',''));
+    for(const stack of backpackStacks()){const label=itemLabel(stack.key)+' ('+amount(stack.key)+')';if(![...selector.options].some(o=>o.value===stack.key))selector.add(new Option(label,stack.key));}
+    if([...selector.options].some(o=>o.value===before))selector.value=before;
+    root.replaceChildren();for(let i=0;i<craftSize*craftSize;i++){
+      const slot=craftCells[i],btn=document.createElement('button');btn.className='craft-cell'+(slot?' occupied':'');btn.type='button';
+      btn.setAttribute('aria-label','Craft slot '+(i+1)+(slot?' '+itemLabel(slot.key)+' × '+slot.qty:' empty'));
+      if(slot){const icon=document.createElement('span');icon.className='craft-icon';icon.textContent=stackIcon(slot.key);const caption=document.createElement('span');caption.textContent=itemLabel(slot.key).slice(0,12);btn.append(icon,caption);if(slot.qty>1){const qty=document.createElement('span');qty.className='craft-qty';qty.textContent=slot.qty;btn.append(qty)}}else btn.textContent='＋';
+      btn.addEventListener('click',e=>{
+        const ingredient=selector.value||selectedStackKey;const current=craftCells[i];
+        if(!ingredient){craftCells[i]=null;preferredCraft=null;renderCraftingGrid();return;}
+        const reserved=craftCells.slice(0,craftSize*craftSize).reduce((sum,c,j)=>sum+(i!==j&&c?.key===ingredient?c.qty:0),0);
+        if(current?.key===ingredient){const next=e.shiftKey?current.qty+1:0;craftCells[i]=next&&next+reserved<=amount(ingredient)?{key:ingredient,qty:next}:null;}
+        else craftCells[i]=amount(ingredient)>reserved?{key:ingredient,qty:1}:null;
+        preferredCraft=null;renderCraftingGrid();
+      });root.appendChild(btn);
+    }
+    const match=matchingRecipe(),out=$('craft-output');
+    out.textContent=match?'➜ '+match.name:'No result';
+    out.disabled=!match||!recipeCanCraft(match);
+    const count=craftCells.slice(0,craftSize*craftSize).filter(Boolean).length;
+    $('craft-state').textContent=match?(recipeCanCraft(match)?'✓ Valid recipe · tap the result to craft':'Find the required ingredients before crafting'):
+      count?'No matching recipe — check the shape and ingredient quantities':table?'Workbench ready · arrange up to nine ingredients':'Pocket crafting · arrange up to four ingredients';
+    const tableItem=inventory[168]+(bag.craftingTable||0);
+    $('craft-place-table').style.display=table?'none':'';
+    $('craft-place-table').textContent=table?'Workbench nearby':'Place Crafting Table ('+tableItem+')';
+    $('craft-place-table').disabled=!tableItem;
+  }
+  function previewRecipe(recipe){
+    if(recipe.station==='furnace'||recipe.station==='smithing'){
+      if(!recipeCanCraft(recipe)){toast('Need '+(recipe.station==='furnace'?'a Furnace':'a Smithing Table')+' and ingredients');return}
+      if(confirm('Use '+stationName(recipe.station)+' to make '+recipe.name+'?'))craft(recipe);return;
+    }
+    const plan=craftTemplate(recipe);
+    if(!plan){toast('This recipe needs a 3 × 3 crafting table. Craft and place one in the world first.');$('craft-state').textContent='⚠ 3 × 3 Crafting Table required for '+recipe.name;return;}
+    craftCells=plan;preferredCraft=recipe;renderCraftingGrid();$('craft-workspace')?.scrollIntoView?.({block:'nearest',behavior:'smooth'});
+  }
+  function placeCraftingTable(){
+    if(gameMode!=='survival')return;
+    if(!inventory[168]&&bag.craftingTable>0){bag.craftingTable--;inventory[168]++;}
+    if(!inventory[168]){toast('Make a Crafting Table using four planks in your 2 × 2 grid');return;}
+    const x=clamp(Math.floor(player.x+Math.sin(player.yaw)*3),2,W-3),z=clamp(Math.floor(player.z-Math.cos(player.yaw)*3),2,D-3),y=Math.max(2,Math.min(H-3,topAt(x,z)+1));
+    if(get(x,y,z)!==0){toast('Move toward a clear patch of ground to place your table');return;}
+    if(setBlock(x,y,z,168)){inventory[168]--;markSave();enterCraftStation();renderGear();toast('🧰 Crafting Table placed nearby · 3 × 3 unlocked');}
+  }
+  $('craft-clear').addEventListener('click',()=>{craftCells=Array(9).fill(null);preferredCraft=null;renderCraftingGrid()});
+  $('craft-output').addEventListener('click',()=>{const match=matchingRecipe();if(!match||!recipeCanCraft(match))return;craft(match);renderCraftingGrid()});
+  $('craft-place-table').addEventListener('click',placeCraftingTable);
   for(const label of ['All','Craftable','Classic',...catalog.categories.filter(x=>x!=='All')]){
     const option=document.createElement('option');option.value=label;option.textContent=label;$('recipe-category').appendChild(option);
   }
@@ -1543,14 +1734,14 @@ body.in-nether #game-wrap{background:#290f19}
       const b=document.createElement('button');b.type='button';b.className='recipe';b.disabled=!recipeCanCraft(r);
       const strong=document.createElement('strong');strong.textContent=r.name;
       const small=document.createElement('small');small.textContent=(r.station?'['+stationName(r.station)+'] ':'')+Object.entries(r.cost).map(([key,n])=>n+' '+itemLabel(key)).join(' + ')+(r.tip?' · '+r.tip:'');
-      b.append(strong,small);b.addEventListener('click',()=>craft(r));root.append(b);
+      b.append(strong,small);b.disabled=false;b.setAttribute('aria-label','Show crafting pattern for '+r.name);b.addEventListener('click',()=>previewRecipe(r));root.append(b);
     }
   }
   function renderGear(){
     const total=backpackStacks().length;
     $('resources-list').textContent='⛏ '+total+' stacks · 🪙 '+(bag.emerald||0)+' emeralds · 🪙 '+(bag.gold||0)+' gold · 💎 '+(bag.diamond||0)+' diamonds';
     $('gear-current').textContent='Equipped: '+(equipped==='none'?'Fists':(tools[equipped]||'none')+' '+equipped)+' · Pickaxe '+tools.pickaxe+' · Sword '+tools.sword;
-    renderBackpack();renderRecipes();renderVehicles();
+    renderBackpack();renderCraftingGrid();renderRecipes();renderVehicles();
   }
   function renderVehicles(){const root=$('ride-vehicles');root.replaceChildren();for(const [key,label] of [['boat','🛶 Oak Boat'],['spruceBoat','🛶 Spruce Boat'],['cherryBoat','🛶 Cherry Boat'],['raft','🎋 Bamboo Raft'],['minecart','🛤 Minecart'],['chestMinecart','📦 Chest Minecart'],['hopperMinecart','🛤 Hopper Minecart'],['furnaceMinecart','🔥 Furnace Minecart']]){
     const button=document.createElement('button');button.className='ui-button ride-vehicle';button.type='button';button.textContent=label+' ('+(bag[key]||0)+')';button.disabled=gameMode!=='survival'||!bag[key];button.addEventListener('click',()=>deployVehicle(key));root.appendChild(button);
@@ -1560,7 +1751,7 @@ body.in-nether #game-wrap{background:#290f19}
   $('item-equip').addEventListener('click',equipSelection);$('item-use').addEventListener('click',consumeSelection);
   $('item-drop').addEventListener('click',()=>dropSelection());$('item-drop-stack').addEventListener('click',()=>dropSelection(true));
   for(const id of ['recipe-search','recipe-category','recipe-craftable'])$(id).addEventListener(id==='recipe-search'?'input':'change',renderRecipes);
-  function openGear(){if(gameMode!=='survival'){toast('The Survival backpack and recipes are only available in Survival. Use ▣ Blocks to build in Creative.');return;}renderGear();$('gear-panel').classList.remove('hidden');paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock()}
+  function openGear(){if(gameMode!=='survival'){toast('The Survival backpack and recipes are only available in Survival. Use ▣ Blocks to build in Creative.');return;}enterCraftStation();renderGear();$('gear-panel').classList.remove('hidden');paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock()}
   function closeGear(){$('gear-panel').classList.add('hidden');if(started)start();else $('welcome').classList.remove('hidden')}
   function setDifficulty(level){
     if(!['peaceful','easy','normal','hard'].includes(level))return;
