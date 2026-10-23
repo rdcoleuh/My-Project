@@ -1,30 +1,15 @@
-# Minecraft Web — iPhone, iPad & Desktop (Java 26.3 experiment)
+# MineWorld — a self-hosted, original 3D browser game
 
-**Live site:** https://rdcoleuh.github.io/My-Project/
+**Play:** https://rdcoleuh.github.io/My-Project/
 
-This repository's `gh-pages` branch provides a **mobile-friendly web app / launcher** for experimental browser Minecraft clients. It does **not** distribute Minecraft Java game code.
+This is a standalone voxel sandbox whose complete playable engine lives in `index.html`. It is **not dependent on Eaglercraft, GoldHQ, Gaius, or external game hosting.** There is no external iframe and no demo timer.
 
-## On iPhone or iPad
+Features: procedurally generated hilly landscape, trees, beaches and water; WebGL 3D; mining; block placement; 9-slot hotbar; jumping and flying; autosaving your world in browser local storage; touch controls for iPhone and iPad; Safari Add to Home Screen installation; and offline caching of this game's own files.
 
-1. Open https://rdcoleuh.github.io/My-Project/ in **Safari**.
-2. Tap **Share → Add to Home Screen**.
-3. Enable **Open as Web App** and tap **Add**.
-4. Open Minecraft Web from the Home Screen and try the 26.3 mobile link.
+Desktop controls: WASD move, move mouse to look, left click mine, right click place, Space jump, F fly, Esc menu, 1–9 select blocks. On a phone: left joystick to move, swipe on the game scene to look, tap Mine/Place/Jump to interact.
 
-The website has responsive touch-friendly navigation, a Home Screen icon, a manifest and an offline-cached **launcher shell only**. Minecraft gameplay itself remains online.
+To add to your iPhone Home Screen: open the live website in Safari → Share → Add to Home Screen. The app uses your browser's local storage and works offline after its assets have been cached once.
 
-## What runs where
+**Important:** This is an original Minecraft-inspired building game, **not the genuine Minecraft Java Edition 26.3**. Hosting Microsoft's/Mojang's proprietary game code as an independently owned browser site requires rights and an authorized way to distribute/run that game. No Minecraft game code or proprietary assets are included here.
 
-- **Java 26.3 mobile experiment:** https://dev.eaglercraft.com/play?version=26.3 — listed as 26.3 on a provider that advertises mobile browsers, but **we have not verified actual 26.3 gameplay on iOS**.
-- **Java 26.3 desktop beta:** https://client.goldhq.net/ — its own published terms say phones and tablets are unsupported and blocked.
-- **Mobile-friendly fallback:** https://dev.eaglercraft.com/play?version=1.8.8 — older Minecraft version; its provider describes touch controls on compatible devices.
-
-External sites may disallow iframe embedding; direct launch links are the recommended approach. This website imposes no timed demo cutoff, but external beta availability, data saving and play duration cannot be guaranteed.
-
-## Downloadable iOS Xcode project
-
-An iOS SwiftUI + WKWebView **source project ZIP** has been generated for the user separately. It can be compiled and signed by Xcode on a Mac. It is **not** a pre-signed `.ipa`. An app wrapper does not supply or unlock 26.3 gameplay, and cross-origin game pages open in Safari.
-
-## Licensing / disclaimer
-
-Unofficial experimental fan launcher, not endorsed or approved by Mojang Studios, Microsoft, Eaglercraft, GoldHQ or Apple. Minecraft belongs to Mojang Studios / Microsoft. No proprietary game files or assets are distributed in this repository.
+GitHub Pages source: `gh-pages` branch.
