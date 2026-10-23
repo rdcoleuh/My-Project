@@ -7,8 +7,14 @@
   const peers = new Map();
   const sockets = new Map();
   let peer = null, host = null, role = 'offline', roomId = '', ready = false;
-  let nickname = 'Builder', lastSend = 0, loadPromise = null, guestWorld = false;
+  let nickname = 'Builder', lastSend = 0, loadPromise = null, guestWorld = false, publicWorld = '', isConnectingPublic = false, exitPending = false;
   const MAX_GUESTS = 6;
+  const PUBLIC = Object.freeze({
+    evergreen:{name:'Evergreen',id:'mineworld-pub-v21-evergreen',seed:17492331},
+    sunset:{name:'Sunset Valley',id:'mineworld-pub-v21-sunset',seed:8342193},
+    highlands:{name:'Highlands',id:'mineworld-pub-v21-highlands',seed:5173268}
+  });
+  const publicParam = new URL(location.href).searchParams.get('server');
   const roomParam = new URL(location.href).searchParams.get('room');
   function validId(id) { return /^[A-Za-z0-9][A-Za-z0-9_-]{0,100}[A-Za-z0-9]$/.test(id) || /^[A-Za-z0-9]$/.test(id); }
   function label() { return nickname.replace(/[<>]/g,'').trim().slice(0,16)||'Builder'; }
@@ -26,28 +32,29 @@
     const count = role==='host' ? sockets.size : (role==='guest' && ready ? peers.size : 0);
     $('online-count').textContent = String(count);
     $('online-hud').classList.toggle('hidden', role==='offline');
-    $('online-hud').textContent = role==='host' ? `👥 Hosting · ${count+1} playing` : role==='guest' ? `👥 ${ready?'Connected':'Connecting'} · ${count+1} players` : '';
+    $('online-hud').textContent = role==='host' ? `🌐 ${publicWorld?PUBLIC[publicWorld].name:'Private room'} · ${count+1} playing` : role==='guest' ? `🌐 ${publicWorld?PUBLIC[publicWorld].name:'Private room'} · ${ready?'Online':'Connecting'} · ${count+1} players` : '';
     $('chatbox').classList.toggle('hidden',role==='offline');
     $('roster').textContent = 'Players: '+[label(),...Array.from(peers.values()).map(p=>p.name)].join(', ');
-    $('copy-room').disabled = role!=='host' || !roomId;
+    $('copy-room').disabled = role==='offline' || !roomId;
     $('leave-room').disabled = role==='offline';
     if(role==='host')$('room-code').value=roomId;
+    document.querySelectorAll('[data-public]').forEach(b=>b.disabled=(role!=='offline'&&role!=='connecting'));
   }
   function openLobby() {
     $('lobby').classList.remove('hidden');
     if(document.pointerLockElement) document.exitPointerLock();
     try { nickname = ($('player-name').value||'Builder').trim().slice(0,16)||'Builder'; }
     catch(_){}
-    if(role==='offline')setStatus('Offline. Host a room or paste a friend’s invitation link.');
+    if(role==='offline'&&!isConnectingPublic)setStatus('Choose a public world, or create a private room.');
     updateUI();
   }
   function closeLobby() { $('lobby').classList.add('hidden'); }
-  function createInvite() { const u = new URL(location.origin+location.pathname); u.searchParams.set('room',roomId); return u.toString(); }
+  function createInvite() { const u = new URL(location.origin+location.pathname); if(publicWorld)u.searchParams.set('server',publicWorld);else u.searchParams.set('room',roomId); return u.toString(); }
   function cleanup(reason) {
     if(peer) {const old=peer; peer=null; try{old.destroy()}catch(_){}}
     host=null;
     for(const c of sockets.values())try{c.close()}catch(_){}
-    sockets.clear();peers.clear();ready=false;roomId='';role='offline';
+    sockets.clear();peers.clear();ready=false;roomId='';role='offline';publicWorld='';isConnectingPublic=false;guestWorld=false;
     history.replaceState(null,'',location.pathname);
     updateUI();
     if(reason)setStatus(reason);
@@ -84,7 +91,7 @@
       if(bridge.acceptSnapshot(message.world)) {
         ready=true;peers.clear();
         for(const p of message.players||[])if(p && p.id && p.id!==peer.id){const state=cleanPlayer(p.state);if(state)peers.set(p.id,state)}
-        setStatus('Connected to host! Tap “Back to Game,” then Play or Resume.');
+        setStatus(`Connected to ${publicWorld?PUBLIC[publicWorld].name:'room'}! ${publicWorld?'Public world is live.':'Shared world loaded.'} Tap Back to Game, then Play.`);
         talk('', 'Shared world loaded. You can mine and build with friends.', true);
         updateUI();
       } else setStatus('Unable to load the shared world (incompatible save data).');
@@ -180,6 +187,66 @@
     }catch(e){cleanup('Could not join: '+e.message)}
     finally{$('join-room').disabled=false}
   }
+  /* Public sessions use predictable PeerJS host IDs. First visitor claims the
+     ID; later visitors join its WebRTC data channel. There is no always-on server. */
+  async function joinPublic(which) {
+    const cfg=PUBLIC[which];
+    if(!cfg){setStatus('That public world does not exist.');return;}
+    if(role!=='offline'){setStatus('Leave your current world before joining another.');return;}
+    if(isConnectingPublic)return;
+    isConnectingPublic=true;publicWorld=which;nickname=label();role='connecting';
+    document.querySelectorAll('[data-public]').forEach(b=>b.disabled=true);
+    setStatus('Finding public world: '+cfg.name+'…');
+    try{
+      const Peer=await peerLibrary();
+      if(role!=='connecting'||publicWorld!==which)return;
+      let p=new Peer(cfg.id,{debug:1});peer=p;
+      p.on('open',id=>{
+        if(peer!==p||role!=='connecting')return;
+        role='host';ready=true;isConnectingPublic=false;guestWorld=false;roomId=id;
+        bridge.resetPublicWorld(cfg.seed);
+        try{history.replaceState(null,'',location.pathname+'?server='+which)}catch(_){}
+        setStatus(cfg.name+' is live. You started the public session! Other players can join now. Keep this tab open.');
+        talk('',cfg.name+' public session started. Anyone can join and edit.',true);
+        updateUI();
+      });
+      p.on('connection',conn=>{if(peer===p&&role==='host')onGuest(conn)});
+      p.on('error',err=>{
+        if(peer!==p)return;
+        if(err.type==='unavailable-id' && role==='connecting'){
+          try{p.destroy()}catch(_){}
+          if(peer===p){peer=null;connectPublicGuest(Peer,which)}
+        } else if(role==='connecting') {
+          cleanup('Public connection failed: '+(err.type||err.message||'Network issue')+'. Try again.');
+        } else setStatus('Public signaling issue: '+(err.type||err.message||'Please check connection'));
+      });
+      p.on('disconnected',()=>{if(peer===p&&role==='host')setStatus('Lost signaling service; connected players may still be online.');});
+    }catch(e){cleanup('Could not open public world: '+e.message)}
+    finally{if(role==='offline')document.querySelectorAll('[data-public]').forEach(b=>b.disabled=false)}
+  }
+  function connectPublicGuest(Peer,which) {
+    const cfg=PUBLIC[which];
+    role='guest';guestWorld=true;ready=false;roomId=cfg.id;
+    const p=peer=new Peer(undefined,{debug:1});
+    p.on('open',()=>{
+      if(peer!==p)return;
+      const conn=host=p.connect(cfg.id,{reliable:true,serialization:'json',metadata:{name:nickname}});
+      const timeout=setTimeout(()=>{if(conn===host&&!ready){setStatus('Could not reach public host. Tap Leave Room and retry.');}},12000);
+      conn.on('open',()=>{
+        if(conn===host){clearTimeout(timeout);setStatus('Connected. Downloading public world…');send(conn,{t:'hello',name:label()});}
+      });
+      conn.on('data',message=>receiveHostData(conn,message));
+      conn.on('close',()=>{
+        clearTimeout(timeout);
+        if(conn===host){host=null;ready=false;peers.clear();setStatus('Public host left. This session ended; leave and rejoin to start a fresh public world.');updateUI()}
+      });
+      conn.on('error',err=>{clearTimeout(timeout);setStatus('Peer connection issue: '+(err.message||'Try another network'))});
+      try{history.replaceState(null,'',location.pathname+'?server='+which)}catch(_){}
+      isConnectingPublic=false;
+      updateUI();
+    });
+    p.on('error',err=>{if(peer===p)setStatus('Unable to join public world: '+(err.type||err.message||'Network error'))});
+  }
   function localEdit(i,b){
     if(role==='host')broadcast({t:'edit',i,b});
     else if(role==='guest' && ready)send(host,{t:'edit',i,b});
@@ -199,15 +266,16 @@
     else send(host,{t:'chat',text:message});
   }
   window.MineWorldMultiplayer={
-    localEdit,tick,isGuest:()=>guestWorld,getRemotes:()=>Array.from(peers.values()),
+    localEdit,tick,isGuest:()=>guestWorld,isShared:()=>guestWorld||!!publicWorld||exitPending,getRemotes:()=>Array.from(peers.values()),
     broadcastWorld:()=>{if(role==='host'){broadcast({t:'world',world:bridge.getSnapshot()});updateUI();}},
     getMode:()=>role
   };
   for(const id of ['friends-toggle','welcome-friends','pause-friends'])$(id)?.addEventListener('click',openLobby);
   $('close-lobby').addEventListener('click',closeLobby);
+  document.querySelectorAll('[data-public]').forEach(b=>b.addEventListener('click',()=>joinPublic(b.dataset.public)));
   $('host-room').addEventListener('click',createRoom);
   $('join-room').addEventListener('click',joinRoom);
-  $('leave-room').addEventListener('click',()=>{const wasGuest=guestWorld;cleanup('You left the room.');if(wasGuest)location.reload();});
+  $('leave-room').addEventListener('click',()=>{const wasShared=role!=='offline';exitPending=!!publicWorld||guestWorld;cleanup('You left the room.');if(wasShared)location.reload();});
   $('copy-room').addEventListener('click',async()=>{
     if(!roomId||role!=='host')return;
     const invite=createInvite();
@@ -221,7 +289,11 @@
   $('player-name').addEventListener('change',()=>{nickname=label();try{localStorage.setItem('mineworld-name',nickname)}catch(_){}updateUI()});
   try {const saved=localStorage.getItem('mineworld-name');if(saved)$('player-name').value=saved.slice(0,16)}catch(_){}
   nickname=label();
-  if(roomParam && validId(roomParam)){
+  if(publicParam && PUBLIC[publicParam]){
+    $('lobby').classList.remove('hidden');
+    setStatus('Joining public world '+PUBLIC[publicParam].name+'…');
+    setTimeout(()=>joinPublic(publicParam),150);
+  } else if(roomParam && validId(roomParam)){
     $('room-code').value=roomParam;
     $('lobby').classList.remove('hidden');
     setStatus('Your friend invited you! Enter a name and tap Join Room.');
