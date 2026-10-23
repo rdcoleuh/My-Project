@@ -1,21 +1,46 @@
-# MineWorld 3.5 — Survival-first progression and separate Creative worlds
+# MineWorld 3.6 — Survival Inventory, Expanded Crafting & Rideable Mounts
 
-Play: https://rdcoleuh.github.io/My-Project/
+**Play now:** https://rdcoleuh.github.io/My-Project/
 
-**Survival features are earned through gameplay.** Survival and Creative now have **different local save slots** and independent block edits, inventories, locations, dimension progress, villager trades, crops and seeds. A legacy world is automatically copied into the appropriate slot the first time the new version loads, leaving the original legacy key intact for backup. The last active mode is restored when refreshing the page.
+MineWorld is an **independently authored**, Minecraft-inspired browser voxel survival game. It does not include or depend on proprietary Mojang/Microsoft game assets or code.
 
-## Play Survival
+## New Survival inventory
 
-1. On the home screen, select **Play Survival**. You start with no starter items. Mine trees, craft planks/sticks/tools, gather ores, eat food, farm, trade with villagers, and claim one-time structure chest loot.
-2. In Gear & Crafting, make Flint & Steel from iron and flint. Gravel can now drop flint. Mine 10 obsidian with a diamond pickaxe or find it in structures. The Nether menu can build and light a physical 10-obsidian portal frame, unlocking Nether travel. Return to the Overworld through the portal menu.
-3. Mine Nether ores and ancient debris, trade, explore bastions for upgrade templates, forge Netherite equipment, fight Nether mobs, and obtain blaze rods and ender pearls.
-4. Craft Eyes of Ender, track down a stronghold, place 12 Eyes, and enter the End. Defeat the dragon before using the End exit portal.
-5. In Survival, the Overworld Atlas, Nether biome directory, End biome directory, and village board give coordinates only; **they cannot teleport you**. Creative retains instant biome travel.
+- **36 visible inventory slots per page**, with 64-item resource stacks, item icons, counts, paging, and search. Extra stacks are accessible on following pages so existing saves aren't truncated. Specific pieces of equipment stack individually.
+- Tap a stack and choose **Equip / Hotbar**, **Eat / Use**, **Drop 1**, or **Drop Stack**. Drag one stack onto another to reorder them on a desktop.
+- Crafted armor is equippable in head/chest/legs/feet slots and reduces damage. Equipped armor, inventory order, vehicles, block stacks, items, world edits, and progression are saved.
+- Creative remains a **separate saved world** with unlimited placeable blocks, no Survival resource transfers, and no shortcut to Survival progress.
+- The fixed-size Backpack is a paged view of the existing resource ledger, rather than a full slot-constrained Minecraft inventory: it does not yet implement cursor-held stacks, container transfers, or strict 36-slot carry limits.
 
-Survival players cannot enable flight or switch their existing world to Creative. The Mode label in the pause menu is locked; use Home to open the separate Creative save. Creative has unlimited building blocks and travel but cannot claim Survival chests, trades, farming rewards, or boss progression.
+## Crafting catalog
 
-**Multiplayer:** public rooms require Survival mode; private rooms require matching modes between host and guest. Nether/End world snapshots include portal progression. Browser-hosted multiplayer is not tamper-proof: there is no dedicated authoritative survival server, and actual multi-device tests are still needed. World save data is stored in each browser's localStorage, not cloud-synced. Older legacy saves remain available under their previous key.
+The original recipe selection is preserved and **220 additional authored recipes** are available (267 recipe entries total in this release). Search and filter recipes by category, station, and craftability:
 
-## Limitations
+- Basic planks, sticks, torch, crafting table, furnace, storage barrel, chests, and workstations.
+- Wood/stone/iron/gold/diamond tools, sword/pickaxe/hoe/axe/shovel; Netherite upgrades; bows and shields.
+- Leather/iron/gold/diamond/Netherite armor, furniture, food, farms, ore processing, building blocks, rails, carts, boats, rafts, redstone components, End and Nether items.
+- Basic **crafting table, furnace, and smithing table** station requirements, with actual resources consumed and results placed in the saved Survival bag.
 
-MineWorld is an independently written Minecraft-inspired game, not Minecraft Java Edition. Crafting, structures, loot and mob behavior are simplified; Survival is much richer but not a complete implementation of every Minecraft mechanic. Nether portals are built via an in-game crafting action with 10 obsidian plus Flint & Steel instead of exact frame detection. End progress remains simplified. No official game code or textures distributed.
+**Important:** 267 entries are **not every Minecraft crafting recipe**. Some crafting results are stored items only; complex redstone machines, storage containers, potions, enchanting, and many transport details do not have exact vanilla gameplay behavior. Recipes are original approximations, not reproductions of an official crafting table.
+
+## Rideable creatures and transport
+
+Approach a rideable and tap **RIDE** (or **M** on a keyboard). Press again (or hold **Shift**) to dismount. Use the left mobile joystick or WASD to steer. Some species need a saddle, harness, or taming food, plus a steering item.
+
+- **Overworld:** horse, donkey, mule, camel, llama (limited steering), pig, skeleton horse and zombie horse.
+- **Nether:** strider on lava, with saddle and Warped Fungus on a Stick.
+- **Happy Ghast:** craft a harness; ride as a simplified flying mount (Space to ascend on desktop, Jump on touch devices).
+- **Crafted vehicles:** oak, spruce and cherry boats, bamboo rafts, and minecart variants. Craft then deploy them from the bottom of the Gear & Crafting menu.
+- Controls exist on both mobile and desktop. Boat floats at local water level, with simplified steering. Minecarts **do not yet follow physical rail networks**. Riders' player positions are shared in multiplayer, with best-effort positioning for ridden mobs, but vehicles are not fully server-authoritative or guaranteed to synchronize across clients.
+
+## How to play
+
+Select **Survival** from the home screen, mine blocks and collect items, then tap **🎒 Gear** or press **I**. Craft a table and tools, collect more supplies, and use the Inventory tabs and search to find specific recipes. Craft a boat or look for animals, then tap Ride. Your Survival save is separate from Creative, so changing modes will not transfer items or gear.
+
+## Testing and known limits
+
+- Syntax checks passed for game and catalog JavaScript.
+- Simulated browser checks passed for Survival startup, all 36 backpack slots on desktop and a touch device, recipe catalog, crafting table, boat crafting/deployment/mount/dismount, stored vehicles, and mounted camel interaction.
+- Gameplay on an actual iPhone/iPad and cross-device multiplayer mount synchronization remain unverified.
+- There are no permanent dedicated multiplayer servers; the public PeerJS/WebRTC rooms are browser-hosted and peer-owned.
+- External permission to use actual Minecraft code/assets is not provided; this release is an independently created sandbox and **is not Minecraft Java Edition**.
