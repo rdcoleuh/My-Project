@@ -1,42 +1,42 @@
-# MineWorld Together — multiplayer voxel sandbox
+# MineWorld 2.0 — Public Multiplayer Worlds
 
-**Website:** https://rdcoleuh.github.io/My-Project/
+**Play the site:** https://rdcoleuh.github.io/My-Project/
 
-MineWorld Together is an original block-building game that runs directly in the browser. It is **not Minecraft Java Edition 26.3** and does not contain Minecraft's proprietary game code, textures, servers, or brand assets. It is inspired by voxel-building games and some themes from the latest Minecraft update.
+MineWorld 2.0 is an **original self-hosted 3D voxel game** inspired by block-building games. It is not Minecraft Java 26.3 or a redistribution of Microsoft/Mojang game files.
 
-## Features
+## Public multiplayer (browser-hosted sessions)
 
-- Self-hosted WebGL world and original procedural terrain
-- Forests with colorful autumn poplar trees, beaches, water, shrubs, and mushrooms
-- Creative building, mining, Survival-style resource inventory, plank crafting
-- 18 block types through two nine-slot hotbar pages (press **E**, or tap **Blocks**)
-- Jumping, flying, 3D other-player avatars, day/night sky, mobile touch joystick and buttons
-- Save your solo world or host world locally in your own browser
-- **Play together**: Host a peer-to-peer room, copy the invitation URL, have up to six friends connect from their browsers, mine/build together, see each other's positions, and use chat
+1. Open the site in Safari, Chrome or Edge and select **Public servers / Friends**.
+2. Enter a display name and choose **Evergreen**, **Sunset Valley**, or **Highlands**.
+3. First player to join becomes the session host. Later visitors to that same public world connect to the host automatically.
+4. Play together: player positions, block edits, world snapshots, and chat synchronize over WebRTC. Up to 7 concurrent players per world (host plus 6 guests).
+5. You can share the public server URL (use **Copy Invite Link**) or just tell friends which world to join.
 
-## Play online with friends
+**Limitations:** These are **open, public, peer-hosted multiplayer sessions**, not 24/7 dedicated servers. The hosting player's browser must remain open. When the host leaves, players disconnect; a new public session can be started by the next visitor, and earlier session changes are not stored on a permanent server. A player on a restrictive network may not connect. There is no moderation, anti-cheat, permanent global world storage, or matchmaking count from a backend. Do not post personal information in chat. Public worlds allow visitors to edit each other's blocks.
 
-1. Open the site, choose **Friends** → **Create Room**.
-2. When the status shows **Room created**, choose **Copy Invite Link** and message the link to friends.
-3. Friends open the link on their device, enter a name and click **Join Room**.
-4. Once the world downloads, they tap **Back to Game** and **Play Now**. Block changes and players are shared.
-5. Keep the host's tab/device connected. If the host leaves, the shared session ends.
+The program uses a PeerJS WebRTC library loaded from jsDelivr and the free PeerJS Cloud signaling service. This server only introduces browsers; real-time gameplay data travels over direct WebRTC channels if reachable. The core game/terrain, world rules, rendering and UI run on **your GitHub Pages website**. Internet is required for multiplayer. No built-in time limit.
 
-**Important limitations:** GitHub Pages only hosts static files. Multiplayer uses the MIT-licensed [PeerJS](https://peerjs.com/) client, loaded on demand from jsDelivr, and the free PeerJS Cloud signaling server to connect players by WebRTC. A relay or signaling service may be needed in restricted networks; no guaranteed connection across all NAT/firewall setups, and no always-online server, account system, grief protection, moderation, anti-cheat, or cross-play with genuine Minecraft. Room links are not passwords. Do not share them publicly. Players should avoid real names or sensitive messages in chat. This has not been verified on a live connection between two remote devices.
+## Also included
 
-The host maintains the authoritative copy of the saved world for the room, while each guest keeps their own pre-existing solo save intact. If guests leave, their shared session ends; don't rely on the guest browser for backups. **There is no built-in play time limit**. Multiplayer requires internet access and support for WebRTC, and the free signaling service has no uptime guarantee.
+- Private invitation-code rooms, using the existing **Create Private Room** / **Join With Code** buttons
+- 18 block types, two hotbar pages, procedural forests, water, original poplar trees, resource collection and plank crafting
+- Mining, placement, moving 3D player avatars, day/night sky, optional flight and saveable solo worlds
+- iPhone/iPad touch joystick, touch actions, mobile-friendly public-lobby cards and Add to Home Screen PWA
+- Solo world stored only in browser. Joining a public session does not replace your solo save.
 
-## iPhone / iPad
+## Real always-on public servers
 
-Open the website in Safari, Share → Add to Home Screen. Touch joystick controls movement, swiping looks around, and jump / mine / place buttons interact with the world. Multiplayer rooms are experimental on Safari/iOS and can fail on some networks. Landscape mode recommended.
+GitHub Pages serves static files only. A full persistent 24/7 public server would require an independently hosted real-time backend, persistent database, moderation, rate limiting and ongoing infrastructure. This version delivers public **live sessions** without that backend, not a permanent server.
 
-## Developer files
+## Testing status
 
-- `index.html` — complete original WebGL voxel game and user interface
-- `multiplayer.js` — original room, chat and synchronization code; PeerJS library is fetched when needed
-- `manifest.webmanifest`, `apple-touch-icon.png`, `favicon.svg` — installable website assets
-- `sw.js` — offline-first caching of the solo game shell; multiplayer never works offline
+JavaScript syntax and lobby UI were tested locally, including mock session hosting. This does not prove real connectivity between different physical devices or network providers. See the game status message after joining to verify your live session; all players must use the same site and public world.
 
-## Legal
+## Source
 
-Not affiliated with Mojang Studios, Microsoft, Minecraft, PeerJS or any Minecraft third-party port. This website runs an original game and does not enable access to official Minecraft servers or copyrighted builds.
+- `index.html`: main WebGL game and responsive UI
+- `multiplayer.js`: original public/private room logic (PeerJS/WebRTC)
+- `sw.js`: offline shell cache, no offline multiplayer
+- `manifest.webmanifest`: PWA configuration
+
+Unofficial, not affiliated with Mojang Studios, Microsoft, PeerJS or Minecraft.
