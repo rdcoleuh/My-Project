@@ -7,7 +7,7 @@
  const B=n=>'block:'+n;
  const table={station:'table'}, furnace={station:'furnace'}, smith={station:'smithing'};
  // Early-game essentials; all ingredients map to actual block inventory or collected bag items.
- add('Basics','Crafting Table',{[B(11)]:4},{craftingTable:1});
+ add('Basics','Crafting Table',{[B(11)]:4},{[B(168)]:1});
  add('Basics','Sticks',{[B(11)]:2},{sticks:4});
  add('Basics','Wooden Planks',{[B(5)]:1},{[B(11)]:4});
  for(const [wood,id] of [['Poplar',15],['Spruce',30],['Birch',32],['Acacia',34],['Jungle',36],['Mangrove',38],['Cherry',40],['Pale Oak',42]])add('Basics',wood+' Planks',{[B(id)]:1},{[B(11)]:4});
