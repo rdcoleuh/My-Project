@@ -76,6 +76,33 @@
 .public-world[disabled]{opacity:.6}
 @media(max-width:540px){.public-worlds{padding:9px}.public-cards{grid-template-columns:1fr;gap:7px}.public-world{min-height:60px;display:grid;grid-template-columns:1fr auto;align-items:center}.public-world strong{grid-column:1}.public-world small{grid-column:1}.public-world span{grid-column:2;grid-row:1/3}.lobby-modal{max-height:93dvh;overflow:auto}}
 
+
+/* Mode-selection start screen, with hand-painted in-CSS block dioramas. */
+#game-wrap:has(#welcome:not(.hidden)) #top-ui,#game-wrap:has(#welcome:not(.hidden)) #hud-bottom,#game-wrap:has(#welcome:not(.hidden)) #crosshair,#game-wrap:has(#welcome:not(.hidden)) #target-name,#game-wrap:has(#welcome:not(.hidden)) #mobile-controls { visibility:hidden }
+#game-wrap:has(#welcome:not(.hidden)) #sky-decor{opacity:1!important}
+#welcome{background:linear-gradient(180deg,#0a1f19bc,#07120ef0),radial-gradient(ellipse at 50% 10%,#4b995d87,transparent 68%);align-items:center}
+.home-modal{width:min(92vw,760px);padding:clamp(19px,4vw,35px);border:2px solid #a3ba80;border-radius:10px;background:linear-gradient(165deg,#2a432dbd,#14261eef);box-shadow:0 12px 0 #09180dd0,0 30px 65px #000c}
+.home-modal h1{font-size:clamp(39px,8vw,68px);margin:2px 0 5px;text-shadow:4px 5px #132318;letter-spacing:-.07em}
+.home-modal h1 span{color:#bbf27d}
+.home-modal .home-subtitle{margin:6px auto 22px;max-width:470px}
+.mode-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;text-align:left;margin:20px 0 11px}
+.mode-card{border:2px solid #547451;background:linear-gradient(180deg,#274932,#172d20);border-radius:9px;padding:15px;min-width:0;box-shadow:inset 0 1px #ffffff20,0 6px 0 #06130950}
+.mode-card.survival{background:linear-gradient(180deg,#614631,#2c2a1d);border-color:#a18152}
+.mode-illustration{height:87px;position:relative;overflow:hidden;border-radius:4px;border:1px solid #ffffff3b;margin-bottom:12px;background:linear-gradient(#80bbcf 0 58%,#4c923b 58% 72%,#77543a 72%)}
+.mode-illustration:after{content:'';position:absolute;width:46px;height:40px;bottom:11px;left:50%;transform:translateX(-50%) skewY(-7deg);background:linear-gradient(#5da044 0 35%,#775439 35% 100%);box-shadow:12px 10px 0 #523d2c,-14px 7px 0 #8e6845,inset -9px 0 #0002}
+.mode-card.survival .mode-illustration{background:linear-gradient(#e6a779 0 55%,#8d964a 55% 67%,#745041 67%)}
+.mode-card.survival .mode-illustration:after{background:linear-gradient(#949a99 0 40%,#74624d 40%)}
+.mode-card h2{font-size:21px;margin:0 0 3px;color:#e8ffcd;letter-spacing:-.03em}
+.mode-card p{font-size:12px;margin:0 0 13px;min-height:62px;line-height:1.48}
+.mode-card .main-button{font-size:15px;min-height:48px}
+.mode-card.survival .main-button{background:#e8c28e;border-color:#fce0b5;box-shadow:inset 0 -4px #b58755}
+.mode-caption{font-size:11px;color:#bfdeba;text-transform:uppercase;letter-spacing:.1em;font-weight:900}
+#survival-hud{display:flex;align-items:center;justify-content:center;gap:10px;background:#182b20d9;border:1px solid #a0a8949c;border-radius:8px;padding:6px 10px;color:#fff5e4;font-size:12px;pointer-events:auto;white-space:nowrap}
+#health-text{color:#ff8482}#hunger-text{color:#ecc67d}
+#eat-btn{background:#617a40;border:1px solid #cad897;border-radius:6px;color:#fff9ec;min-height:28px;padding:3px 9px;font-weight:800;font-size:11px}
+@media(max-width:600px){.home-modal{width:min(97vw,690px);padding:18px 13px}.mode-cards{gap:9px}.mode-card{padding:9px}.mode-illustration{height:50px;margin-bottom:7px}.mode-card h2{font-size:17px}.mode-card p{font-size:11px;min-height:69px}.mode-card .main-button{font-size:12px;min-height:45px}.home-modal .home-subtitle{font-size:11px;margin:4px auto 8px}.home-modal h1{font-size:36px}#survival-hud{gap:5px;padding:5px 7px;font-size:10px}#eat-btn{font-size:10px}}
+@media(max-height:590px){.home-modal{padding:12px}.home-modal h1{font-size:30px}.emblem{display:none}.mode-cards{margin:8px 0}.mode-card{padding:9px}.mode-card p{min-height:0;margin-bottom:7px}.mode-illustration{display:none}.home-modal .note{display:none}.home-modal .features{display:none}}
+@media(pointer:coarse){#survival-hud{margin-bottom:0}}
 </style>
 <title>MineWorld — Build Your Own World</title>
 </head>
@@ -92,8 +119,9 @@
   <div id="online-hud" class="hidden">👥 Offline</div>
   <div id="target-name">Aim at a block to mine</div>
   <div id="hud-bottom">
+    <div id="survival-hud" class="hidden" aria-live="polite"><span id="health-text">♥ 20/20</span><span id="hunger-text">🍖 20/20</span><button id="eat-btn" type="button" aria-label="Eat mushroom">Eat 🍄 0</button></div>
     <div id="hotbar" role="toolbar" aria-label="Choose a building block"></div>
-    <div id="hints">WASD move · Mouse look · Left click mine · Right click place · E blocks · Space jump · F fly · 1–9 select</div>
+    <div id="hints">WASD · Mouse look · Left mine · Right place · E blocks · Space jump · F Creative fly · Q eat · 1–9 select</div>
   </div>
   <div id="coord-readout">X 0 · Y 0 · Z 0</div>
   <div id="mobile-controls" aria-label="Touch game controls">
@@ -101,22 +129,32 @@
     <div id="touch-buttons"><button id="jump-btn" class="touch-btn" aria-label="Jump">↑<small>JUMP</small></button><button id="mine-btn" class="touch-btn mine" aria-label="Mine block">⛏<small>MINE</small></button><button id="place-btn" class="touch-btn place" aria-label="Place block">▣<small>PLACE</small></button></div>
   </div>
   <div id="welcome" class="modal-backdrop">
-    <section class="modal" aria-label="Game introduction">
-      <div class="emblem" aria-hidden="true">▧</div>
-      <div class="kicker">YOUR WORLD · YOUR RULES</div>
-      <h1>Welcome to <span>MineWorld</span></h1>
-      <p>Explore rolling hills, forests and water. Mine blocks, build anything, and return to your saved world. Everything runs from <strong>this website's own original game code.</strong></p>
-      <div class="features"><span>✦ Autumn forests</span><span>⛏ Mining &amp; building</span><span>🌐 Public multiplayer</span><span>☁ Autosave</span></div>
-      <button id="start-btn" class="main-button">▶ &nbsp; PLAY NOW</button>
-      <button id="welcome-friends" class="ui-button" style="width:100%;margin-top:12px">🌐 Play on public servers</button>
-      <p class="note">Original Minecraft-inspired game — not Minecraft Java Edition 26.3 or an official Mojang product. No Eaglercraft, external game iframe, account or demo timer.</p>
+    <section class="modal home-modal" aria-label="MineWorld main menu">
+      <div class="kicker">✦ BUILD · EXPLORE · SURVIVE ✦</div>
+      <h1>MINE<span>WORLD</span></h1>
+      <p class="home-subtitle">Choose your adventure. Your world, your way — on phone, tablet or desktop.</p>
+      <div class="mode-cards" role="group" aria-label="Choose a game mode">
+        <div class="mode-card creative"><div class="mode-illustration" aria-hidden="true"></div>
+          <div class="mode-caption">Unlimited building</div><h2>✦ Creative</h2>
+          <p>Build anything with unlimited blocks, explore freely and fly around your world.</p>
+          <button id="start-btn" class="main-button" type="button">▶ PLAY CREATIVE</button>
+        </div>
+        <div class="mode-card survival"><div class="mode-illustration" aria-hidden="true"></div>
+          <div class="mode-caption">Gather and survive</div><h2>♥ Survival</h2>
+          <p>Mine your supplies, craft planks, watch health and hunger, and eat to stay alive.</p>
+          <button id="survival-start" class="main-button" type="button">▶ PLAY SURVIVAL</button>
+        </div>
+      </div>
+      <button id="welcome-friends" class="ui-button" style="width:100%;margin-top:10px">🌐 Public multiplayer / Friends</button>
+      <p class="note">An independent voxel sandbox with original pixel-art textures. Not the official Minecraft game. World changes save in this browser; public worlds are live peer-hosted sessions.</p>
     </section>
   </div>
   <div id="pause" class="modal-backdrop hidden">
     <section class="modal menu-modal" aria-label="Game menu">
       <div class="kicker">MINEWORLD</div><h2>Game menu</h2>
-      <p>Pick up where you left off, switch flying mode, or generate a brand new world.</p>
+      <p>Resume exploring, switch between Creative and Survival, or return to the home screen.</p>
       <button class="main-button" id="resume-btn">▶ &nbsp; Resume Game</button>
+      <button id="home-btn" class="ui-button" style="width:100%;margin-top:10px">⌂ Home Screen · Choose Mode</button>
       <button id="pause-friends" class="ui-button" style="width:100%;margin-top:10px">🌐 Public servers / Friends</button>
       <div class="menu-actions"><button id="fly-btn" class="ui-button">✦ Flying: Off</button><button id="save-btn" class="ui-button">↓ Save World</button></div>
       <div class="menu-actions"><button id="mode-btn" class="ui-button">⚒ Mode: Creative</button><button id="craft-btn" class="ui-button">🪵 Craft 4 Planks</button></div>
@@ -156,8 +194,9 @@
     <div class="chat-row"><input id="chat-entry" maxlength="160" autocomplete="off" placeholder="Message friends…"><button id="chat-send" type="button">Send</button></div>
   </div>
   <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD · PUBLIC WORLDS · v2.1</div>
+  <div class="version">MINEWORLD · CREATIVE + SURVIVAL · v2.2</div>
 </div>
+<script src="./texture-atlas.js"></script>
 <script>
 /* MineWorld — original browser voxel sandbox; no Minecraft game code or third-party runtime. */
 (() => {
@@ -189,7 +228,7 @@
   ];
   const player={x:32.5,y:16,z:32.5,vy:0,yaw:.4,pitch:-.12,ground:false,fly:false};
   const keys=new Set(); let seed=85721, started=false, paused=true, selection=0, frameCount=0, lastTime=0, meshCount=0, vbo=null, savedEdits=new Map(), dirtySave=false, saveTimer=0, aim=null, notifications=0, dayClock=0, deltaViewX=0, deltaViewY=0;
-  let gameMode='creative';
+  let gameMode='creative',health=20,hunger=20,hungerDrain=0,hungerPulse=0,healPulse=0;
   const inventory=new Uint16Array(18);
   const movement={x:0,y:0}, touchHold={mine:false,place:false}, timers={mine:0,place:0};
   const isTouch=matchMedia('(pointer: coarse)').matches;
@@ -244,18 +283,13 @@
     set(x,y,z,b);savedEdits.set(idx(x,y,z),b);buildMesh();markSave();if(!remote)window.MineWorldMultiplayer?.localEdit(idx(x,y,z),b);return true;
   }
   function pushFace(a,x,y,z,b,f){
-    let base=COLORS[b]||[.7,.7,.7];let shade=f.shade;let variant=.89+.2*rand(x*37+f.n[0]*13,z*41+y*23+f.n[2]*11);
-    let c=base.slice();
-    if(b===1&&f.n[1]===0)c=[.43,.39,.24];
-    if(b===5&&f.n[1])c=[.67,.51,.30];
-    if(b===11&&f.n[1])c=[.72,.54,.34];
-    if(b===15&&f.n[1])c=[.77,.64,.48];
-    if(b===8)c=[.69+.05*(y%2),.30,.25];
-    if(b===9)c=[.65,.86,.93];
-    if(b===10)c=[1,.91,.54];
-    const r=clamp(c[0]*shade*variant,0,1),g=clamp(c[1]*shade*variant,0,1),blue=clamp(c[2]*shade*variant,0,1);
+    const face=f.n[1]===1?0:(f.n[1]===-1?2:1);
+    const shade=f.shade*(.95+rand(x*37,z*41+y*23)*.10);
     const vs=f.v;
-    for(const i of [0,1,2,0,2,3]){const v=vs[i];a.push(x+v[0],y+v[1],z+v[2],r,g,blue)}
+    for(const i of [0,1,2,0,2,3]){
+      const v=vs[i],uv=window.MineWorldAtlas.uv(b,face,i);
+      a.push(x+v[0],y+v[1],z+v[2],shade,shade,shade,uv[0],uv[1]);
+    }
   }
   function buildMesh(){
     let a=[];
@@ -263,17 +297,20 @@
       const b=get(x,y,z);if(!b)continue;
       for(const f of FACE){const v=get(x+f.n[0],y+f.n[1],z+f.n[2]);if(v&&!(b!==7&&v===7)&&!(b===9&&v!==9))continue;if(b===7&&v===7)continue;pushFace(a,x,y,z,b,f)}
     }
-    gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.STATIC_DRAW);meshCount=a.length/6;
+    gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.STATIC_DRAW);meshCount=a.length/8;
   }
-  const vs=`attribute vec3 aPos;attribute vec3 aColor;uniform mat4 uVP;varying vec3 vColor;varying vec3 vPos;void main(){vColor=aColor;vPos=aPos;gl_Position=uVP*vec4(aPos,1.0);}`;
-  const fs=`precision mediump float;varying vec3 vColor;varying vec3 vPos;uniform vec3 uEye;uniform vec3 uSky;void main(){float d=distance(vPos,uEye);float fog=smoothstep(25.0,83.0,d);
-vec3 cell=floor(vPos*9.0+vec3(0.01));float fleck=fract(sin(dot(cell,vec3(12.9898,78.233,45.164)))*43758.5453);
-vec3 textureColor=vColor*(0.87+fleck*0.22);
-vec3 c=mix(textureColor,uSky,fog);gl_FragColor=vec4(c,1.0);}`;
+  const vs=`attribute vec3 aPos;attribute vec3 aColor;attribute vec2 aUV;uniform mat4 uVP;varying vec3 vColor;varying vec3 vPos;varying vec2 vUV;void main(){vColor=aColor;vPos=aPos;vUV=aUV;gl_Position=uVP*vec4(aPos,1.0);}`;
+  const fs=`precision mediump float;varying vec3 vColor;varying vec3 vPos;varying vec2 vUV;uniform vec3 uEye;uniform vec3 uSky;uniform sampler2D uAtlas;uniform float uTextured;void main(){
+    float d=distance(vPos,uEye);float fog=smoothstep(25.0,83.0,d);
+    vec3 blockColor=texture2D(uAtlas,vUV).rgb*vColor;
+    vec3 c=mix(mix(vColor,blockColor,uTextured),uSky,fog);
+    gl_FragColor=vec4(c,1.0);
+  }`;
   function compileShader(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s}
   const program=gl.createProgram();gl.attachShader(program,compileShader(gl.VERTEX_SHADER,vs));gl.attachShader(program,compileShader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(program);
   if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
-  const aPos=gl.getAttribLocation(program,'aPos'),aColor=gl.getAttribLocation(program,'aColor'),uVP=gl.getUniformLocation(program,'uVP'),uEye=gl.getUniformLocation(program,'uEye'),uSky=gl.getUniformLocation(program,'uSky');
+  const aPos=gl.getAttribLocation(program,'aPos'),aColor=gl.getAttribLocation(program,'aColor'),aUV=gl.getAttribLocation(program,'aUV'),uVP=gl.getUniformLocation(program,'uVP'),uEye=gl.getUniformLocation(program,'uEye'),uSky=gl.getUniformLocation(program,'uSky'),uAtlas=gl.getUniformLocation(program,'uAtlas'),uTextured=gl.getUniformLocation(program,'uTextured');
+  const atlasTexture=window.MineWorldAtlas.create(gl);
   vbo=gl.createBuffer();const aimBuffer=gl.createBuffer(),avatarBuffer=gl.createBuffer();
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
   function mul(a,b){let o=new Float32Array(16);for(let col=0;col<4;col++)for(let row=0;row<4;row++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+row]*b[col*4+k];o[col*4+row]=s}return o}
@@ -299,15 +336,59 @@ vec3 c=mix(textureColor,uSky,fog);gl_FragColor=vec4(c,1.0);}`;
     }
     return null;
   }
-  function performMine(){if(paused||!aim)return; if(setBlock(aim.x,aim.y,aim.z,0)){if(gameMode==='survival'&&aim.b!==7){const found=(aim.b===1?2:aim.b);inventory[found]=Math.min(inventory[found]+1,999);updateHotbar();}toast('Mined '+NAMES[aim.b]);timers.mine=.2}}
+  function performMine(){if(paused||!aim)return; if(setBlock(aim.x,aim.y,aim.z,0)){if(gameMode==='survival'&&aim.b!==7){const found=(aim.b===1?2:aim.b);inventory[found]=Math.min(inventory[found]+1,999);updateHotbar();updateSurvivalHUD();}toast('Mined '+NAMES[aim.b]);timers.mine=.2}}
   function performPlace(){if(paused||!aim||!aim.previous)return;let p=aim.previous,b=HOT9[selection];if(!inside(p.x,p.y,p.z)||get(p.x,p.y,p.z)!==0)return;if(gameMode==='survival'&&inventory[b]===0){toast('Mine resources to collect '+NAMES[b]);return;}if(setBlock(p.x,p.y,p.z,b)){if(gameMode==='survival'){inventory[b]--;updateHotbar();}toast('Placed '+NAMES[b]);timers.place=.2}}
   function markSave(){dirtySave=true}
-  function save(){if(window.MineWorldMultiplayer?.isShared())return;try{const edits=[...savedEdits.entries()];localStorage.setItem(STORAGE,JSON.stringify({seed,edits,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},version:1}));dirtySave=false;$('status').textContent='● Saved locally'}catch(e){$('status').textContent='● Storage unavailable'}}
-  function load(){try{let data=localStorage.getItem(STORAGE);if(!data)return false;let s=JSON.parse(data);if(!s||!Number.isInteger(s.seed)||!Array.isArray(s.edits))return false;seed=s.seed;generate();savedEdits.clear();for(let [i,b] of s.edits){if(Number.isInteger(i)&&i>=0&&i<voxels.length&&Number.isInteger(b)&&b>=0&&b<NAMES.length){voxels[i]=b;savedEdits.set(i,b)}}if(s.gameMode==='survival')gameMode='survival';if(Array.isArray(s.inventory))for(let i=0;i<inventory.length;i++)inventory[i]=Math.min(999,Math.max(0,Number(s.inventory[i])||0));updateModeButton();updateHotbar();if(s.player){for(let k of ['x','y','z','yaw','pitch'])if(Number.isFinite(s.player[k]))player[k]=s.player[k];player.fly=!!s.player.fly;player.x=clamp(player.x,.7,W-.7);player.z=clamp(player.z,.7,D-.7);player.y=clamp(player.y,3,H-3)}buildMesh();updateFlyButton();dirtySave=false;return true}catch(e){return false}}
+  function save(){if(window.MineWorldMultiplayer?.isShared())return;try{const edits=[...savedEdits.entries()];localStorage.setItem(STORAGE,JSON.stringify({seed,edits,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,version:2}));dirtySave=false;$('status').textContent='● Saved locally'}catch(e){$('status').textContent='● Storage unavailable'}}
+  function load(){try{let data=localStorage.getItem(STORAGE);if(!data)return false;let s=JSON.parse(data);if(!s||!Number.isInteger(s.seed)||!Array.isArray(s.edits))return false;seed=s.seed;generate();savedEdits.clear();for(let [i,b] of s.edits){if(Number.isInteger(i)&&i>=0&&i<voxels.length&&Number.isInteger(b)&&b>=0&&b<NAMES.length){voxels[i]=b;savedEdits.set(i,b)}}if(s.gameMode==='survival')gameMode='survival';if(Number.isFinite(s.health))health=clamp(s.health,1,20);if(Number.isFinite(s.hunger))hunger=clamp(s.hunger,0,20);if(Array.isArray(s.inventory))for(let i=0;i<inventory.length;i++)inventory[i]=Math.min(999,Math.max(0,Number(s.inventory[i])||0));updateModeButton();updateHotbar();updateSurvivalHUD();if(s.player){for(let k of ['x','y','z','yaw','pitch'])if(Number.isFinite(s.player[k]))player[k]=s.player[k];player.fly=gameMode==='creative'&&!!s.player.fly;player.x=clamp(player.x,.7,W-.7);player.z=clamp(player.z,.7,D-.7);player.y=clamp(player.y,3,H-3)}buildMesh();updateFlyButton();dirtySave=false;return true}catch(e){return false}}
   function toggleInventory(){hotbarPage=(hotbarPage+1)%HOTSETS.length;HOT9.splice(0,HOT9.length,...HOTSETS[hotbarPage]);selection=0;updateHotbar();toast(hotbarPage?'Nature & extras':'Classic blocks');}
-  function updateHotbar(){const root=$('hotbar');root.innerHTML='';HOT9.forEach((id,i)=>{const button=document.createElement('button');button.type='button';button.className='hot-item'+(i===selection?' active':'');button.setAttribute('aria-label',NAMES[id]);button.innerHTML='<small>'+(gameMode==='survival'?inventory[id]:i+1)+'</small><div class="swatch" style="background:'+SWATCH[id]+'"></div><span>'+NAMES[id]+'</span>';button.addEventListener('pointerdown',e=>e.stopPropagation());button.addEventListener('click',()=>{selection=i;updateHotbar();toast(NAMES[HOT9[selection]])});root.appendChild(button)})}
+  function updateHotbar(){const root=$('hotbar');root.innerHTML='';HOT9.forEach((id,i)=>{const button=document.createElement('button');button.type='button';button.className='hot-item'+(i===selection?' active':'');button.setAttribute('aria-label',NAMES[id]);const tile=id*3,tx=((tile%8)/7*100).toFixed(2),ty=(Math.floor(tile/8)/7*100).toFixed(2),image=window.MineWorldAtlas.dataURL;
+    button.innerHTML='<small>'+(gameMode==='survival'?inventory[id]:i+1)+'</small><div class="swatch" style="background-color:'+SWATCH[id]+';background-image:url('+image+');background-size:800% 800%;background-position:'+tx+'% '+ty+'%"></div><span>'+NAMES[id]+'</span>';button.addEventListener('pointerdown',e=>e.stopPropagation());button.addEventListener('click',()=>{selection=i;updateHotbar();toast(NAMES[HOT9[selection]])});root.appendChild(button)})}
   function toast(s){let x=$('toast');x.textContent=s;x.classList.add('show');notifications++;const n=notifications;setTimeout(()=>{if(n===notifications)x.classList.remove('show')},1250)}
+  function updateSurvivalHUD(){
+    $('survival-hud').classList.toggle('hidden',gameMode!=='survival');
+    $('health-text').textContent='♥ '+Math.ceil(health)+'/20';
+    $('hunger-text').textContent='🍖 '+Math.ceil(hunger)+'/20';
+    $('eat-btn').textContent='Eat 🍄 '+inventory[17];
+  }
+  function setGameMode(next){
+    if(next!=='creative'&&next!=='survival')return;
+    gameMode=next;
+    if(gameMode==='survival'){
+      player.fly=false;player.vy=0;
+      if(!inventory.some(v=>v>0)){inventory[2]=8;inventory[5]=4;inventory[11]=8;inventory[17]=3;}
+      health=clamp(health,1,20);hunger=clamp(hunger,1,20);
+    }
+    updateModeButton();updateFlyButton();updateHotbar();updateSurvivalHUD();markSave();
+  }
   function updateModeButton(){$('mode-btn').textContent='⚒ Mode: '+(gameMode==='creative'?'Creative':'Survival');}
+  function eatFood(){
+    if(gameMode!=='survival')return;
+    if(!inventory[17]){toast('Mine mushrooms from the ground to eat');return;}
+    if(hunger>=20&&health>=20){toast('You are already full');return;}
+    inventory[17]--;hunger=clamp(hunger+6,0,20);health=clamp(health+2,0,20);
+    updateHotbar();updateSurvivalHUD();markSave();toast('Ate a mushroom · +6 hunger');
+  }
+  function respawn(){
+    player.x=32.5;player.z=32.5;player.y=terrain(32,32)+3;
+    player.vy=0;player.fly=false;health=20;hunger=18;
+    updateSurvivalHUD();toast('You respawned at your world spawn');
+  }
+  function damage(amount,cause){
+    if(gameMode!=='survival'||amount<=0)return;
+    health=clamp(health-amount,0,20);
+    if(health<=0)respawn();else{updateSurvivalHUD();toast(cause+' −'+amount+' health')}
+    markSave();
+  }
+  function updateSurvival(dt){
+    if(gameMode!=='survival')return;
+    const moving=keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||Math.hypot(movement.x,movement.y)>.08;
+    hungerDrain+=dt*(moving?.067:.028);
+    if(hungerDrain>=1){hunger=clamp(hunger-Math.floor(hungerDrain),0,20);hungerDrain%=1;updateSurvivalHUD();markSave();}
+    hungerPulse+=dt;healPulse+=dt;
+    if(hunger===0&&hungerPulse>=4){hungerPulse=0;damage(1,'Starving')}
+    if(hunger>=16&&health<20&&healPulse>=9){healPulse=0;health=clamp(health+1,0,20);updateSurvivalHUD();}
+  }
   function updateFlyButton(){$('fly-btn').textContent='✦ Flying: '+(player.fly?'On':'Off')}
   function start(){if(!started){started=true;lastTime=performance.now();requestAnimationFrame(render)}paused=false;$('welcome').classList.add('hidden');$('pause').classList.add('hidden');if(!isTouch&&canvas.requestPointerLock)canvas.requestPointerLock()?.catch?.(()=>{});toast('World ready — have fun!')}
   function menu(){paused=true;keys.clear();movement.x=0;movement.y=0;touchHold.mine=false;touchHold.place=false;$('pause').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock();save()}
@@ -326,7 +407,7 @@ vec3 c=mix(textureColor,uSky,fog);gl_FragColor=vec4(c,1.0);}`;
     player.vy-=22*dt;const nextY=player.y+player.vy*dt;
     if(!blockAtFeet(player.x,nextY,player.z)){player.y=nextY;player.ground=false}
     else{
-      if(player.vy<=0)player.ground=true;
+      if(player.vy<=0){player.ground=true;const impact=-player.vy;if(impact>12)damage(Math.floor((impact-9)/3),'Fall damage')}
       player.vy=0;
       if(player.ground){let snap=player.y;for(let i=0;i<40;i++){let low=snap-.025;if(blockAtFeet(player.x,low,player.z))break;snap=low}player.y=snap}
     }
@@ -363,11 +444,20 @@ vec3 c=mix(textureColor,uSky,fog);gl_FragColor=vec4(c,1.0);}`;
     for(let [u,v] of [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]]){for(let i of [u,v])a.push(...p[i],1,.96,.72)}
     gl.bindBuffer(gl.ARRAY_BUFFER,aimBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.DYNAMIC_DRAW);setAttribs();gl.drawArrays(gl.LINES,0,a.length/6);
   }
-  function setAttribs(){gl.enableVertexAttribArray(aPos);gl.enableVertexAttribArray(aColor);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(aColor,3,gl.FLOAT,false,24,12)}
+  function setAttribs(textured=false){
+    const stride=textured?32:24;
+    gl.enableVertexAttribArray(aPos);gl.enableVertexAttribArray(aColor);
+    gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,stride,0);
+    gl.vertexAttribPointer(aColor,3,gl.FLOAT,false,stride,12);
+    if(textured){gl.enableVertexAttribArray(aUV);gl.vertexAttribPointer(aUV,2,gl.FLOAT,false,32,24)}
+    else{gl.disableVertexAttribArray(aUV);gl.vertexAttrib2f(aUV,0,0)}
+    gl.uniform1f(uTextured,textured?1:0);
+  }
   function render(t){requestAnimationFrame(render);let dt=clamp((t-lastTime)/1000,0,.05);lastTime=t;
     if(paused)return;
     dayClock+=dt;
     move(dt);
+    updateSurvival(dt);
     window.MineWorldMultiplayer?.tick(t);
     if(touchHold.mine&&timers.mine<=0){performMine();timers.mine=.20}
     if(touchHold.place&&timers.place<=0){performPlace();timers.place=.25}
@@ -383,7 +473,8 @@ vec3 c=mix(textureColor,uSky,fog);gl_FragColor=vec4(c,1.0);}`;
     $('sky-decor').style.opacity=String(clamp(skyTint*.75,0,1));
     gl.clearColor(...sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,vp);gl.uniform3fv(uEye,eye);gl.uniform3fv(uSky,sky);
-    gl.bindBuffer(gl.ARRAY_BUFFER,vbo);setAttribs();gl.drawArrays(gl.TRIANGLES,0,meshCount);
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uAtlas,0);
+    gl.bindBuffer(gl.ARRAY_BUFFER,vbo);setAttribs(true);gl.drawArrays(gl.TRIANGLES,0,meshCount);
     drawRemotePlayers();
     drawHighlight(aim);
     $('target-name').textContent=aim?'⛏ '+NAMES[aim.b]+'  ·  '+aim.x+', '+aim.y+', '+aim.z:'Aim at a block to mine';
@@ -391,14 +482,17 @@ vec3 c=mix(textureColor,uSky,fog);gl_FragColor=vec4(c,1.0);}`;
     saveTimer+=dt;if(saveTimer>8){saveTimer=0;if(dirtySave)save()}
   }
   $('inventory-toggle').addEventListener('click',toggleInventory);
-  $('start-btn').addEventListener('click',start);
+  $('start-btn').addEventListener('click',()=>{setGameMode('creative');start()});
+  $('survival-start').addEventListener('click',()=>{setGameMode('survival');start()});
+  $('home-btn').addEventListener('click',()=>{paused=true;$('pause').classList.add('hidden');$('welcome').classList.remove('hidden');save();});
+  $('eat-btn').addEventListener('click',eatFood);
   $('resume-btn').addEventListener('click',start);
   $('menu-toggle').addEventListener('click',menu);
   $('save-btn').addEventListener('click',()=>{save();toast('Saved to this browser')});
-  $('mode-btn').addEventListener('click',()=>{gameMode=gameMode==='creative'?'survival':'creative';if(gameMode==='survival'&&!inventory.some(v=>v>0)){inventory[2]=16;inventory[5]=6;inventory[11]=8;}updateModeButton();updateHotbar();markSave();toast('Mode: '+gameMode)});
+  $('mode-btn').addEventListener('click',()=>{setGameMode(gameMode==='creative'?'survival':'creative');toast('Mode: '+gameMode)});
   $('craft-btn').addEventListener('click',()=>{if(gameMode==='creative'){toast('Crafting is for Survival mode');return}const raw=inventory[5]>0?5:15;if(!inventory[raw]){toast('You need a Wood or Poplar Log');return}inventory[raw]--;inventory[11]=Math.min(999,inventory[11]+4);updateHotbar();markSave();toast('Crafted 4 Planks')});
-  $('fly-btn').addEventListener('click',()=>{player.fly=!player.fly;player.vy=0;updateFlyButton();markSave();toast(player.fly?'Flying enabled':'Flying disabled')});
-  $('new-btn').addEventListener('click',()=>{if(window.MineWorldMultiplayer?.isShared()){toast('Leave the shared world to generate a private world');return;}if(!confirm('Generate a new world? Your previous world will be replaced.'))return;seed=Math.floor(Math.random()*90000000)+1;generate();save();window.MineWorldMultiplayer?.broadcastWorld();$('pause').classList.add('hidden');start();toast('A new world begins!')});
+  $('fly-btn').addEventListener('click',()=>{if(gameMode==='survival'){toast('Flying is only available in Creative');return;}player.fly=!player.fly;player.vy=0;updateFlyButton();markSave();toast(player.fly?'Flying enabled':'Flying disabled')});
+  $('new-btn').addEventListener('click',()=>{if(window.MineWorldMultiplayer?.isShared()){toast('Leave the shared world to generate a private world');return;}if(!confirm('Generate a new world? Your previous world will be replaced.'))return;seed=Math.floor(Math.random()*90000000)+1;inventory.fill(0);health=20;hunger=20;generate();setGameMode(gameMode);save();window.MineWorldMultiplayer?.broadcastWorld();$('pause').classList.add('hidden');start();toast('A new world begins!')});
   document.addEventListener('keydown',e=>{
     if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab'].includes(e.code))e.preventDefault();
     if(e.target instanceof HTMLInputElement)return;
@@ -407,7 +501,8 @@ vec3 c=mix(textureColor,uSky,fog);gl_FragColor=vec4(c,1.0);}`;
     keys.add(e.code);
     if(e.code==='Space'&&!e.repeat)jump();
     if(e.code==='KeyE'&&!e.repeat)toggleInventory();
-    if(e.code==='KeyF'&&!e.repeat){player.fly=!player.fly;player.vy=0;updateFlyButton();toast(player.fly?'Fly mode on':'Fly mode off')}
+    if(e.code==='KeyF'&&!e.repeat){if(gameMode==='survival'){toast('Flying is Creative only');}else{player.fly=!player.fly;player.vy=0;updateFlyButton();toast(player.fly?'Fly mode on':'Fly mode off')}}
+    if(e.code==='KeyQ'&&!e.repeat)eatFood();
     if(e.code.startsWith('Digit')){const i=Number(e.code.slice(5))-1;if(i>=0&&i<HOT9.length){selection=i;updateHotbar()}}
   });
   document.addEventListener('keyup',e=>keys.delete(e.code));
@@ -443,10 +538,11 @@ vec3 c=mix(textureColor,uSky,fog);gl_FragColor=vec4(c,1.0);}`;
     b.addEventListener('pointercancel',()=>touchHold[verb]=false);
     b.addEventListener('lostpointercapture',()=>touchHold[verb]=false);
   }
-  updateModeButton();
+  updateModeButton();updateSurvivalHUD();
   if(!load())generate();else $('status').textContent='● Previous world restored';
   window.MineWorldBridge={
     getPlayer:()=>({x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly}),
+    getMode:()=>gameMode,
     getSnapshot:()=>({seed,edits:[...savedEdits.entries()],dayClock}),
     resetPublicWorld:(newSeed)=>{
       if(!Number.isInteger(newSeed)||newSeed<1||newSeed>99999999)return false;
