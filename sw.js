@@ -1,22 +1,8 @@
-const VERSION = "minecraft-web-shell-20261023-ios-v1";
-const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./favicon.svg"];
-self.addEventListener("install", event => {
-  event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+const CACHE='mineworld-independent-20261023-v2';
+const FILES=['./','./index.html','./manifest.webmanifest','./favicon.svg','./apple-touch-icon.png'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',e=>{
+ if(e.request.method!=='GET'||new URL(e.request.url).origin!==self.location.origin)return;
+ e.respondWith(fetch(e.request).then(r=>{if(r.ok){const cp=r.clone();caches.open(CACHE).then(c=>c.put(e.request,cp)).catch(()=>{});}return r}).catch(()=>caches.match(e.request)));
 });
-self.addEventListener("activate", event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith("minecraft-web-shell-") && key !== VERSION).map(key => caches.delete(key)))).then(() => self.clients.claim()));
-});
-self.addEventListener("fetch", event => {
-  const req = event.request;
-  if (req.method !== "GET") return;
-  const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
-  event.respondWith(fetch(req).then(response => {
-    if (response.ok && (req.mode === "navigate" || SHELL.some(path => new URL(path, self.registration.scope).pathname === url.pathname))) {
-      const copy = response.clone();
-      caches.open(VERSION).then(cache => cache.put(req, copy)).catch(() => {});
-    }
-    return response;
-  }).catch(() => caches.match(req)));
-});
-// Only the website shell can be used offline; third-party Minecraft runtimes are not cached.
