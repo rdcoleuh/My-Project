@@ -164,6 +164,25 @@
 .seed-row button{font-size:12px;white-space:nowrap}.seed-actions{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap}.seed-actions span{flex:1;color:#d2e3bc;font-size:11px;word-break:break-word}.seed-actions button{font-size:11px;padding:9px 10px}
 .seed-panel small{display:block;color:#abc5b0;font-size:10px;line-height:1.5;margin-top:9px}
 @media(max-width:520px){.seed-panel{padding:10px}.seed-row button{padding:8px}.seed-actions{gap:5px}}
+/* Nether dimension interface */
+.nether-accent{background:linear-gradient(155deg,#843223,#381823)!important;border-color:#ba6d4d!important;color:#fff2dd!important}
+#portal-toggle{background:#642638;border-color:#db8b78;white-space:nowrap}
+.nether-page{width:min(94vw,720px);max-height:93dvh;overflow:auto;text-align:center;border-color:#c36e62;background:linear-gradient(145deg,#401921,#19121d)}
+.nether-biomes{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:18px 0}
+.nether-biome{padding:12px 6px;min-height:106px;border:1px solid #c78b70;border-radius:10px;color:#f9e7d7;background:#4f272c;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:8px;font-weight:bold;font-size:12px}
+.nether-biome span{font-size:28px}.nether-biome small{font-size:10px;color:#ffe7bf}
+#nether-info{font-size:12px;color:#eacabd;line-height:1.6;text-align:left;background:#25161c;padding:12px;border:1px solid #85565a;border-radius:9px}
+#dimension-indicator{position:absolute;z-index:6;top:80px;right:15px;padding:7px 10px;border-radius:9px;border:1px solid #d97d62;background:#391822d9;color:#ffe1d1;font-weight:850;font-size:11px;pointer-events:none}
+body.in-nether #sky-decor{display:none}
+body.in-nether #game-wrap{background:#290f19}
+@media(max-width:560px){.top-buttons #portal-toggle::before{content:'🔥';font-size:17px}body.in-nether .top-buttons #portal-toggle::before{content:'🌿'}}
+.nether-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.nether-tools button{min-height:42px}
+#nether-mob-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0 14px}
+.nether-mob-grid-button{background:#532630;color:#ffe6d6;border:1px solid #9f665a;padding:9px 5px;border-radius:7px;font-size:11px;line-height:1.3}
+.nether-mob-grid-button:focus-visible{outline:3px solid #f1c99e}
+@media(max-width:560px){#nether-mob-grid{grid-template-columns:repeat(3,1fr)}.nether-tools{grid-template-columns:1fr}}
+@media(max-width:680px){.nether-biomes{grid-template-columns:repeat(2,1fr)}.nether-biome{min-height:73px}.nether-biome span{font-size:23px}#dimension-indicator{top:58px;right:10px}}
 </style>
 <title>MineWorld 3.0 — 10,000 × 10,000 Seeded Worlds</title>
 </head>
@@ -173,11 +192,12 @@
   <div id="sky-decor" aria-hidden="true"><div class="sun"></div><div class="cloud cloud1"></div><div class="cloud cloud2"></div></div>
   <div id="top-ui">
     <div class="title-mark"><div class="block-symbol"></div><div><strong>MINEWORLD</strong><small>INDEPENDENT BLOCK SANDBOX</small></div></div>
-    <div class="top-buttons"><div id="status" class="status">● World loaded</div><button id="inventory-toggle" class="ui-button small">▣ Blocks</button><button id="atlas-toggle" class="ui-button small" aria-label="Biome atlas and landmarks" title="Explore biomes and structures">🧭</button><button id="bag-toggle" class="ui-button small">🎒 Gear</button><button id="friends-toggle" class="ui-button small">👥 Friends <span id="online-count">0</span></button>
+    <div class="top-buttons"><div id="status" class="status">● World loaded</div><button id="inventory-toggle" class="ui-button small">▣ Blocks</button><button id="portal-toggle" class="ui-button small" title="Travel between the Overworld and Nether" aria-label="Nether portal">🔥 Nether</button><button id="atlas-toggle" class="ui-button small" aria-label="Biome atlas and landmarks" title="Explore biomes and structures">🧭</button><button id="bag-toggle" class="ui-button small">🎒 Gear</button><button id="friends-toggle" class="ui-button small">👥 Friends <span id="online-count">0</span></button>
     <button id="menu-toggle" class="ui-button small" aria-label="Open game menu">☰ Menu</button></div>
   </div>
   <div id="crosshair" aria-hidden="true"></div>
   <div id="online-hud" class="hidden">👥 Offline</div>
+  <div id="dimension-indicator" class="hidden">🔥 THE NETHER</div>
   <div id="target-name">Aim at a block to mine</div>
   <div id="hud-bottom">
     <div id="survival-hud" class="hidden" aria-live="polite"><span id="health-text">♥ 20/20</span><span id="hunger-text">🍖 20/20</span><span id="weapon-readout" title="Equipped gear">✊ Fists</span><button id="eat-btn" type="button" aria-label="Eat available food">Eat 🍄 0</button></div>
@@ -204,6 +224,7 @@
         <div class="mode-card creative"><div class="mode-illustration" aria-hidden="true"></div>
           <div class="mode-caption">Unlimited building</div><h2>✦ Creative</h2>
           <p>Build anything with unlimited blocks, explore freely and fly around your world.</p>
+          <button id="nether-from-home" class="ui-button nether-accent" style="width:100%;margin-bottom:10px">🔥 Enter the Nether · New dimension</button>
           <button id="atlas-from-home" class="ui-button" style="width:100%;margin-bottom:12px">🧭 Explore biome atlas &amp; structures</button>
       <button id="start-btn" class="main-button" type="button">▶ PLAY CREATIVE</button>
         </div>
@@ -224,6 +245,7 @@
       <p>Resume exploring, switch between Creative and Survival, or return to the home screen.</p>
       <button class="main-button" id="resume-btn">▶ &nbsp; Resume Game</button>
       <button id="home-btn" class="ui-button" style="width:100%;margin-top:10px">⌂ Home Screen · Choose Mode</button>
+      <button id="nether-from-pause" class="ui-button nether-accent" style="width:100%;margin-top:10px">🔥 Nether Portals &amp; Biomes</button>
       <button id="atlas-from-pause" class="ui-button" style="width:100%;margin-top:10px">🧭 Biomes, Trees &amp; Structures</button>
       <button id="pause-friends" class="ui-button" style="width:100%;margin-top:10px">🌐 Public servers / Friends</button>
       <div class="menu-actions"><button id="fly-btn" class="ui-button">✦ Flying: Off</button><button id="save-btn" class="ui-button">↓ Save World</button></div>
@@ -284,18 +306,34 @@
       <p>Explore all 36 themed regions in this miniature Overworld, with distinct trees, terrain and generated structures. Tap a biome to travel there.</p>
       <div class="atlas-counts"><span>🌲 36 Biome Types</span><span>🏛 Seeded Structures</span><span>🕳 3 Underground Types</span></div>
       <div id="atlas-grid" class="atlas-grid" role="list" aria-label="Travel to a biome"></div>
-      <p class="atlas-note">The atlas finds real regions across a 10,000 × 10,000 world. The same seed produces the same world for every player. Nether and End dimensions remain future updates.</p>
+      <p class="atlas-note">The atlas finds real regions across a 10,000 × 10,000 world. The same seed produces the same world for every player. The Nether is accessible using 🔥 Nether. The End is not included yet.</p>
       <button id="close-atlas" class="main-button" type="button">Back to World</button>
     </section>
   </div>
+  <div id="nether-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Nether dimension and travel">
+    <section class="modal nether-page">
+      <div class="kicker">🔥 NETHER EXPEDITION</div><h2>Beyond the Portal</h2>
+      <p>Cross to a volcanic underworld, or return to the Overworld. Your original world, inventory and progress are preserved. Each seed builds both dimensions.</p>
+      <button id="cross-portal" class="main-button nether-accent" type="button">🔥 Enter the Nether</button>
+      <h3 style="margin:22px 0 4px">Explore all five Nether biomes</h3>
+      <div id="nether-biome-grid" class="nether-biomes"></div>
+      <h3 style="margin:13px 0 7px">Nether Creatures &amp; Combat</h3>
+      <p style="font-size:12px">Creatures wander, chase, attack and drop loot. In Creative, select any species to spawn it near you. Survival uses natural biome spawning and structure encounters.</p>
+      <div id="nether-mob-grid" role="group" aria-label="Nether creature roster"></div>
+      <div class="nether-tools"><button type="button" id="nether-barter" class="ui-button">🪙 Piglin Barter · 5 gold</button><button type="button" id="nether-wither" class="ui-button nether-accent">☠ Summon Wither Boss</button></div>
+      <p id="nether-info">Nether Wastes · Crimson Forest · Warped Forest · Soul Sand Valley · Basalt Deltas. Find lava seas, glowing fungus forests, ancient ruins, nether fortresses, bastion remnants, fossils and obsidian portal remnants.</p>
+      <button id="close-nether" class="ui-button" style="width:100%;margin-top:12px">Return to the game</button>
+      <p class="note">Original MineWorld-style Nether. Mob AI, structures and mechanics are simplified; this is not Mojang's source code. In public rooms the host coordinates shared creatures while in the same dimension.</p>
+    </section>
+  </div>
   <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v3.0 · 10,000 × 10,000 · SEEDED CHUNKS</div>
+  <div class="version">MINEWORLD v3.1 · THE NETHER · 2 DIMENSIONS</div>
 </div>
 <script>
 /* MineWorld original procedural 16x16 voxel pixel-art atlas. No external assets. */
 (() => {
   'use strict';
-  const SIZE=16, COLUMNS=16, ROWS=13;
+  const SIZE=16, COLUMNS=16, ROWS=19;
   const clamp=(n)=>Math.max(0,Math.min(255,Math.round(n)));
   function hash(a,b,c){let x=(Math.imul(a+17,374761393)^Math.imul(b+29,668265263)^Math.imul(c+73,1442695041))|0;x=Math.imul(x^(x>>>13),1274126177);return ((x^(x>>>16))>>>0)/4294967295}
   function tileColor(b,face,x,y){
@@ -378,6 +416,32 @@
       case 62:c=[46+v*.4,111+v*.5,86+v*.37];break;
       case 63:c=[122+v*.5,88+v*.42,67+v*.37];if((x+y)%5===0)c=[166+v*.4,125+v*.4,91+v*.35];break;
       case 64:c=[17+v*.35,39+v*.4,51+v*.43];if(n>.90)c=[27+v*.35,109+v*.45,116+v*.45];break;
+      case 65:c=[113+v*.9,34+v*.5,39+v*.5];if(m>.71)c=[77+v*.5,21+v*.35,30+v*.3];break;
+      case 66:c=[255,82+v*.6+(m>.55?35:0),15+v*.2];if((x+y)%5===0)c=[255,151,24];break;
+      case 67:c=[81+v*.5,76+v*.5,75+v*.45];if(x%4===0)c=[52+v*.25,54+v*.2,59+v*.26];break;
+      case 68:c=[50+v*.28,42+v*.27,47+v*.3];if(n>.80)c=[92+v*.24,73+v*.2,76+v*.24];break;
+      case 69:c=[72+v*.32,59+v*.32,64+v*.29];if((x%8===0)||(y%8===0))c=[44+v*.2,34+v*.2,36+v*.2];break;
+      case 70:c=[93+v*.3,79+v*.3,71+v*.4];if(n>.79)c=[119+v*.2,97+v*.2,80+v*.2];break;
+      case 71:c=[69+v*.42,61+v*.33,65+v*.4];break;
+      case 72:case 74:{const grout=y%5===0||(x+(Math.floor(y/5)%2)*6)%8===0;c=grout?[49+v*.3,23+v*.2,27+v*.2]:[108+v*.47,42+v*.32,48+v*.3];break;}
+      case 73:c=[173+v*.6,25+v*.3,58+v*.3];if(x%4===1||y%7===1)c=[92+v*.3,20+v*.2,34+v*.2];break;
+      case 75:c=face===0?[140+v*.5,39+v*.4,47+v*.4]:[105+v*.45,35+v*.35,46+v*.35];break;
+      case 76:c=face===0?[37+v*.5,129+v*.5,120+v*.45]:[24+v*.5,79+v*.5,86+v*.42];break;
+      case 77:c=n>.55?[193+v*.25,47+v*.35,78+v*.25]:[88+v*.3,19+v*.2,43+v*.2];break;
+      case 78:case 80:{const c0=b===78?[153,39,57]:[44,125,129],k=x%4===0?-27:x%5===1?14:0;c=c0.map(t=>t+k+v*.44);if(face===0||face===2)c=c0.map(t=>t+(Math.floor(Math.abs(x-8)+Math.abs(y-8))/2)%2*32+v*.35);break;}
+      case 79:c=[120+v*.35,30+v*.32,50+v*.3];if(n>.78)c=[185+v*.3,39+v*.3,55+v*.3];break;
+      case 81:c=[40+v*.3,100+v*.3,111+v*.3];if(n>.80)c=[60+v*.3,162+v*.3,164+v*.3];break;
+      case 82:c=n>.5?[31+v*.3,181+v*.4,168+v*.3]:[12+v*.25,83+v*.3,94+v*.35];break;
+      case 83:case 84:case 85:{const ore=n>.73;c=ore?(b===83?[244+v*.2,223+v*.3,203+v*.2]:b===84?[250+v*.2,183+v*.3,37+v*.2]:[124+v*.3,102+v*.3,92+v*.3]):[110+v*.45,36+v*.3,37+v*.3];break;}
+      case 86:c=[205+v*.28,197+v*.28,173+v*.28];if(face!==1){if(Math.floor((x+y)/4)%4===0)c=[160+v*.25,145+v*.25,119+v*.25];}break;
+      case 87:c=[81+v*.4,26+v*.2,152+v*.5];if(m>.48)c=[133+v*.35,59+v*.25,211+v*.2];break;
+      case 88:c=[62+v*.25,36+v*.25,28+v*.2];if(n>.73)c=[255,120+v*.3,23+v*.15];break;
+      case 89:c=n>.55?[36+v*.35,174+v*.35,207+v*.22]:[14+v*.2,58+v*.3,88+v*.3];break;
+      case 90:c=n>.53?[241+v*.23,183+v*.23,81+v*.2]:[206+v*.3,111+v*.3,65+v*.2];break;
+      case 91:c=n>.76?[217+v*.3,168+v*.3,52+v*.2]:[44+v*.3,35+v*.25,41+v*.3];break;
+      case 92:c=[119+v*.5,104+v*.5,99+v*.5];break;
+      case 93:c=n>.4?[44+v*.3,183+v*.3,172+v*.25]:[25+v*.3,82+v*.3,94+v*.3];break;
+      case 94:c=n>.4?[201+v*.3,46+v*.3,71+v*.3]:[84+v*.3,27+v*.2,39+v*.2];break;
 
     }
     return [clamp(c[0]),clamp(c[1]),clamp(c[2]),255];
@@ -386,7 +450,7 @@
     const canvas=document.createElement('canvas');canvas.width=SIZE*COLUMNS;canvas.height=SIZE*ROWS;
     const ctx=canvas.getContext('2d',{willReadFrequently:true});if(!ctx)throw Error('2D canvas textures unavailable');
     const img=ctx.createImageData(canvas.width,canvas.height);
-    for(let b=1;b<=64;b++)for(let f=0;f<3;f++){
+    for(let b=1;b<=94;b++)for(let f=0;f<3;f++){
       const tile=b*3+f,col=tile%COLUMNS,row=Math.floor(tile/COLUMNS);
       for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
         const i=((row*SIZE+y)*canvas.width+col*SIZE+x)*4;
@@ -417,6 +481,7 @@
 
 </script>
 <script src="./world-chunks.js"></script>
+<script src="./nether-world.js"></script>
 <script>
 /* MineWorld — original browser voxel sandbox; no Minecraft game code or third-party runtime. */
 (() => {
@@ -434,7 +499,7 @@
   let lastChunkX=-1,lastChunkZ=-1,streamQueue=[],streamClock=0;
   const renderRadius=matchMedia('(pointer: coarse)').matches?1:2;
   const MAX_CHUNKS=matchMedia('(pointer: coarse)').matches?42:70;
-  const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace','Snow','Ice','Packed Ice','Sandstone','Terracotta','Red Sand','Red Terracotta','Podzol','Coarse Dirt','Spruce Log','Spruce Leaves','Birch Log','Birch Leaves','Acacia Log','Acacia Leaves','Jungle Log','Jungle Leaves','Mangrove Log','Mangrove Leaves','Cherry Log','Cherry Leaves','Pale Oak Log','Pale Oak Leaves','Cactus','Bamboo','Moss','Mud','Red Mushroom Cap','Brown Mushroom Cap','Netherrack','Obsidian','Dark Planks','Stone Bricks','Chiseled Sandstone','Prismarine','Copper','Clay','Deepslate','Lantern','Hay Bale','Cobblestone','Glow Lichen','Dripstone','Sculk'];
+  const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace','Snow','Ice','Packed Ice','Sandstone','Terracotta','Red Sand','Red Terracotta','Podzol','Coarse Dirt','Spruce Log','Spruce Leaves','Birch Log','Birch Leaves','Acacia Log','Acacia Leaves','Jungle Log','Jungle Leaves','Mangrove Log','Mangrove Leaves','Cherry Log','Cherry Leaves','Pale Oak Log','Pale Oak Leaves','Cactus','Bamboo','Moss','Mud','Red Mushroom Cap','Brown Mushroom Cap','Netherrack','Obsidian','Dark Planks','Stone Bricks','Chiseled Sandstone','Prismarine','Copper','Clay','Deepslate','Lantern','Hay Bale','Cobblestone','Glow Lichen','Dripstone','Sculk','Nether Rock','Lava','Basalt','Blackstone','Polished Blackstone','Soul Sand','Soul Soil','Nether Bricks','Nether Wart','Chiseled Nether Bricks','Crimson Nylium','Warped Nylium','Crimson Roots','Crimson Stem','Nether Wart Block','Warped Stem','Warped Wart Block','Warped Roots','Quartz Ore','Nether Gold Ore','Ancient Debris','Bone Block','Portal','Magma Block','Soul Fire','Shroomlight','Gilded Blackstone','Gravel','Twisting Vines','Weeping Vines'];
   const HOT=[1,2,3,5,12,13,14,15,11];
   const HOTSETS=[
     [1,2,3,5,6,4,8,9,10],
@@ -443,7 +508,10 @@
     [30,31,32,33,34,35,36,37,38],
     [39,40,41,42,43,44,45,46,47],
     [48,49,50,51,52,53,54,55,56],
-    [57,58,59,60,61,62,63,64,5]
+    [57,58,59,60,61,62,63,64,5],
+    [65,67,68,70,72,75,76,78,80],
+    [66,69,71,73,79,81,83,84,85],
+    [86,87,88,89,90,91,92,93,94]
   ];
   const HOT9=[...HOTSETS[0]];
   let hotbarPage=0;
@@ -460,8 +528,9 @@
   const player={x:SPAWN+.5,y:18,z:SPAWN+.5,vy:0,yaw:.4,pitch:-.12,ground:false,fly:false};
   const keys=new Set(); let seed=85721, started=false, paused=true, selection=0, frameCount=0, lastTime=0, meshCount=0, vbo=null, savedEdits=new Map(), dirtySave=false, saveTimer=0, aim=null, notifications=0, dayClock=0, deltaViewX=0, deltaViewY=0;
   let gameMode='creative',health=20,hunger=20,hungerDrain=0,hungerPulse=0,healPulse=0;
+  let dimension='overworld',overworldEdits=savedEdits,netherEdits=new Map(),overworldPosition=null,netherPosition=null,lavaCooldown=0;
   const inventory=new Uint16Array(NAMES.length);
-  const bag={coal:0,iron:0,raw:0,cooked:0,bone:0,string:0,powder:0,sticks:0};
+  const bag={coal:0,iron:0,raw:0,cooked:0,bone:0,string:0,powder:0,sticks:0,quartz:0,gold:0,blazeRod:0,magmaCream:0,enderPearl:0,witherSkull:0};
   const toolLevels={none:0,wood:1,stone:2,iron:3};
   const tools={pickaxe:'none',sword:'none'};
   let equipped='pickaxe',difficulty='normal',mobSerial=0,mobs=[],mobSpawnClock=0,mobAttackClock=0,aimMob=null,aimPlayer=null,attackCooldown=0,playerHitCooldown=0;
@@ -474,7 +543,21 @@
    zombie:{name:'Zombie',kind:'hostile',hp:16,speed:1.00,damage:3,body:[.23,.48,.34],head:[.33,.57,.31],drop:'raw'},
    skeleton:{name:'Skeleton',kind:'hostile',hp:12,speed:.85,damage:2,body:[.79,.81,.76],head:[.94,.93,.87],drop:'bone'},
    spider:{name:'Spider',kind:'hostile',hp:12,speed:1.52,damage:2,body:[.27,.22,.28],head:[.24,.20,.25],drop:'string'},
-   creeper:{name:'Creeper',kind:'hostile',hp:14,speed:.83,damage:7,body:[.28,.65,.32],head:[.33,.76,.39],drop:'powder'}
+   creeper:{name:'Creeper',kind:'hostile',hp:14,speed:.83,damage:7,body:[.28,.65,.32],head:[.33,.76,.39],drop:'powder'},
+   ghast:{name:'Ghast',kind:'hostile',hp:10,speed:.45,damage:5,body:[.91,.89,.87],head:[.98,.93,.92],drop:'powder'},
+   blaze:{name:'Blaze',kind:'hostile',hp:18,speed:.90,damage:4,body:[.95,.57,.12],head:[1,.76,.18],drop:'blazeRod'},
+   magma_cube:{name:'Magma Cube',kind:'hostile',hp:14,speed:.80,damage:3,body:[.33,.19,.18],head:[.94,.34,.10],drop:'magmaCream'},
+   piglin:{name:'Piglin',kind:'neutral',hp:18,speed:1.05,damage:3,body:[.72,.44,.34],head:[.86,.61,.46],drop:'gold'},
+   piglin_brute:{name:'Piglin Brute',kind:'hostile',hp:28,speed:1.23,damage:5,body:[.47,.30,.30],head:[.79,.52,.43],drop:'gold'},
+   zombified_piglin:{name:'Zombified Piglin',kind:'neutral',hp:18,speed:.88,damage:3,body:[.57,.55,.35],head:[.58,.78,.44],drop:'gold'},
+   hoglin:{name:'Hoglin',kind:'hostile',hp:22,speed:1.30,damage:4,body:[.55,.25,.20],head:[.80,.41,.34],drop:'raw'},
+   zoglin:{name:'Zoglin',kind:'hostile',hp:20,speed:1.2,damage:4,body:[.48,.42,.40],head:[.70,.56,.54],drop:'raw'},
+   strider:{name:'Strider',kind:'passive',hp:16,speed:.45,body:[.75,.32,.27],head:[.91,.43,.36],drop:'string'},
+   wither_skeleton:{name:'Wither Skeleton',kind:'hostile',hp:18,speed:1.18,damage:5,body:[.17,.16,.18],head:[.24,.24,.28],drop:'witherSkull'},
+   enderman:{name:'Enderman',kind:'neutral',hp:28,speed:1.45,damage:5,body:[.16,.11,.21],head:[.24,.18,.28],drop:'enderPearl'},
+   wither:{name:'Wither Boss',kind:'boss',hp:40,speed:1.06,damage:8,body:[.17,.16,.18],head:[.25,.25,.27],drop:'witherSkull'},
+   ghastling:{name:'Ghastling',kind:'passive',hp:8,speed:.5,body:[.92,.92,.89],head:[.98,.98,.96],drop:'powder'},
+   happy_ghast:{name:'Happy Ghast',kind:'passive',hp:20,speed:.55,body:[.94,.89,.84],head:[.99,.97,.91],drop:'powder'}
   };
   const movement={x:0,y:0}, touchHold={mine:false,place:false}, timers={mine:0,place:0};
   const isTouch=matchMedia('(pointer: coarse)').matches;
@@ -487,7 +570,7 @@
     if(cx<0||cz<0||cx>=Math.ceil(W/CHUNK)||cz>=Math.ceil(D/CHUNK))return null;
     const key=chunkKey(cx,cz);let chunk=chunkCache.get(key);
     if(chunk){chunk.last=performance.now();return chunk;}
-    const data=window.MineWorldBiomes.generateChunk({cx,cz,H,SEA,edits:savedEdits});
+    const data=(dimension==='nether'?window.MineWorldNether.generateChunk({cx,cz,H,edits:savedEdits}):window.MineWorldBiomes.generateChunk({cx,cz,H,SEA,edits:savedEdits}));
     chunk={cx,cz,data,vbo:null,count:0,dirty:true,last:performance.now()};
     chunkCache.set(key,chunk);return chunk;
   }
@@ -537,15 +620,15 @@
       for(const c of removable){if(chunkCache.size<=MAX_CHUNKS)break;if(c.vbo)gl.deleteBuffer(c.vbo);chunkCache.delete(chunkKey(c.cx,c.cz));}
     }
   }
-  const solid=b=>b!==0&&b!==7;
+  const solid=b=>b!==0&&b!==7&&b!==66&&b!==87&&b!==89;
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const rand=(x,z,s=seed)=>{let n=Math.imul(x+307,374761393)^Math.imul(z+811,668265263)^Math.imul(s,1274126177);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295};
   const lerp=(a,b,t)=>a+(b-a)*t;
   function noise(x,z,scale){let px=x/scale,pz=z/scale,ix=Math.floor(px),iz=Math.floor(pz),fx=px-ix,fz=pz-iz;fx=fx*fx*(3-2*fx);fz=fz*fz*(3-2*fz);return lerp(lerp(rand(ix,iz),rand(ix+1,iz),fx),lerp(rand(ix,iz+1),rand(ix+1,iz+1),fx),fz)}
   // A 10,000-block-wide world is never allocated at once. Every chunk is deterministic.
-  function terrain(x,z){return window.MineWorldBiomes.terrainAt(x,z,SEA,H)}
+  function terrain(x,z){return dimension==='nether'?window.MineWorldNether.surfaceAt(x,z):window.MineWorldBiomes.terrainAt(x,z,SEA,H)}
   function generate(){
-    window.MineWorldBiomes.setSeed(seed);unloadAllChunks();savedEdits.clear();
+    window.MineWorldBiomes.setSeed(seed);window.MineWorldNether.setSeed(seed);dimension='overworld';document.body.classList.remove('in-nether');overworldEdits=new Map();netherEdits=new Map();savedEdits=overworldEdits;overworldPosition=netherPosition=null;unloadAllChunks();
     const top=terrain(SPAWN,SPAWN);
     player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=top+2.5;
     player.vy=0;player.pitch=-.14;player.yaw=.6;player.fly=false;selection=0;
@@ -558,7 +641,7 @@
     if(!inside(x,y,z)||y===0)return false;
     if(b!==0&&solid(b)&&x>=Math.floor(player.x-.3)&&x<=Math.floor(player.x+.3)&&z>=Math.floor(player.z-.3)&&z<=Math.floor(player.z+.3)&&y<player.y+1.9&&y+1>player.y)return false;
     const before=get(x,y,z);if(before===b)return false;
-    set(x,y,z,b);savedEdits.set(idx(x,y,z),b);dirtyAround(x,z);markSave();if(!remote)window.MineWorldMultiplayer?.localEdit(idx(x,y,z),b);return true;
+    set(x,y,z,b);savedEdits.set(idx(x,y,z),b);dirtyAround(x,z);markSave();if(!remote)window.MineWorldMultiplayer?.localEdit(idx(x,y,z)+(dimension==='nether'?W*D*H:0),b);return true;
   }
   function pushFace(a,x,y,z,b,f){
     const face=f.n[1]===1?0:(f.n[1]===-1?2:1);
@@ -631,6 +714,7 @@
     if(paused)return;
     if(aimMob){attackMob(aimMob);return;}
     if(!aim)return;
+    if(aim.b===87){switchDimension(dimension==='nether'?'overworld':'nether');return;}
     if(attackCooldown>0)return;
     if(gameMode==='survival'){
       if((aim.b===19||aim.b===18)&&toolLevels[tools.pickaxe]<(aim.b===19?2:1)){
@@ -640,20 +724,20 @@
     if(setBlock(aim.x,aim.y,aim.z,0)){
       if(gameMode==='survival'&&aim.b!==7){
         const found=aim.b===1?2:aim.b;
-        if(found===18)bag.coal++;else inventory[found]=Math.min(inventory[found]+1,999);
+        if(found===18)bag.coal++;else if(found===83)bag.quartz++;else if(found===84)bag.gold++;else inventory[found]=Math.min(inventory[found]+1,999);
         updateHotbar();updateSurvivalHUD();markSave();
       }
       toast('Mined '+NAMES[aim.b]);
       attackCooldown=gameMode==='creative'?.07:(tools.pickaxe==='iron'?.14:tools.pickaxe==='stone'?.23:tools.pickaxe==='wood'?.32:.47);
     }
   }
-  function performPlace(){if(paused||!aim||!aim.previous)return;let p=aim.previous,b=HOT9[selection];if(!inside(p.x,p.y,p.z)||get(p.x,p.y,p.z)!==0)return;if(gameMode==='survival'&&inventory[b]===0){toast('Mine resources to collect '+NAMES[b]);return;}if(setBlock(p.x,p.y,p.z,b)){if(gameMode==='survival'){inventory[b]--;updateHotbar();}toast('Placed '+NAMES[b]);timers.place=.2}}
+  function performPlace(){if(paused||!aim||!aim.previous)return;let p=aim.previous,b=HOT9[selection];if(!inside(p.x,p.y,p.z)||get(p.x,p.y,p.z)!==0)return;if(dimension==='nether'&&b===7){toast('💨 Water instantly evaporates in the Nether');return;}if(gameMode==='survival'&&inventory[b]===0){toast('Mine resources to collect '+NAMES[b]);return;}if(setBlock(p.x,p.y,p.z,b)){if(gameMode==='survival'){inventory[b]--;updateHotbar();}toast('Placed '+NAMES[b]);timers.place=.2}}
   function markSave(){dirtySave=true}
   function save(){
     if(window.MineWorldMultiplayer?.isShared())return;
     try{
       const edits=[...savedEdits.entries()];
-      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,version:5});
+      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],dimension,overworldPosition,netherPosition,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,version:6});
       localStorage.setItem(STORAGE,payload);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';
     }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';}
   }
@@ -661,15 +745,19 @@
     try{
       const data=localStorage.getItem(STORAGE);if(!data)return false;
       const s=JSON.parse(data);if(!s||!Number.isInteger(s.seed)||!Array.isArray(s.edits))return false;
-      if((s.version||0)<5){try{if(!localStorage.getItem('mineworld-backup-before-10k'))localStorage.setItem('mineworld-backup-before-10k',data);}catch(e){console.warn('Save backup could not be stored; continuing migration',e);}}
-      seed=s.seed;seedLabel=String(s.seedLabel||s.seed);generate();savedEdits.clear();
+      if((s.version||0)<5&&!localStorage.getItem('mineworld-backup-before-10k'))localStorage.setItem('mineworld-backup-before-10k',data);
+      if((s.version||0)<6&&!localStorage.getItem('mineworld-backup-before-nether'))localStorage.setItem('mineworld-backup-before-nether',data);
+      seed=s.seed;seedLabel=String(s.seedLabel||s.seed);generate();overworldEdits.clear();
       const legacy=(s.version||0)<5,oldW=(s.version||0)<4?64:96,oldH=(s.version||0)<4?27:36;
       for(let [i,b] of s.edits){
         if(legacy){const oldX=Math.floor(i/(oldW*oldH)),oldZ=Math.floor(i/oldH)%oldW,oldY=i%oldH;
           i=idx(oldX+SPAWN-56,oldY,oldZ+SPAWN-56);
         }
-        if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)savedEdits.set(i,b);
+        if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)overworldEdits.set(i,b);
       }
+      if(Array.isArray(s.netherEdits))for(const pair of s.netherEdits){if(!Array.isArray(pair)||pair.length!==2)continue;const [i,b]=pair;if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)netherEdits.set(i,b)}
+      if(s.overworldPosition&&Number.isFinite(s.overworldPosition.x))overworldPosition=s.overworldPosition;
+      if(s.netherPosition&&Number.isFinite(s.netherPosition.x))netherPosition=s.netherPosition;
       // Regenerate nearby chunks with saved block edits so even older worlds survive migration.
       unloadAllChunks();scheduleChunks(true);streamChunks(5);
       if(s.gameMode==='survival')gameMode='survival';
@@ -686,13 +774,41 @@
         player.fly=gameMode==='creative'&&!!s.player.fly;
         player.x=clamp(player.x,.7,W-.7);player.z=clamp(player.z,.7,D-.7);player.y=clamp(player.y,3,H-3);
       }
-      scheduleChunks(true);streamChunks(5);updateFlyButton();updateSeedLabel();dirtySave=false;
+      if(s.dimension==='nether'){overworldPosition=overworldPosition||{x:SPAWN+.5,z:SPAWN+.5,y:terrain(SPAWN,SPAWN)+3};dimension='nether';savedEdits=netherEdits;document.body.classList.add('in-nether');unloadAllChunks();scheduleChunks(true);streamChunks(5);mobs=[];spawnNetherWildlife()}
+      updatePortalUI();scheduleChunks(true);streamChunks(5);updateFlyButton();updateSeedLabel();dirtySave=false;
       return true;
     }catch(e){console.warn('World save not loaded:',e);return false;}
   }
+  function switchDimension(target){
+    const next=target==='nether'?'nether':'overworld';
+    if(next===dimension)return;
+    const prev=dimension;
+    const pos={x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch};
+    if(prev==='overworld'){overworldPosition=pos;overworldEdits=savedEdits}
+    else{netherPosition=pos;netherEdits=savedEdits}
+    const shift=(v,toNether)=>clamp(SPAWN+(v-SPAWN)*(toNether?1/8:8),7,W-8);
+    dimension=next;savedEdits=next==='nether'?netherEdits:overworldEdits;
+    window.MineWorldBiomes.setSeed(seed);window.MineWorldNether.setSeed(seed);
+    let saved=next==='nether'?netherPosition:overworldPosition;
+    player.x=saved?.x??shift(pos.x,next==='nether');player.z=saved?.z??shift(pos.z,next==='nether');
+    unloadAllChunks();scheduleChunks(true);streamChunks(5);
+    player.y=clamp(saved?.y??(terrain(Math.floor(player.x),Math.floor(player.z))+3),3,H-5);
+    player.vy=0;player.ground=false;player.fly=false;player.yaw=saved?.yaw??pos.yaw;player.pitch=saved?.pitch??pos.pitch;
+    mobs=[];mobSerial=0;mobSpawnClock=0;
+    if(next==='overworld')spawnWildlife();else if(!window.MineWorldMultiplayer?.isGuest())spawnNetherWildlife();
+    updatePortalUI();updateFlyButton();updateHotbar();markSave();window.MineWorldMultiplayer?.flushMobs();
+    toast(next==='nether'?'🔥 You entered the Nether!':'🌿 Returned to the Overworld');
+  }
+  function updatePortalUI(){
+    const nether=dimension==='nether';document.body.classList.toggle('in-nether',nether);
+    $('dimension-indicator').classList.toggle('hidden',!nether);
+    $('portal-toggle').textContent=nether?'🌿 Overworld':'🔥 Nether';
+    $('cross-portal').textContent=nether?'🌿 Return to the Overworld':'🔥 Enter the Nether';
+    $('atlas-toggle').title=nether?'Travel between Nether biomes':'Explore Overworld biomes';
+  }
   function toggleInventory(){hotbarPage=(hotbarPage+1)%HOTSETS.length;HOT9.splice(0,HOT9.length,...HOTSETS[hotbarPage]);selection=0;updateHotbar();toast(hotbarPage?'Nature & extras':'Classic blocks');}
-  function updateHotbar(){const root=$('hotbar');root.innerHTML='';HOT9.forEach((id,i)=>{const button=document.createElement('button');button.type='button';button.className='hot-item'+(i===selection?' active':'');button.setAttribute('aria-label',NAMES[id]);const tile=id*3,tx=((tile%8)/7*100).toFixed(2),ty=(Math.floor(tile/8)/7*100).toFixed(2),image=window.MineWorldAtlas.dataURL;
-    button.innerHTML='<small>'+(gameMode==='survival'?inventory[id]:i+1)+'</small><div class="swatch" style="background-color:'+SWATCH[id]+';background-image:url('+image+');background-size:800% 800%;background-position:'+tx+'% '+ty+'%"></div><span>'+NAMES[id]+'</span>';button.addEventListener('pointerdown',e=>e.stopPropagation());button.addEventListener('click',()=>{selection=i;updateHotbar();toast(NAMES[HOT9[selection]])});root.appendChild(button)})}
+  function updateHotbar(){const root=$('hotbar');root.innerHTML='';HOT9.forEach((id,i)=>{const button=document.createElement('button');button.type='button';button.className='hot-item'+(i===selection?' active':'');button.setAttribute('aria-label',NAMES[id]);const tile=id*3,tx=((tile%16)/15*100).toFixed(2),ty=(Math.floor(tile/16)/18*100).toFixed(2),image=window.MineWorldAtlas.dataURL;
+    button.innerHTML='<small>'+(gameMode==='survival'?inventory[id]:i+1)+'</small><div class="swatch" style="background-color:'+SWATCH[id]+';background-image:url('+image+');background-size:1600% 1900%;background-position:'+tx+'% '+ty+'%"></div><span>'+NAMES[id]+'</span>';button.addEventListener('pointerdown',e=>e.stopPropagation());button.addEventListener('click',()=>{selection=i;updateHotbar();toast(NAMES[HOT9[selection]])});root.appendChild(button)})}
   function toast(s){let x=$('toast');x.textContent=s;x.classList.add('show');notifications++;const n=notifications;setTimeout(()=>{if(n===notifications)x.classList.remove('show')},1250)}
   function updateSurvivalHUD(){
     $('survival-hud').classList.toggle('hidden',gameMode!=='survival');
@@ -735,7 +851,11 @@
     {name:'⚔ Iron sword',cost:{iron:2,sticks:1},tool:['sword','iron'],tip:'2 iron + stick'},
     {name:'🔥 Furnace',cost:{'block:3':8},give:{'block:20':1},tip:'8 stone → furnace'},
     {name:'🍖 Cook meat',cost:{raw:1,coal:1},give:{cooked:1},tip:'Raw meat + coal → cooked food'},
-    {name:'⚒ Smelt iron',cost:{'block:19':1,coal:1},give:{iron:1},tip:'Iron ore + coal → iron ingot'}
+    {name:'⚒ Smelt iron',cost:{'block:19':1,coal:1},give:{iron:1},tip:'Iron ore + coal → iron ingot'},
+    {name:'🧱 Nether bricks',cost:{'block:65':4},give:{'block:72':4},tip:'4 nether rock → 4 dark bricks'},
+    {name:'✦ Soul torch',cost:{'block:71':1,sticks:1},give:{'block:89':4},tip:'Soul soil + stick → 4 soul flames'},
+    {name:'🔥 Magma block',cost:{magmaCream:2,'block:68':1},give:{'block:88':2},tip:'2 magma cream + blackstone'},
+    {name:'✨ Shroomlight',cost:{'block:79':2,'block:81':2},give:{'block:90':1},tip:'Crimson and warped wart'}
   ];
   function amount(key){return key.startsWith('block:')?inventory[Number(key.slice(6))]:(bag[key]||0)}
   function addResource(key,n){if(key.startsWith('block:')){const i=Number(key.slice(6));inventory[i]=clamp(inventory[i]+n,0,999)}else bag[key]=clamp((bag[key]||0)+n,0,999)}
@@ -769,10 +889,11 @@
   function setDifficulty(level){
     if(!['peaceful','easy','normal','hard'].includes(level))return;
     difficulty=level;$('home-difficulty').value=level;$('pause-difficulty').value=level;
-    if(level==='peaceful')mobs=mobs.filter(m=>SPECIES[m.kind].kind!=='hostile');
+    if(level==='peaceful')mobs=mobs.filter(m=>SPECIES[m.kind].kind!=='hostile'&&SPECIES[m.kind].kind!=='boss');
     markSave();toast('Difficulty: '+level[0].toUpperCase()+level.slice(1));
   }
   function respawn(){
+    if(dimension==='nether')switchDimension('overworld');
     player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=terrain(SPAWN,SPAWN)+3;
     player.vy=0;player.fly=false;health=20;hunger=18;
     updateSurvivalHUD();toast('You respawned at your world spawn');
@@ -784,6 +905,13 @@
     markSave();
   }
   function updateSurvival(dt){
+    if(dimension==='nether'){
+      lavaCooldown-=dt;
+      const fx=Math.floor(player.x),fy=Math.floor(player.y+.15),fz=Math.floor(player.z);
+      if((get(fx,fy,fz)===66||get(fx,fy-1,fz)===66||get(fx,fy,fz)===88)&&lavaCooldown<=0){
+        lavaCooldown=1.15;damage(3,'Lava burns');
+      }
+    }
     if(gameMode!=='survival')return;
     if(difficulty==='peaceful'){health=clamp(health+dt*.75,0,20);hunger=20;updateSurvivalHUD();return;}
     const moving=keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||Math.hypot(movement.x,movement.y)>.08;
@@ -815,22 +943,25 @@
       player.vy=0;
       if(player.ground){let snap=player.y;for(let i=0;i<40;i++){let low=snap-.025;if(blockAtFeet(player.x,low,player.z))break;snap=low}player.y=snap}
     }
-    if(player.y<1){player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=terrain(SPAWN,SPAWN)+2;player.vy=0}
+    if(player.y<1){if(dimension==='nether')switchDimension('overworld');player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=terrain(SPAWN,SPAWN)+2;player.vy=0}
   }
   // Autonomous creatures are original low-poly models and simple local AI.
   // Intentionally not claimed to be server-authoritative multiplayer entities.
   function topAt(x,z){
     let X=Math.floor(x),Z=Math.floor(z);if(X<0||X>=W||Z<0||Z>=D)return SEA+1;
+    if(dimension==='nether')return window.MineWorldNether.surfaceAt(X,Z);
     for(let y=H-2;y>=1;y--)if(solid(get(X,y,Z)))return y;
     return 1;
   }
   function spawnOne(kind,x,z){
     if(!(kind in SPECIES)||mobs.length>=26)return null;
     x=clamp(x,2,W-3);z=clamp(z,2,D-3);
-    const y=topAt(x,z)+1;
+    let y=topAt(x,z)+1;
+    if(dimension==='nether'&&get(Math.floor(x),y-1,Math.floor(z))===66&&kind!=='strider')return null;
+    if(['ghast','happy_ghast','ghastling','blaze','wither'].includes(kind))y=Math.min(H-8,y+4);
     if(y>H-4||get(Math.floor(x),y,Math.floor(z))||get(Math.floor(x),y+1,Math.floor(z)))return null;
     let m={id:++mobSerial,kind,x,y,z,hp:SPECIES[kind].hp,heading:Math.random()*6.28,step:.8+Math.random()*2.5,attack:1.5,anger:0,windup:0};
-    mobs.push(m);return m;
+    m.dimension=dimension;mobs.push(m);return m;
   }
   function spawnWildlife(){
     const types=['cow','pig','sheep','chicken'];
@@ -839,49 +970,71 @@
       if(Math.hypot(x-SPAWN,z-SPAWN)>6)spawnOne(types[i%4],x,z);
     }
   }
+  function spawnNetherWildlife(){
+    const n=window.MineWorldNether;
+    for(let i=0;i<12;i++){
+      const angle=i*2.399,r=12+(i%4)*5,x=clamp(player.x+Math.cos(angle)*r,3,W-3),z=clamp(player.z+Math.sin(angle)*r,3,D-3);
+      const b=n.biomeAt(x,z);let kind=b.mobs[(i+seed)%b.mobs.length];
+      const structure=n.landmarkAt(x,z);
+      if(Math.hypot(structure.x-x,structure.z-z)<25){
+        if(structure.kind==='Nether Fortress')kind=i%2?'wither_skeleton':'blaze';
+        else if(structure.kind==='Bastion Remnant')kind=i%2?'piglin_brute':'piglin';
+      }
+      if(kind==='strider'&&n.surfaceAt(x,z)>10)kind='zombified_piglin';
+      spawnOne(kind,x,z);
+    }
+  }
   function nightTime(){return Math.sin(dayClock*.015-.9)<-.18}
   function updateMobs(dt){
     // In multiplayer, only the room host runs the shared creature simulation.
     // Guests draw authoritative snapshots and send attacks for host validation.
     const network=window.MineWorldMultiplayer;
     if(network?.isGuest())return;
-    const combatants=[{id:null,...player,mode:gameMode},...(network?.getCombatants()||[])];
+    const combatants=[{id:null,...player,mode:gameMode,dimension},...(network?.getCombatants()||[])].filter(p=>(p.dimension||'overworld')===dimension);
     const living=combatants.filter(p=>p.mode==='survival');
     const fighting=living.length>0;
     if(fighting&&!paused){
       mobSpawnClock+=dt;
       if(mobSpawnClock>8){
         mobSpawnClock=0;
-        if(nightTime()&&difficulty!=='peaceful'&&mobs.filter(m=>SPECIES[m.kind].kind==='hostile').length<(difficulty==='hard'?12:8)){
+        if((dimension==='nether'||nightTime())&&difficulty!=='peaceful'&&mobs.filter(m=>SPECIES[m.kind].kind==='hostile'||SPECIES[m.kind].kind==='boss').length<(difficulty==='hard'?12:8)){
           for(let attempt=0;attempt<4;attempt++){
             const target=living[Math.floor(Math.random()*living.length)];
             const a=Math.random()*Math.PI*2,r=12+Math.random()*11;
             const x=target.x+Math.cos(a)*r,z=target.z+Math.sin(a)*r;
-            const kind=['zombie','skeleton','spider','creeper'][Math.floor(Math.random()*4)];
+            const kinds=dimension==='nether'?window.MineWorldNether.biomeAt(x,z).mobs:['zombie','skeleton','spider','creeper'];
+            let kind=kinds[Math.floor(Math.random()*kinds.length)];
+            if(dimension==='nether'){
+              const landmark=window.MineWorldNether.landmarkAt(x,z);
+              if(Math.hypot(x-landmark.x,z-landmark.z)<23){
+                if(landmark.kind==='Nether Fortress')kind=Math.random()>.5?'blaze':'wither_skeleton';
+                if(landmark.kind==='Bastion Remnant')kind=Math.random()>.5?'piglin_brute':'piglin';
+              }
+            }
             if(x>3&&x<W-3&&z>3&&z<D-3&&spawnOne(kind,x,z))break;
           }
         }
-        if(mobs.filter(m=>SPECIES[m.kind].kind==='passive').length<9){
+        if(dimension==='overworld'&&mobs.filter(m=>SPECIES[m.kind].kind==='passive').length<9){
           {const nearby=living[Math.floor(Math.random()*living.length)]||player;spawnOne(['cow','pig','sheep','chicken'][Math.floor(Math.random()*4)],clamp(nearby.x+Math.random()*35-17,3,W-4),clamp(nearby.z+Math.random()*35-17,3,D-4));}
         }
       }
     }
-    if(difficulty==='peaceful')mobs=mobs.filter(m=>SPECIES[m.kind].kind==='passive');
+    if(difficulty==='peaceful')mobs=mobs.filter(m=>SPECIES[m.kind].kind!=='hostile'&&SPECIES[m.kind].kind!=='boss');
     for(let i=mobs.length-1;i>=0;i--){
       const m=mobs[i],type=SPECIES[m.kind];
       m.step-=dt;m.attack-=dt;m.anger=Math.max(0,m.anger-dt);
       let target=null,dist=Infinity;
-      if(type.kind==='hostile'){
+      if(type.kind==='hostile'||type.kind==='boss'||(type.kind==='neutral'&&m.anger>0)){
         for(const p of living){const d=Math.hypot(m.x-p.x,m.z-p.z);if(d<dist){dist=d;target=p}}
-        if(!nightTime()&&dist>15){mobs.splice(i,1);continue}
+        if(dimension==='overworld'&&!nightTime()&&dist>15){mobs.splice(i,1);continue}
         if(target&&dist<16)m.heading=Math.atan2(target.z-m.z,target.x-m.x);
       }else if(m.step<=0){m.step=1.4+Math.random()*4;m.heading+=-1.5+Math.random()*3;}
-      const chase=type.kind==='hostile'&&!!target&&dist<16;
+      const chase=(type.kind==='hostile'||type.kind==='boss'||(type.kind==='neutral'&&m.anger>0))&&!!target&&dist<16;
       const pace=(chase?type.speed:(!m.anger?.34:.8)*type.speed)*dt;
       const vx=Math.cos(m.heading)*pace,vz=Math.sin(m.heading)*pace;
       const nx=clamp(m.x+vx,1.6,W-1.6),nz=clamp(m.z+vz,1.6,D-1.6);
       const ground=topAt(nx,nz)+1;
-      if(Math.abs(ground-m.y)<1.25&&get(Math.floor(nx),ground,Math.floor(nz))===0){m.x=nx;m.z=nz;m.y=ground}
+      if(Math.abs(ground-m.y)<1.25&&get(Math.floor(nx),ground,Math.floor(nz))===0){m.x=nx;m.z=nz;m.y=ground}else if(['ghast','blaze','happy_ghast','ghastling','wither'].includes(m.kind)){m.x=nx;m.z=nz;m.y=Math.max(ground+3,Math.min(H-6,m.y+Math.sin(dayClock+m.id)*dt*.4));}
       if(chase&&m.attack<=0){
         const mul=difficulty==='hard'?1.65:difficulty==='easy'?.65:1;
         if(dist<1.55){
@@ -890,11 +1043,11 @@
           else network?.damagePlayer(target.id,amount,type.name+' attack');
           m.attack=1.75;
           if(m.kind==='creeper'){mobs.splice(i,1);continue}
-        }else if(m.kind==='skeleton'&&dist<8&&dist>=2){
-          const amount=difficulty==='hard'?4:2;
+        }else if(['skeleton','wither_skeleton','blaze','ghast','wither'].includes(m.kind)&&dist<11&&dist>=2){
+          const amount=difficulty==='hard'?5:(['ghast','blaze','wither'].includes(m.kind)?4:2);
           if(target.id===null){if(playerHitCooldown<=0){damage(amount,'Skeleton arrow');playerHitCooldown=.85}}
           else network?.damagePlayer(target.id,amount,'Skeleton arrow');
-          m.attack=3.8;
+          m.attack=['ghast','wither','blaze'].includes(m.kind)?2.7:3.8;
         }
       }
     }
@@ -912,7 +1065,7 @@
       if(attackerId===null&&gameMode==='survival')grantLoot(drop,count);
       return {hit:true,dead:true,kind:m.kind,drop,count};
     }
-    m.anger=4;
+    m.anger=9;
     return {hit:true,dead:false,kind:m.kind,hp:m.hp};
   }
   function grantLoot(drop,count){
@@ -925,16 +1078,16 @@
     for(const v of data){
       if(!v||!Number.isInteger(v.id)||v.id<1||!SPECIES[v.kind])continue;
       if(![v.x,v.y,v.z,v.hp].every(Number.isFinite)||v.x<0||v.x>W||v.y<0||v.y>H+3||v.z<0||v.z>D||v.hp<=0||v.hp>40)continue;
-      fresh.push({id:v.id,kind:v.kind,x:v.x,y:v.y,z:v.z,hp:v.hp,heading:0,step:2,attack:2,anger:0});
+      if((v.dimension||'overworld')!==dimension)continue;fresh.push({id:v.id,kind:v.kind,x:v.x,y:v.y,z:v.z,hp:v.hp,dimension,heading:0,step:2,attack:2,anger:0});
     }
     mobs=fresh;return true;
   }
-  function mobSnapshot(){return mobs.map(m=>({id:m.id,kind:m.kind,x:+m.x.toFixed(2),y:+m.y.toFixed(2),z:+m.z.toFixed(2),hp:m.hp}));}
+  function mobSnapshot(){return mobs.map(m=>({id:m.id,kind:m.kind,x:+m.x.toFixed(2),y:+m.y.toFixed(2),z:+m.z.toFixed(2),hp:m.hp,dimension:m.dimension||dimension}));}
   function targetRemotePlayer(eye,forward,block){
     if(!window.MineWorldMultiplayer?.canPvp())return null;
     let best=null,bestT=Infinity;
     for(const p of window.MineWorldMultiplayer.getCombatants()){
-      const to=[p.x-eye[0],p.y+1.15-eye[1],p.z-eye[2]];
+      if((p.dimension||'overworld')!==dimension)continue;const to=[p.x-eye[0],p.y+1.15-eye[1],p.z-eye[2]];
       const t=to[0]*forward[0]+to[1]*forward[1]+to[2]*forward[2];
       if(t<0||t>4.6||t>=bestT)continue;
       const side=Math.hypot(to[0]-forward[0]*t,to[1]-forward[1]*t,to[2]-forward[2]*t);
@@ -983,7 +1136,41 @@
     function cube(x,y,z,w,h,d,c){for(const face of FACE){for(const i of [0,1,2,0,2,3]){const v=face.v[i],shade=face.shade;a.push(x+v[0]*w,y+v[1]*h,z+v[2]*d,c[0]*shade,c[1]*shade,c[2]*shade)}}}
     for(const m of mobs){
       if(Math.hypot(m.x-player.x,m.z-player.z)>39)continue;
-      const type=SPECIES[m.kind],x=m.x,z=m.z,y=m.y,hostile=type.kind==='hostile';
+      const type=SPECIES[m.kind],x=m.x,z=m.z,y=m.y,hostile=type.kind==='hostile'||type.kind==='neutral'||type.kind==='boss';
+      if(['ghast','ghastling','happy_ghast'].includes(m.kind)){
+        const scale=m.kind==='ghastling'?.55:m.kind==='happy_ghast'?.95:1;
+        cube(x-0.68*scale,y+1.1*scale,z-.68*scale,1.36*scale,1.32*scale,1.36*scale,type.body);
+        for(let i=0;i<4;i++)for(let j=0;j<3;j++)if((i+j)%2===0)
+          cube(x+(-.5+i*.31)*scale,y+(0.4+Math.sin(dayClock*2+i)*.13)*scale,z+(-.3+j*.34)*scale,.14*scale,.9*scale,.14*scale,type.head);
+        for(const ex of [-1,1])cube(x+ex*.29*scale-.11*scale,y+1.87*scale,z-.72*scale,.22*scale,.19*scale,.05*scale,[.20,.15,.16]);
+        continue;
+      }
+      if(m.kind==='magma_cube'){
+        cube(x-.48,y+.17,z-.48,.96,.92,.96,type.body);
+        cube(x-.42,y+.35,z-.49,.84,.14,.06,[.92,.30,.08]);
+        for(const ex of [-1,1])cube(x+ex*.21-.06,y+.71,z-.49,.13,.12,.055,[.99,.81,.28]);
+        continue;
+      }
+      if(m.kind==='blaze'){
+        cube(x-.18,y+1.0,z-.18,.36,.55,.36,type.head);
+        for(let i=0;i<8;i++){const angle=i*Math.PI*.25+dayClock*.8,dx=Math.cos(angle)*.42,dz=Math.sin(angle)*.42;
+          cube(x+dx-.07,y+.6+Math.sin(dayClock*2+i)*.2,z+dz-.07,.14,.72,.14,[.99,.57,.17]);}
+        continue;
+      }
+      if(['hoglin','zoglin','strider'].includes(m.kind)){
+        const strider=m.kind==='strider';
+        cube(x-.49,y+.55,z-.40,.98,strider?.69:.88,.80,type.body);
+        cube(x-.36,y+.91,z-.69,.72,.63,.45,type.head);
+        for(const ox of [-.35,.24])for(const oz of [-.27,.21])cube(x+ox,y+.02,z+oz,.14,strider?.77:.55,.16,type.head);
+        if(!strider)for(const ox of [-.30,.19])cube(x+ox,y+1.3,z-.73,.13,.25,.15,[.91,.84,.71]);
+        continue;
+      }
+      if(m.kind==='wither'){
+        cube(x-.54,y+1.20,z-.22,1.08,.44,.44,type.body);
+        for(const ox of [-.77,0,.77])cube(x+ox-.22,y+1.66,z-.23,.44,.43,.45,type.head);
+        for(let i=0;i<3;i++)cube(x-.3+i*.3,y+.58,z-.17,.14,.66,.3,type.body);
+        continue;
+      }
       if(hostile){
         const spider=m.kind==='spider',creeper=m.kind==='creeper';
         cube(x-.32,y+(spider?.25:.65),z-.23,.64,spider?.45:creeper?1.17:.84,.46,type.body);
@@ -1016,6 +1203,7 @@
       }
     }
     for(const other of others){
+      if((other.dimension||'overworld')!==dimension)continue;
       if(Math.abs(other.x-player.x)>42||Math.abs(other.z-player.z)>42)continue;
       let x=other.x,y=other.y,z=other.z;
       const n=String(other.name||'Friend');let tint=0;for(let i=0;i<n.length;i++)tint=(tint*31+n.charCodeAt(i))>>>0;
@@ -1066,8 +1254,8 @@
     const {vp,eye,forward}=vpMatrix(dw,dh);aim=pointAtBlock(eye,forward,7);aimMob=targetMob(eye,forward,aim);aimPlayer=targetRemotePlayer(eye,forward,aim);
     const sun=Math.sin(dayClock*.015-0.9);
     const skyTint=clamp((sun+0.4)/1.1,.13,1);
-    sky=[.07+skyTint*.46,.09+skyTint*.67,.19+skyTint*.72];
-    $('sky-decor').style.opacity=String(clamp(skyTint*.75,0,1));
+    sky=dimension==='nether'?window.MineWorldNether.biomeAt(player.x,player.z).index===2?[.08,.22,.21]:window.MineWorldNether.biomeAt(player.x,player.z).index===3?[.17,.15,.22]:window.MineWorldNether.biomeAt(player.x,player.z).index===4?[.18,.17,.19]:[.24,.075,.09]:[.07+skyTint*.46,.09+skyTint*.67,.19+skyTint*.72];
+    $('sky-decor').style.opacity=dimension==='nether'?'0':String(clamp(skyTint*.75,0,1));
     gl.clearColor(...sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,vp);gl.uniform3fv(uEye,eye);gl.uniform3fv(uSky,sky);
     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uAtlas,0);
@@ -1076,7 +1264,7 @@
     drawMobs();
     drawHighlight(aimMob?null:aim);
     $('target-name').textContent=aimMob?'⚔ '+SPECIES[aimMob.kind].name+' · ♥ '+Math.ceil(aimMob.hp):aimPlayer?'⚔ '+aimPlayer.name+' · PvP enabled':aim?'⛏ '+NAMES[aim.b]+'  ·  '+aim.x+', '+aim.y+', '+aim.z:'Aim at a block or creature';
-    if((frameCount++%18)===0){$('coord-readout').textContent='🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
+    if((frameCount++%18)===0){$('coord-readout').textContent=(dimension==='nether'?'🔥 '+window.MineWorldNether.biomeAt(player.x,player.z).name:'🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name)+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
     saveTimer+=dt;if(saveTimer>8){saveTimer=0;if(dirtySave)save()}
   }
   // Biome travel stays deterministic and works in the same peer-to-peer world.
@@ -1089,7 +1277,7 @@
     const landmark=document.createElement('small');landmark.textContent=b.feature?'🏛 '+window.MineWorldBiomes.STRUCTURE_NAMES[b.feature]:b.tree==='none'?'⛰ Explore landscape':'🌳 '+b.tree.replace(/[A-Z]/g,c=>' '+c.toLowerCase());
     tile.appendChild(landmark);
     tile.addEventListener('click',()=>{
-      const {x,z}=window.MineWorldBiomes.atlasDestination(i);
+      if(dimension==='nether')switchDimension('overworld');const {x,z}=window.MineWorldBiomes.atlasDestination(i);
       player.x=x+.5;player.z=z+.5;scheduleChunks(true);streamChunks(5);player.y=topAt(x,z)+3;player.vy=0;player.fly=false;
       updateFlyButton();markSave();$('atlas-modal').classList.add('hidden');
       start();toast('🧭 '+b.name+(b.feature?' · '+window.MineWorldBiomes.STRUCTURE_NAMES[b.feature]:''));
@@ -1109,6 +1297,67 @@
   }
   for(const id of ['atlas-toggle','atlas-from-home','atlas-from-pause'])$(id).addEventListener('click',openAtlas);
   $('close-atlas').addEventListener('click',closeAtlas);
+  let netherWasPlaying=false;
+  const netherGrid=$('nether-biome-grid');
+  const icons=['🌋','🍄','🌀','🦴','⛰'];
+  window.MineWorldNether.BIOMES.forEach((b,i)=>{
+    const button=document.createElement('button');button.type='button';button.className='nether-biome';button.style.background='linear-gradient(145deg,'+b.color+',#241620)';
+    const icon=document.createElement('span');icon.textContent=icons[i];const name=document.createElement('strong');name.textContent=b.name;
+    const tip=document.createElement('small');tip.textContent='Explore →';button.append(icon,name,tip);
+    button.addEventListener('click',()=>{
+      if(dimension!=='nether')switchDimension('nether');
+      const pos=window.MineWorldNether.destination(i);player.x=pos.x+.5;player.z=pos.z+.5;
+      unloadAllChunks();scheduleChunks(true);streamChunks(5);player.y=terrain(pos.x,pos.z)+3;player.vy=0;
+      mobs=[];mobSerial=0;spawnNetherWildlife();$('nether-modal').classList.add('hidden');
+      updatePortalUI();start();toast('🔥 '+b.name);markSave();
+    });netherGrid.append(button);
+  });
+  const netherRoster=[
+    ['ghast','☁ Ghast'],['blaze','🔥 Blaze'],['magma_cube','🟠 Magma Cube'],
+    ['piglin','🐽 Piglin'],['piglin_brute','⚔ Piglin Brute'],['zombified_piglin','🧟 Zombified Piglin'],
+    ['hoglin','🐗 Hoglin'],['zoglin','☠ Zoglin'],['strider','🐾 Strider'],
+    ['wither_skeleton','🦴 Wither Skeleton'],['skeleton','🏹 Skeleton'],['enderman','👁 Enderman'],
+    ['ghastling','☁ Ghastling'],['happy_ghast','😊 Happy Ghast']
+  ];
+  for(const [kind,label] of netherRoster){
+    const button=document.createElement('button');button.type='button';button.className='nether-mob-grid-button';button.textContent=label;
+    button.title='Creative: summon creature near you';
+    button.addEventListener('click',()=>{
+      if(dimension!=='nether'){toast('Enter the Nether first');return;}
+      if(gameMode!=='creative'){toast('Find this species in the Nether, or use Creative to summon it');return;}
+      if(window.MineWorldMultiplayer?.isGuest()){toast('Only the host can summon shared creatures');return;}
+      const dx=Math.sin(player.yaw)*5,dz=-Math.cos(player.yaw)*5;
+      const m=spawnOne(kind,player.x+dx,player.z+dz);
+      if(m){toast('Summoned '+SPECIES[kind].name);window.MineWorldMultiplayer?.flushMobs()}
+      else toast('Move to more open ground to summon');
+      $('nether-modal').classList.add('hidden');start();
+    });netherGrid.parentElement.querySelector('#nether-mob-grid').append(button);
+  }
+  $('nether-barter').addEventListener('click',()=>{
+    if(dimension!=='nether'){toast('Enter the Nether to barter');return}
+    if(gameMode==='survival'&&bag.gold<5){toast('Need 5 gold from Nether ore or piglins');return}
+    if(gameMode==='survival')bag.gold-=5;
+    const reward=['enderPearl','quartz','magmaCream'][Math.floor(Math.random()*3)];bag[reward]+=2;
+    updateSurvivalHUD();markSave();toast('Bartered 5 gold for 2 '+reward);
+  });
+  $('nether-wither').addEventListener('click',()=>{
+    if(dimension!=='nether'){toast('Enter the Nether before summoning the boss');return}
+    if(window.MineWorldMultiplayer?.isGuest()){toast('Only the host may summon the boss');return}
+    if(gameMode==='survival'){
+      if(bag.witherSkull<3||inventory[70]<4){toast('Summon with 3 Wither Skulls and 4 Soul Sand');return}
+      bag.witherSkull-=3;inventory[70]-=4;updateHotbar();updateSurvivalHUD();markSave();
+    }
+    const x=player.x+Math.sin(player.yaw)*7,z=player.z-Math.cos(player.yaw)*7;
+    const m=spawnOne('wither',x,z);
+    if(m){window.MineWorldMultiplayer?.flushMobs();$('nether-modal').classList.add('hidden');start();toast('☠ Wither Boss has awakened!')}
+    else toast('Find an open space to summon the Wither');
+  });
+  function openNether(){netherWasPlaying=started&&!paused;paused=true;keys.clear();movement.x=movement.y=0;
+    if(document.pointerLockElement)document.exitPointerLock();updatePortalUI();$('nether-modal').classList.remove('hidden');}
+  function closeNether(){$('nether-modal').classList.add('hidden');if(netherWasPlaying)start();else if(started)$('pause').classList.remove('hidden');else $('welcome').classList.remove('hidden');}
+  for(const id of ['portal-toggle','nether-from-home','nether-from-pause'])$(id).addEventListener('click',openNether);
+  $('close-nether').addEventListener('click',closeNether);
+  $('cross-portal').addEventListener('click',()=>{switchDimension(dimension==='nether'?'overworld':'nether');$('nether-modal').classList.add('hidden');start()});
   $('inventory-toggle').addEventListener('click',toggleInventory);
   let seedLabel='85721';
   function updateSeedLabel(){
@@ -1121,7 +1370,7 @@
     try{const previous=localStorage.getItem(STORAGE);if(previous)localStorage.setItem('mineworld-previous-seed-backup',previous);}catch(_){}
     seed=window.MineWorldBiomes.seedFrom(text);seedLabel=text;
     inventory.fill(0);for(const k of Object.keys(bag))bag[k]=0;tools.pickaxe=tools.sword='none';equipped='pickaxe';health=20;hunger=20;
-    generate();setGameMode(gameMode);save();updateSeedLabel();return true;
+    generate();setGameMode(gameMode);save();updatePortalUI();updateSeedLabel();return true;
   }
   function playMode(mode){
     const typed=$('seed-input').value.trim();
@@ -1201,40 +1450,44 @@
     b.addEventListener('lostpointercapture',()=>touchHold[verb]=false);
   }
   updateModeButton();updateSurvivalHUD();
-  if(!load())generate();else $('status').textContent='● Previous world restored';setDifficulty(difficulty);updateSeedLabel();
+  if(!load())generate();else $('status').textContent='● Previous world restored';setDifficulty(difficulty);updatePortalUI();updateSeedLabel();
   window.MineWorldBridge={
-    getPlayer:()=>({x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly,mode:gameMode}),
+    getPlayer:()=>({x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly,mode:gameMode,dimension}),
     getCombatProfile:()=>({mode:gameMode,equipped,weapon:equipped==='sword'?tools.sword:equipped==='pickaxe'?tools.pickaxe:'none'}),
     getMobs:mobSnapshot, setMobs:syncMobs, applyMobHit, grantLoot,
     applyDamage:(n,cause)=>{if(Number.isInteger(n)&&n>0&&n<=20)damage(n,String(cause||'Combat').slice(0,40))},
     getMode:()=>gameMode,
-    getSnapshot:()=>({seed,version:5,worldSize:W,edits:[...savedEdits.entries()],dayClock,mobs:mobSnapshot()}),
+    getSnapshot:()=>({seed,version:6,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],dayClock,mobs:mobSnapshot(),hostDimension:dimension}),
     resetPublicWorld:(newSeed)=>{
       if(!Number.isInteger(newSeed)||newSeed<1||newSeed>99999999)return false;
       seed=newSeed;seedLabel=String(newSeed);generate();dirtySave=false;return true;
     },
     acceptSnapshot:(snapshot)=>{
-      if(!snapshot||!Number.isInteger(snapshot.seed)||!Array.isArray(snapshot.edits)||snapshot.edits.length>250000)return false;
-      seed=snapshot.seed;seedLabel=String(seed);generate();savedEdits.clear();
+      if(!snapshot||!Number.isInteger(snapshot.seed)||!Array.isArray(snapshot.edits)||snapshot.edits.length>250000||!Array.isArray(snapshot.netherEdits||[])||(snapshot.netherEdits||[]).length>250000)return false;
+      seed=snapshot.seed;seedLabel=String(seed);generate();overworldEdits.clear();netherEdits.clear();
       for(const pair of snapshot.edits){
         if(!Array.isArray(pair)||pair.length!==2)continue;
         const [i,b]=pair;
-        if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)savedEdits.set(i,b);
+        if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)overworldEdits.set(i,b);
       }
+      for(const pair of snapshot.netherEdits||[]){if(Array.isArray(pair)&&pair.length===2){const [i,b]=pair;if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)netherEdits.set(i,b)}}
       unloadAllChunks();scheduleChunks(true);streamChunks(5);
       if(Number.isFinite(snapshot.dayClock))dayClock=snapshot.dayClock;
       if(Array.isArray(snapshot.mobs))syncMobs(snapshot.mobs);
       dirtySave=false;updateSeedLabel();return true;
     },
     remoteEdit:(i,b)=>{
-      if(!Number.isSafeInteger(i)||i<0||i>=W*D*H||!Number.isInteger(b)||b<0||b>=NAMES.length)return false;
-      const x=Math.floor(i/(D*H)),z=Math.floor(i/H)%D,y=i%H;
+      if(!Number.isSafeInteger(i)||i<0||i>=2*W*D*H||!Number.isInteger(b)||b<0||b>=NAMES.length)return false;
+      const target=i>=W*D*H?'nether':'overworld',localIndex=target==='nether'?i-W*D*H:i;
+      const x=Math.floor(localIndex/(D*H)),z=Math.floor(localIndex/H)%D,y=localIndex%H;
       if(y===0)return false;
-      savedEdits.set(i,b);
+      (target==='nether'?netherEdits:overworldEdits).set(localIndex,b);
+      if(target!==dimension)return true;
       const chunk=chunkCache.get(chunkKey(Math.floor(x/CHUNK),Math.floor(z/CHUNK)));
       if(chunk){chunk.data[chunkIndex(x,y,z)]=b;dirtyAround(x,z);}
       markSave();return true;
     },
+    getDimension:()=>dimension,
     isStarted:()=>started,
     start:()=>{if(!started)start()},
     announce:(msg)=>toast(msg)
