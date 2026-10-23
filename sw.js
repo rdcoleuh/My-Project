@@ -1,5 +1,5 @@
-const VERSION='mineworld-chunked-10000-20261023-v6';
-const FILES=['./','./index.html','./multiplayer.js','./world-chunks.js','./manifest.webmanifest','./favicon.svg','./apple-touch-icon.png'];
+const VERSION='mineworld-nether-dimension-v31-20261023-v7';
+const FILES=['./','./index.html','./multiplayer.js','./world-chunks.js','./nether-world.js','./manifest.webmanifest','./favicon.svg','./apple-touch-icon.png'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(VERSION).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x.startsWith('mineworld-')&&x!==VERSION).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
