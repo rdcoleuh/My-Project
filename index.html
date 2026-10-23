@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111915">
+  <meta name="description" content="Play an experimental Minecraft Java Edition 26.3 browser port through Gaius, with no demo timer.">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Minecraft Web — Java Edition 26.3</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <style>
+    :root{color-scheme:dark;--ink:#eff8ed;--muted:#a7bca9;--faint:#7f9686;--deep:#0b110e;--canvas:#111915;--elev:#1c2720;--elev2:#243328;--rule:#35483a;--green:#b6f67c;--green2:#74b947;--shadow:0 22px 80px #02080399}
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse 90% 34% at 48% -14%,#325039 0%,transparent 80%),var(--deep);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;font-size:15px}
+    button,a{font:inherit;-webkit-tap-highlight-color:transparent}
+    button{cursor:pointer}
+    button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #fffca2;outline-offset:3px}
+    a{color:inherit;text-decoration:none}
+    .layout{max-width:1600px;margin:0 auto;padding:17px clamp(14px,3.2vw,56px) 25px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px}
+    .brand{display:flex;align-items:center;gap:13px;min-width:0}
+    .voxel{width:45px;height:45px;flex:none;background:linear-gradient(to bottom,#81c958 0 23%,#579239 23% 34%,#866342 34% 70%,#69482f 70%);border:3px solid #23301d;box-shadow:inset -6px -6px #0002,inset 5px 2px #ffffff2c,4px 4px 0 #0005;transform:rotate(-5deg)}
+    .brand h1{margin:0;font-size:clamp(21px,2.5vw,30px);line-height:1.02;letter-spacing:.045em;font-weight:950;font-family:Impact,'Arial Black',system-ui,sans-serif;text-shadow:2px 3px 0 #000a}
+    .brand p{margin:5px 0 0;color:var(--faint);font-size:11px;letter-spacing:.13em;text-transform:uppercase}
+    .pills{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:9px}
+    .pill{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:650;border:1px solid #33513b;background:#183022;border-radius:99px;padding:8px 13px;color:#d3efcc}
+    .led{height:8px;width:8px;border-radius:50%;background:#a5fa75;box-shadow:0 0 0 3px #a5fa7524}
+    .pill.subtle{border-color:#3e453d;background:#252b25;color:#c1cec0}
+    .intro{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:16px}
+    .eyebrow{display:block;color:var(--green);font-size:11px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;margin-bottom:7px}
+    h2{font-size:clamp(28px,3.3vw,48px);letter-spacing:-.042em;line-height:1.06;margin:0;font-weight:820}
+    .intro p{color:var(--muted);margin:8px 0 0;max-width:690px;font-size:14px;line-height:1.5}
+    .switcher{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .version{border:1px solid #4a594a;background:#1f2a22;color:#dbe8d8;padding:11px 15px;border-radius:8px;font-weight:750;font-size:13px;white-space:nowrap}
+    .version[aria-pressed="true"]{background:#b7ee88;color:#172216;border-color:#d0ff9d;box-shadow:inset 0 -3px #7dba5b}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#202d23;border:1px solid #3a4a3d;border-radius:10px 10px 0 0;padding:10px 12px}
+    .toolbar-note{color:#d7e4d4;font-weight:650;font-size:13px;display:flex;gap:9px;align-items:center}
+    .toolbar-note svg{color:var(--green)}
+    .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:40px;border-radius:7px;padding:9px 15px;border:1px solid #526353;background:#314335;color:var(--ink);font-size:13px;font-weight:800;white-space:nowrap}
+    .btn:hover{background:#3b523e}
+    .btn.primary{background:#91d75d;color:#162711;border-color:#b9ec95;box-shadow:inset 0 -2px #65a440}
+    .btn.primary:hover{background:#b0f581}
+    .btn svg{width:16px;height:16px}
+    .screen{position:relative;border:2px solid #476046;border-top:0;min-height:460px;height:min(71vh,880px);isolation:isolate;overflow:hidden;background:#070a09;box-shadow:var(--shadow)}
+    .screen:fullscreen{height:100vh;width:100vw;border:0}
+    iframe{height:100%;width:100%;display:block;border:0;background:#050805}
+    .overlay{position:absolute;z-index:3;inset:0;display:grid;place-items:center;background:linear-gradient(#08130ac9,#08130afb);padding:26px;text-align:center}
+    .overlay[hidden]{display:none!important}
+    .overlay-content{max-width:640px}
+    .overlay .symbol{display:inline-grid;place-items:center;height:74px;width:74px;border-radius:19px;border:1px solid #6b9764;background:linear-gradient(145deg,#3e6e42,#263a25);box-shadow:0 10px 33px #0005;font-size:36px;margin-bottom:14px}
+    .overlay h3{font-size:clamp(23px,3.2vw,39px);margin:0 0 10px;letter-spacing:-.04em}
+    .overlay p{color:#c2d1c1;font-size:14px;line-height:1.65;max-width:520px;margin:0 auto 22px}
+    .overlay .overlay-cta{font-size:16px;padding:13px 22px}
+    .hint{color:#a9bba6;font-size:12px;margin-top:19px}
+    .screen-footer{display:flex;justify-content:space-between;gap:18px;align-items:center;flex-wrap:wrap;background:#1c2a20;border:1px solid #3b503e;border-top:0;border-radius:0 0 10px 10px;padding:12px 16px}
+    .screen-footer div:first-child{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+    .screen-footer strong{font-size:13px}
+    .screen-footer .muted{font-size:12px;color:var(--muted)}
+    .keystrip{font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    kbd{display:inline-block;color:#edf7e5;background:#334734;border:1px solid #66806c;border-bottom-width:3px;border-radius:4px;padding:1px 6px;font:700 11px/1.6 ui-monospace,monospace}
+    .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:15px 0}
+    .card{border:1px solid var(--rule);background:linear-gradient(145deg,#18271b,#162119);padding:16px 17px;border-radius:9px}
+    .card h3{font-size:13px;margin:0 0 8px;color:#e8f6e1}
+    .card p{font-size:12px;margin:0;line-height:1.55;color:var(--muted)}
+    .card a{color:var(--green);text-decoration:underline;text-underline-offset:2px}
+    .card.featured{background:linear-gradient(145deg,#263e26,#162a1c);border-color:#4c6e4c}
+    footer{text-align:center;font-size:11px;line-height:1.6;color:var(--faint);padding:11px 4px}
+    footer a{text-decoration:underline;text-underline-offset:2px}
+    @media(max-width:1000px){.intro{align-items:start;flex-direction:column}.cards{grid-template-columns:1fr 1fr}.screen{height:min(64vh,690px)}}
+    @media(max-width:690px){.layout{padding:12px}.pills .subtle{display:none}.brand p{font-size:10px}.voxel{width:37px;height:37px}.intro{gap:13px}.toolbar{gap:10px}.actions{width:100%}.btn{flex:1}.screen{height:60vh;min-height:380px}.screen-footer{gap:9px}.cards{grid-template-columns:1fr}.overlay{padding:15px}.overlay .symbol{height:60px;width:60px}.version{padding:10px 12px}}
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <header>
+      <div class="brand"><div class="voxel" aria-hidden="true"></div><div><h1>MINECRAFT WEB</h1><p>Java Edition in the browser · Unofficial</p></div></div>
+      <div class="pills"><span class="pill"><span class="led"></span> No demo timer</span><span class="pill subtle">Browser-only gameplay</span></div>
+    </header>
+    <main>
+      <section class="intro" aria-labelledby="headline">
+        <div><span class="eyebrow">Experimental real Java Edition port</span><h2 id="headline">Your world. Your adventure.<br>As long as you want.</h2><p>Play Minecraft Java Edition <strong>26.3</strong> in your browser through the Gaius port. Build, mine, explore and save singleplayer worlds — without the old three-minute trial cutoff.</p></div>
+        <div class="switcher" aria-label="Select game version"><button type="button" class="version" data-version="26.3" aria-pressed="true">Java 26.3 · Newest</button><button type="button" class="version" data-version="26.2" aria-pressed="false">Java 26.2</button></div>
+      </section>
+      <div class="toolbar">
+        <div class="toolbar-note"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 5v14l11-7z"/></svg><span id="playing-version">Minecraft Java Edition 26.3</span></div>
+        <div class="actions"><button class="btn" type="button" id="retry">↻ Reload game</button><button class="btn" type="button" id="fullscreen" title="Fullscreen the game frame">⛶ Fullscreen</button><a class="btn primary" id="open-direct" href="https://typethe0ry.github.io/Gaius/Gaius-26.3.html" target="_blank" rel="noopener noreferrer">↗ Play in full tab</a></div>
+      </div>
+      <div class="screen" id="screen" aria-label="Minecraft game viewport">
+        <iframe id="game" title="Minecraft Java Edition 26.3 via Gaius browser port" src="https://typethe0ry.github.io/Gaius/Gaius-26.3.html" allow="fullscreen; gamepad; autoplay; pointer-lock; clipboard-read; clipboard-write" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        <div class="overlay" id="mobile-notice" hidden>
+          <div class="overlay-content"><span class="symbol" aria-hidden="true">⛏</span><h3>Ready to explore?</h3><p>This version is built and tested for desktop Chrome / Chromium. Mobile browsers, including iPhone Safari, may not load the game properly. You can still try the game directly in a tab.</p><a class="btn primary overlay-cta" id="mobile-direct" href="https://typethe0ry.github.io/Gaius/Gaius-26.3.html" target="_blank" rel="noopener noreferrer">Open Minecraft 26.3</a><div class="hint"><button type="button" id="try-embed" class="btn" style="margin-top:6px;min-height:34px">Try here anyway</button></div></div>
+        </div>
+      </div>
+      <div class="screen-footer">
+        <div><strong id="footer-version">Minecraft Java 26.3</strong><span class="muted">Singleplayer · Creative &amp; Survival · Worlds saved locally in browser storage</span></div>
+        <div class="keystrip"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move</span><span><kbd>SPACE</kbd> Jump</span><span><kbd>E</kbd> Inventory</span><span><kbd>ESC</kbd> Pause</span></div>
+      </div>
+      <section class="cards" aria-label="Game information">
+        <div class="card featured"><h3>✓ No built-in time limit</h3><p>This version does <strong>not</strong> use the three-minute Browsercraft trial. Play sessions are not cut off by a timer in this website. The port is still experimental and can crash or fail to load.</p></div>
+        <div class="card"><h3>Saving your world</h3><p>The Gaius singleplayer port saves to browser storage. For the most reliable saves, use <strong>Play in full tab</strong> and return to the same browser/profile; embedded storage can be partitioned or cleared. Worlds for 26.2 and 26.3 are separate.</p></div>
+        <div class="card"><h3>Compatibility &amp; source</h3><p>Best on current <strong>Chrome or Chromium desktop</strong>. First load may take a while. The actual runtime is served by <a href="https://github.com/TypeThe0ry/Gaius" target="_blank" rel="noopener noreferrer">Gaius</a> on GitHub Pages, not by this website. <a id="direct-help" href="https://typethe0ry.github.io/Gaius/Gaius-26.3.html" target="_blank" rel="noopener noreferrer">If the embed stays blank, open the game directly.</a></p></div>
+      </section>
+    </main>
+    <footer>Minecraft is owned by Mojang Studios / Microsoft. This unofficial page is not affiliated with or endorsed by them. Gaius is an independently developed experimental browser port. The game code and artwork are not packaged in this website. No online services, account authentication, or feature compatibility are guaranteed.</footer>
+  </div>
+  <script>
+    (() => {
+      'use strict';
+      const base = 'https://typethe0ry.github.io/Gaius/';
+      const versions = Object.freeze({'26.3':base+'Gaius-26.3.html', '26.2':base+'Gaius-26.2.html'});
+      const frame = document.getElementById('game');
+      const screen = document.getElementById('screen');
+      const direct = document.getElementById('open-direct');
+      const mobileDirect = document.getElementById('mobile-direct');
+      const directHelp = document.getElementById('direct-help');
+      const notice = document.getElementById('mobile-notice');
+      let version = '26.3';
+      function changeVersion(next) {
+        if (!Object.prototype.hasOwnProperty.call(versions,next)) return;
+        version = next;
+        frame.src = versions[next];
+        frame.title = 'Minecraft Java Edition ' + next + ' via Gaius browser port';
+        direct.href = mobileDirect.href = directHelp.href = versions[next];
+        mobileDirect.textContent = 'Open Minecraft ' + next;
+        document.getElementById('playing-version').textContent = 'Minecraft Java Edition ' + next;
+        document.getElementById('footer-version').textContent = 'Minecraft Java ' + next;
+        document.querySelectorAll('[data-version]').forEach(b => b.setAttribute('aria-pressed',String(b.dataset.version === next)));
+      }
+      document.querySelectorAll('[data-version]').forEach(b => b.addEventListener('click',() => changeVersion(b.dataset.version)));
+      document.getElementById('retry').addEventListener('click',() => { frame.src = versions[version]; });
+      document.getElementById('fullscreen').addEventListener('click',async () => {
+        try {
+          if (document.fullscreenElement) await document.exitFullscreen();
+          else if (screen.requestFullscreen) await screen.requestFullscreen();
+          else window.open(versions[version], '_blank','noopener,noreferrer');
+        } catch (_) { window.open(versions[version], '_blank','noopener,noreferrer'); }
+      });
+      document.getElementById('try-embed').addEventListener('click',() => { notice.hidden = true; });
+      if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) notice.hidden = false;
+    })();
+  </script>
+</body>
+</html>
