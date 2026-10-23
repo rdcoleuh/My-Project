@@ -3,7 +3,7 @@
  */
 (() => {
  'use strict';
- const WORLD=10000, CHUNK=16, COLS=6, ROWS=6, REGION=144, CENTER=5000;
+ const WORLD=10000, CHUNK=16, COLS=6, ROWS=6, REGION=240, CENTER=5000;
  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
  let worldSeed=85721;
  const hash=(x,z,salt=0)=>{
@@ -26,23 +26,44 @@
    return (v%99999998)+1;
  }
  function setSeed(seed){worldSeed=clamp((Math.floor(Number(seed))||85721),1,99999999);window.MineWorldOres?.setSeed(worldSeed);return worldSeed;}
- function zone(x,z){
-   const rx=Math.floor(x/REGION),rz=Math.floor(z/REGION);
-   // Every 6x6 set of regions includes all 36 biomes, in a seed-dependent order.
+ // Irregular seeded biome regions replace rigid square tile boundaries.
+ // All 36 biome categories remain discoverable in each 6x6 cluster.
+ const BIOME_STEPS=[5,7,11,13,17,19,23,25,29,31,35];
+ function regionIndex(rx,rz){
    const a=((rx%6)+6)%6,b=((rz%6)+6)%6;
-   const t=(b*6+a+worldSeed%36)%36;
-   return t;
+   const step=BIOME_STEPS[worldSeed%BIOME_STEPS.length];
+   return ((b*6+a)*step+worldSeed%36)%36;
  }
+ function sampleZone(x,z){
+   const rx=Math.floor(x/REGION),rz=Math.floor(z/REGION);
+   let best=Infinity,second=Infinity,index=0,other=0;
+   for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++){
+     const gx=rx+dx,gz=rz+dz;
+     const siteX=(gx+.5)*REGION+(rnd(gx,gz,910)-.5)*REGION*.72;
+     const siteZ=(gz+.5)*REGION+(rnd(gx,gz,911)-.5)*REGION*.72;
+     const xx=x-siteX,zz=z-siteZ,d=xx*xx+zz*zz;
+     if(d<best){second=best;other=index;best=d;index=regionIndex(gx,gz);}
+     else if(d<second){second=d;other=regionIndex(gx,gz);}
+   }
+   const distance=Math.sqrt(second)-Math.sqrt(best);
+   return {index,other,blend:clamp(distance/(REGION*.32),0,1)};
+ }
+ function zone(x,z){return sampleZone(x,z).index;}
  function biomeAt(x,z){const index=zone(x,z);return {...BIOMES[index],index};}
  function terrainAt(x,z,sea=14,H=48){
-   const biome=BIOMES[zone(x,z)];
-   const smooth=noise(x,z,70,82)*7+noise(x,z,29,83)*4+noise(x,z,12,84)*2;
-   const rough=(noise(x,z,6,85)-.5)*2.2;
-   let y=sea+1+biome.height+smooth-6.5+rough;
-   if(biome.water)y=Math.min(y,sea-2);
-   if(/Peaks|Slopes|Stony/.test(biome.name))y+=noise(x,z,25,86)*7;
-   if(/Badlands/.test(biome.name))y=Math.round(y/2)*2;
-   return clamp(Math.floor(y),4,H-10);
+   const q=sampleZone(x,z),biome=BIOMES[q.index],neighbor=BIOMES[q.other];
+   const blend=q.blend*q.blend*(3-2*q.blend);
+   const height=neighbor.height+(biome.height-neighbor.height)*blend;
+   const continental=(noise(x,z,650,88)-.50)*7.0;
+   const broad=(noise(x,z,144,82)-.5)*8;
+   const rolling=(noise(x,z,42,83)-.5)*4;
+   const micro=(noise(x,z,11,84)-.5)*1.6;
+   let y=sea+3+height+continental+broad+rolling+micro;
+   const peak=/Peaks|Slopes|Stony|Windswept/.test(biome.name);
+   if(peak){const ridge=Math.abs(noise(x,z,85,89)-.5);y+=Math.pow(ridge*2,1.75)*10*blend;}
+   if(/Badlands/.test(biome.name))y+=(noise(x,z,66,86)-.5)*5*blend;
+   if(biome.water){const marine=sea-4+(noise(x,z,78,87)-.5)*4;const depth=.45+.55*blend;y=y*(1-depth)+marine*depth;}
+   return clamp(Math.floor(y),4,H-9);
  }
  const cacheAtlas=new Map();
  function atlasDestination(biomeIndex){
@@ -137,6 +158,16 @@
    // Seeded mineral veins are distributed across depth bands and neighboring chunk edges.
    // This runs after cave carving and before structures; saved edits are reapplied last.
    window.MineWorldOres.generate({data,cx,cz,H,sea:SEA,biomeAt,terrainAt,protectedEdits:null});
+   // Seeded biome-specific groundcover and reeds.
+   for(let x=x0;x<x0+CHUNK;x++)for(let z=z0;z<z0+CHUNK;z++){
+     if(x<1||z<1||x>=WORLD-1||z>=WORLD-1)continue;
+     const biome=BIOMES[zone(x,z)],top=terrainAt(x,z,SEA,H),kind=biome.tree;
+     if(top>=H-4)continue;
+     if(kind==='flowers'&&rnd(x,z,441)>.67&&get(x,top+1,z)===0){put(x,top+1,z,rnd(x,z,442)>.4?16:17);}
+     else if(kind==='reeds'&&rnd(x,z,443)>.84&&top<=SEA+2){put(x,top+1,z,45);put(x,top+2,z,45);}
+     else if(/Meadow|Flower Forest|Cherry Grove/.test(biome.name)&&rnd(x,z,444)>.94){put(x,top+1,z,16,true);}
+     else if(/Swamp|Mangrove/.test(biome.name)&&rnd(x,z,445)>.96){put(x,top+1,z,46,true);}
+   }
    // Tree placement samples beyond the edges so canopy crosses adjacent chunks consistently.
    const stampTree=(x,z,kind)=>{
      const top=terrainAt(x,z,SEA,H),base=top+1;
