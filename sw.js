@@ -1,4 +1,4 @@
-const VERSION='mineworld-shared-combat-survival-20261023-v4';
+const VERSION='mineworld-atlas-biomes-20261023-v5';
 const FILES=['./','./index.html','./texture-atlas.js','./multiplayer.js','./multiplayer.js','./manifest.webmanifest','./favicon.svg','./apple-touch-icon.png'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(VERSION).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x.startsWith('mineworld-')&&x!==VERSION).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
