@@ -1,33 +1,35 @@
-# MineWorld 2.4 — Shared Survival Combat
+# MineWorld 2.5 — Biomes, Trees & Landmarks
 
-**Play:** https://rdcoleuh.github.io/My-Project/
+**Play in a browser:** https://rdcoleuh.github.io/My-Project/
 
-This is an original Minecraft-inspired browser voxel sandbox. It is **not Minecraft Java Edition** and contains none of Mojang's proprietary textures or game code. It works as a GitHub Pages website on iPhone, iPad and desktop.
+MineWorld is an independent, original 3D voxel sandbox for iPhone, iPad, and desktop. It has **Creative and Survival** modes, mining/building, health/hunger, crafting, animals, combat, and public/private browser-hosted multiplayer.
 
-## Home menu
+## World Atlas: 36 compact surface regions
 
-Choose **Creative** (unlimited blocks, flying, instant mining) or **Survival** (health, hunger, resources, basic crafting, tool progression, combat, food, and respawning). Select Peaceful, Easy, Normal or Hard; Peaceful disables hostile monster spawning. The game includes eight original low-poly creature species (cow, pig, sheep, chicken, zombie, skeleton, spider, creeper), natural wandering or chasing, 16×16 procedural pixel-art block textures, ores, gear, cooking and mining. It **does not** contain every original Minecraft Survival feature, recipe, biome, structure, animation or mob.
+The world has a 6 × 6 grid of themed environments inspired by Minecraft's overworld ecology, including frozen ocean, snowy plains, ice spikes, taiga, old-growth spruce forest, stony peaks, birch forest, dark forest, cherry grove, pale garden, meadow, plains, dappled forest, flower forest, savanna, desert, badlands, jungle, bamboo jungle, mangrove swamp, swamp, mushroom fields and more. Tap the **compass (🧭)** in-game or the **Explore Biome Atlas** button on the home screen to inspect the map and travel to any region. There are also **three simplified subterranean cave styles** (mossy/lush, dripstone, sculk/deep dark), though these are not fully developed cave biome simulations.
 
-## Online combat — upgraded in v2.4
+Each environment has distinct surface blocks, terrain elevation, and vegetation where appropriate. Generated tree/plant styles include oak, birch, spruce, pine, tall spruce, dark oak, acacia, jungle, poplar, cherry, pale oak, mangrove, giant mushrooms, bamboo, cacti and ice formations. These are block-built, original approximations, not copies of the original game or its tree schematics.
 
-The first visitor to a public world hosts a session using browser WebRTC/PeerJS. Friends in the same Evergreen, Sunset Valley or Highlands world can now **see the same creatures, hit the same monsters, see shared monster health and deaths, and receive drops if they landed the finishing hit**. Host-side AI picks surviving players to chase and sends damage to them. Health loss and respawning are handled on the affected player's device.
+## 24 generated structure sites
 
-**PvP** (player vs player) is **off by default**. The session host can tap **Friends → ⚔ PvP: OFF** to enable friendly combat. When enabled, both players must be near each other and in Survival mode to deal player damage. The host validates range, timing and mob existence before accepting guest hits, and broadcasts creature state about four times per second. These checks reduce accidental desync and simple attacks; they are **not production-grade anti-cheat**. Because users run the code in their browsers, it cannot guarantee fair play against modified clients.
+World generation creates 24 explorable miniature landmarks, including a village, desert temple, jungle temple, woodland manor, shipwreck, ruined portal, witch hut, cabins, igloo, ruins, campsite, mineshaft entrance, bridge, watchtowers, and more. They are **non-interactive simplified structures**, not complete reproductions of Minecraft structures with chests, puzzles, NPCs, or fully implemented interior gameplay.
 
-The host uses their own game for creature AI and receives/replies to guest attack messages. **If the host pauses or leaves, creature AI pauses or the session ends.** Shared mob state is not permanently saved between sessions. Up to seven players per room (host + six guests), not a dedicated always-on server. Reliable matchmaking across NAT/firewalls cannot be guaranteed with free PeerJS signaling. PvP is not moderated and public sessions have no account verification.
+**Important scope limitation:** The map is a **miniature Overworld sampler**, not the complete biome/dimension catalogue. It does not yet include every Minecraft biome variant, the Nether or End dimensions, portals to other dimensions, complete cave generation, or all official structures. The real Minecraft Java Edition contains many more biomes and structures.
 
-### Desktop controls
+## Save migration
 
-- **WASD** move; mouse drag / pointer lock look; **Space** jump; **E** change block hotbar; **I** open gear; **Q** eat; **R** attack mob/player; left-click aims/mines/attacks; right-click places; **F** toggles flying only in Creative.
-- **Mobile:** on-screen joystick, swipe to look, and dedicated **HIT**, **JUMP**, **MINE**, **PLACE** controls. Tap **Friends** to join a public room. Safari → Share → Add to Home Screen to install a launcher icon.
+MineWorld automatically migrates previous v2.4 edits from the old 64×64×27 coordinate format to the new 96×96×36 world and preserves player supplies where possible. The original pre-upgrade save JSON is preserved in browser storage under `mineworld-backup-before-biomes`. Because terrain has changed, old buildings may appear in different surroundings, or may require adjustment. Worlds are saved per browser/device, not synchronized permanently online.
 
-## Files
+## Multiplayer
 
-- `index.html`: voxel world, gameplay, survival AI, health/hunger, mobile UI, online-combat bridge
-- `multiplayer.js`: PeerJS signaling + WebRTC host/guest session and shared mob/combat packets
-- `texture-atlas.js`: original, locally generated pixel-art textures
-- `manifest.webmanifest`, `sw.js`, `apple-touch-icon.png`, `favicon.svg`: installable offline **game shell**; multiplayer still requires internet
+The same world seed creates the same biome locations, trees and structures, so connected peers see matching starting terrain. Block edits, creatures and supported combat events remain synchronized using the existing PeerJS/WebRTC browser-hosted session. Public sessions require a player to host them and disappear when that host leaves; this is **not** a continuously running dedicated game server. Real cross-device gameplay on an iPhone has not been independently verified in this update.
 
-## Testing
+## Performance and compatibility
 
-JavaScript syntax checks, desktop/mobile UI simulation, and a two-client same-origin network simulation passed the following critical flows: joining a private world, syncing creature snapshots, guest attack on shared mob with synchronized death, server-directed damage to a guest, PvP toggle broadcast, and guest hitting a Survival host. **Not tested on two physical phones over the public Internet**. Real-world connection reliability remains unverified.
+The 96×96 world is intentionally smaller than Minecraft's infinite worlds to run inside mobile browsers. Original pixel-art textures are generated on-device by `texture-atlas.js`; the environments are built deterministically by `world-biomes.js`. The service worker stores core game files for return visits. Online multiplayer still needs an internet connection and the external PeerJS signaling service.
+
+Safari: Open the site, tap Share → Add to Home Screen → Add. On other devices, open the link in a modern WebGL-enabled browser. Older phones may have low frame rates.
+
+## Rights
+
+MineWorld is a fan-made original block-building game, **not Minecraft Java Edition**, not officially affiliated with Mojang or Microsoft, and does not distribute any Minecraft source code, proprietary textures, or game assets.
