@@ -91,7 +91,7 @@
     const x=Number(data.x),y=Number(data.y),z=Number(data.z);
     if(![x,y,z].every(Number.isFinite))return null;
     if(x<0||x>10000||y<-2||y>48||z<0||z>10000)return null;
-    return {x,y,z,yaw:Number.isFinite(data.yaw)?data.yaw:0, pitch:Number.isFinite(data.pitch)?data.pitch:0,mode:data.mode==='survival'?'survival':'creative',dimension:['overworld','nether','end'].includes(data.dimension)?data.dimension:'overworld',name:String(data.name||'Friend').replace(/[<>]/g,'').slice(0,16)};
+    return {x,y,z,yaw:Number.isFinite(data.yaw)?data.yaw:0, pitch:Number.isFinite(data.pitch)?data.pitch:0,mode:data.mode==='survival'?'survival':'creative',dimension:['overworld','nether','end'].includes(data.dimension)?data.dimension:'overworld',riding:['horse','donkey','mule','camel','llama','pig','strider','skeleton_horse','zombie_horse','happy_ghast','boat','raft','spruceBoat','cherryBoat','minecart','chestMinecart','hopperMinecart','furnaceMinecart'].includes(data.riding)?data.riding:'',name:String(data.name||'Friend').replace(/[<>]/g,'').slice(0,16)};
   }
   function receiveHostData(conn,message) {
     if(!message||typeof message!=='object'||conn.peer!==host?.peer)return;
