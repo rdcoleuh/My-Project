@@ -1,0 +1,174 @@
+/* MineWorld 3.6 independently-authored Survival recipe catalog.
+   These recipes are inspired by voxel survival games, not the official Minecraft recipe database. */
+(() => {
+ 'use strict';
+ const recipes=[];
+ const add=(category,name,cost,give,extra={})=>recipes.push({category,name,cost,give,...extra});
+ const B=n=>'block:'+n;
+ const table={station:'table'}, furnace={station:'furnace'}, smith={station:'smithing'};
+ // Early-game essentials; all ingredients map to actual block inventory or collected bag items.
+ add('Basics','Crafting Table',{[B(11)]:4},{craftingTable:1});
+ add('Basics','Sticks',{[B(11)]:2},{sticks:4});
+ add('Basics','Wooden Planks',{[B(5)]:1},{[B(11)]:4});
+ for(const [wood,id] of [['Poplar',15],['Spruce',30],['Birch',32],['Acacia',34],['Jungle',36],['Mangrove',38],['Cherry',40],['Pale Oak',42]])add('Basics',wood+' Planks',{[B(id)]:1},{[B(11)]:4});
+ add('Basics','Dark Planks',{[B(50)]:1},{[B(52)]:4});
+ add('Basics','Torch',{coal:1,sticks:1},{torch:4});
+ add('Basics','Charcoal',{[B(5)]:1,coal:1},{charcoal:1},furnace);
+ add('Basics','Craft a Chest',{[B(11)]:8},{[B(119)]:1},table);
+ add('Basics','Storage Barrel',{[B(11)]:6,sticks:2},{[B(160)]:1},table);
+ add('Basics','Ladder',{sticks:7},{ladder:3},table);
+ add('Basics','Fence',{[B(11)]:4,sticks:2},{fence:3},table);
+ add('Basics','Gate',{[B(11)]:2,sticks:4},{gate:1},table);
+ add('Basics','Door',{[B(11)]:6},{door:3},table);
+ add('Basics','Trapdoor',{[B(11)]:6},{trapdoor:2},table);
+ add('Basics','Sign',{[B(11)]:6,sticks:1},{sign:3},table);
+ add('Basics','Wooden Button',{[B(11)]:1},{button:1});
+ add('Basics','Pressure Plate',{[B(11)]:2},{pressurePlate:1});
+ add('Basics','Craft a Furnace',{[B(61)]:8},{[B(20)]:1},table);
+ add('Basics','Craft a Smoker',{[B(5)]:4,[B(20)]:1},{[B(157)]:1},table);
+ add('Basics','Craft a Blast Furnace',{iron:5,[B(20)]:1,[B(3)]:3},{[B(158)]:1},table);
+ add('Basics','Craft a Composter',{[B(11)]:7},{[B(155)]:1},table);
+ add('Basics','Bucket',{iron:3},{bucket:1},table);
+ add('Basics','Shears',{iron:2},{shears:1},table);
+ add('Basics','Flint and Steel',{iron:1,flint:1},{flintSteel:1});
+ add('Basics','Compass',{iron:4,redstone:1},{compass:1},table);
+ add('Basics','Clock',{gold:4,redstone:1},{clock:1},table);
+ add('Basics','Map',{paper:8,compass:1},{map:1},table);
+ add('Basics','Paper',{sugar:3},{paper:3});
+ add('Basics','Book',{paper:3,leather:1},{books:1});
+ add('Basics','Bookshelf',{books:3,[B(11)]:6},{bookshelf:1},table);
+ add('Basics','Painting',{sticks:8,wool:1},{painting:1},table);
+ add('Basics','Item Frame',{sticks:8,leather:1},{itemFrame:1},table);
+ add('Basics','Name Tag Repair',{paper:1,iron:1},{nameTag:1},table);
+ add('Basics','Leads',{string:4,rope:1},{lead:2},table);
+ // Tools and weapons use the same internal pickaxe/sword/hoe mechanics as the existing world.
+ const tiers=[['Wooden',{[B(11)]:1},'wood'],['Stone',{[B(61)]:1},'stone'],['Iron',{iron:1},'iron'],['Gold',{gold:1},'gold'],['Diamond',{diamond:1},'diamond']];
+ for(const [label,cost,tier] of tiers){const [key]=Object.keys(cost),material=cost[key];
+  for(const [kind,n] of [['Pickaxe',3],['Axe',3],['Shovel',1],['Hoe',2],['Sword',2]]){
+   const req={[key]:n*material,sticks:kind==='Shovel'||kind==='Sword'?1:2};
+   const e={...table};if(['Pickaxe','Hoe','Sword'].includes(kind))e.tool=[kind.toLowerCase(),tier==='gold'?'iron':tier];
+   else e.giveEquipment={kind:kind.toLowerCase(),tier};
+   add('Tools',label+' '+kind,req,{},e);
+  }
+ }
+ add('Tools','Netherite Pickaxe',{netheriteIngot:1,netheriteUpgrade:1},{},{...smith,tool:['pickaxe','netherite'],upgradeFrom:'diamond'});
+ add('Tools','Netherite Sword',{netheriteIngot:1,netheriteUpgrade:1},{},{...smith,tool:['sword','netherite'],upgradeFrom:'diamond'});
+ add('Tools','Netherite Hoe',{netheriteIngot:1,netheriteUpgrade:1},{},{...smith,tool:['hoe','netherite'],upgradeFrom:'diamond'});
+ add('Tools','Fishing Rod',{sticks:3,string:2},{fishingRod:1},table);
+ add('Tools','Bow',{sticks:3,string:3},{bow:1},table);
+ add('Tools','Crossbow',{sticks:3,string:2,iron:1,tripwireHook:1},{crossbow:1},table);
+ add('Tools','Arrows',{sticks:1,flint:1,feather:1},{arrow:4},table);
+ add('Tools','Spectral Arrows',{arrow:1,glowstone:1},{spectralArrow:2},table);
+ add('Tools','Shield',{[B(11)]:6,iron:1},{shield:1},table);
+ add('Tools','Campfire',{sticks:3,coal:1,[B(5)]:3},{campfire:1},table);
+ add('Tools','Lantern',{iron:8,torch:1},{[B(59)]:1},table);
+ add('Tools','Soul Lantern',{iron:8,[B(71)]:1},{soulLantern:1},table);
+ add('Tools','Anvil',{iron:31},{anvil:1},table);
+ add('Tools','Enchanting Table',{books:1,diamond:2,[B(51)]:4},{enchantingTable:1},table);
+ add('Tools','Brewing Stand',{blazeRod:1,[B(61)]:3},{[B(159)]:1},table);
+ add('Tools','Grindstone',{sticks:2,[B(11)]:2,[B(3)]:1},{[B(167)]:1},table);
+ add('Tools','Smithing Table',{iron:2,[B(11)]:4},{[B(136)]:1},table);
+ add('Tools','Stonecutter',{iron:1,[B(3)]:3},{[B(164)]:1},table);
+ add('Tools','Cartography Table',{paper:2,[B(11)]:4},{[B(158)]:1},table);
+ add('Tools','Loom',{string:2,[B(11)]:2},{[B(165)]:1},table);
+ add('Tools','Lectern',{books:1,[B(11)]:4},{[B(163)]:1},table);
+ add('Tools','Fletching Table',{flint:2,[B(11)]:4},{[B(161)]:1},table);
+ add('Tools','Iron Bars',{iron:6},{ironBars:16},table);
+ add('Tools','Chain',{iron:3},{chain:1},table);
+ // Armor is functional when equipped from the Backpack UI.
+ const armors=[['Leather','leather',{leather:1}],['Iron','iron',{iron:1}],['Gold','gold',{gold:1}],['Diamond','diamond',{diamond:1}]];
+ const parts=[['Helmet','head',5],['Chestplate','chest',8],['Leggings','legs',7],['Boots','feet',4]];
+ for(const [label,tier,base]of armors)for(const [part,slot,n]of parts){const key=Object.keys(base)[0];add('Armor',label+' '+part,{[key]:n},{[tier+part]:1},{...table,armor:slot})}
+ for(const [part,slot] of parts)add('Armor','Netherite '+part,{netheriteIngot:1,netheriteUpgrade:1,[('diamond'+part)]:1},{['netherite'+part]:1},{...smith,armor:slot});
+ add('Armor','Turtle Helmet',{turtleScute:5},{turtleHelmet:1},table);
+ add('Armor','Horse Armor (leather)',{leather:7},{horseArmor:1},table);
+ // Food and farming.
+ add('Food','Bread',{wheat:3},{bread:1});
+ add('Food','Cookie',{wheat:2,sugar:1},{cookie:8},table);
+ add('Food','Cake',{wheat:3,sugar:2,bucket:3},{cake:1},table);
+ add('Food','Pumpkin Pie',{pumpkinSeeds:1,sugar:1,egg:1},{pumpkinPie:1});
+ add('Food','Mushroom Stew',{[B(17)]:2,bowl:1},{mushroomStew:1});
+ add('Food','Rabbit Stew',{rabbitHide:1,carrot:1,potato:1,bowl:1},{rabbitStew:1},table);
+ add('Food','Beetroot Soup',{beetroot:6,bowl:1},{beetrootSoup:1},table);
+ add('Food','Bowl',{[B(11)]:3},{bowl:4});
+ add('Food','Golden Apple',{gold:8,apple:1},{goldenApple:1},table);
+ add('Food','Golden Carrot',{goldNugget:8,carrot:1},{goldenCarrot:1},table);
+ add('Food','Cooked Meat',{raw:1,coal:1},{cooked:1},furnace);
+ add('Food','Cooked Chicken',{chicken:1,coal:1},{cookedChicken:1},furnace);
+ add('Food','Cooked Mutton',{mutton:1,coal:1},{cookedMutton:1},furnace);
+ add('Food','Cooked Fish',{fish:1,coal:1},{cookedFish:1},furnace);
+ add('Food','Baked Potato',{potato:1,coal:1},{bakedPotato:1},furnace);
+ add('Food','Dried Kelp',{kelp:1,coal:1},{driedKelp:1},furnace);
+ add('Food','Hay Bale',{wheat:9},{[B(60)]:1});
+ add('Food','Wheat from Hay Bale',{[B(60)]:1},{wheat:9});
+ add('Food','Wheat Seeds',{wheat:1},{wheatSeeds:2});
+ add('Food','Beetroot Seeds',{beetroot:1},{beetrootSeeds:2});
+ add('Food','Bone Meal',{bone:1},{boneMeal:3});
+ add('Food','Sugar',{sugarCane:1},{sugar:1});
+ add('Food','Bread from Flour',{wheat:3},{bread:1});
+ // Building blocks: all outputs correspond to actual placeable MineWorld block indices.
+ const blocks=[['Stone Bricks',{[B(3)]:4},53,4],['Cobblestone',{[B(3)]:1},61,1],['Sandstone',{[B(4)]:4},24,1],['Red Sand',{[B(26)]:1},26,1],['Brick Block',{brick:4},8,1],['Glass',{[B(4)]:1,coal:1},9,1],['Snow Block',{[B(21)]:4},21,1],['Packed Ice',{[B(22)]:9},23,1],['Terracotta',{[B(47)]:1,coal:1},25,1],['Prismarine',{[B(55)]:4},55,4],['Deepslate',{[B(58)]:4},58,4],['Nether Bricks',{[B(65)]:4},72,4],['Polished Blackstone',{[B(68)]:4},69,4],['End Stone Bricks',{[B(121)]:4},130,4],['Purpur Block',{[B(122)]:4},131,4],['Bone Block',{bone:9},86,1],['Quartz Block',{quartz:4},128,1],['Copper Block',{copper:9},113,1],['Diamond Block',{diamond:9},112,1],['Emerald Block',{emerald:9},111,1],['Iron Block',{iron:9},115,1],['Gold Block',{gold:9},114,1],['Coal Block',{coal:9},116,1],['Redstone Block',{redstone:9},117,1],['Lapis Block',{lapis:9},110,1],['Netherite Block',{netheriteIngot:9},135,1],['Redstone Lamp',{redstone:4,[B(10)]:1},109,1],['Shroomlight',{[B(79)]:2,[B(81)]:2},90,1]];
+ for(const [name,cost,id,n] of blocks)add('Blocks',name,cost,{[B(id)]:n},table);
+ add('Blocks','Iron Nuggets',{iron:1},{ironNugget:9});
+ add('Blocks','Gold Nuggets',{gold:1},{goldNugget:9});
+ add('Blocks','Gold Ingot',{goldNugget:9},{gold:1});
+ add('Blocks','Iron Ingot',{ironNugget:9},{iron:1});
+ add('Blocks','Quartz Pillar',{quartz:4},{quartzPillar:2},table);
+ add('Blocks','Glazed Terracotta',{[B(25)]:1,dye:1},{glazedTerracotta:1},furnace);
+ add('Blocks','Flower Pot',{brick:3},{flowerPot:1},table);
+ add('Blocks','Glass Pane',{[B(9)]:6},{glassPane:16},table);
+ add('Blocks','Moss Carpet',{[B(46)]:2},{mossCarpet:3});
+ add('Blocks','Mud Bricks',{[B(47)]:4},{mudBricks:4},table);
+ // Redstone components: crafted inventory objects; advanced wiring simulation remains future work.
+ add('Redstone','Lever',{sticks:1,[B(61)]:1},{lever:1});
+ add('Redstone','Repeater',{redstone:3,[B(3)]:3,torch:2},{repeater:1},table);
+ add('Redstone','Comparator',{redstone:3,quartz:1,[B(3)]:3},{comparator:1},table);
+ add('Redstone','Piston',{[B(11)]:3,[B(61)]:4,iron:1,redstone:1},{piston:1},table);
+ add('Redstone','Sticky Piston',{piston:1,slime:1},{stickyPiston:1},table);
+ add('Redstone','Dispenser',{[B(61)]:7,bow:1,redstone:1},{dispenser:1},table);
+ add('Redstone','Dropper',{[B(61)]:7,redstone:1},{dropper:1},table);
+ add('Redstone','Observer',{[B(61)]:6,redstone:2,quartz:1},{observer:1},table);
+ add('Redstone','Note Block',{[B(11)]:8,redstone:1},{noteBlock:1},table);
+ add('Redstone','Hopper',{iron:5,[B(119)]:1},{hopper:1},table);
+ add('Redstone','Target Block',{wheat:4,redstone:1},{targetBlock:1},table);
+ add('Redstone','Tripwire Hook',{iron:1,sticks:1,[B(11)]:1},{tripwireHook:2},table);
+ add('Redstone','TNT',{powder:5,[B(4)]:4},{tnt:1},table);
+ add('Redstone','Daylight Sensor',{[B(9)]:3,quartz:3,[B(11)]:3},{daylightSensor:1},table);
+ // Transportation: all rideable vehicles have real spawn/mount controls in MineWorld 3.6.
+ add('Transport','Oak Boat',{[B(11)]:5},{boat:1},table);
+ add('Transport','Spruce Boat',{[B(30)]:5},{spruceBoat:1},table);
+ add('Transport','Cherry Boat',{[B(40)]:5},{cherryBoat:1},table);
+ add('Transport','Bamboo Raft',{[B(45)]:5},{raft:1},table);
+ add('Transport','Minecart',{iron:5},{minecart:1},table);
+ add('Transport','Chest Minecart',{minecart:1,[B(119)]:1},{chestMinecart:1},table);
+ add('Transport','Hopper Minecart',{minecart:1,hopper:1},{hopperMinecart:1},table);
+ add('Transport','Furnace Minecart',{minecart:1,[B(20)]:1},{furnaceMinecart:1},table);
+ add('Transport','Rails',{iron:6,sticks:1},{rails:16},table);
+ add('Transport','Powered Rails',{gold:6,sticks:1,redstone:1},{poweredRails:6},table);
+ add('Transport','Detector Rails',{iron:6,sticks:1,redstone:1},{detectorRails:6},table);
+ add('Transport','Activator Rails',{iron:6,sticks:1,redstone:1},{activatorRails:6},table);
+ add('Transport','Saddle',{leather:5,iron:2},{saddle:1},table);
+ add('Transport','Carrot on a Stick',{fishingRod:1,carrot:1},{carrotStick:1},table);
+ add('Transport','Warped Fungus on a Stick',{fishingRod:1,[B(82)]:1},{fungusStick:1},table);
+ add('Transport','Happy Ghast Harness',{leather:3,string:2,wool:1},{harness:1},table);
+ add('Transport','Lead',{string:4,rope:1},{lead:2},table);
+ add('Transport','Horse Armor',{leather:7},{horseArmor:1},table);
+ // End/Nether progress.
+ add('Nether','Netherite Scrap',{[B(85)]:1,coal:1},{netheriteScrap:1},furnace);
+ add('Nether','Netherite Ingot',{netheriteScrap:4,gold:4},{netheriteIngot:1},table);
+ add('Nether','Upgrade Template Copy',{netheriteUpgrade:1,diamond:7,[B(65)]:1},{netheriteUpgrade:2},table);
+ add('Nether','Blaze Powder',{blazeRod:1},{blazePowder:2});
+ add('Nether','Magma Cream',{slime:1,blazePowder:1},{magmaCream:1});
+ add('Nether','Fire Charge',{coal:1,blazePowder:1,powder:1},{fireCharge:3});
+ add('Nether','Glowstone',{glowstone:4},{[B(10)]:1});
+ add('Nether','Nether Wart Block',{netherWart:9},{[B(79)]:1},table);
+ add('Nether','Soul Campfire',{sticks:3,coal:1,[B(70)]:1,[B(5)]:2},{soulCampfire:1},table);
+ add('End','Eye of Ender',{enderPearl:1,blazePowder:1},{eyeOfEnder:1});
+ add('End','End Rod',{blazeRod:1,chorusFruit:1},{[B(128)]:4});
+ add('End','Purpur Pillar',{[B(132)]:2},{[B(132)]:2});
+ add('End','Ender Chest',{[B(51)]:8,eyeOfEnder:1},{enderChest:1},table);
+ add('End','Shulker Box',{[B(133)]:2,[B(119)]:1},{shulkerBox:1},table);
+ add('End','End Crystal',{[B(9)]:7,eyeOfEnder:1,dragonBreath:1},{[B(124)]:1},table);
+ // All generated categories and recipes are deterministic and held in this site's source.
+ window.MineWorldCatalog={recipes,categories:['All','Basics','Tools','Armor','Food','Blocks','Redstone','Transport','Nether','End'],label:key=>key.startsWith('block:')?'Block '+key.slice(6):key.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase())};
+})();
