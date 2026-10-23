@@ -90,7 +90,7 @@
   const frame=document.getElementById('game');
   document.getElementById('embed-button').addEventListener('click',function(){
     pane.classList.add('visible');
-    if(!frame.src) frame.src='https://classic.minecraft.net/';
+    if(!frame.hasAttribute('src')) frame.src='https://classic.minecraft.net/';
     pane.scrollIntoView({behavior:'smooth',block:'start'});
   });
   document.getElementById('close-button').addEventListener('click',function(){
