@@ -90,7 +90,7 @@
     if(!data||typeof data!=='object')return null;
     const x=Number(data.x),y=Number(data.y),z=Number(data.z);
     if(![x,y,z].every(Number.isFinite))return null;
-    if(x<0||x>64||y<-2||y>40||z<0||z>64)return null;
+    if(x<0||x>96||y<-2||y>43||z<0||z>96)return null;
     return {x,y,z,yaw:Number.isFinite(data.yaw)?data.yaw:0, pitch:Number.isFinite(data.pitch)?data.pitch:0,mode:data.mode==='survival'?'survival':'creative',name:String(data.name||'Friend').replace(/[<>]/g,'').slice(0,16)};
   }
   function receiveHostData(conn,message) {
@@ -124,7 +124,7 @@
   function receiveGuestData(conn,message) {
     if(!message||typeof message!=='object'||!sockets.has(conn.peer))return;
     if(message.t==='hello') {
-      const existing=peers.get(conn.peer)||{x:32,y:17,z:32,name:'Friend'};
+      const existing=peers.get(conn.peer)||{x:56,y:19,z:56,name:'Friend'};
       existing.name=String(message.name||'Friend').replace(/[<>]/g,'').trim().slice(0,16)||'Friend';
       peers.set(conn.peer,existing);
       send(conn,{t:'snapshot',world:bridge.getSnapshot(),pvp,players:[{id:peer.id,state:{...bridge.getPlayer(),name:label()}},...Array.from(peers.entries()).filter(([id])=>id!==conn.peer).map(([id,state])=>({id,state}))]});
