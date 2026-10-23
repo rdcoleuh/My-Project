@@ -1,8 +1,19 @@
-# MineWorld 2.0 — Public Multiplayer Worlds
+# MineWorld 2.2 — Creative, Survival & Public Multiplayer
 
 **Play the site:** https://rdcoleuh.github.io/My-Project/
 
 MineWorld 2.0 is an **original self-hosted 3D voxel game** inspired by block-building games. It is not Minecraft Java 26.3 or a redistribution of Microsoft/Mojang game files.
+
+## Main menu and game modes
+
+The home screen offers two game modes on desktop, iPhone and iPad:
+
+- **Creative:** unlimited blocks, free building, flying, and instant mining.
+- **Survival:** limited block inventory, gather materials, make planks, health and hunger meters, eat collected mushrooms for food (the **Eat** touch button or **Q** key), fall damage, starvation and respawning. Survival cannot use flight.
+
+Use **Menu → Home Screen · Choose Mode** to return to the launcher without deleting your world. Mode switches are saved with your offline solo world. Shared online worlds do not have persistent server storage.
+
+**Original pixel-art voxel textures:** a locally generated 16×16 atlas gives grass, dirt, stone, sand, logs, leaves, planks, bricks, glass and glowstone separate block-face designs. The textures resemble classic block-sandbox aesthetics but are original code-generated artwork, not copied Minecraft textures. They render as nearest-neighbor pixels with per-face light shading. The game includes no Mojang texture files.
 
 ## Public multiplayer (browser-hosted sessions)
 
@@ -36,6 +47,7 @@ JavaScript syntax and lobby UI were tested locally, including mock session hosti
 
 - `index.html`: main WebGL game and responsive UI
 - `multiplayer.js`: original public/private room logic (PeerJS/WebRTC)
+- `texture-atlas.js`: independent original 16×16 pixel-art texture generator
 - `sw.js`: offline shell cache, no offline multiplayer
 - `manifest.webmanifest`: PWA configuration
 
