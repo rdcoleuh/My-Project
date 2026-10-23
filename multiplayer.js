@@ -12,9 +12,9 @@
   const attackTimes=new Map(), hitTimes=new Map();
   const MAX_GUESTS = 6;
   const PUBLIC = Object.freeze({
-    evergreen:{name:'Evergreen',id:'mineworld-pub-v30-evergreen',seed:17492331},
-    sunset:{name:'Sunset Valley',id:'mineworld-pub-v30-sunset',seed:8342193},
-    highlands:{name:'Highlands',id:'mineworld-pub-v30-highlands',seed:5173268}
+    evergreen:{name:'Evergreen',id:'mineworld-pub-v31-nether-evergreen',seed:17492331},
+    sunset:{name:'Sunset Valley',id:'mineworld-pub-v31-nether-sunset',seed:8342193},
+    highlands:{name:'Highlands',id:'mineworld-pub-v31-nether-highlands',seed:5173268}
   });
   const publicParam = new URL(location.href).searchParams.get('server');
   const roomParam = new URL(location.href).searchParams.get('room');
@@ -91,12 +91,12 @@
     const x=Number(data.x),y=Number(data.y),z=Number(data.z);
     if(![x,y,z].every(Number.isFinite))return null;
     if(x<0||x>10000||y<-2||y>48||z<0||z>10000)return null;
-    return {x,y,z,yaw:Number.isFinite(data.yaw)?data.yaw:0, pitch:Number.isFinite(data.pitch)?data.pitch:0,mode:data.mode==='survival'?'survival':'creative',name:String(data.name||'Friend').replace(/[<>]/g,'').slice(0,16)};
+    return {x,y,z,yaw:Number.isFinite(data.yaw)?data.yaw:0, pitch:Number.isFinite(data.pitch)?data.pitch:0,mode:data.mode==='survival'?'survival':'creative',dimension:data.dimension==='nether'?'nether':'overworld',name:String(data.name||'Friend').replace(/[<>]/g,'').slice(0,16)};
   }
   function receiveHostData(conn,message) {
     if(!message||typeof message!=='object'||conn.peer!==host?.peer)return;
     if(message.t==='snapshot') {
-      if(message.world?.version===5 && message.world?.worldSize===10000 && bridge.acceptSnapshot(message.world)) {
+      if(message.world?.version===6 && message.world?.worldSize===10000 && bridge.acceptSnapshot(message.world)) {
         ready=true;pvp=!!message.pvp;peers.clear();
         for(const p of message.players||[])if(p && p.id && p.id!==peer.id){const state=cleanPlayer(p.state);if(state)peers.set(p.id,state)}
         setStatus(`Connected to ${publicWorld?PUBLIC[publicWorld].name:'room'}! ${publicWorld?'Public world is live.':'Shared world loaded.'} Tap Back to Game, then Play.`);
@@ -116,7 +116,7 @@
     }
     if(message.t==='leave'){peers.delete(message.id);updateUI();}
     if(message.t==='chat'){talk(message.name,message.text);}
-    if(message.t==='world' && message.world?.version===5 && message.world?.worldSize===10000 && bridge.acceptSnapshot(message.world)) {
+    if(message.t==='world' && message.world?.version===6 && message.world?.worldSize===10000 && bridge.acceptSnapshot(message.world)) {
       talk('','Host generated a new world!',true);
     }
     if(message.t==='reject'){setStatus('Host room is full or unavailable.');host?.close();}
@@ -169,7 +169,7 @@
     const attacker=peers.get(from),conn=sockets.get(from),now=performance.now();
     if(!attacker||!conn||!allowAttack({...attacker,id:from},now))return false;
     const m=bridge.getMobs().find(m=>m.id===message.id);
-    if(!m||distance(attacker,m)>5.3)return false;
+    if(!m||distance(attacker,m)>5.3||(attacker.dimension||'overworld')!==(m.dimension||'overworld'))return false;
     const damage=Math.min(20,playerProfile(message.profile).damage);
     const result=bridge.applyMobHit(m.id,damage,from);
     if(!result.hit)return false;
@@ -191,7 +191,7 @@
     const attacker=peers.get(from),target=message.target===peer.id?{...bridge.getPlayer(),mode:bridge.getMode()}:peers.get(message.target);
     const now=performance.now();
     if(!attacker||!target||target.mode!=='survival'||!allowAttack({...attacker,id:from},now))return false;
-    if(distance(attacker,target)>5.2)return false;
+    if(distance(attacker,target)>5.2||(attacker.dimension||'overworld')!==(target.dimension||'overworld'))return false;
     const damage=Math.min(11,Math.ceil(playerProfile(message.profile).damage));
     return damagePlayer(message.target,damage,'PvP sword strike');
   }
@@ -203,7 +203,7 @@
     if(!pvp||!id||role==='offline'||!ready)return false;
     if(role==='guest'){send(host,{t:'attack-player',target:id,profile:bridge.getCombatProfile()});return true}
     const target=peers.get(id),local=bridge.getPlayer();
-    if(!target||target.mode!=='survival'||bridge.getMode()!=='survival'||distance(local,target)>5.2)return false;
+    if(!target||target.mode!=='survival'||bridge.getMode()!=='survival'||distance(local,target)>5.2||(target.dimension||'overworld')!==(local.dimension||'overworld'))return false;
     const now=performance.now();if(!allowAttack({...local,id:peer.id},now))return false;
     return damagePlayer(id,Math.min(11,Math.ceil(playerProfile(bridge.getCombatProfile()).damage)),'PvP sword strike');
   }
