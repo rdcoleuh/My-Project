@@ -2,107 +2,144 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#142319">
-<meta name="description" content="Experimental launch page for Minecraft Java Edition 26.3 in a browser, using an independently hosted third-party port.">
-<title>Minecraft 26.3 | Browser Experiment</title>
+<meta name="viewport" content="width=device-width, initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#172a1b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Minecraft Web">
+<meta name="description" content="An unofficial mobile-friendly launcher to try Minecraft 26.3 browser clients on iPhone, iPad and desktop.">
+<link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<title>Minecraft 26.3 · iPhone and Browser</title>
 <style>
-  :root{color-scheme:dark;--bg:#0c1510;--panel:#17261b;--raised:#223829;--border:#3c5f44;--lime:#b5ec8a;--white:#eff8ed;--muted:#b1c6b0}
-  *{box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{margin:0;min-height:100vh;color:var(--white);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(ellipse at 30% -22%,#385841,transparent 56%),var(--bg)}
-  a,button{font:inherit}
-  a{color:inherit}
-  button{cursor:pointer}
-  a:focus-visible,button:focus-visible{outline:3px solid #fff2a9;outline-offset:4px}
-  .wrap{max-width:1370px;margin:0 auto;padding:clamp(15px,3vw,38px)}
-  header{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:40px}
-  .brand{display:flex;align-items:center;gap:16px}
-  .cube{width:49px;height:49px;flex:none;background:linear-gradient(#86c957 0 30%,#805a40 30% 100%);border:3px solid #213820;box-shadow:inset -7px -6px #0003,4px 4px #0006;transform:rotate(-5deg)}
-  .brand h1{margin:0;font-size:clamp(25px,4vw,36px);letter-spacing:-.05em;line-height:1;font-weight:950}
-  .brand small{display:block;margin-top:6px;color:#acc2ad;text-transform:uppercase;letter-spacing:.1em;font-size:11px}
-  .chip{border:1px solid var(--border);background:#253d2b;padding:9px 13px;font-size:12px;border-radius:30px;color:#e0f6d8}
-  .hero{display:grid;grid-template-columns:1fr;overflow:hidden;border:1px solid var(--border);border-radius:18px;background:linear-gradient(133deg,#263d2a,#16281b);box-shadow:0 30px 80px #0006}
-  .hero-body{padding:clamp(24px,5vw,58px);background:radial-gradient(ellipse at 85% 8%,#3a693a,transparent 40%)}
-  .eyebrow{font-size:12px;color:var(--lime);letter-spacing:.19em;text-transform:uppercase;font-weight:900}
-  h2{font-size:clamp(38px,6.6vw,78px);letter-spacing:-.055em;line-height:1.03;margin:15px 0 21px;font-weight:900}
-  .sub{color:#c9dbc9;font-size:clamp(15px,1.6vw,18px);max-width:810px;line-height:1.55;margin:0 0 26px}
-  .buttons{display:flex;gap:11px;flex-wrap:wrap}
-  .btn{border-radius:8px;display:inline-flex;align-items:center;justify-content:center;gap:7px;text-align:center;min-height:48px;padding:12px 20px;background:#3c5640;border:1px solid #6c896a;color:#f3fbef;font-size:15px;font-weight:800;text-decoration:none;line-height:1.2}
-  .btn.primary{background:var(--lime);border-color:#d5ffae;color:#193119;box-shadow:inset 0 -3px #78b354}
-  .btn:hover{filter:brightness(1.1)}
-  .fine{font-size:12px;color:#b5cbb4;margin:22px 0 0;line-height:1.65;max-width:890px}
-  .bar{padding:13px 20px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;background:#14251a;border-top:1px solid #3b6340}
-  .bar strong{font-size:14px}
-  .bar span{color:var(--muted);font-size:12px}
-  .player{display:none;background:#080c09}
-  .player.visible{display:block}
-  .player iframe{width:100%;height:min(78vh,900px);min-height:520px;border:0;display:block;background:#090e0a}
-  .player .help{padding:15px 20px;background:#1f3325;color:#d1e5d1;font-size:13px;line-height:1.55}
-  .player .help a{color:var(--lime)}
-  .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:23px}
-  .card{padding:23px;border:1px solid var(--border);border-radius:12px;background:#182b1e}
-  .card h3{font-size:16px;margin:0 0 9px}
-  .card p{font-size:13px;color:var(--muted);line-height:1.65;margin:0}
-  .card a{color:var(--lime)}
-  footer{text-align:center;color:#8fa992;font-size:12px;line-height:1.65;margin:27px auto 12px;max-width:950px}
-  @media(max-width:740px){header{margin-bottom:24px}.wrap{padding:12px}.hero-body{padding:25px 18px}h2{font-size:43px}.buttons{flex-direction:column}.btn{width:100%}.cards{grid-template-columns:1fr}.player iframe{min-height:460px}.chip{font-size:11px}}
+:root{color-scheme:dark;--bg:#0e1711;--panel:#1d3022;--border:#3d6549;--text:#f4faef;--muted:#c0d1bc;--green:#b4eb80}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 40% -25%,#3d6243,transparent 58%),var(--bg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}
+button,a{font:inherit}a{color:inherit}
+a:focus-visible,button:focus-visible{outline:3px solid #fff7b5;outline-offset:3px}
+button{cursor:pointer}
+.wrap{max-width:1340px;margin:auto;padding:clamp(12px,3vw,40px)}
+header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:25px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:15px}
+.voxel{width:48px;height:48px;background:linear-gradient(#7fc454 0 32%,#76553c 32%);border:3px solid #293924;transform:rotate(-5deg);box-shadow:inset -8px -5px #0004,4px 4px #0006;flex-shrink:0}
+h1{margin:0;font-size:clamp(24px,3.5vw,36px);letter-spacing:-.05em}
+.brand small{display:block;margin-top:3px;text-transform:uppercase;letter-spacing:.10em;color:#b8cbb5;font-size:10px}
+.chip{border:1px solid #5a8664;border-radius:30px;background:#233b29;padding:9px 13px;color:#d0e5c8;font-size:12px}
+.hero{border:1px solid var(--border);border-radius:18px;overflow:hidden;background:linear-gradient(125deg,#284531,#14221a);box-shadow:0 26px 85px #0007}
+.copy{padding:clamp(22px,5vw,58px);background:radial-gradient(ellipse at 90% 0%,#3a7549,transparent 50%)}
+.eyebrow{font-weight:800;text-transform:uppercase;letter-spacing:.17em;color:var(--green);font-size:11px}
+h2{font-size:clamp(38px,6.5vw,78px);letter-spacing:-.055em;line-height:1.02;margin:15px 0 20px}
+.sub{font-size:clamp(15px,1.7vw,18px);line-height:1.55;color:#d3e6ce;max-width:830px}
+.buttons{display:flex;flex-wrap:wrap;gap:11px;margin-top:24px}
+.btn{min-height:49px;display:inline-flex;align-items:center;justify-content:center;text-align:center;gap:9px;text-decoration:none;padding:13px 21px;border-radius:9px;border:1px solid #749276;background:#314f38;color:var(--text);font-weight:800;font-size:14px}
+.btn.primary{background:var(--green);color:#142711;border-color:#d4ffae;box-shadow:inset 0 -3px #75b54b}
+.btn:hover{filter:brightness(1.09)}
+.note{color:#b6c9b2;font-size:12px;line-height:1.6;margin:22px 0 0}
+.launchpad{padding:clamp(17px,3vw,28px);border-top:1px solid var(--border);background:#15261a}
+.launchpad h3{font-size:17px;margin:0 0 14px}
+.choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.choice{display:flex;flex-direction:column;gap:11px;background:#1f3525;border:1px solid #3a6044;padding:16px;border-radius:12px}
+.choice strong{font-size:15px}
+.choice p{font-size:12px;line-height:1.6;color:var(--muted);margin:0;flex-grow:1}
+.choice .btn{width:100%;font-size:13px;min-height:44px;padding:10px 11px}
+.label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#a8f187;font-weight:900}
+.important{background:#3b321c;border:1px solid #89794b;color:#f9e9ae;padding:12px 15px;border-radius:9px;font-size:13px;line-height:1.5;margin-top:16px}
+.install{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;align-items:center;margin-top:19px;padding:23px;border:1px solid #4c754f;border-radius:13px;background:#1c3321}
+.install h3{margin:0 0 7px;font-size:20px}
+.install p{line-height:1.55;font-size:13px;color:#cfddcc;margin:0}
+.install aside{border-left:1px solid #5b785b;padding-left:17px;font-size:13px;line-height:1.75;color:#d0e5ce}
+.install aside strong{color:var(--green)}
+.player{display:none;margin-top:19px;border:1px solid var(--border);border-radius:13px;overflow:hidden;background:#080c09}
+.player.visible{display:block}
+.player-bar{padding:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;background:#1d3524}
+.player-bar p{margin:0;color:#d2e5cc;font-size:12px}
+iframe{width:100%;height:min(73vh,850px);min-height:480px;background:#0a0f0b;border:0;display:block}
+.player footer{text-align:left;background:#213b27;padding:12px 16px;margin:0}
+footer{font-size:11px;line-height:1.7;color:#9cb39e;text-align:center;margin:27px auto 5px;max-width:900px}
+footer a{text-decoration:underline}
+@media(max-width:870px){.choices{grid-template-columns:1fr 1fr}.install{grid-template-columns:1fr}}
+@media(max-width:600px){
+body{padding-bottom:env(safe-area-inset-bottom)}
+.wrap{padding:12px}.voxel{width:39px;height:39px}
+header{margin-bottom:18px}.chip{font-size:11px}.copy{padding:24px 18px}
+h2{font-size:43px}.buttons{display:grid;grid-template-columns:1fr}.btn{width:100%}
+.choices{grid-template-columns:1fr}.install{padding:19px;gap:12px}
+.install aside{border-left:0;border-top:1px solid #5b785b;padding-left:0;padding-top:10px}
+iframe{min-height:360px}.player-bar .btn{width:auto}
+}
+@media(max-height:510px) and (orientation:landscape){.copy{padding:19px}h2{font-size:40px}.choices{grid-template-columns:repeat(3,minmax(0,1fr))}iframe{height:78vh;min-height:280px}}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header>
-  <div class="brand"><div class="cube" aria-hidden="true"></div><div><h1>MINECRAFT WEB</h1><small>Java 26.3 browser experiment · Unofficial</small></div></div>
-  <div class="chip">26.3 Beta · No timer added by this site</div>
+ <div class="brand"><div class="voxel" aria-hidden="true"></div><div><h1>MINECRAFT WEB</h1><small>iPhone · iPad · Desktop browser experiment</small></div></div>
+ <span class="chip">26.3 browser experiment · No timer on this page</span>
 </header>
 <main>
 <section class="hero">
-  <div class="hero-body">
-    <span class="eyebrow">Experimental browser edition</span>
-    <h2>Minecraft<br>Java 26.3</h2>
-    <p class="sub">Try Minecraft Java Edition 26.3 in your browser through the independently hosted <strong>Eagler26</strong> beta. The earlier Gaius version was removed from GitHub, so this page uses a different third-party provider.</p>
-    <div class="buttons">
-      <a class="btn primary" id="direct26" href="https://client.goldhq.net/" target="_blank" rel="noopener noreferrer">▶ Launch Java 26.3 ↗</a>
-      <button class="btn" id="tryhere" type="button">Try playing inside this page</button>
-      <a class="btn" href="https://classic.minecraft.net/" target="_blank" rel="noopener noreferrer">Minecraft Classic fallback ↗</a>
-    </div>
-    <p class="fine"><strong>Science-test note:</strong> This website is a launch page, not a self-hosted copy of Minecraft. The provider controls whether 26.3 launches and may block embedded frames. Its beta may have bugs or downtime, and it requires a desktop browser with keyboard and mouse. We do not set a play-time cutoff; we cannot promise unlimited uninterrupted access on another service.</p>
+<div class="copy">
+ <span class="eyebrow">Unofficial web launcher · Apple-ready website</span>
+ <h2>Minecraft 26.3<br>on your device.</h2>
+ <p class="sub">Try a Minecraft Java Edition 26.3 browser client on iPhone, iPad, Mac or PC. Install this launcher to your iPhone Home Screen for an app-like shortcut. The game itself is provided by third-party projects and iPhone compatibility is experimental.</p>
+ <div class="buttons">
+  <a class="btn primary" href="https://dev.eaglercraft.com/play?version=26.3" target="_blank" rel="noopener noreferrer" id="mobile-play">▶ Try 26.3 on iPhone / iPad ↗</a>
+  <a class="btn" href="https://client.goldhq.net/" target="_blank" rel="noopener noreferrer">26.3 Desktop Beta ↗</a>
+  <button class="btn" id="show-player" type="button">Try game inside this page</button>
+ </div>
+ <p class="note">The external Eaglercraft site advertises mobile browser support and lists 26.3; it has not been verified on this iPhone. The separate GoldHQ 26.3 beta explicitly blocks phones and tablets. The website imposes no three-minute cutoff, but can't guarantee external games remain available.</p>
+</div>
+<div class="launchpad">
+ <h3>Choose a game client</h3>
+ <div class="choices">
+  <div class="choice">
+   <span class="label">Mobile 26.3 experiment</span>
+   <strong>Try Java 26.3</strong>
+   <p>Use the Eaglercraft 26.3 browser listing. This is the best experimental mobile version target we found, but actual iOS play is unverified.</p>
+   <a class="btn primary" href="https://dev.eaglercraft.com/play?version=26.3" target="_blank" rel="noopener noreferrer">Launch mobile 26.3 ↗</a>
   </div>
-  <div class="bar"><strong>Java 26.3 · Wilderness Bound</strong><span>Chrome / Edge desktop recommended · Third-party beta</span></div>
-  <div class="player" id="player">
-    <div class="bar">
-      <strong>Attempting embedded Eagler26 (26.3)</strong>
-      <div class="buttons">
-        <a class="btn primary" href="https://client.goldhq.net/" target="_blank" rel="noopener noreferrer">Open 26.3 directly ↗</a>
-        <button class="btn" id="close" type="button">Close frame</button>
-      </div>
-    </div>
-    <iframe id="frame" title="Eagler26 Minecraft Java 26.3 browser beta" allow="fullscreen; autoplay; gamepad; pointer-lock" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
-    <div class="help">If the game is blank, blocked, or produces a 404 inside the frame, use <a href="https://client.goldhq.net/" target="_blank" rel="noopener noreferrer">Launch Java 26.3 directly</a>. Websites may disallow being embedded on other domains. Your saved data, if supported by the provider, may be stored on their website instead of this one.</div>
+  <div class="choice">
+   <span class="label">Desktop 26.3 · Limited devices</span>
+   <strong>Eagler26 Beta</strong>
+   <p>GoldHQ's beta targets Java 26.3 but requires a computer with a keyboard and mouse. It blocks mobile devices, including iPhones.</p>
+   <a class="btn" href="https://client.goldhq.net/" target="_blank" rel="noopener noreferrer">Open desktop client ↗</a>
   </div>
+  <div class="choice">
+   <span class="label">Mobile-friendly older release</span>
+   <strong>EaglercraftX 1.8.8</strong>
+   <p>Lower Minecraft version that advertises automatic touch controls and iOS audio support. Use this if 26.3 cannot launch on your phone.</p>
+   <a class="btn" href="https://dev.eaglercraft.com/play?version=1.8.8" target="_blank" rel="noopener noreferrer">Try touch-friendly version ↗</a>
+  </div>
+ </div>
+ <div class="important"><strong>iPhone limits:</strong> Adding this website to your Home Screen does not make the 26.3 game itself a native iOS app. A native app wrapper also cannot force a third-party Minecraft port to support touch or bypass mobile blocking.</div>
+</div>
 </section>
-<section class="cards" aria-label="Test information">
-  <div class="card"><h3>✓ Correct version target</h3><p>The primary link is to Eagler26, which its developers identify as a Minecraft Java 26.3 browser port. This site does not replace it with a lookalike or a lower version.</p></div>
-  <div class="card"><h3>⏱ No countdown in our page</h3><p>There is no three-minute countdown here. Any limits, outages, crashes, or launch restrictions on the external beta are outside this site's control.</p></div>
-  <div class="card"><h3>⚠ Beta &amp; privacy</h3><p>Eagler26's provider says it collects technical diagnostics when launched. Review its <a href="https://client.goldhq.net/privacy" target="_blank" rel="noopener noreferrer">privacy policy</a> and <a href="https://client.goldhq.net/terms" target="_blank" rel="noopener noreferrer">terms</a> before playing.</p></div>
+<section class="install" id="install">
+ <div>
+  <h3>📱 Put Minecraft Web on your iPhone Home Screen</h3>
+  <p>In <strong>Safari</strong>, open this website, tap the page menu or Share icon, select <strong>Add to Home Screen</strong>, turn on <strong>Open as Web App</strong>, then tap <strong>Add</strong>. The Minecraft Web icon will appear on your Home Screen. The game still needs an internet connection.</p>
+ </div>
+ <aside><strong>Apple-compatible launcher</strong><div>✓ Touch-friendly buttons</div><div>✓ Portrait and landscape layouts</div><div>✓ Home Screen web app manifest</div><div>✓ No timer imposed by this site</div><div>⚠ 26.3 mobile gameplay not guaranteed</div></aside>
+</section>
+<section class="player" id="player">
+ <div class="player-bar"><p>Experimental embedded client · External provider may block frames</p><div class="buttons"><a class="btn primary" href="https://dev.eaglercraft.com/play?version=26.3" target="_blank" rel="noopener noreferrer">Open directly ↗</a><button class="btn" id="close-player" type="button">Close</button></div></div>
+ <iframe id="game" title="Experimental Minecraft 26.3 iframe" allow="fullscreen; pointer-lock; autoplay; gamepad" allowfullscreen></iframe>
+ <footer>If the embedded game displays a blank page or an error, launch 26.3 in its own browser tab. Browser cross-origin protections prevent this website from injecting touch controls into a third-party game.</footer>
 </section>
 </main>
-<footer>Minecraft is owned by Mojang Studios / Microsoft. This unofficial website is not affiliated with, sponsored by, or endorsed by Mojang, Microsoft or GoldHQ. This site links to an independent third-party port and does not distribute proprietary Minecraft files. 26.3 availability and feature completeness are not guaranteed.</footer>
+<footer>Minecraft belongs to Mojang Studios / Microsoft. This is an independent experiment and launcher, not an official Minecraft product. It includes no proprietary Minecraft code and cannot guarantee the external clients' availability or compatibility. <a href="https://www.minecraft.net/" target="_blank" rel="noopener noreferrer">Minecraft official website</a>.</footer>
 </div>
 <script>
 (()=>{
- const pane=document.getElementById("player");
- const frame=document.getElementById("frame");
- document.getElementById("tryhere").addEventListener("click",()=>{
-  pane.classList.add("visible");
-  if(!frame.hasAttribute("src"))frame.src="https://client.goldhq.net/";
-  pane.scrollIntoView({block:"start",behavior:"smooth"});
+ const pane=document.getElementById('player'), frame=document.getElementById('game');
+ document.getElementById('show-player').addEventListener('click',()=>{
+  pane.classList.add('visible');
+  if(!frame.hasAttribute('src'))frame.src='https://dev.eaglercraft.com/play?version=26.3';
+  pane.scrollIntoView({behavior:'smooth',block:'start'});
  });
- document.getElementById("close").addEventListener("click",()=>{
-  frame.removeAttribute("src");
-  pane.classList.remove("visible");
- });
+ document.getElementById('close-player').addEventListener('click',()=>{frame.removeAttribute('src');pane.classList.remove('visible')});
+ if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 })();
 </script>
 </body>
