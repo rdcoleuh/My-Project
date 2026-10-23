@@ -1,8 +1,12 @@
-const CACHE='mineworld-independent-20261023-v2';
-const FILES=['./','./index.html','./manifest.webmanifest','./favicon.svg','./apple-touch-icon.png'];
-self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+const VERSION='mineworld-together-v2-20261023-2';
+const FILES=['./','./index.html','./multiplayer.js','./manifest.webmanifest','./favicon.svg','./apple-touch-icon.png'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(VERSION).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x.startsWith('mineworld-')&&x!==VERSION).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
- if(e.request.method!=='GET'||new URL(e.request.url).origin!==self.location.origin)return;
- e.respondWith(fetch(e.request).then(r=>{if(r.ok){const cp=r.clone();caches.open(CACHE).then(c=>c.put(e.request,cp)).catch(()=>{});}return r}).catch(()=>caches.match(e.request)));
+ if(e.request.method!=='GET')return;
+ const url=new URL(e.request.url);
+ if(url.origin!==self.location.origin)return; // Never cache third-party signaling services.
+ e.respondWith(fetch(e.request).then(r=>{
+   if(r.ok){const copy=r.clone();caches.open(VERSION).then(c=>c.put(e.request,copy)).catch(()=>{});}return r;
+ }).catch(()=>caches.match(e.request)));
 });
