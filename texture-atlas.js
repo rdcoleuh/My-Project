@@ -48,6 +48,10 @@
         if(nail)c=[82,64,46];break}
       case 16:c=n>.78?[173+v*.5,64+v*.3,78+v*.3]:[85+v*.5,124+v*.4,62+v*.4];break;
       case 17:c=(x>4&&x<12&&y<9)?[212+v*.5,190+v*.4,148+v*.4]:[111+v*.5,75+v*.38,53+v*.35];break;
+      case 18:case 19:{const rock=121+v*.9;const spot=hash(Math.floor(x/3),Math.floor(y/3),b*7)>.61;
+        c=spot?(b===18?[38+v*.2,42+v*.2,41+v*.2]:[193+v*.3,139+v*.3,98+v*.3]):[rock,rock+4,rock+6];break}
+      case 20:{const dark=(x>3&&x<12&&y>4&&y<12&&face===1);const rim=x<2||x>13||y<2||y>13;
+        c=dark?[52+v*.2,44+v*.2,40+v*.2]:rim?[112+v*.6,113+v*.6,115+v*.6]:[139+v*.5,139+v*.5,143+v*.5];break}
     }
     return [clamp(c[0]),clamp(c[1]),clamp(c[2]),255];
   }
@@ -55,7 +59,7 @@
     const canvas=document.createElement('canvas');canvas.width=SIZE*COLUMNS;canvas.height=SIZE*ROWS;
     const ctx=canvas.getContext('2d',{willReadFrequently:true});if(!ctx)throw Error('2D canvas textures unavailable');
     const img=ctx.createImageData(canvas.width,canvas.height);
-    for(let b=1;b<=17;b++)for(let f=0;f<3;f++){
+    for(let b=1;b<=20;b++)for(let f=0;f<3;f++){
       const tile=b*3+f,col=tile%COLUMNS,row=Math.floor(tile/COLUMNS);
       for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
         const i=((row*SIZE+y)*canvas.width+col*SIZE+x)*4;
