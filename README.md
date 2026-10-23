@@ -1,36 +1,41 @@
-# MineWorld 3.0 — 10,000 × 10,000 Custom-Seed Worlds
+# MineWorld 3.1 — The Nether Expedition
 
-Play: **https://rdcoleuh.github.io/My-Project/**
+**Live game:** https://rdcoleuh.github.io/My-Project/
 
-An independently coded voxel browser game for iPhone, iPad, and desktop with both Creative and Survival, simplified biome/structure generation, and peer-to-peer public multiplayer sessions.
+Self-hosted independent browser voxel game for iPhone, iPad, and desktop browsers, with Creative, Survival, seeded worlds, and peer-to-peer public multiplayer sessions. This project is NOT Minecraft Java Edition and contains no Minecraft game code, artwork, textures, or music.
 
-## New in MineWorld 3.0
+## The Nether dimension
 
-- **World bounds:** X and Z coordinates from 0 to 9,999 inclusive — a 10,000 × 10,000-block surface footprint. Vertical range: 48 blocks. This is 100 million possible columns, **not 100 million columns loaded simultaneously**.
-- **Chunk streaming:** load/generate **16 × 16-block chunks** around the player, retaining a small memory cache and disposing distant GPU buffers; show 3 × 3 chunks on touch devices or 5 × 5 on desktop. Additional chunks load as you walk or teleport.
-- **Custom seed input:** Type a number or text, or select Random. Same seed reproducibly generates the same biome placement, elevation, trees, caves, ore, and simplified structures. Numeric seed IDs are 1–99,999,999; text seed labels hash to a numeric ID. This is **MineWorld's own seed algorithm**, not Minecraft's.
-- **Biome Atlas:** the 36-biome list now finds matching regions in the larger world instead of 36 tiny sections all packed into one 96 × 96 map.
-- **Save migration:** an older saved world is backed up locally under `mineworld-backup-before-10k`. The previous edited blocks are translated near the new spawn point. Local saves only store seed, world edits, and progress; distant terrain can be regenerated. Migrated regions can look different from the original terrain.
-- **Multiplayer:** the three public-session IDs are versioned for 3.0, keeping incompatible older-version peers separate. Peers receive the same world seed and block edit log; monster combat remains host-coordinated. Sessions still close when the browser host leaves.
+Tap **🔥 Nether** in the top toolbar, **Enter the Nether** on the home screen, or **Nether Portals & Biomes** from the in-game menu. Choose **Enter the Nether** to cross, or choose one of the five biome tiles to travel there. The new dimension has its own 10,000×10,000 coordinates, distinct block-edit data, Nether cave shelves, a lava sea, a cavern ceiling, seed-generated fungus trees, blue soul-fire regions, new rocks, ores and original textures.
 
-## How to create your world
+Five biomes: **Nether Wastes, Crimson Forest, Warped Forest, Soul Sand Valley, Basalt Deltas**.
 
-1. Open the link in Safari/Chrome/Edge. On iPhone, you may choose **Share → Add to Home Screen**.
-2. Enter a **World Seed**, e.g. `pumpkin kingdom`, `12345678`, or `Ocean Builders`. Or tap **Random**.
-3. Tap **New World** to regenerate, or tap **Play Creative / Play Survival** and confirm the new seed.
-4. To explore, move normally or open the 🧭 **Biome Atlas**. World coordinates appear on screen. The same seed reproduces the generated terrain across devices.
+Procedural landmarks: **Nether fortress** platforms and bridges with blaze/wither-skeleton activity; **bastion remnant** halls with piglin/brute activity; **ruined obsidian portals**; **Nether fossils**; and **lava wells**. Same world seed = same structures and terrain. This is a *simplified original interpretation*, not the precise Minecraft Java generation system.
 
-## Limits
+Nether creature types: ghast, blaze, magma cube, piglin, piglin brute, zombified piglin, hoglin, zoglin, strider, wither skeleton, skeleton, enderman, wither boss, ghastling, and happy ghast. Most spawn based on biome/structure; the boss is an optional summon, and ghastlings/happy ghasts and zoglins are summonable in Creative. All have simplified voxel bodies and AI, **not the full behaviors of the original game**. Most Nether hostiles can pursue and damage Survival players. Ghast/blaze/Wither attacks use simplified distance attacks, not complex projectile simulation. Loot supports quartz, gold, blaze rods, magma cream, pearls, and skulls. Trade gold via the Nether menu, and summon a Wither boss in Survival using 3 skulls and 4 Soul Sand.
 
-- The 10k footprint is procedurally generated on demand and is not an infinite world. The game has a **48-block vertical ceiling** and simplified caves/landmarks. Biomes cover 36 original approximations of familiar categories.
-- Saving uses **browser local storage**, so large numbers of modified blocks can exceed the browser quota. Worlds are not backed up online. Public-world block changes last only for the peer-hosted session.
-- The **public lobby is not an always-on, dedicated server**. PeerJS signaling/WebRTC may fail on restrictive networks. Public sessions and gameplay across different real devices have not been verified here.
-- This is an original Minecraft-inspired game. **It does not contain or run Mojang/Microsoft Minecraft Java game code or texture files**, and its seed algorithm is independent of Minecraft Java Edition.
+### Controls
 
-## Source files
+- **Desktop:** Use the Nether button in menus (press **Esc** if your mouse is locked in the game). Use WASD/mouse, mine/build normally, and press R to attack.
+- **iPhone / iPad:** Use the 🔥 icon or **Menu → Nether Portals**, and the joystick / touch action controls. In Survival, use the HIT button for nearby mobs.
+- **Return:** Select **Return to the Overworld** in the Nether menu. Your overworld and nether positions and modified blocks are stored separately.
 
-- `index.html`: original game, menus and client-side chunk streaming
-- `world-chunks.js`: 10,000² coordinate generator and custom seeded biomes, trees and structures
-- `multiplayer.js`: public/private peer-to-peer sessions, shared edits and combat
-- `sw.js`: offline shell cache / Home Screen integration
-- `manifest.webmanifest`, `apple-touch-icon.png`, `favicon.svg`: installable web-app metadata and artwork
+### Save compatibility
+
+Local Overworld saves from 3.0 load into 3.1. On first successful load of an old save, MineWorld attempts a browser-local backup under `mineworld-backup-before-nether`. New saves store both `edits` (Overworld) and `netherEdits` (Nether), plus the current dimension and last positions. Worlds are stored in browser local storage, **not backed up online**; clearing browser data can erase them. Changes in shared public sessions are transient and not persisted on a dedicated server.
+
+### Multiplayer limits
+
+Public servers are *peer-hosted browser sessions*: the first player hosts; a permanent 24/7 dedicated server is not included. Both dimensions' changed blocks are synchronized. Player position messages include dimension; players only appear and may fight one another in the same dimension. Shared mob simulation is controlled by the session host for the dimension the **host currently occupies**. Guests in a different dimension from the host cannot count on synchronized combat there, and two-device real internet testing remains unverified. PeerJS Cloud / WebRTC are required for multiplayer signaling.
+
+### Performance and rendering
+
+16×16 on-demand chunks and a max 48-block height in both dimensions. On iPhones the game renders a narrower region and unloads distant chunks. The Nether features original generated 16×16 pixel textures and chunk-seeded layouts. The project has passed static syntax, deterministic-generation, bridge/save-edit, and simulated desktop/mobile menu tests. A physical iPhone and live multiplayer across networks have **not** been verified.
+
+### Source files
+
+- `index.html`: client, UI, dimensions, blocks, Survival, mobs, rendering
+- `nether-world.js`: deterministic Nether generation with five biomes and structure stamping
+- `world-chunks.js`: custom-seeded Overworld generator
+- `multiplayer.js`: public/private WebRTC room logic, dimension-aware player state, block edits, mobs
+- `sw.js`, `manifest.webmanifest`, `favicon.svg`, `apple-touch-icon.png`: PWA install support
