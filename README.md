@@ -1,54 +1,33 @@
-# MineWorld 2.2 — Creative, Survival & Public Multiplayer
+# MineWorld 2.4 — Shared Survival Combat
 
-**Play the site:** https://rdcoleuh.github.io/My-Project/
+**Play:** https://rdcoleuh.github.io/My-Project/
 
-MineWorld 2.0 is an **original self-hosted 3D voxel game** inspired by block-building games. It is not Minecraft Java 26.3 or a redistribution of Microsoft/Mojang game files.
+This is an original Minecraft-inspired browser voxel sandbox. It is **not Minecraft Java Edition** and contains none of Mojang's proprietary textures or game code. It works as a GitHub Pages website on iPhone, iPad and desktop.
 
-## Main menu and game modes
+## Home menu
 
-The home screen offers two game modes on desktop, iPhone and iPad:
+Choose **Creative** (unlimited blocks, flying, instant mining) or **Survival** (health, hunger, resources, basic crafting, tool progression, combat, food, and respawning). Select Peaceful, Easy, Normal or Hard; Peaceful disables hostile monster spawning. The game includes eight original low-poly creature species (cow, pig, sheep, chicken, zombie, skeleton, spider, creeper), natural wandering or chasing, 16×16 procedural pixel-art block textures, ores, gear, cooking and mining. It **does not** contain every original Minecraft Survival feature, recipe, biome, structure, animation or mob.
 
-- **Creative:** unlimited blocks, free building, flying, and instant mining.
-- **Survival:** limited block inventory, gather materials, make planks, health and hunger meters, eat collected mushrooms for food (the **Eat** touch button or **Q** key), fall damage, starvation and respawning. Survival cannot use flight.
+## Online combat — upgraded in v2.4
 
-Use **Menu → Home Screen · Choose Mode** to return to the launcher without deleting your world. Mode switches are saved with your offline solo world. Shared online worlds do not have persistent server storage.
+The first visitor to a public world hosts a session using browser WebRTC/PeerJS. Friends in the same Evergreen, Sunset Valley or Highlands world can now **see the same creatures, hit the same monsters, see shared monster health and deaths, and receive drops if they landed the finishing hit**. Host-side AI picks surviving players to chase and sends damage to them. Health loss and respawning are handled on the affected player's device.
 
-**Original pixel-art voxel textures:** a locally generated 16×16 atlas gives grass, dirt, stone, sand, logs, leaves, planks, bricks, glass and glowstone separate block-face designs. The textures resemble classic block-sandbox aesthetics but are original code-generated artwork, not copied Minecraft textures. They render as nearest-neighbor pixels with per-face light shading. The game includes no Mojang texture files.
+**PvP** (player vs player) is **off by default**. The session host can tap **Friends → ⚔ PvP: OFF** to enable friendly combat. When enabled, both players must be near each other and in Survival mode to deal player damage. The host validates range, timing and mob existence before accepting guest hits, and broadcasts creature state about four times per second. These checks reduce accidental desync and simple attacks; they are **not production-grade anti-cheat**. Because users run the code in their browsers, it cannot guarantee fair play against modified clients.
 
-## Public multiplayer (browser-hosted sessions)
+The host uses their own game for creature AI and receives/replies to guest attack messages. **If the host pauses or leaves, creature AI pauses or the session ends.** Shared mob state is not permanently saved between sessions. Up to seven players per room (host + six guests), not a dedicated always-on server. Reliable matchmaking across NAT/firewalls cannot be guaranteed with free PeerJS signaling. PvP is not moderated and public sessions have no account verification.
 
-1. Open the site in Safari, Chrome or Edge and select **Public servers / Friends**.
-2. Enter a display name and choose **Evergreen**, **Sunset Valley**, or **Highlands**.
-3. First player to join becomes the session host. Later visitors to that same public world connect to the host automatically.
-4. Play together: player positions, block edits, world snapshots, and chat synchronize over WebRTC. Up to 7 concurrent players per world (host plus 6 guests).
-5. You can share the public server URL (use **Copy Invite Link**) or just tell friends which world to join.
+### Desktop controls
 
-**Limitations:** These are **open, public, peer-hosted multiplayer sessions**, not 24/7 dedicated servers. The hosting player's browser must remain open. When the host leaves, players disconnect; a new public session can be started by the next visitor, and earlier session changes are not stored on a permanent server. A player on a restrictive network may not connect. There is no moderation, anti-cheat, permanent global world storage, or matchmaking count from a backend. Do not post personal information in chat. Public worlds allow visitors to edit each other's blocks.
+- **WASD** move; mouse drag / pointer lock look; **Space** jump; **E** change block hotbar; **I** open gear; **Q** eat; **R** attack mob/player; left-click aims/mines/attacks; right-click places; **F** toggles flying only in Creative.
+- **Mobile:** on-screen joystick, swipe to look, and dedicated **HIT**, **JUMP**, **MINE**, **PLACE** controls. Tap **Friends** to join a public room. Safari → Share → Add to Home Screen to install a launcher icon.
 
-The program uses a PeerJS WebRTC library loaded from jsDelivr and the free PeerJS Cloud signaling service. This server only introduces browsers; real-time gameplay data travels over direct WebRTC channels if reachable. The core game/terrain, world rules, rendering and UI run on **your GitHub Pages website**. Internet is required for multiplayer. No built-in time limit.
+## Files
 
-## Also included
+- `index.html`: voxel world, gameplay, survival AI, health/hunger, mobile UI, online-combat bridge
+- `multiplayer.js`: PeerJS signaling + WebRTC host/guest session and shared mob/combat packets
+- `texture-atlas.js`: original, locally generated pixel-art textures
+- `manifest.webmanifest`, `sw.js`, `apple-touch-icon.png`, `favicon.svg`: installable offline **game shell**; multiplayer still requires internet
 
-- Private invitation-code rooms, using the existing **Create Private Room** / **Join With Code** buttons
-- 18 block types, two hotbar pages, procedural forests, water, original poplar trees, resource collection and plank crafting
-- Mining, placement, moving 3D player avatars, day/night sky, optional flight and saveable solo worlds
-- iPhone/iPad touch joystick, touch actions, mobile-friendly public-lobby cards and Add to Home Screen PWA
-- Solo world stored only in browser. Joining a public session does not replace your solo save.
+## Testing
 
-## Real always-on public servers
-
-GitHub Pages serves static files only. A full persistent 24/7 public server would require an independently hosted real-time backend, persistent database, moderation, rate limiting and ongoing infrastructure. This version delivers public **live sessions** without that backend, not a permanent server.
-
-## Testing status
-
-JavaScript syntax and lobby UI were tested locally, including mock session hosting. This does not prove real connectivity between different physical devices or network providers. See the game status message after joining to verify your live session; all players must use the same site and public world.
-
-## Source
-
-- `index.html`: main WebGL game and responsive UI
-- `multiplayer.js`: original public/private room logic (PeerJS/WebRTC)
-- `texture-atlas.js`: independent original 16×16 pixel-art texture generator
-- `sw.js`: offline shell cache, no offline multiplayer
-- `manifest.webmanifest`: PWA configuration
-
-Unofficial, not affiliated with Mojang Studios, Microsoft, PeerJS or Minecraft.
+JavaScript syntax checks, desktop/mobile UI simulation, and a two-client same-origin network simulation passed the following critical flows: joining a private world, syncing creature snapshots, guest attack on shared mob with synchronized death, server-directed damage to a guest, PvP toggle broadcast, and guest hitting a Survival host. **Not tested on two physical phones over the public Internet**. Real-world connection reliability remains unverified.
