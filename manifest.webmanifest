@@ -1,7 +1,7 @@
 {
-  "name": "MineWorld 3.4 \u2014 End, Villages & Survival",
+  "name": "MineWorld 3.6 \u2014 Survival Inventory & Riding",
   "short_name": "MineWorld",
-  "description": "Original 3D browser sandbox with End, Nether, Overworld ores, village trades, crop farming, chests, and multiplayer.",
+  "description": "Original mobile browser sandbox with 36-slot Survival backpack, 267 craftable entries, animals, rideable boats, rafts and carts, and multiplayer.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
