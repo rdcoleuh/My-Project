@@ -1,4 +1,4 @@
-# MineWorld 3.7 — 2×2 Inventory Crafting, 3×3 Workbench, Improved Biomes
+# MineWorld 3.8 — Java-Style Title Screen
 
 **Play:** https://rdcoleuh.github.io/My-Project/
 
@@ -26,3 +26,9 @@ Creative stays independent; Survival resources and crafted items cannot be trans
 Crafting behavior and recipes are improved but are **not the entire official Minecraft recipe registry**. World generation and pixel-art textures are original approximations, not identical to Minecraft terrain generation or official textures. Multiplayer remains peer-hosted rather than a persistent dedicated server; shared crafting inventories are not server-authoritative. Different generator versions with the same seed can have different naturally generated layouts.
 
 The website includes no Microsoft/Mojang code or original copyrighted texture-pack assets.
+
+## 3.8 title screen redesign
+
+The initial screen is redesigned in the spirit of classic voxel-game Java menus: a **large original MINEWORLD stone-style wordmark**, gently panning procedurally drawn block landscape, Singleplayer, Multiplayer, Creative World, Options and World Atlas. Singleplayer opens the existing Creative/Survival world-and-seed chooser; Multiplayer opens the existing public/private lobby. Options provides a panorama-motion toggle, full-screen attempt (where supported), and control reference. Returning home restores the main title screen.
+
+The menu landscape, texture, lettering and art are independently generated and do not use Mojang/Minecraft assets or fonts. Gameplay and saves are unchanged by the menu-only update.
