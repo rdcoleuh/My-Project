@@ -104,6 +104,7 @@
         updateUI();
       } else setStatus('Unable to load the shared world (incompatible save data).');
     }
+    if(message.t==='reject'){setStatus(String(message.reason||'Host room unavailable or a different game mode.').slice(0,160));host?.close();return;}
     if(!ready)return;
     if(message.t==='edit') { bridge.remoteEdit(message.i,message.b); }
     if(message.t==='mobs')bridge.setMobs(message.mobs);
@@ -119,11 +120,14 @@
     if(message.t==='world' && message.world?.version===7 && message.world?.worldSize===10000 && bridge.acceptSnapshot(message.world)) {
       talk('','Host generated a new world!',true);
     }
-    if(message.t==='reject'){setStatus('Host room is full or unavailable.');host?.close();}
   }
   function receiveGuestData(conn,message) {
     if(!message||typeof message!=='object'||!sockets.has(conn.peer))return;
     if(message.t==='hello') {
+      if((message.mode==='survival'?'survival':'creative')!==bridge.getMode()){
+        send(conn,{t:'reject',reason:'This world is '+bridge.getMode()+'. Choose the same mode on the Home Screen before joining.'});
+        setTimeout(()=>conn.close(),150);return;
+      }
       const existing=peers.get(conn.peer)||{x:5000,y:22,z:5000,name:'Friend'};
       existing.name=String(message.name||'Friend').replace(/[<>]/g,'').trim().slice(0,16)||'Friend';
       peers.set(conn.peer,existing);
@@ -170,7 +174,7 @@
     if(!attacker||!conn||!allowAttack({...attacker,id:from},now))return false;
     const m=bridge.getMobs().find(m=>m.id===message.id);
     if(!m||distance(attacker,m)>5.3||(attacker.dimension||'overworld')!==(m.dimension||'overworld'))return false;
-    const damage=Math.min(20,playerProfile(message.profile).damage);
+    const damage=Math.min(20,playerProfile({...message.profile,mode:attacker.mode}).damage);
     const result=bridge.applyMobHit(m.id,damage,from);
     if(!result.hit)return false;
     if(result.dead&&result.drop)send(conn,{t:'loot',drop:result.drop,count:result.count});
@@ -192,7 +196,7 @@
     const now=performance.now();
     if(!attacker||!target||target.mode!=='survival'||!allowAttack({...attacker,id:from},now))return false;
     if(distance(attacker,target)>5.2||(attacker.dimension||'overworld')!==(target.dimension||'overworld'))return false;
-    const damage=Math.min(11,Math.ceil(playerProfile(message.profile).damage));
+    const damage=Math.min(11,Math.ceil(playerProfile({...message.profile,mode:attacker.mode}).damage));
     return damagePlayer(message.target,damage,'PvP sword strike');
   }
   function attackMob(id){
@@ -253,7 +257,7 @@
       p.on('open',()=>{
         if(p!==peer)return;
         const conn=host=p.connect(code,{reliable:true,serialization:'json',metadata:{name:nickname}});
-        conn.on('open',()=>{if(conn===host){setStatus('Connected. Downloading host world…');send(conn,{t:'hello',name:label()});}});
+        conn.on('open',()=>{if(conn===host){setStatus('Connected. Downloading host world…');send(conn,{t:'hello',name:label(),mode:bridge.getMode()});}});
         conn.on('data',message=>receiveHostData(conn,message));
         conn.on('close',()=>{if(conn===host){host=null;ready=false;peers.clear();setStatus('Host disconnected. The shared room is no longer live. Reload to return to your saved solo world.');updateUI()}});
         conn.on('error',err=>setStatus('Could not connect to room: '+(err.message||'connection error')));
@@ -266,6 +270,7 @@
   /* Public sessions use predictable PeerJS host IDs. First visitor claims the
      ID; later visitors join its WebRTC data channel. There is no always-on server. */
   async function joinPublic(which) {
+    if(bridge.getMode()!=='survival'){setStatus('Public worlds are Survival-only. Choose Play Survival on the Home Screen before joining.');return;}
     const cfg=PUBLIC[which];
     if(!cfg){setStatus('That public world does not exist.');return;}
     if(role!=='offline'){setStatus('Leave your current world before joining another.');return;}
@@ -309,7 +314,7 @@
       const conn=host=p.connect(cfg.id,{reliable:true,serialization:'json',metadata:{name:nickname}});
       const timeout=setTimeout(()=>{if(conn===host&&!ready){setStatus('Could not reach public host. Tap Leave Room and retry.');}},12000);
       conn.on('open',()=>{
-        if(conn===host){clearTimeout(timeout);setStatus('Connected. Downloading public world…');send(conn,{t:'hello',name:label()});}
+        if(conn===host){clearTimeout(timeout);setStatus('Connected. Downloading public world…');send(conn,{t:'hello',name:label(),mode:bridge.getMode()});}
       });
       conn.on('data',message=>receiveHostData(conn,message));
       conn.on('close',()=>{
