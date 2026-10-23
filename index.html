@@ -188,6 +188,29 @@ body.in-nether #game-wrap{background:#290f19}
 .village-page,.trade-page{max-height:94dvh;overflow-y:auto;width:min(96vw,690px);text-align:left;padding:clamp(14px,3vw,25px)}.village-page h2,.trade-page h2{font-size:clamp(25px,5vw,33px);margin:9px 0}.village-page h3{font-size:15px;margin:15px 0 7px;color:#d9f1bd}.village-page p,.trade-page p{font-size:12px;margin:8px 0;color:#cbe3ca}.village-professions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.village-professions button{background:#254b34;border:1px solid #638a69;border-radius:8px;color:#f6ffe8;padding:9px 8px;text-align:left;min-height:65px}.village-professions button strong{display:block;font-size:12px}.village-professions button small{display:block;font-size:10px;color:#c6e9cb;margin-top:3px}.farm-tools{display:flex;flex-wrap:wrap;gap:7px}.farm-tools button{border:1px solid #739e70;border-radius:8px;background:#31543a;color:#f7ffe9;padding:10px 12px;font-size:12px}.trade-offers{display:flex;flex-direction:column;gap:8px;max-height:53vh;overflow-y:auto}.trade-offer{display:flex;align-items:center;gap:9px;padding:10px;border:1px solid #6d9a6e;border-radius:9px;background:#233b2a;color:#f4ffe6;text-align:left}.trade-offer span{flex:1}.trade-offer strong{font-size:13px;display:block}.trade-offer small{font-size:11px;color:#c9ddc5;display:block}.trade-offer:disabled{opacity:.48}.trade-level{font-size:11px;color:#bbefa7;font-weight:850;letter-spacing:.08em;padding:10px 4px 2px}
 @media(max-width:560px){.village-professions{grid-template-columns:repeat(2,minmax(0,1fr))}.top-buttons{gap:3px}.top-buttons .ui-button.small{padding:9px 8px;font-size:11px}.trade-page{padding:14px}}
 .chest-contents{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin:10px 0}.chest-contents>div{background:#263b2a;border:1px solid #577a5d;border-radius:8px;padding:9px 10px;font-size:12px;color:#e9ffe0}
+
+/* MineWorld 3.6: searchable 36-slot backpack, craft catalog and rideable controls */
+.gear-modal{width:min(96vw,1040px);max-height:94dvh;overflow:auto;text-align:left}
+.gear-modal h2,.gear-modal>.kicker{text-align:center}
+.inventory-shell{background:#12251a;border:1px solid #608c67;border-radius:13px;padding:12px;margin:12px 0}
+.inventory-bar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:9px}
+.inventory-bar strong{font-size:14px;color:#e9ffce}.inventory-search{background:#1d3927;color:#fff;border:1px solid #7ea379;border-radius:8px;padding:9px;min-height:39px;min-width:145px;flex:1;user-select:text;-webkit-user-select:text;touch-action:manipulation}
+.inventory-grid{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:5px;max-width:760px;margin:auto}
+.inventory-slot{position:relative;min-height:55px;padding:4px 3px;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;border:2px solid #536e54;background:#344535;color:#f4ffe9;border-radius:5px;font-size:9px;overflow:hidden;word-break:break-word;text-align:center}
+.inventory-slot .item-icon{font-size:21px;line-height:1}.inventory-slot .stack-size{position:absolute;bottom:2px;right:3px;font-weight:900;font-size:10px;text-shadow:1px 1px black}.inventory-slot .item-name{font-size:8px;line-height:1.1;max-height:20px;overflow:hidden}
+.inventory-slot.selected{border-color:#d6ff8c;box-shadow:0 0 0 1px #e7ffa3}.inventory-slot.empty{background:#192b1e;border-color:#314b37;opacity:.58;pointer-events:none}.inventory-slot:hover:not(.empty){filter:brightness(1.15)}
+.inventory-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px}.inventory-actions button,.inventory-pages button{padding:8px 11px;min-height:34px;font-size:12px}
+#inventory-detail{font-size:12px;color:#d2eec7;flex:1;min-width:150px}.inventory-pages{display:flex;align-items:center;justify-content:center;gap:9px;margin:10px 0 3px;color:#d3efc8;font-size:11px}
+#inventory-help{margin:10px 0 0;font-size:11px;color:#aec5ab}.inventory-empty{padding:16px;color:#c1d4b9;text-align:center}
+.craft-toolbar{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.craft-toolbar select,.craft-toolbar input{flex:1;background:#11291a;color:#eaffdf;border:1px solid #759c73;padding:10px;border-radius:8px;min-height:43px;min-width:130px;touch-action:manipulation;user-select:text;-webkit-user-select:text}
+#recipe-stats{font-size:12px;color:#c4e5bb;margin:10px 0}
+#recipes{grid-template-columns:repeat(3,minmax(0,1fr));max-height:350px;overflow-y:auto;padding:6px;border:1px solid #456b4a;border-radius:8px}.recipe{min-height:69px}.recipe small{word-break:break-word}
+#ride-vehicles{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}.ride-vehicle{min-height:43px;font-size:11px}
+#ride-btn{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:calc(205px + env(safe-area-inset-bottom));z-index:6;pointer-events:auto;background:#2e5c51;border:2px solid #bdfbd3;border-radius:14px;color:#edfff1;min-width:78px;min-height:47px;font-weight:900;box-shadow:0 6px 20px #0007}
+#mount-readout{position:absolute;top:131px;right:13px;z-index:4;background:#183f35dc;color:#edffdb;border:1px solid #92e3ac;border-radius:9px;padding:8px 10px;font-size:12px;pointer-events:none}
+@media(max-width:750px){.inventory-grid{grid-template-columns:repeat(6,minmax(0,1fr))}#recipes{grid-template-columns:repeat(2,minmax(0,1fr))}.inventory-slot{min-height:49px}.gear-modal{padding:12px}.inventory-shell{padding:9px}}
+@media(max-width:440px){.inventory-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:3px}.inventory-slot{min-height:48px;padding:2px}.inventory-slot .item-icon{font-size:16px}.inventory-slot .item-name{font-size:7px}.inventory-slot .stack-size{font-size:8px}#ride-btn{bottom:calc(166px + env(safe-area-inset-bottom));right:12px;font-size:12px;min-height:39px;min-width:64px}#mount-readout{top:76px;right:9px;max-width:135px;font-size:9px}.craft-toolbar{gap:4px}}
+@media(pointer:fine){#ride-btn{bottom:102px}}
 </style>
 <title>MineWorld 3.4 — Villages, Survival & The End</title>
 </head>
@@ -210,6 +233,8 @@ body.in-nether #game-wrap{background:#290f19}
     <div id="hints">WASD · Mouse look · Left mine · Right place · E blocks · Space jump · F Creative fly · Q eat · 1–9 select</div>
   </div>
   <div id="coord-readout">X 0 · Y 0 · Z 0</div>
+  <div id="mount-readout" class="hidden" aria-live="polite"></div>
+  <button id="ride-btn" type="button" aria-label="Mount or dismount nearby rideable animal or vehicle">🐎 RIDE</button>
   <div id="mobile-controls" aria-label="Touch game controls">
     <div id="joystick" aria-label="Movement joystick"><div id="joystick-knob"></div></div>
     <div id="touch-buttons"><button id="attack-btn" class="touch-btn attack" aria-label="Attack creature">⚔<small>HIT</small></button><button id="jump-btn" class="touch-btn" aria-label="Jump">↑<small>JUMP</small></button><button id="mine-btn" class="touch-btn mine" aria-label="Mine block">⛏<small>MINE</small></button><button id="place-btn" class="touch-btn place" aria-label="Place block">▣<small>PLACE</small></button></div>
@@ -264,10 +289,22 @@ body.in-nether #game-wrap{background:#290f19}
     <section class="modal gear-modal">
       <div class="kicker">SURVIVAL · INVENTORY</div><h2>🎒 Gear & Crafting</h2>
       <p>Mine ores and ancient debris, smelt Netherite scraps, upgrade your gear, and collect one-time treasures from generated structures.</p>
+      <section class="inventory-shell" aria-label="Survival inventory with 36 visible slots">
+        <div class="inventory-bar"><strong>🎒 Backpack · 36 Slots Per Page</strong><input id="inventory-search" class="inventory-search" placeholder="Find items…" aria-label="Search inventory"></div>
+        <div id="inventory-grid" class="inventory-grid" role="group" aria-label="Inventory item stacks"></div>
+        <div class="inventory-pages"><button class="ui-button" id="inventory-prev" type="button">←</button><span id="inventory-page">Page 1</span><button class="ui-button" id="inventory-next" type="button">→</button></div>
+        <div class="inventory-actions"><span id="inventory-detail">Select an item stack</span><button id="item-equip" class="ui-button" type="button">Equip / Hotbar</button><button id="item-use" class="ui-button" type="button">Eat / Use</button><button id="item-drop" class="ui-button" type="button">Drop 1</button><button id="item-drop-stack" class="ui-button" type="button">Drop Stack</button></div>
+        <p id="inventory-help">Tap a stack to select it. Blocks can be assigned to the hotbar; armor can be equipped. Stacks are organized into pages. Drag an item onto another to reorder it.</p>
+      </section>
       <div id="resources-list" class="resources-list" aria-live="polite"></div>
-      <div class="gear-options"><button id="gear-pickaxe" class="ui-button">⛏ Pickaxe</button><button id="gear-sword" class="ui-button">⚔ Sword</button><button id="gear-hoe" class="ui-button">🌾 Hoe</button><button id="gear-none" class="ui-button">✊ Hands</button></div>
+      <div class="gear-options"><button id="gear-pickaxe" class="ui-button">⛏ Pickaxe</button><button id="gear-sword" class="ui-button">⚔ Sword</button><button id="gear-hoe" class="ui-button">🌾 Hoe</button><button id="gear-axe" class="ui-button">🪓 Axe</button><button id="gear-shovel" class="ui-button">⛏ Shovel</button><button id="gear-none" class="ui-button">✊ Hands</button></div>
       <div id="gear-current" class="gear-current"></div>
+      <div class="craft-toolbar"><select id="recipe-category" aria-label="Recipe category"></select><input id="recipe-search" placeholder="Search recipes…" aria-label="Search crafting recipes"><label style="font-size:11px;display:flex;align-items:center;gap:4px;color:#ccedbb"><input id="recipe-craftable" type="checkbox"> Craftable</label></div>
+      <div id="recipe-stats" role="status"></div>
       <div class="recipes" id="recipes"></div>
+      <h3 style="margin:18px 0 8px">🐴 Rideable mounts & vehicles</h3><p style="font-size:12px;color:#d0e4ca">Approach a horse, donkey, mule, camel, llama, pig, strider, or other mount and press Ride (M on keyboard). Some require a saddle or harness. Craft a boat, raft or minecart below and deploy it into the world. Shift or Ride again to dismount.</p>
+      <div id="ride-vehicles"></div>
+      <div id="armor-readout" style="font-size:12px;color:#dffac4"></div>
       <button id="close-gear" class="main-button">Return to World</button>
       <p class="note">Original simplified crafting recipes. When online, the host controls shared mobs, monster attacks, combat damage, and drops for every player. PvP can be enabled or disabled by the host. Public sessions still end when the host leaves.</p>
     </section>
@@ -557,6 +594,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./end-world.js"></script>
 <script src="./overworld-ores.js"></script>
 <script src="./world-chunks.js"></script>
+<script src="./survival-catalog.js"></script>
 <script src="./nether-world.js"></script>
 <script>
 /* MineWorld — original browser voxel sandbox; no Minecraft game code or third-party runtime. */
@@ -615,14 +653,26 @@ body.in-nether #game-wrap{background:#290f19}
   let dimension='overworld',overworldEdits=savedEdits,netherEdits=new Map(),endEdits=new Map(),overworldPosition=null,netherPosition=null,endPosition=null,lavaCooldown=0,dragonDefeated=false,eyesPlaced=0,netherPortalBuilt=false,netherPortalPosition=null;
   const villagerProgress=Object.create(null);let aimVillager=null,nearbyVillagers=[],villageUpdateClock=0,farmClock=0,farmerClock=0;
   const inventory=new Uint16Array(NAMES.length);
+  const catalog=window.MineWorldCatalog;
+  if(!catalog||!Array.isArray(catalog.recipes))throw Error('Crafting catalog could not be loaded');
   const bag={coal:0,iron:0,rawIron:0,raw:0,cooked:0,bone:0,string:0,powder:0,sticks:0,quartz:0,gold:0,rawCopper:0,copper:0,rawGold:0,redstone:0,lapis:0,diamond:0,emerald:0,blazeRod:0,magmaCream:0,enderPearl:0,witherSkull:0,netheriteScrap:0,netheriteIngot:0,netheriteUpgrade:0,ancientDebris:0,elytra:0,dragonBreath:0,eyeOfEnder:0,shulkerShell:0,chorusFruit:0,dragonEgg:0,experience:0};
   for(const key of ['paper','map','potato','compass','apple','goldenApple','wheat','spruceSapling','arrow','crossbow','sentryTrim','fishingRod','suspiciousSand','potterySherd','brick','bread','saddle','cherrySapling','resin','books','paleSapling','rope','dye','wayfinderTrim','duneTrim','rails','nameTag','pumpkinSeeds','goldNugget','obsidian','flintSteel','fireCharge','goldenGear','sugar','glassBottle','wildTrim','bamboo','mushroom','ribTrim','netherWart','pigstep','snoutTrim','gildedBlackstone','enchantedGear','spireTrim','beetrootSeeds','healingPotion','eyeTrim'])bag[key]=0;
   for(const key of ['wheat','wheatSeeds','carrot','potato','beetroot','beetrootSeeds','bread','goldenCarrot','pumpkinPie','rottenFlesh','chicken','mutton','steak','sweetBerries','fish','tropicalFish','flint','leather','rabbitHide','rabbitFoot','wool','feather','clay','stone','granite','terracotta','inkSac','bookQuill','turtleScute','compass','lavaBucket','boat','tripwireHook','rabbitStew','glowstone','fish','wool','cookedFish','enchantedRod','tippedArrow','ironHelmet','ironChestplate','diamondBoots','diamondChestplate','shield','leatherCap','leatherTunic','leatherPants','leatherBoots','enchantedBook','wool','shears','bed','painting','stoneBricks','polishedStone','quartzBlock','glazedTerracotta','stonePickaxe','ironAxe','ironPickaxe','diamondAxe','diamondPickaxe','ironSword','diamondSword','experienceBottle','banner','globeBanner'])if(!Object.hasOwn(bag,key))bag[key]=0;
+  for(const r of catalog.recipes)for(const key of Object.keys({...r.cost,...r.give}))if(!key.startsWith('block:')&&!Object.hasOwn(bag,key))bag[key]=0;
+  const inventoryOrder=[],armor={head:'',chest:'',legs:'',feet:''};
+  let backpackPage=0,selectedStackKey='',backpackFilter='',mount=null,vehicles=[],vehicleSerial=0,mountLift=0,stabledMounts=[];
   const toolLevels={none:0,wood:1,stone:2,iron:3,diamond:4,netherite:5};
-  const tools={pickaxe:'none',sword:'none',hoe:'none'};
+  const tools={pickaxe:'none',sword:'none',hoe:'none',axe:'none',shovel:'none'};
   let equipped='pickaxe',difficulty='normal',mobSerial=0,mobs=[],mobSpawnClock=0,mobAttackClock=0,aimMob=null,aimPlayer=null,attackCooldown=0,playerHitCooldown=0;
   let lastMobSync=0;
   const SPECIES={
+   horse:{name:'Horse',kind:'passive',hp:20,speed:1.6,drop:'leather',body:[.45,.31,.20],head:[.55,.39,.27]},
+   donkey:{name:'Donkey',kind:'passive',hp:18,speed:1.25,drop:'leather',body:[.44,.40,.37],head:[.53,.49,.44]},
+   mule:{name:'Mule',kind:'passive',hp:21,speed:1.35,drop:'leather',body:[.42,.33,.26],head:[.55,.47,.33]},
+   camel:{name:'Camel',kind:'passive',hp:30,speed:1.4,drop:'leather',body:[.77,.58,.32],head:[.88,.68,.40]},
+   llama:{name:'Llama',kind:'passive',hp:18,speed:1.0,drop:'leather',body:[.76,.68,.57],head:[.80,.72,.59]},
+   skeleton_horse:{name:'Skeleton Horse',kind:'passive',hp:15,speed:1.55,drop:'bone',body:[.77,.81,.73],head:[.95,.96,.90]},
+   zombie_horse:{name:'Zombie Horse',kind:'passive',hp:22,speed:1.35,drop:'raw',body:[.28,.43,.31],head:[.37,.59,.38]},
    cow:{name:'Cow',kind:'passive',hp:10,speed:.54,drop:'raw',count:3,body:[.35,.25,.19],head:[.39,.32,.25]},
    pig:{name:'Pig',kind:'passive',hp:10,speed:.59,drop:'raw',count:2,body:[.92,.58,.66],head:[.96,.67,.73]},
    sheep:{name:'Sheep',kind:'passive',hp:8,speed:.53,drop:'raw',count:2,body:[.88,.87,.82],head:[.38,.35,.30]},
@@ -863,7 +913,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(window.MineWorldMultiplayer?.isShared())return;
     try{
       const edits=[...savedEdits.entries()];
-      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,version:7});
+      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:8});
       localStorage.setItem(slotKey(gameMode),payload);localStorage.setItem(LAST_SLOT,gameMode);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';
     }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';}
   }
@@ -894,7 +944,11 @@ body.in-nether #game-wrap{background:#290f19}
       if(['peaceful','easy','normal','hard'].includes(s.difficulty))difficulty=s.difficulty;
       if(Number.isFinite(s.dayClock))dayClock=s.dayClock;
       if(s.bag&&typeof s.bag==='object')for(const k of Object.keys(bag))bag[k]=clamp(Math.floor(Number(s.bag[k])||0),0,999);
-      if(s.tools)for(const k of ['pickaxe','sword','hoe'])if(Object.hasOwn(toolLevels,s.tools[k]))tools[k]=s.tools[k];
+      if(s.tools)for(const k of ['pickaxe','sword','hoe','axe','shovel'])if(Object.hasOwn(toolLevels,s.tools[k]))tools[k]=s.tools[k];
+      if(s.armor&&typeof s.armor==='object')for(const k of Object.keys(armor))armor[k]=typeof s.armor[k]==='string'?s.armor[k].slice(0,35):'';
+      inventoryOrder.splice(0,inventoryOrder.length,...(Array.isArray(s.inventoryOrder)?s.inventoryOrder.filter(k=>typeof k==='string').slice(0,2000):[]));
+      vehicles=Array.isArray(s.vehicles)?s.vehicles.filter(v=>v&&['boat','raft','minecart','chestMinecart','hopperMinecart','furnaceMinecart','spruceBoat','cherryBoat'].includes(v.kind)&&v.dimension&&Number.isFinite(v.x)&&Number.isFinite(v.z)).slice(0,80):[];vehicleSerial=vehicles.reduce((n,v)=>Math.max(n,Number(v.id)||0),0);mount=null;
+      stabledMounts=Array.isArray(s.tamedMounts)?s.tamedMounts.filter(v=>v&&typeof v.kind==='string'&&Number.isFinite(v.x)&&Number.isFinite(v.z)).slice(0,60):[];
       if(['pickaxe','sword','hoe','none'].includes(s.equipped))equipped=s.equipped;
       if(Number.isFinite(s.health))health=clamp(s.health,1,20);if(Number.isFinite(s.hunger))hunger=clamp(s.hunger,0,20);
       if(Array.isArray(s.inventory))for(let i=0;i<inventory.length;i++)inventory[i]=clamp(Math.floor(Number(s.inventory[i])||0),0,999);
@@ -910,13 +964,15 @@ body.in-nether #game-wrap{background:#290f19}
         unloadAllChunks();scheduleChunks(true);streamChunks(5);mobs=[];
         if(dimension==='nether')spawnNetherWildlife();else spawnEndWildlife();
       }
-      updatePortalUI();scheduleChunks(true);streamChunks(5);updateFlyButton();updateSeedLabel();dirtySave=false;
+      restoreStabledMounts();updatePortalUI();scheduleChunks(true);streamChunks(5);updateFlyButton();updateSeedLabel();dirtySave=false;
       return true;
     }catch(e){console.warn('World save not loaded:',e);return false;}
   }
   function switchDimension(target){
     const next=['overworld','nether','end'].includes(target)?target:'overworld';
     if(next===dimension)return;
+    if(mount)dismount(true);
+    stabledMounts.push(...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled})));
     const prev=dimension;
     const pos={x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch};
     if(prev==='overworld'){overworldPosition=pos;overworldEdits=savedEdits;}
@@ -967,7 +1023,7 @@ body.in-nether #game-wrap{background:#290f19}
     $('survival-hud').classList.toggle('hidden',gameMode!=='survival');
     $('health-text').textContent='♥ '+Math.ceil(health)+'/20';
     $('hunger-text').textContent='🍖 '+Math.ceil(hunger)+'/20';
-    $('eat-btn').textContent='Eat '+(bag.cooked?'🍖 '+bag.cooked:bag.raw?'🥩 '+bag.raw:'🍄 '+inventory[17]);$('weapon-readout').textContent=equipped==='none'?'✊ Fists':(equipped==='sword'?'⚔ ':equipped==='hoe'?'🌾 ':'⛏ ')+(tools[equipped]==='none'?'Hands':tools[equipped]+' '+equipped);
+    $('eat-btn').textContent='Eat '+(bag.cooked?'🍖 '+bag.cooked:bag.raw?'🥩 '+bag.raw:'🍄 '+inventory[17]);$('weapon-readout').textContent=equipped==='none'?'✊ Fists':(equipped==='sword'?'⚔ ':equipped==='hoe'?'🌾 ':equipped==='axe'?'🪓 ':'⛏ ')+(tools[equipped]==='none'?'Hands':tools[equipped]+' '+equipped);
   }
   function setGameMode(next){
     if(next!=='creative'&&next!=='survival')return;
@@ -1057,10 +1113,12 @@ body.in-nether #game-wrap{background:#290f19}
     if(recipe.tool&&toolLevels[tools[recipe.tool[0]]] >= toolLevels[recipe.tool[1]]){toast('Already own this tier or better');return;}
     if(recipe.upgradeFrom&&tools[recipe.tool[0]]!==recipe.upgradeFrom){toast('First craft a diamond '+recipe.tool[0]);return;}
     if(recipe.requiresSmithing&&!inventory[136]){toast('Craft and carry a Smithing Table to upgrade');return;}
+    if(recipe.station&&!hasCraftingStation(recipe.station)){toast('Need '+stationName(recipe.station)+' in your inventory');return;}
     if(!Object.entries(cost).every(([key,n])=>amount(key)>=n)){toast('Need more resources');return}
     for(const [key,n]of Object.entries(cost))addResource(key,-n);
     if(recipe.give)for(const [key,n]of Object.entries(recipe.give))addResource(key,n);
     if(recipe.tool){tools[recipe.tool[0]]=recipe.tool[1];equipped=recipe.tool[0]}
+    if(recipe.giveEquipment){tools[recipe.giveEquipment.kind]=recipe.giveEquipment.tier;equipped=recipe.giveEquipment.kind;}
     updateHotbar();updateSurvivalHUD();renderGear();markSave();toast('Crafted '+recipe.name.replace(/^[^ ]+ /,''));
   }
   // Village residents are deterministic for a seed and village coordinates.
@@ -1405,21 +1463,104 @@ body.in-nether #game-wrap{background:#290f19}
   });
   $('close-chest').addEventListener('click',()=>{$('chest-modal').classList.add('hidden');if(started)start();else $('welcome').classList.remove('hidden')});
 
-  function renderGear(){
-    const list=[];
-    for(let i=1;i<inventory.length;i++)if(inventory[i])list.push(NAMES[i]+' '+inventory[i]);
-    for(const [name,n]of Object.entries(bag))if(n)list.push(name+' '+n);
-    $('resources-list').textContent=list.join(' · ')||'No resources yet — mine wood, stone or ores.';
-    $('gear-current').textContent='Equipped: '+(equipped==='none'?'Fists':tools[equipped]+' '+equipped)+' · Pickaxe '+tools.pickaxe+' · Sword '+tools.sword;
+  // The existing bag and block inventory remain the authoritative saved resource totals.
+  // The Backpack projects them into 64-item stacks with a searchable, accessible 36-slot grid.
+  function itemLabel(key){return key.startsWith('block:')?(NAMES[Number(key.slice(6))]||'Block'):catalog.label(key)}
+  const FOOD={cooked:9,raw:3,bread:5,carrot:3,potato:2,beetroot:1,apple:4,goldenApple:8,goldenCarrot:8,steak:8,cookedChicken:6,cookedMutton:6,cookedFish:5,bakedPotato:5,cookie:2,cake:8,pumpkinPie:8,mushroomStew:6,rabbitStew:10,beetrootSoup:6,sweetBerries:2,fish:2};
+  function stackLimit(key){return /sword|pickaxe|axe|shovel|hoe|helmet|chestplate|leggings|boots|armor|elytra|shield|saddle|harness|rod|boat|raft|minecart|enchanted/i.test(key)?1:64}
+  function stackIcon(key){
+    if(key.startsWith('block:')){const id=Number(key.slice(6));return [1,2,3,4,5,6,7,9,10,11].includes(id)?'🧱':id>=65&&id<95?'🔥':id>=119&&id<137?'🟪':'▦'}
+    if(key in FOOD)return '🍖';if(/horse|saddle|harness|boat|raft|minecart|stick/i.test(key))return '🐎';
+    if(/helmet|chestplate|leggings|boots|shield|armor/i.test(key))return '🛡';
+    if(/sword|pickaxe|axe|shovel|hoe|bow|arrow/i.test(key))return '⚒';
+    if(/diamond|gold|iron|copper|coal|lapis|redstone|emerald|netherite/i.test(key))return '💎';return '🎒';
+  }
+  function backpackStacks(){
+    const resource=[];for(let i=1;i<inventory.length;i++)if(inventory[i]>0)resource.push(['block:'+i,inventory[i]]);
+    for(const [k,n] of Object.entries(bag))if(n>0)resource.push([k,n]);
+    const ordered=new Map(resource);const keys=[...new Set([...inventoryOrder,...resource.map(x=>x[0])])].filter(k=>ordered.has(k));
+    const result=[];for(const key of keys){let remaining=ordered.get(key),n=stackLimit(key);while(remaining>0){let size=Math.min(n,remaining);result.push({key,size});remaining-=size}}
+    return result;
+  }
+  function inventorySelection(){const key=selectedStackKey;if(!key)return null;const count=amount(key);return count>0?{key,count}:null}
+  function renderBackpack(){
+    const root=$('inventory-grid');root.replaceChildren();
+    const stacks=backpackStacks().filter(x=>!backpackFilter||itemLabel(x.key).toLowerCase().includes(backpackFilter));
+    const pages=Math.max(1,Math.ceil(stacks.length/36));backpackPage=clamp(backpackPage,0,pages-1);
+    const subset=stacks.slice(backpackPage*36,backpackPage*36+36);
+    for(let i=0;i<36;i++){
+      const stack=subset[i],button=document.createElement('button');button.type='button';button.className='inventory-slot'+(!stack?' empty':stack.key===selectedStackKey?' selected':'');
+      if(stack){button.title=itemLabel(stack.key)+' ×'+stack.size;button.setAttribute('aria-label',button.title);button.draggable=true;
+        const icon=document.createElement('span');icon.className='item-icon';icon.textContent=stackIcon(stack.key);
+        const name=document.createElement('span');name.className='item-name';name.textContent=itemLabel(stack.key);
+        const n=document.createElement('span');n.className='stack-size';n.textContent=stack.size;button.append(icon,name,n);
+        button.addEventListener('click',()=>{selectedStackKey=stack.key;renderBackpack()});
+        button.addEventListener('dragstart',e=>{e.dataTransfer?.setData('text/plain',stack.key)});
+        button.addEventListener('dragover',e=>e.preventDefault());
+        button.addEventListener('drop',e=>{e.preventDefault();const from=e.dataTransfer?.getData('text/plain');if(!from||from===stack.key)return;
+          for(const k of [from,stack.key])if(!inventoryOrder.includes(k))inventoryOrder.push(k);
+          const a=inventoryOrder.indexOf(from),b=inventoryOrder.indexOf(stack.key);[inventoryOrder[a],inventoryOrder[b]]=[inventoryOrder[b],inventoryOrder[a]];
+          markSave();renderBackpack();});
+      }else{button.tabIndex=-1;button.setAttribute('aria-hidden','true')}
+      root.appendChild(button);
+    }
+    $('inventory-page').textContent='Page '+(backpackPage+1)+' / '+pages+' · '+stacks.length+' stacks';
+    $('inventory-prev').disabled=backpackPage===0;$('inventory-next').disabled=backpackPage>=pages-1;
+    const selected=inventorySelection();$('inventory-detail').textContent=selected?itemLabel(selected.key)+' · '+selected.count+' total':'Select a stack to use, equip or drop';
+    $('item-equip').disabled=!selected;$('item-use').disabled=!selected;$('item-drop').disabled=!selected;$('item-drop-stack').disabled=!selected;
+    $('armor-readout').textContent='Armor: '+Object.entries(armor).map(([slot,key])=>slot+' '+(key?itemLabel(key):'empty')).join(' · ');
+  }
+  function armorSlot(key){return /helmet|cap/i.test(key)?'head':/chestplate|tunic/i.test(key)?'chest':/leggings|pants/i.test(key)?'legs':/boots/i.test(key)?'feet':''}
+  function equipSelection(){const item=inventorySelection();if(!item)return;
+    const {key}=item,slot=armorSlot(key);
+    if(slot){if(armor[slot])addResource(armor[slot],1);addResource(key,-1);armor[slot]=key;toast('Equipped '+itemLabel(key));}
+    else if(key.startsWith('block:')){const block=Number(key.slice(6));HOT9[selection]=block;updateHotbar();toast('Added '+itemLabel(key)+' to selected hotbar slot');}
+    else if(/sword|pickaxe|shovel|hoe|axe/i.test(key)){const kind=/sword/.test(key)?'sword':/pickaxe/.test(key)?'pickaxe':/shovel/.test(key)?'shovel':/hoe/.test(key)?'hoe':'axe';equipped=kind;const tier=/netherite/i.test(key)?'netherite':/diamond/i.test(key)?'diamond':/iron/i.test(key)?'iron':/gold/i.test(key)?'iron':/stone/i.test(key)?'stone':'wood';tools[kind]=tier;toast('Equipped '+itemLabel(key));}
+    else{toast('This item is stored. Use or craft with it from your backpack.');}
+    updateSurvivalHUD();updateHotbar();markSave();renderGear();
+  }
+  function consumeSelection(){const item=inventorySelection();if(!item)return;let key=item.key;if(!(key in FOOD)){toast('This item is not food');return}
+    if(hunger>=20&&health>=20){toast('You are not hungry');return}
+    addResource(key,-1);hunger=clamp(hunger+FOOD[key],0,20);if(key==='goldenApple')health=clamp(health+4,0,20);
+    toast('Ate '+itemLabel(key));updateSurvivalHUD();updateHotbar();markSave();renderGear();
+  }
+  function dropSelection(stack=false){const selected=inventorySelection();if(!selected)return;const qty=stack?Math.min(stackLimit(selected.key),selected.count):1;
+    addResource(selected.key,-qty);toast('Dropped '+qty+' '+itemLabel(selected.key));if(!amount(selected.key))selectedStackKey='';updateHotbar();updateSurvivalHUD();markSave();renderGear();
+  }
+  function stationName(station){return {table:'a Crafting Table',furnace:'a Furnace',smithing:'a Smithing Table'}[station]||station}
+  function hasCraftingStation(station){return station==='table'?bag.craftingTable>0:station==='furnace'?inventory[20]>0||inventory[156]>0||inventory[157]>0:station==='smithing'?inventory[136]>0:true}
+  function recipeCanCraft(r){return gameMode==='survival'&&(!r.station||hasCraftingStation(r.station))&&Object.entries(r.cost).every(([key,n])=>amount(key)>=n)&&(!r.tool||toolLevels[tools[r.tool[0]]] < toolLevels[r.tool[1]])&&(!r.upgradeFrom||tools[r.tool[0]]===r.upgradeFrom)&&(!r.requiresSmithing||inventory[136]>0)}
+  const ALL_RECIPES=[...RECIPES.map(r=>({...r,category:'Classic'})),...catalog.recipes];
+  for(const label of ['All','Craftable','Classic',...catalog.categories.filter(x=>x!=='All')]){
+    const option=document.createElement('option');option.value=label;option.textContent=label;$('recipe-category').appendChild(option);
+  }
+  function renderRecipes(){
+    const query=$('recipe-search').value.trim().toLowerCase(),category=$('recipe-category').value,onlyCraftable=$('recipe-craftable').checked||category==='Craftable';
+    const recipes=ALL_RECIPES.filter(r=>(!query||r.name.toLowerCase().includes(query)||Object.keys(r.cost).some(k=>itemLabel(k).toLowerCase().includes(query)))&&(category==='All'||category==='Craftable'||r.category===category)&&(!onlyCraftable||recipeCanCraft(r)));
+    $('recipe-stats').textContent=ALL_RECIPES.length+' recipes · '+recipes.length+' shown · '+ALL_RECIPES.filter(recipeCanCraft).length+' currently craftable';
     const root=$('recipes');root.replaceChildren();
-    for(const r of RECIPES){
-      const b=document.createElement('button');b.type='button';b.className='recipe';
-      b.disabled=gameMode!=='survival'||Object.entries(r.cost).some(([key,n])=>amount(key)<n)||(r.tool&&toolLevels[tools[r.tool[0]]] >= toolLevels[r.tool[1]])||(r.upgradeFrom&&tools[r.tool[0]]!==r.upgradeFrom)||(r.requiresSmithing&&!inventory[136]);
-      const strong=document.createElement('strong');strong.textContent=r.name;const small=document.createElement('small');small.textContent=r.tip;
+    for(const r of recipes.slice(0,350)){
+      const b=document.createElement('button');b.type='button';b.className='recipe';b.disabled=!recipeCanCraft(r);
+      const strong=document.createElement('strong');strong.textContent=r.name;
+      const small=document.createElement('small');small.textContent=(r.station?'['+stationName(r.station)+'] ':'')+Object.entries(r.cost).map(([key,n])=>n+' '+itemLabel(key)).join(' + ')+(r.tip?' · '+r.tip:'');
       b.append(strong,small);b.addEventListener('click',()=>craft(r));root.append(b);
     }
   }
-  function openGear(){renderGear();$('gear-panel').classList.remove('hidden');paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock()}
+  function renderGear(){
+    const total=backpackStacks().length;
+    $('resources-list').textContent='⛏ '+total+' stacks · 🪙 '+(bag.emerald||0)+' emeralds · 🪙 '+(bag.gold||0)+' gold · 💎 '+(bag.diamond||0)+' diamonds';
+    $('gear-current').textContent='Equipped: '+(equipped==='none'?'Fists':(tools[equipped]||'none')+' '+equipped)+' · Pickaxe '+tools.pickaxe+' · Sword '+tools.sword;
+    renderBackpack();renderRecipes();renderVehicles();
+  }
+  function renderVehicles(){const root=$('ride-vehicles');root.replaceChildren();for(const [key,label] of [['boat','🛶 Oak Boat'],['spruceBoat','🛶 Spruce Boat'],['cherryBoat','🛶 Cherry Boat'],['raft','🎋 Bamboo Raft'],['minecart','🛤 Minecart'],['chestMinecart','📦 Chest Minecart'],['hopperMinecart','🛤 Hopper Minecart'],['furnaceMinecart','🔥 Furnace Minecart']]){
+    const button=document.createElement('button');button.className='ui-button ride-vehicle';button.type='button';button.textContent=label+' ('+(bag[key]||0)+')';button.disabled=gameMode!=='survival'||!bag[key];button.addEventListener('click',()=>deployVehicle(key));root.appendChild(button);
+  }}
+  $('inventory-prev').addEventListener('click',()=>{backpackPage--;renderBackpack()});$('inventory-next').addEventListener('click',()=>{backpackPage++;renderBackpack()});
+  $('inventory-search').addEventListener('input',e=>{backpackFilter=e.target.value.trim().toLowerCase();backpackPage=0;renderBackpack()});
+  $('item-equip').addEventListener('click',equipSelection);$('item-use').addEventListener('click',consumeSelection);
+  $('item-drop').addEventListener('click',()=>dropSelection());$('item-drop-stack').addEventListener('click',()=>dropSelection(true));
+  for(const id of ['recipe-search','recipe-category','recipe-craftable'])$(id).addEventListener(id==='recipe-search'?'input':'change',renderRecipes);
+  function openGear(){if(gameMode!=='survival'){toast('The Survival backpack and recipes are only available in Survival. Use ▣ Blocks to build in Creative.');return;}renderGear();$('gear-panel').classList.remove('hidden');paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock()}
   function closeGear(){$('gear-panel').classList.add('hidden');if(started)start();else $('welcome').classList.remove('hidden')}
   function setDifficulty(level){
     if(!['peaceful','easy','normal','hard'].includes(level))return;
@@ -1428,6 +1569,7 @@ body.in-nether #game-wrap{background:#290f19}
     markSave();toast('Difficulty: '+level[0].toUpperCase()+level.slice(1));
   }
   function respawn(){
+    if(mount)dismount(true);
     if(dimension!=='overworld')switchDimension('overworld');
     player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=terrain(SPAWN,SPAWN)+3;
     player.vy=0;player.fly=false;health=20;hunger=18;
@@ -1435,6 +1577,8 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function damage(amount,cause){
     if(gameMode!=='survival'||amount<=0)return;
+    const armorPoints=Object.values(armor).reduce((sum,k)=>sum+(!k?0:/netherite/i.test(k)?4:/diamond/i.test(k)?3:/iron/i.test(k)?2:/gold/i.test(k)?1.4:/leather/i.test(k)?.7:1),0);
+    amount=Math.max(1,Math.ceil(amount*(1-Math.min(.72,armorPoints*.038))));
     health=clamp(health-amount,0,20);
     if(health<=0)respawn();else{updateSurvivalHUD();toast(cause+' −'+amount+' health')}
     markSave();
@@ -1443,7 +1587,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(dimension==='nether'){
       lavaCooldown-=dt;
       const fx=Math.floor(player.x),fy=Math.floor(player.y+.15),fz=Math.floor(player.z);
-      if((get(fx,fy,fz)===66||get(fx,fy-1,fz)===66||get(fx,fy,fz)===88)&&lavaCooldown<=0){
+      if((get(fx,fy,fz)===66||get(fx,fy-1,fz)===66||get(fx,fy,fz)===88)&&lavaCooldown<=0&&mount?.kind!=='strider'){
         lavaCooldown=1.15;damage(3,'Lava burns');
       }
     }
@@ -1459,8 +1603,63 @@ body.in-nether #game-wrap{background:#290f19}
   function updateFlyButton(){$('fly-btn').textContent='✦ Flying: '+(player.fly?'On':'Off')}
   function start(){if(!started){started=true;lastTime=performance.now();requestAnimationFrame(render)}paused=false;$('welcome').classList.add('hidden');$('pause').classList.add('hidden');if(!isTouch&&canvas.requestPointerLock)canvas.requestPointerLock()?.catch?.(()=>{});toast('World ready — have fun!')}
   function menu(){paused=true;keys.clear();movement.x=0;movement.y=0;touchHold.mine=false;touchHold.place=false;$('pause').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock();save()}
-  function jump(){if(paused)return;if(player.fly){player.y+=.7;return}if(player.ground){player.vy=8;player.ground=false}}
+  function jump(){if(paused)return;if(mount){mountLift=.28;return;}if(player.fly){player.y+=.7;return}if(player.ground){player.vy=8;player.ground=false}}
+  const RIDE_KINDS={horse:{speed:10,saddle:true},donkey:{speed:7,saddle:true},mule:{speed:8,saddle:true},camel:{speed:8,saddle:true},llama:{speed:3,saddle:false,unsteerable:true},pig:{speed:5,saddle:true,control:'carrotStick'},strider:{speed:6,saddle:true,control:'fungusStick'},skeleton_horse:{speed:10,saddle:false},zombie_horse:{speed:9,saddle:true},happy_ghast:{speed:10,harness:true,flying:true}};
+  const VEHICLE_KINDS=new Set(['boat','raft','minecart','spruceBoat','cherryBoat','chestMinecart','hopperMinecart','furnaceMinecart']);
+  function dismount(silent=false){if(!mount)return;const kind=mount.kind;mount=null;mountLift=0;$('mount-readout').classList.add('hidden');$('ride-btn').textContent='🐎 RIDE';if(!silent)toast('Dismounted '+kind);markSave();}
+  function startMount(kind,id,vehicle=false){
+    if(mount)dismount(true);mount={kind,id,vehicle,dimension};
+    $('mount-readout').textContent='🐎 Riding '+(SPECIES[kind]?.name||itemLabel(kind))+' · M or Ride to dismount';$('mount-readout').classList.remove('hidden');$('ride-btn').textContent='↘ EXIT';
+    markSave();toast('Mounted '+(SPECIES[kind]?.name||itemLabel(kind))+' · steer with joystick/WASD');
+  }
+  function tryRide(){
+    if(paused)return;if(mount){dismount();return;}
+    const available=[...mobs.filter(m=>m.dimension===dimension&&RIDE_KINDS[m.kind]).map(m=>({...m,vehicle:false})),...vehicles.filter(v=>v.dimension===dimension).map(v=>({...v,vehicle:true}))]
+      .map(m=>({m,d:Math.hypot(m.x-player.x,m.z-player.z)})).filter(x=>x.d<5).sort((a,b)=>a.d-b.d);
+    if(!available.length){toast('No rideable mount nearby. Find an animal or craft a boat!');return;}
+    const m=available[0].m,kind=m.kind,details=RIDE_KINDS[kind];
+    if(details&&gameMode==='survival'){
+      if(details.harness&&!bag.harness){toast('Craft a Happy Ghast Harness before riding');return}
+      if(details.saddle&&!m.saddled){if(!bag.saddle){toast('Find or craft a saddle first');return;}bag.saddle--;m.saddled=true;}
+      if(details.control&&!bag[details.control]){toast('Need '+itemLabel(details.control)+' to steer this mount');return}
+      if(['horse','donkey','mule','llama','skeleton_horse','zombie_horse'].includes(kind)&&!m.tamed){if(!bag.wheat&&!bag.carrot){toast('Feed wheat or carrots to tame this mount');return;}const food=bag.wheat?'wheat':'carrot';bag[food]--;m.tamed=true;toast('Mount tamed');}
+    }
+    startMount(kind,m.id,!!m.vehicle);
+  }
+  function deployVehicle(kind){
+    if(gameMode!=='survival'||!VEHICLE_KINDS.has(kind)||!bag[kind])return;
+    if(mount){toast('Dismount first');return;}
+    if(vehicles.length>=60){toast('Too many vehicles in this world');return;}
+    bag[kind]--;const v={id:++vehicleSerial,kind,x:player.x+Math.sin(player.yaw)*2,z:player.z-Math.cos(player.yaw)*2,y:player.y,dimension};
+    vehicles.push(v);$('gear-panel').classList.add('hidden');if(started)start();else $('welcome').classList.remove('hidden');
+    startMount(kind,v.id,true);markSave();
+  }
+  function moveMounted(dt){
+    if(!mount||mount.dimension!==dimension){dismount(true);return false;}
+    const creature=mount.vehicle?vehicles.find(v=>v.id===mount.id):mobs.find(m=>m.id===mount.id);
+    if(!creature){dismount(true);return false;}
+    let f=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)-movement.y;
+    let strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+movement.x;
+    const len=Math.hypot(f,strafe);if(len>1){f/=len;strafe/=len}
+    const descriptor=RIDE_KINDS[mount.kind],flying=!!descriptor?.flying,boat=/boat|raft/i.test(mount.kind),cart=/minecart/i.test(mount.kind);
+    const base=descriptor?.speed||(boat?6:cart?8:6);
+    if(descriptor?.unsteerable){f*=.12;strafe*=.12}
+    const nextX=clamp(player.x+(Math.sin(player.yaw)*f+Math.cos(player.yaw)*strafe)*dt*base,1.2,W-1.2);
+    const nextZ=clamp(player.z+(-Math.cos(player.yaw)*f+Math.sin(player.yaw)*strafe)*dt*base,1.2,D-1.2);
+    // Boats navigate shallow water; simple MineWorld minecarts can be steered, but do not implement vanilla track physics.
+    const feet=topAt(nextX,nextZ)+1,water=boat&&get(Math.floor(nextX),SEA,Math.floor(nextZ))===7;
+    let floorY=water?SEA+1.1:feet;
+    if(flying){const climb=(keys.has('Space')?1:0)-(keys.has('KeyC')?1:0);player.y=clamp(player.y+(climb+(mountLift>0?1:0))*dt*base*.6,4,H-5);mountLift=Math.max(0,mountLift-dt);}
+    else{if(Math.abs(floorY-creature.y)<3.7){player.y=floorY+(.7+(mount.kind==='camel'?.35:0))}else{player.y=creature.y+.85}}
+    player.x=nextX;player.z=nextZ;player.vy=0;player.ground=true;
+    creature.x=nextX;creature.z=nextZ;creature.y=flying?player.y-1.2:player.y-.8;
+    if(!mount.vehicle){creature.step=4;creature.attack=2;creature.heading=player.yaw;}
+    if(Math.hypot(f,strafe)>.1)hungerDrain+=dt*.018;
+    return true;
+  }
+  $('ride-btn').addEventListener('click',tryRide);
   function move(dt){
+    if(mount){moveMounted(dt);return;}
     let fw=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)-movement.y;
     let strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+movement.x;
     const len=Math.hypot(fw,strafe);if(len>1){fw/=len;strafe/=len}
@@ -1498,11 +1697,21 @@ body.in-nether #game-wrap{background:#290f19}
     let m={id:++mobSerial,kind,x,y,z,hp:SPECIES[kind].hp,heading:Math.random()*6.28,step:.8+Math.random()*2.5,attack:1.5,anger:0,windup:0};
     m.dimension=dimension;mobs.push(m);return m;
   }
+  function restoreStabledMounts(){
+    const remain=[];
+    for(const record of stabledMounts){
+      if(record.dimension!==dimension){remain.push(record);continue;}
+      if(!RIDE_KINDS[record.kind]||mobs.length>=38)continue;
+      if(mobs.some(m=>m.kind===record.kind&&Math.hypot(m.x-record.x,m.z-record.z)<1.5))continue;
+      mobs.push({id:++mobSerial,kind:record.kind,x:clamp(record.x,2,W-3),z:clamp(record.z,2,D-3),y:clamp(record.y,2,H-3),hp:SPECIES[record.kind].hp,heading:0,step:5,attack:2,anger:0,windup:0,dimension,tamed:!!record.tamed,saddled:!!record.saddled});
+    }
+    stabledMounts=remain;
+  }
   function spawnWildlife(){
-    const types=['cow','pig','sheep','chicken'];
-    for(let i=0;i<12;i++){
+    const types=['cow','pig','sheep','chicken','horse','donkey','mule','camel','llama','skeleton_horse','zombie_horse'];
+    for(let i=0;i<18;i++){
       const x=SPAWN-24+rand(i*29,seed+i*3)*48,z=SPAWN-24+rand(i*17,seed+i*11)*48;
-      if(Math.hypot(x-SPAWN,z-SPAWN)>6)spawnOne(types[i%4],x,z);
+      if(Math.hypot(x-SPAWN,z-SPAWN)>6)spawnOne(types[i%types.length],x,z);
     }
   }
   function spawnNetherWildlife(){
@@ -1550,13 +1759,23 @@ body.in-nether #game-wrap{background:#290f19}
           }
         }
         if(dimension==='overworld'&&mobs.filter(m=>SPECIES[m.kind].kind==='passive').length<9){
-          {const nearby=living[Math.floor(Math.random()*living.length)]||player;spawnOne(['cow','pig','sheep','chicken'][Math.floor(Math.random()*4)],clamp(nearby.x+Math.random()*35-17,3,W-4),clamp(nearby.z+Math.random()*35-17,3,D-4));}
+          {const nearby=living[Math.floor(Math.random()*living.length)]||player;spawnOne(['cow','pig','sheep','chicken','horse','donkey','mule','camel','llama'][Math.floor(Math.random()*9)],clamp(nearby.x+Math.random()*35-17,3,W-4),clamp(nearby.z+Math.random()*35-17,3,D-4));}
         }
       }
     }
     if(difficulty==='peaceful')mobs=mobs.filter(m=>SPECIES[m.kind].kind!=='hostile'&&SPECIES[m.kind].kind!=='boss');
+    // The host keeps animals ridden by remote peers aligned with their shared position states.
+    // This is a best-effort peer-hosted sync, not a dedicated authoritative vehicle server.
+    const remoteRiders=(network?.getCombatants()||[]).filter(p=>p.riding&&RIDE_KINDS[p.riding]&&(p.dimension||'overworld')===dimension);
+    for(const m of mobs)if(m.riderId&&!remoteRiders.some(p=>p.id===m.riderId))delete m.riderId;
+    for(const rider of remoteRiders){
+      let animal=mobs.find(m=>m.riderId===rider.id&&m.kind===rider.riding);
+      if(!animal)animal=mobs.find(m=>m.kind===rider.riding&&!m.riderId&&Math.hypot(m.x-rider.x,m.z-rider.z)<5);
+      if(animal&&Math.hypot(animal.x-rider.x,animal.z-rider.z)<18){animal.riderId=rider.id;animal.x=rider.x;animal.z=rider.z;animal.y=rider.y-.8;animal.step=4;}
+    }
     for(let i=mobs.length-1;i>=0;i--){
       const m=mobs[i],type=SPECIES[m.kind];
+      if((mount&&!mount.vehicle&&mount.id===m.id)||m.tamed||m.riderId){m.step=4;continue;}
       m.step-=dt;m.attack-=dt;m.anger=Math.max(0,m.anger-dt);
       if(m.kind==='ender_dragon'){
         const c=window.MineWorldEnd.CENTER;
@@ -1595,7 +1814,7 @@ body.in-nether #game-wrap{background:#290f19}
     }
   }
   // These methods are called only after host-side validation in multiplayer.js.
-  function combatStrength(){return gameMode==='creative'?20:equipped==='sword'?(2+toolLevels[tools.sword]*3):equipped==='pickaxe'?(1+toolLevels[tools.pickaxe]):1.5}
+  function combatStrength(){return gameMode==='creative'?20:equipped==='sword'?(2+toolLevels[tools.sword]*3):equipped==='axe'?(2+toolLevels[tools.axe]*2.3):equipped==='pickaxe'?(1+toolLevels[tools.pickaxe]):1.5}
   function applyMobHit(id,strength,attackerId=null){
     const m=mobs.find(x=>x.id===id);
     if(!m)return {hit:false};
@@ -1659,6 +1878,7 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function attackMob(m){
     if(paused||attackCooldown>0)return;
+    if(mount){toast('Dismount to attack');return;}
     if(!m&&aimPlayer){
       if(window.MineWorldMultiplayer?.attackPlayer(aimPlayer.id,combatStrength())){
         attackCooldown=.5;toast('⚔ Attacking '+(aimPlayer.name||'player'));
@@ -1679,9 +1899,11 @@ body.in-nether #game-wrap{background:#290f19}
     window.MineWorldMultiplayer?.flushMobs();
   }
   function drawMobs(){
-    if(!mobs.length)return;
+    if(!mobs.length&&!vehicles.some(v=>v.dimension===dimension))return;
     const a=[];
     function cube(x,y,z,w,h,d,c){for(const face of FACE){for(const i of [0,1,2,0,2,3]){const v=face.v[i],shade=face.shade;a.push(x+v[0]*w,y+v[1]*h,z+v[2]*d,c[0]*shade,c[1]*shade,c[2]*shade)}}}
+    for(const v of vehicles){if(v.dimension!==dimension||Math.hypot(v.x-player.x,v.z-player.z)>39)continue;const x=v.x,y=v.y,z=v.z;const boat=/boat|raft/i.test(v.kind);const c=boat?[.52,.31,.16]:[.45,.49,.55];
+      cube(x-.75,y+.03,z-.45,1.5,.24,.9,c);cube(x-.72,y+.25,z-.45,.14,.3,.9,c);cube(x+.58,y+.25,z-.45,.14,.3,.9,c);if(!boat)cube(x-.7,y+.25,z-.4,1.4,.1,.8,[.26,.29,.31]);}
     for(const m of mobs){
       if(Math.hypot(m.x-player.x,m.z-player.z)>39)continue;
       const type=SPECIES[m.kind],x=m.x,z=m.z,y=m.y,hostile=type.kind==='hostile'||type.kind==='neutral'||type.kind==='boss';
@@ -1977,7 +2199,8 @@ body.in-nether #game-wrap{background:#290f19}
   function resetWorldInventory(){
     inventory.fill(0);
     for(const k of Object.keys(bag))bag[k]=0;
-    tools.pickaxe=tools.sword=tools.hoe='none';equipped='none';
+    tools.pickaxe=tools.sword=tools.hoe=tools.axe=tools.shovel='none';equipped='none';
+    for(const k of Object.keys(armor))armor[k]='';inventoryOrder.length=0;vehicles=[];vehicleSerial=0;mount=null;stabledMounts=[];backpackPage=0;selectedStackKey='';
     health=20;hunger=20;hungerDrain=hungerPulse=healPulse=0;
     dayClock=0;hotbarPage=0;HOT9.splice(0,HOT9.length,...HOTSETS[0]);selection=0;
   }
@@ -2018,7 +2241,7 @@ body.in-nether #game-wrap{background:#290f19}
   $('menu-toggle').addEventListener('click',menu);
   $('save-btn').addEventListener('click',()=>{save();toast('Saved to this browser')});
   $('mode-btn').addEventListener('click',()=>toast('World modes have separate saves. Use Home Screen to switch worlds.'));
-  $('craft-btn').addEventListener('click',openGear);$('bag-toggle').addEventListener('click',openGear);$('close-gear').addEventListener('click',closeGear);for(const [btn,tool] of [['gear-pickaxe','pickaxe'],['gear-sword','sword'],['gear-hoe','hoe'],['gear-none','none']])$(btn).addEventListener('click',()=>{equipped=tool;updateSurvivalHUD();renderGear();markSave()});$('home-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));$('pause-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));
+  $('craft-btn').addEventListener('click',openGear);$('bag-toggle').addEventListener('click',openGear);$('close-gear').addEventListener('click',closeGear);for(const [btn,tool] of [['gear-pickaxe','pickaxe'],['gear-sword','sword'],['gear-hoe','hoe'],['gear-axe','axe'],['gear-shovel','shovel'],['gear-none','none']])$(btn).addEventListener('click',()=>{equipped=tool;updateSurvivalHUD();renderGear();markSave()});$('home-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));$('pause-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));
   $('fly-btn').addEventListener('click',()=>{if(gameMode==='survival'){toast('Flying is only available in Creative');return;}player.fly=!player.fly;player.vy=0;updateFlyButton();markSave();toast(player.fly?'Flying enabled':'Flying disabled')});
   $('new-btn').addEventListener('click',()=>{
     if(window.MineWorldMultiplayer?.isShared()){toast('Leave multiplayer before creating a private world');return;}
@@ -2028,14 +2251,14 @@ body.in-nether #game-wrap{background:#290f19}
   });
   document.addEventListener('keydown',e=>{
     if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab'].includes(e.code))e.preventDefault();
-    if(e.target instanceof HTMLInputElement)return;
+    if(e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement||e.target instanceof HTMLTextAreaElement)return;
     if(e.code==='Escape'){if(!paused)menu();else if(started)start();return}
     if(paused)return;
     keys.add(e.code);
     if(e.code==='Space'&&!e.repeat)jump();
     if(e.code==='KeyE'&&!e.repeat)toggleInventory();
     if(e.code==='KeyF'&&!e.repeat){if(gameMode==='survival'){toast('Flying is Creative only');}else{player.fly=!player.fly;player.vy=0;updateFlyButton();toast(player.fly?'Fly mode on':'Fly mode off')}}
-    if(e.code==='KeyQ'&&!e.repeat)eatFood();if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);else openVillage();}if(e.code==='KeyR'&&!e.repeat)attackMob(aimMob);if(e.code==='KeyI'&&!e.repeat)openGear();
+    if(e.code==='KeyQ'&&!e.repeat)eatFood();if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);else openVillage();}if(e.code==='KeyR'&&!e.repeat)attackMob(aimMob);if(e.code==='KeyM'&&!e.repeat)tryRide();if(e.code==='ShiftLeft'&&mount&&!e.repeat)dismount();if(e.code==='KeyI'&&!e.repeat)openGear();
     if(e.code.startsWith('Digit')){const i=Number(e.code.slice(5))-1;if(i>=0&&i<HOT9.length){selection=i;updateHotbar()}}
   });
   document.addEventListener('keyup',e=>keys.delete(e.code));
@@ -2075,7 +2298,7 @@ body.in-nether #game-wrap{background:#290f19}
   migrateLegacySave();const activeSlot=(()=>{try{return localStorage.getItem(LAST_SLOT)==='survival'?'survival':'creative'}catch(_){return 'creative'}})();gameMode=activeSlot;updateModeButton();updateSurvivalHUD();
   if(!load(activeSlot)){generate();setGameMode(activeSlot);}else $('status').textContent='● '+(activeSlot==='survival'?'Survival':'Creative')+' world restored';setDifficulty(difficulty);updatePortalUI();updateSeedLabel();updateVillagers();
   window.MineWorldBridge={
-    getPlayer:()=>({x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly,mode:gameMode,dimension}),
+    getPlayer:()=>({x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly,mode:gameMode,dimension,riding:mount?.kind||''}),
     getCombatProfile:()=>({mode:gameMode,equipped,weapon:equipped==='sword'?tools.sword:equipped==='pickaxe'?tools.pickaxe:'none'}),
     getMobs:mobSnapshot, setMobs:syncMobs, applyMobHit, grantLoot,
     applyDamage:(n,cause)=>{if(Number.isInteger(n)&&n>0&&n<=20)damage(n,String(cause||'Combat').slice(0,40))},
