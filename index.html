@@ -119,6 +119,43 @@
 @media(pointer:coarse){#survival-hud{font-size:10px}#weapon-readout{font-size:9px}}
 @media(max-width:600px){#bag-toggle{font-size:10px;padding:10px 7px}#survival-hud{gap:4px}#weapon-readout{display:none}#touch-buttons{gap:3px}#touch-buttons .touch-btn{width:clamp(38px,11vw,51px);height:53px;font-size:20px}.gear-modal{padding:14px}.recipes{grid-template-columns:1fr 1fr;gap:6px}.recipe{padding:8px}}
 @media(pointer:coarse) and (orientation:landscape){#touch-buttons{gap:4px}#touch-buttons .touch-btn{width:48px;height:50px}}
+
+/* Compact on-device atlas: no external map, images or API required. */
+.atlas-panel{width:min(96vw,850px);max-height:min(93dvh,880px);overflow:auto;text-align:left;padding:clamp(13px,3vw,25px)}
+.atlas-panel .kicker,.atlas-panel h2{text-align:center}.atlas-panel h2{font-size:clamp(24px,4vw,36px);margin:7px 0}
+.atlas-panel>p{font-size:12px;text-align:center;margin:10px auto 16px;max-width:700px}
+.atlas-counts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
+.atlas-counts span{padding:7px 9px;border:1px solid #567e61;border-radius:6px;font-size:10px;color:#d9f8d7;background:#183928}
+.atlas-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+.atlas-tile{min-height:80px;text-align:left;border:1px solid #88a58c;border-radius:6px;padding:8px 6px;color:#f4fff0;background:#2e5038;display:flex;flex-direction:column;gap:5px}
+.atlas-tile:hover,.atlas-tile:focus-visible{border-color:#e0fab8;filter:brightness(1.2)}
+.atlas-tile strong{font-size:11px;line-height:1.22}.atlas-tile small{font-size:9px;color:#f2ffde;line-height:1.3}
+.atlas-tile[data-climate="cold"]{background:linear-gradient(145deg,#577487,#364857)}
+.atlas-tile[data-climate="water"]{background:linear-gradient(145deg,#2d6481,#204457)}
+.atlas-tile[data-climate="arid"]{background:linear-gradient(145deg,#8d7041,#4b3927)}
+.atlas-tile[data-climate="lush"]{background:linear-gradient(145deg,#407b44,#25402b)}
+.atlas-tile[data-climate="mystic"]{background:linear-gradient(145deg,#775b79,#3a3649)}
+.atlas-tile.current{outline:2px solid #e4ff9a;outline-offset:-3px}
+.atlas-panel .main-button{margin-top:14px}
+@media(max-width:680px){.atlas-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.atlas-tile{min-height:65px;padding:7px}.atlas-panel{max-height:94dvh}.atlas-counts span{font-size:9px}}
+@media(max-width:380px){.atlas-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#atlas-toggle{padding:10px 7px}.top-buttons{gap:4px}}
+
+/* Keep the full five-button toolbar accessible on narrow iPhones. */
+@media(max-width:560px){
+ #top-ui{display:flex;align-items:flex-start;padding:9px 7px;gap:4px}
+ .title-mark{flex:0 0 auto;gap:5px;padding:8px 5px}
+ .title-mark strong{font-size:12px}.title-mark small{font-size:6px}
+ .block-symbol{width:22px;height:22px}
+ .top-buttons{display:flex;flex-wrap:nowrap;gap:4px;margin-left:auto}
+ .top-buttons .ui-button.small{flex:0 0 32px;width:32px;height:35px;padding:6px 2px!important;font-size:0!important;display:grid;place-items:center}
+ #inventory-toggle::after{content:'▣';font-size:16px}
+ #bag-toggle::after{content:'🎒';font-size:17px}
+ #friends-toggle::after{content:'👥';font-size:15px}
+ #friends-toggle #online-count{display:none}
+ #atlas-toggle{font-size:18px!important}
+ #menu-toggle::after{content:'☰';font-size:18px}
+}
+@media(max-width:374px){.title-mark small{display:none}.title-mark strong{font-size:11px}.top-buttons .ui-button.small{flex-basis:29px;width:29px}}
 </style>
 <title>MineWorld — Build Your Own World</title>
 </head>
@@ -128,7 +165,7 @@
   <div id="sky-decor" aria-hidden="true"><div class="sun"></div><div class="cloud cloud1"></div><div class="cloud cloud2"></div></div>
   <div id="top-ui">
     <div class="title-mark"><div class="block-symbol"></div><div><strong>MINEWORLD</strong><small>INDEPENDENT BLOCK SANDBOX</small></div></div>
-    <div class="top-buttons"><div id="status" class="status">● World loaded</div><button id="inventory-toggle" class="ui-button small">▣ Blocks</button><button id="bag-toggle" class="ui-button small">🎒 Gear</button><button id="friends-toggle" class="ui-button small">👥 Friends <span id="online-count">0</span></button>
+    <div class="top-buttons"><div id="status" class="status">● World loaded</div><button id="inventory-toggle" class="ui-button small">▣ Blocks</button><button id="atlas-toggle" class="ui-button small" aria-label="Biome atlas and landmarks" title="Explore biomes and structures">🧭</button><button id="bag-toggle" class="ui-button small">🎒 Gear</button><button id="friends-toggle" class="ui-button small">👥 Friends <span id="online-count">0</span></button>
     <button id="menu-toggle" class="ui-button small" aria-label="Open game menu">☰ Menu</button></div>
   </div>
   <div id="crosshair" aria-hidden="true"></div>
@@ -148,12 +185,13 @@
     <section class="modal home-modal" aria-label="MineWorld main menu">
       <div class="kicker">✦ BUILD · EXPLORE · SURVIVE ✦</div>
       <h1>MINE<span>WORLD</span></h1>
-      <p class="home-subtitle">Choose your adventure. Your world, your way — on phone, tablet or desktop.</p>
+      <p class="home-subtitle">Explore 36 biome zones, diverse trees and generated landmarks — on phone, tablet or desktop.</p>
       <div class="mode-cards" role="group" aria-label="Choose a game mode">
         <div class="mode-card creative"><div class="mode-illustration" aria-hidden="true"></div>
           <div class="mode-caption">Unlimited building</div><h2>✦ Creative</h2>
           <p>Build anything with unlimited blocks, explore freely and fly around your world.</p>
-          <button id="start-btn" class="main-button" type="button">▶ PLAY CREATIVE</button>
+          <button id="atlas-from-home" class="ui-button" style="width:100%;margin-bottom:12px">🧭 Explore biome atlas &amp; structures</button>
+      <button id="start-btn" class="main-button" type="button">▶ PLAY CREATIVE</button>
         </div>
         <div class="mode-card survival"><div class="mode-illustration" aria-hidden="true"></div>
           <div class="mode-caption">Gather and survive</div><h2>♥ Survival</h2>
@@ -172,6 +210,7 @@
       <p>Resume exploring, switch between Creative and Survival, or return to the home screen.</p>
       <button class="main-button" id="resume-btn">▶ &nbsp; Resume Game</button>
       <button id="home-btn" class="ui-button" style="width:100%;margin-top:10px">⌂ Home Screen · Choose Mode</button>
+      <button id="atlas-from-pause" class="ui-button" style="width:100%;margin-top:10px">🧭 Biomes, Trees &amp; Structures</button>
       <button id="pause-friends" class="ui-button" style="width:100%;margin-top:10px">🌐 Public servers / Friends</button>
       <div class="menu-actions"><button id="fly-btn" class="ui-button">✦ Flying: Off</button><button id="save-btn" class="ui-button">↓ Save World</button></div>
       <div class="menu-actions"><button id="mode-btn" class="ui-button">⚒ Mode: Creative</button><button id="craft-btn" class="ui-button">⚒ Crafting & Gear</button></div>
@@ -224,10 +263,409 @@
     <div id="chat-log" aria-live="polite"></div>
     <div class="chat-row"><input id="chat-entry" maxlength="160" autocomplete="off" placeholder="Message friends…"><button id="chat-send" type="button">Send</button></div>
   </div>
+  <div id="atlas-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="World biome atlas">
+    <section class="modal atlas-panel">
+      <div class="kicker">EXPLORE THE WORLD</div>
+      <h2>World Atlas</h2>
+      <p>Explore all 36 themed regions in this miniature Overworld, with distinct trees, terrain and generated structures. Tap a biome to travel there.</p>
+      <div class="atlas-counts"><span>🌲 36 Surface Zones</span><span>🏛 24 Landmarks</span><span>🕳 3 Underground Types</span></div>
+      <div id="atlas-grid" class="atlas-grid" role="list" aria-label="Travel to a biome"></div>
+      <p class="atlas-note">Each region is condensed so everything fits in one shared world. Nether and End dimensions, and many official Minecraft sub-biomes and structures, aren't implemented yet.</p>
+      <button id="close-atlas" class="main-button" type="button">Back to World</button>
+    </section>
+  </div>
   <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD · SHARED COMBAT + SURVIVAL · v2.4</div>
+  <div class="version">MINEWORLD · 36 BIOMES + LANDMARKS · v2.5</div>
 </div>
-<script src="./texture-atlas.js"></script>
+<script>
+/* MineWorld original procedural 16x16 voxel pixel-art atlas. No external assets. */
+(() => {
+  'use strict';
+  const SIZE=16, COLUMNS=16, ROWS=13;
+  const clamp=(n)=>Math.max(0,Math.min(255,Math.round(n)));
+  function hash(a,b,c){let x=(Math.imul(a+17,374761393)^Math.imul(b+29,668265263)^Math.imul(c+73,1442695041))|0;x=Math.imul(x^(x>>>13),1274126177);return ((x^(x>>>16))>>>0)/4294967295}
+  function tileColor(b,face,x,y){
+    const n=hash(x,y,b*13+face*101),m=hash(Math.floor(x/3),Math.floor(y/3),b+face*17);
+    const v=(n-.5)*32+(m-.5)*13;
+    let c=[130,130,130];
+    switch(b){
+      case 1: // grass: crisp green top; grassy fringe on earthy side
+        if(face===0)c=[91+v*.6,150+v,57+v*.55];
+        else if(face===2)c=[113+v,77+v*.67,49+v*.53];
+        else if(y<3+(hash(x,0,b)*2|0))c=[83+v*.5,137+v,51+v*.5];
+        else c=[115+v,78+v*.73,51+v*.65];
+        break;
+      case 2:c=[116+v,79+v*.75,55+v*.54];break;
+      case 3: {let dark=(hash(Math.floor(x/2),Math.floor(y/2),4)>.76)?-28:0;c=[128+v+dark,132+v+dark,137+v+dark];break}
+      case 4:c=[216+v*.62,201+v*.64,151+v*.55];break;
+      case 5:case 15:{
+        const pale=b===15;
+        if(face===0||face===2){
+          const ring=Math.min(Math.abs(x-7.5),Math.abs(y-7.5));const stripe=(Math.max(Math.abs(x-7.5),Math.abs(y-7.5))%4<1.5)?-19:7;
+          c=pale?[155+stripe+v*.3,125+stripe+v*.35,93+stripe+v*.25]:[145+stripe+v*.3,103+stripe+v*.35,61+stripe+v*.2];
+        }else{
+          const stripe=((x+Math.floor(Math.sin(y*1.8)*.8))%5===0)?-24:((x+1)%5===0?15:0);
+          c=pale?[164+stripe+v*.35,138+stripe+v*.33,107+stripe+v*.3]:[121+stripe+v*.35,85+stripe+v*.33,51+stripe+v*.2];
+        }break}
+      case 6:case 12:case 13:case 14:{
+        const tones={6:[65,135,57],12:[163,50,40],13:[214,117,36],14:[214,177,58]};
+        const t=tones[b];const bright=(hash(Math.floor(x/2),Math.floor(y/2),b)>.68)?23:-7;
+        c=[t[0]+v*.65+bright,t[1]+v*.7+bright,t[2]+v*.6+bright];break}
+      case 7: c=[42+v*.48,118+v*.5,184+v*.45+(y%4===0?12:0)];break;
+      case 8: { // offset red brick courses with grey mortar
+        const row=Math.floor(y/5),off=(row%2)*7,vertical=((x+off)%9===0),horizontal=(y%5===0);
+        c=(vertical||horizontal)?[106+v*.25,99+v*.25,88+v*.25]:[164+v*.75,72+v*.55,57+v*.42];break}
+      case 9: {const border=x===0||x===15||y===0||y===15;
+        c=border?[177+v*.3,215+v*.3,217+v*.3]:[198+v*.2,225+v*.2,224+v*.2];if((x===3&&y>2&&y<12)||(y===3&&x>3&&x<11))c=[244,250,252];break}
+      case 10: {const glow=m>.55?26:-13;c=[221+v*.6+glow,179+v*.45+glow,91+v*.35+glow];break}
+      case 11:{const plank=(y%4===0);const nail=(x===2||x===13)&&(y%8===2);
+        c=plank?[94+v*.4,67+v*.3,43+v*.2]:[178+v*.5,130+v*.42,78+v*.35];if(nail)c=[82,64,46];break}
+      case 16:c=n>.78?[173+v*.5,64+v*.3,78+v*.3]:[85+v*.5,124+v*.4,62+v*.4];break;
+      case 17:c=(x>4&&x<12&&y<9)?[212+v*.5,190+v*.4,148+v*.4]:[111+v*.5,75+v*.38,53+v*.35];break;
+      case 18:case 19:{const rock=121+v*.9;const spot=hash(Math.floor(x/3),Math.floor(y/3),b*7)>.61;
+        c=spot?(b===18?[38+v*.2,42+v*.2,41+v*.2]:[193+v*.3,139+v*.3,98+v*.3]):[rock,rock+4,rock+6];break}
+      case 20:{const dark=(x>3&&x<12&&y>4&&y<12&&face===1);const rim=x<2||x>13||y<2||y>13;
+        c=dark?[52+v*.2,44+v*.2,40+v*.2]:rim?[112+v*.6,113+v*.6,115+v*.6]:[139+v*.5,139+v*.5,143+v*.5];break}
+
+      case 21:c=[220+v*.6,233+v*.4,241+v*.3];break; // snow
+      case 22:c=[156+v*.5,208+v*.42,229+v*.3];if((x+y)%9===0)c=[207,240,249];break;
+      case 23:c=[123+v*.5,177+v*.45,206+v*.44];break;
+      case 24:case 54:{const stripe=y%5===0?-12:y%7===0?7:0;c=[220+v*.48+stripe,203+v*.4+stripe,151+v*.36+stripe];if(b===54&&Math.abs(x-7)<4&&Math.abs(y-8)<3)c=[168+v*.45,146+v*.4,96+v*.3];break}
+      case 25:case 27:c=b===25?[172+v*.45,113+v*.35,88+v*.33]:[153+v*.4,66+v*.4,46+v*.3];break;
+      case 26:c=[190+v*.7,96+v*.42,54+v*.36];break;
+      case 28:c=[80+v*.4,69+v*.37,43+v*.4];if(n>.72)c=[111+v*.3,99+v*.25,55+v*.2];break;
+      case 29:c=[124+v*.5,98+v*.42,75+v*.39];break;
+      case 30:case 32:case 34:case 36:case 38:case 40:case 42:{
+        const base={30:[86,64,43],32:[204,196,170],34:[117,101,67],36:[135,99,58],38:[115,83,77],40:[129,85,106],42:[166,154,145]}[b];
+        const stripe=face===0||face===2?(Math.floor(Math.max(Math.abs(x-8),Math.abs(y-8))/2)%2?21:-12):x%4===0?-25:x%5===1?10:0;
+        c=base.map((q,k)=>q+stripe+(k===0?.54:.43)*v);break;
+      }
+      case 31:case 33:case 35:case 37:case 39:case 41:case 43:{
+        const leaf={31:[39,87,59],33:[107,155,66],35:[143,152,68],37:[45,115,47],39:[58,106,75],41:[237,162,190],43:[158,180,174]}[b];
+        const dot=hash(Math.floor(x/2),Math.floor(y/2),b)>.63?18:-12;
+        c=leaf.map(q=>q+dot+v*.55);break;
+      }
+      case 44:c=[58+v*.42,127+v*.5,65+v*.4];if(x%5===0)c=[32+v*.25,90+v*.3,43+v*.3];break;
+      case 45:c=[94+v*.52,160+v*.55,65+v*.44];if(x%4===0||y%8===0)c=[51+v*.25,112+v*.27,44+v*.25];break;
+      case 46:c=[64+v*.3,110+v*.48,54+v*.28];break;
+      case 47:c=[71+v*.5,65+v*.4,57+v*.3];break;
+      case 48:case 49:{const red=b===48;c=red?[183+v*.44,46+v*.3,42+v*.27]:[121+v*.43,76+v*.36,43+v*.25];
+        if(hash(Math.floor(x/3),Math.floor(y/3),b)>.86)c=[231,217,194];break;}
+      case 50:c=[122+v*.6,48+v*.27,48+v*.28];break;
+      case 51:c=[29+v*.12,21+v*.16,42+v*.2];if(n>.93)c=[67+v*.13,37+v*.12,80+v*.2];break;
+      case 52:{const stripe=y%4===0?-30:y%4===1?13:0;c=[82+stripe+v*.3,69+stripe+v*.31,58+stripe+v*.29];break;}
+      case 53:case 61:{const mortar=y%7===0||((x+((Math.floor(y/7)%2)*5))%9===0);c=mortar?[79+v*.3,85+v*.35,83+v*.3]:[143+v*.7,144+v*.65,142+v*.6];break;}
+      case 55:c=[63+v*.46,142+v*.57,143+v*.5];if(((x+y)%8===0))c=[125+v*.4,196+v*.5,184+v*.4];break;
+      case 56:c=[170+v*.52,112+v*.47,72+v*.46];if(n>.77)c=[67+v*.43,143+v*.52,125+v*.46];break;
+      case 57:c=[152+v*.43,148+v*.47,143+v*.46];break;
+      case 58:c=[77+v*.38,83+v*.39,91+v*.35];break;
+      case 59:c=[218+v*.44,170+v*.36,73+v*.24];if(x<3||x>12||y<3||y>12)c=[65,68,55];break;
+      case 60:c=[190+v*.55,166+v*.52,65+v*.34];if(x%4===0)c=[122+v*.4,111+v*.4,56+v*.4];break;
+      case 62:c=[46+v*.4,111+v*.5,86+v*.37];break;
+      case 63:c=[122+v*.5,88+v*.42,67+v*.37];if((x+y)%5===0)c=[166+v*.4,125+v*.4,91+v*.35];break;
+      case 64:c=[17+v*.35,39+v*.4,51+v*.43];if(n>.90)c=[27+v*.35,109+v*.45,116+v*.45];break;
+
+    }
+    return [clamp(c[0]),clamp(c[1]),clamp(c[2]),255];
+  }
+  function create(gl){
+    const canvas=document.createElement('canvas');canvas.width=SIZE*COLUMNS;canvas.height=SIZE*ROWS;
+    const ctx=canvas.getContext('2d',{willReadFrequently:true});if(!ctx)throw Error('2D canvas textures unavailable');
+    const img=ctx.createImageData(canvas.width,canvas.height);
+    for(let b=1;b<=64;b++)for(let f=0;f<3;f++){
+      const tile=b*3+f,col=tile%COLUMNS,row=Math.floor(tile/COLUMNS);
+      for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
+        const i=((row*SIZE+y)*canvas.width+col*SIZE+x)*4;
+        const c=tileColor(b,f,x,y);for(let k=0;k<4;k++)img.data[i+k]=c[k];
+      }
+    }
+    ctx.putImageData(img,0,0);
+    window.MineWorldAtlas.dataURL=canvas.toDataURL('image/png');
+    const texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,canvas);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+    return texture;
+  }
+  function uv(b,face,corner){
+    const tile=b*3+face;
+    const x=tile%COLUMNS,y=Math.floor(tile/COLUMNS);
+    const corners=[[0,0],[0,1],[1,1],[1,0]];
+    const [u,v]=corners[corner];
+    // inset half a source pixel, preventing bleeding from neighboring textures
+    return [(x*SIZE+.5+u*(SIZE-1))/(SIZE*COLUMNS),(y*SIZE+.5+v*(SIZE-1))/(SIZE*ROWS)];
+  }
+  window.MineWorldAtlas={create,uv,tileColor};
+})();
+
+</script>
+<script>
+/* MineWorld Atlas — original procedurally generated environments and structures.
+   No Minecraft game textures, world-generation code, or assets are used.
+   All content is deterministic from a seed for browser multiplayer. */
+(() => {
+  'use strict';
+  const COLS=6, ROWS=6;
+  const BIOMES=[
+    {name:'Frozen Ocean',top:22,under:4,height:-5,tree:'none',feature:'shipwreck',water:true},
+    {name:'Snowy Plains',top:21,under:2,height:0,tree:'none',feature:'igloo'},
+    {name:'Ice Spikes',top:21,under:3,height:1,tree:'spikes',feature:null},
+    {name:'Snowy Taiga',top:21,under:2,height:1,tree:'spruce',feature:'cabin'},
+    {name:'Snowy Slopes',top:21,under:3,height:5,tree:'sparseSpruce',feature:null},
+    {name:'Frozen Peaks',top:21,under:3,height:8,tree:'none',feature:'peakTower'},
+    {name:'Stony Peaks',top:3,under:3,height:7,tree:'none',feature:'watchtower'},
+    {name:'Grove',top:21,under:2,height:3,tree:'spruce',feature:null},
+    {name:'Taiga',top:28,under:2,height:1,tree:'spruce',feature:null},
+    {name:'Old Growth Pine Taiga',top:28,under:2,height:2,tree:'pine',feature:null},
+    {name:'Old Growth Spruce Taiga',top:28,under:2,height:2,tree:'bigSpruce',feature:null},
+    {name:'Stony Shore',top:3,under:3,height:-2,tree:'none',feature:'shoreRuins'},
+    {name:'Cold Ocean',top:4,under:57,height:-6,tree:'kelp',feature:'oceanRuins',water:true},
+    {name:'Beach',top:4,under:4,height:-3,tree:'palm',feature:'well'},
+    {name:'Birch Forest',top:1,under:2,height:1,tree:'birch',feature:'village'},
+    {name:'Dark Forest',top:1,under:2,height:1,tree:'darkOak',feature:'manor'},
+    {name:'Cherry Grove',top:1,under:2,height:3,tree:'cherry',feature:'pavilion'},
+    {name:'Pale Garden',top:46,under:2,height:1,tree:'paleOak',feature:'shrine'},
+    {name:'Savanna',top:1,under:2,height:0,tree:'acacia',feature:'savannaVillage'},
+    {name:'Meadow',top:1,under:2,height:2,tree:'flowers',feature:null},
+    {name:'Flower Forest',top:1,under:2,height:0,tree:'oak',feature:null},
+    {name:'Plains',top:1,under:2,height:0,tree:'sparseOak',feature:null},
+    {name:'Dappled Forest',top:1,under:2,height:1,tree:'poplar',feature:'abandonedCamp'},
+    {name:'Forest',top:1,under:2,height:0,tree:'oak',feature:'trailRuins'},
+    {name:'Desert',top:4,under:24,height:-1,tree:'cactus',feature:'desertTemple'},
+    {name:'Badlands',top:26,under:25,height:2,tree:'none',feature:'mineshaft'},
+    {name:'Wooded Badlands',top:26,under:25,height:3,tree:'sparseOak',feature:null},
+    {name:'Savanna Plateau',top:1,under:2,height:3,tree:'acacia',feature:'ruinedPortal'},
+    {name:'Windswept Savanna',top:3,under:3,height:4,tree:'acacia',feature:null},
+    {name:'River',top:4,under:57,height:-5,tree:'reeds',feature:'bridge',water:true},
+    {name:'Mangrove Swamp',top:47,under:47,height:-2,tree:'mangrove',feature:'swampHut'},
+    {name:'Swamp',top:1,under:47,height:-2,tree:'swampOak',feature:'witchHut'},
+    {name:'Jungle',top:1,under:2,height:1,tree:'jungle',feature:'jungleTemple'},
+    {name:'Bamboo Jungle',top:1,under:2,height:0,tree:'bamboo',feature:'camp'},
+    {name:'Sparse Jungle',top:1,under:2,height:0,tree:'sparseJungle',feature:null},
+    {name:'Mushroom Fields',top:46,under:2,height:0,tree:'mushroom',feature:'mushroomHut'}
+  ];
+  const STRUCTURE_NAMES={
+    shipwreck:'Shipwreck',igloo:'Igloo',cabin:'Taiga Cabin',peakTower:'Mountain Watchtower',
+    watchtower:'Stone Watchtower',shoreRuins:'Coastal Ruins',oceanRuins:'Underwater Ruins',
+    well:'Sandstone Well',village:'Birch Village',manor:'Woodland Manor',pavilion:'Cherry Pavilion',
+    shrine:'Pale Garden Shrine',savannaVillage:'Savanna Village',abandonedCamp:'Abandoned Camp',
+    trailRuins:'Trail Ruins',desertTemple:'Desert Temple',mineshaft:'Mine Entrance',
+    ruinedPortal:'Ruined Portal',bridge:'Stone Bridge',swampHut:'Mangrove Cabin',
+    witchHut:'Witch Hut',jungleTemple:'Jungle Temple',camp:'Bamboo Camp',mushroomHut:'Mushroom House'
+  };
+  function zone(x,z,W,D){
+    const a=Math.max(0,Math.min(COLS-1,Math.floor(x/(W/COLS))));
+    const b=Math.max(0,Math.min(ROWS-1,Math.floor(z/(D/ROWS))));
+    return b*COLS+a;
+  }
+  function biomeAt(x,z,W,D){return {...BIOMES[zone(x,z,W,D)],index:zone(x,z,W,D)};}
+  function generate({W,D,H,SEA,seed,set,get,noise,rand,clamp}){
+    const sx=W/COLS,sz=D/ROWS;
+    const elevations=new Int16Array(W*D);
+    const elevationsAt=(x,z)=>elevations[x*D+z];
+    const ground=(x,z)=>biomeAt(x,z,W,D);
+    const worldRand=(x,z,salt=0)=>rand(x*31+salt*13,z*29-salt*11);
+    function terrainAt(x,z){
+      const b=ground(x,z),undulation=(noise(x,z,19)-.5)*4.5+(noise(x+237,z-91,7)-.5)*2.6;
+      let elevation=SEA+2+b.height+undulation;
+      if(b.water)elevation=Math.min(SEA-2,elevation);
+      if(b.name==='Ice Spikes'||b.name==='Frozen Peaks')elevation+=noise(x+73,z+90,9)*2;
+      if(b.name==='Windswept Savanna'||b.name==='Stony Peaks')elevation+=noise(x+10,z+120,5)*3.3;
+      if(b.name==='Badlands'||b.name==='Wooded Badlands')elevation=Math.round(elevation/2)*2;
+      return clamp(Math.floor(elevation),3,H-10);
+    }
+    // Basic climate-zone columns (surface, subsoil, rock, water).
+    for(let x=0;x<W;x++)for(let z=0;z<D;z++){
+      const b=ground(x,z),top=terrainAt(x,z);elevations[x*D+z]=top;
+      for(let y=0;y<=top;y++){
+        let block=3;
+        if(y===top)block=b.top;
+        else if(y>=top-3)block=b.under;
+        if(b.name.includes('Badlands')&&y<top&&y>top-7)block=((y+Math.floor(seed%3))%4===0?27:25);
+        set(x,y,z,block);
+      }
+      for(let y=top+1;y<=SEA;y++)set(x,y,z,b.name==='Frozen Ocean'?22:7);
+    }
+    // 3 miniature subterranean biome environments: dripstone, lush caves and deep dark.
+    for(let x=2;x<W-2;x++)for(let z=2;z<D-2;z++){
+      const biomeZone=(Math.floor(x/31)+Math.floor(z/37)+seed%3)%3;
+      const ceiling=Math.min(elevationsAt(x,z)-4,8);
+      for(let y=3;y<=ceiling;y++){
+        const cave=noise(x+80+y*5,z+41-y*3,11)*.60+noise(x-y*3,z+17+y*4,6)*.40;
+        if(cave>.63){set(x,y,z,0);
+          if(y===3||y===ceiling){
+            if(biomeZone===0)set(x,y,z,63);
+            if(biomeZone===1)set(x,y,z,46);
+            if(biomeZone===2)set(x,y,z,64);
+          }
+        }else if(get(x,y,z)===3){
+          const ore=worldRand(x+y*7,z+y*9,2);
+          if(ore>.965)set(x,y,z,18);
+          else if(ore<.025&&y<7)set(x,y,z,19);
+        }
+      }
+    }
+    function safeSet(x,y,z,id,onlyAir=false){
+      if(x<1||x>=W-1||z<1||z>=D-1||y<1||y>=H-1)return;
+      if(!onlyAir||get(x,y,z)===0)set(x,y,z,id);
+    }
+    function log(x,y,z,id,h){for(let k=0;k<h;k++)safeSet(x,y+k,z,id);}
+    function crown(x,y,z,id,rx=2,ry=2){
+      for(let dx=-rx;dx<=rx;dx++)for(let dz=-rx;dz<=rx;dz++)for(let dy=-1;dy<=ry;dy++){
+        const dist=(dx*dx+dz*dz)/(rx*rx)+(dy*dy)/((ry+.3)*(ry+.3));
+        if(dist>1.35||worldRand(x+dx*3+dy,z+dz*3,9)<.045)continue;
+        safeSet(x+dx,y+dy,z+dz,id,true);
+      }
+    }
+    function plantTree(kind,x,z){
+      let t=elevationsAt(x,z),base=t+1;
+      if(t<=SEA&&kind!=='mangrove'&&kind!=='mushroom'&&kind!=='kelp')return;
+      if(base+9>=H)return;
+      if(kind==='none'||kind==='flowers'||kind==='reeds')return;
+      if(kind==='cactus'){log(x,base,z,44,2+(worldRand(x,z,7)*2|0));return;}
+      if(kind==='bamboo'){log(x,base,z,45,3+(worldRand(x,z,1)*4|0));return;}
+      if(kind==='kelp'){log(x,base,z,45,2);return;}
+      if(kind==='spikes'){const ht=4+(worldRand(x,z,3)*5|0);for(let dy=0;dy<ht;dy++)for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)if((Math.abs(dx)+Math.abs(dz)<2)&&(dy<ht-2||dx===0&&dz===0))safeSet(x+dx,base+dy,z+dz,23);return;}
+      if(kind==='mushroom'){
+        const cap=worldRand(x,z,4)>.48?48:49;log(x,base,z,57,4);
+        for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)if(Math.abs(dx)+Math.abs(dz)<4)safeSet(x+dx,base+4,z+dz,cap,true);
+        safeSet(x,base+5,z,cap,true);return;
+      }
+      const code={oak:[5,6,4,2],sparseOak:[5,6,4,2],swampOak:[5,6,4,3],birch:[32,33,5,2],
+        darkOak:[5,6,5,3],spruce:[30,31,6,2],sparseSpruce:[30,31,5,2],pine:[30,31,7,2],
+        bigSpruce:[30,31,8,3],acacia:[34,35,4,3],jungle:[36,37,7,3],
+        sparseJungle:[36,37,5,3],mangrove:[38,39,5,3],cherry:[40,41,5,3],
+        paleOak:[42,43,6,3],poplar:[15,[12,13,14][worldRand(x,z,2)*3|0],6,2],palm:[34,35,5,2]}[kind];
+      if(!code)return;
+      const [trunk,leaf,height,radius]=code;
+      log(x,base,z,trunk,height);
+      if(kind==='acacia'||kind==='palm'){log(x+1,base+height-2,z,trunk,2);crown(x+1,base+height,z,leaf,radius,1);}
+      else if(['spruce','pine','bigSpruce','sparseSpruce'].includes(kind)){
+        for(let i=height-1;i>=2;i--){
+          const rad=i>height-3?1:radius;
+          for(let dx=-rad;dx<=rad;dx++)for(let dz=-rad;dz<=rad;dz++){
+            if(Math.abs(dx)+Math.abs(dz)<=rad+1)safeSet(x+dx,base+i,z+dz,leaf,true);
+          }
+        }
+        safeSet(x,base+height,z,leaf,true);
+      }else crown(x,base+height,z,leaf,radius,2);
+      if(kind==='mangrove'){
+        for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){
+          safeSet(x+dx,base,z+dz,38);safeSet(x+dx,base+1,z+dz,38,true);
+        }
+      }
+      if(kind==='darkOak'){
+        for(let k=0;k<height-1;k++)safeSet(x+1,base+k,z,trunk);
+      }
+    }
+    // Trees follow terrain and are kept out of the footprint reserved for structures.
+    for(let x=2;x<W-2;x++)for(let z=2;z<D-2;z++){
+      const b=ground(x,z),kind=b.tree;
+      const cx=Math.floor(x/sx)*sx+sx/2,cz=Math.floor(z/sz)*sz+sz/2;
+      if(b.feature&&Math.abs(x-cx)<6&&Math.abs(z-cz)<6)continue;
+      const vegetation=worldRand(x,z,5);
+      const density=kind==='bamboo'?.18:kind==='jungle'?.075:kind==='bigSpruce'?.054:
+        kind==='paleOak'||kind==='darkOak'?.060:kind==='mangrove'?.065:
+        kind==='spikes'?.027:kind==='cactus'?.04:kind==='flowers'?.02:
+        kind==='none'?0:kind.startsWith('sparse')?.018:.047;
+      if(vegetation<density)plantTree(kind,x,z);
+      else if(kind==='flowers'&&vegetation<.13&&get(x,elevationsAt(x,z)+1,z)===0)safeSet(x,elevationsAt(x,z)+1,z,16);
+      else if(kind==='reeds'&&vegetation<.06)plantTree('bamboo',x,z);
+    }
+    function structureAt(feature,cx,cz){
+      const b=ground(cx,cz),base=Math.max(SEA+1,elevationsAt(cx,cz)+1);
+      const water=b.water;
+      const floor=water?SEA+1:base;
+      const put=(dx,dy,dz,id)=>safeSet(cx+dx,floor+dy,cz+dz,id);
+      const room=(w,d,h,wall,roof)=>{
+        for(let dx=-w;dx<=w;dx++)for(let dz=-d;dz<=d;dz++){
+          for(let dy=0;dy<=h+1;dy++)put(dx,dy,dz,0);
+          put(dx,-1,dz,wall===24?24:61);
+          for(let dy=0;dy<=h;dy++)if(Math.abs(dx)===w||Math.abs(dz)===d)put(dx,dy,dz,dy===2&&dx===0&&dz===-d?0:wall);
+          put(dx,h+1,dz,roof);
+        }
+        put(0,1,0,59);
+      };
+      const pillar=(dx,dz,h,block)=>{for(let y=0;y<=h;y++)put(dx,y,dz,block)};
+      switch(feature){
+        case 'igloo':room(3,3,2,21,21);put(0,1,-3,0);break;
+        case 'cabin':room(3,3,3,30,31);put(0,1,-3,0);break;
+        case 'peakTower':case 'watchtower':
+          for(const p of [[-2,-2],[2,-2],[-2,2],[2,2]])pillar(...p,6,53);
+          for(let x=-3;x<=3;x++)for(let z=-3;z<=3;z++){put(x,5,z,11);if(Math.abs(x)===3||Math.abs(z)===3)put(x,6,z,53)}
+          put(0,0,0,53);put(0,1,0,53);break;
+        case 'shipwreck':case 'shoreRuins':case 'oceanRuins':
+          for(let x=-4;x<=4;x++)for(let z=-2;z<=2;z++){
+            if(Math.abs(x)===4||Math.abs(z)===2)put(x,0,z,feature==='shipwreck'?11:55);
+            else if(worldRand(cx+x,cz+z,20)>.52)put(x,0,z,feature==='shipwreck'?5:53);
+          }
+          if(feature==='shipwreck')pillar(0,0,6,5);else for(const x of [-3,3])pillar(x,0,2,53);
+          break;
+        case 'well':
+          for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++){put(x,0,z,24);if(Math.abs(x)===2||Math.abs(z)===2)put(x,1,z,24);else put(x,1,z,7)}
+          for(const x of [-2,2])for(const z of [-2,2])pillar(x,z,4,54);
+          for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++)put(x,4,z,24);
+          break;
+        case 'village':case 'savannaVillage':
+          room(3,3,3,feature==='village'?11:34,feature==='village'?53:35);
+          for(let x=-2;x<=2;x++)put(x,0,-5,61);
+          for(let x=-2;x<=2;x++)for(let z=4;z<=6;z++)put(x,0,z,60);
+          break;
+        case 'manor':room(4,4,5,52,31);for(const x of [-3,3])for(const z of [-3,3])pillar(x,z,5,5);break;
+        case 'pavilion':
+          for(const x of [-3,3])for(const z of [-3,3])pillar(x,z,4,40);
+          for(let x=-4;x<=4;x++)for(let z=-4;z<=4;z++)put(x,4,z,41);
+          for(let x=-3;x<=3;x++)for(let z=-3;z<=3;z++)put(x,0,z,11);break;
+        case 'shrine':
+          for(const x of [-2,2])for(const z of [-2,2])pillar(x,z,4,42);
+          for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++)put(x,4,z,43);
+          put(0,1,0,10);break;
+        case 'abandonedCamp':case 'camp':
+          for(let x=-3;x<=3;x++)for(let z=-3;z<=3;z++)if(Math.abs(x)===3||Math.abs(z)===3)put(x,0,z,11);
+          for(const x of [-3,3])for(const z of [-3,3])pillar(x,z,3,15);
+          for(let x=-3;x<=3;x++)for(let z=-3;z<=3;z++)if(Math.abs(x)+Math.abs(z)<5)put(x,3,z,feature==='camp'?31:13);
+          put(0,0,0,10);break;
+        case 'trailRuins':
+          for(let x=-4;x<=4;x++)for(let z=-3;z<=3;z++)if(worldRand(cx+x,cz+z,10)>.64)put(x,0,z,53);
+          for(const x of [-3,3])for(const z of [-2,2])pillar(x,z,worldRand(cx+x,cz+z,11)>.5?2:4,53);
+          break;
+        case 'desertTemple':case 'jungleTemple':
+          room(4,4,4,feature==='desertTemple'?24:53,feature==='desertTemple'?54:46);
+          for(const x of [-4,4])for(const z of [-4,4])pillar(x,z,6,feature==='desertTemple'?54:61);
+          put(0,0,0,10);break;
+        case 'mineshaft':
+          for(let x=-3;x<=3;x++)for(let z=-3;z<=3;z++)put(x,0,z,61);
+          for(let y=1;y<=4;y++)for(const x of [-3,3])put(x,y,0,5);
+          for(let x=-3;x<=3;x++)put(x,4,0,5);
+          for(let y=1;y<=4;y++)put(0,y,0,0);
+          break;
+        case 'ruinedPortal':
+          for(const x of [-2,2])for(let y=0;y<7;y++)if(y!==4)put(x,y,0,51);
+          for(let x=-2;x<=2;x++){put(x,0,0,51);if(x%2===0)put(x,6,0,51)}
+          put(0,1,2,10);break;
+        case 'bridge':
+          for(let x=-5;x<=5;x++)for(let z=-1;z<=1;z++)put(x,0,z,53);
+          for(let x=-5;x<=5;x++){put(x,1,-2,61);put(x,1,2,61)}break;
+        case 'swampHut':case 'witchHut':room(3,3,3,feature==='swampHut'?38:5,feature==='swampHut'?39:31);break;
+        case 'mushroomHut':room(3,3,3,57,48);break;
+      }
+    }
+    const structures=[];
+    for(let zoneId=0;zoneId<BIOMES.length;zoneId++){
+      const b=BIOMES[zoneId];if(!b.feature)continue;
+      const cx=Math.floor((zoneId%COLS+.5)*sx),cz=Math.floor((Math.floor(zoneId/COLS)+.5)*sz);
+      structureAt(b.feature,cx,cz);
+      structures.push({name:STRUCTURE_NAMES[b.feature],biome:b.name,x:cx,z:cz});
+    }
+    return {biomes:BIOMES,structures,elevations,terrainAt,columns:COLS,rows:ROWS};
+  }
+  window.MineWorldBiomes={COLS,ROWS,BIOMES,STRUCTURE_NAMES,zone,biomeAt,generate};
+})();
+
+</script>
 <script>
 /* MineWorld — original browser voxel sandbox; no Minecraft game code or third-party runtime. */
 (() => {
@@ -240,11 +678,19 @@
     $('start-btn').disabled = true;
     return;
   }
-  const W=64, D=64, H=27, SEA=7, STORAGE='mineworld-selfhost-v1';
+  const W=96, D=96, H=36, SEA=9, SPAWN=56, STORAGE='mineworld-selfhost-v1';
   const voxels = new Uint8Array(W*D*H);
-  const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace'];
+  const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace','Snow','Ice','Packed Ice','Sandstone','Terracotta','Red Sand','Red Terracotta','Podzol','Coarse Dirt','Spruce Log','Spruce Leaves','Birch Log','Birch Leaves','Acacia Log','Acacia Leaves','Jungle Log','Jungle Leaves','Mangrove Log','Mangrove Leaves','Cherry Log','Cherry Leaves','Pale Oak Log','Pale Oak Leaves','Cactus','Bamboo','Moss','Mud','Red Mushroom Cap','Brown Mushroom Cap','Netherrack','Obsidian','Dark Planks','Stone Bricks','Chiseled Sandstone','Prismarine','Copper','Clay','Deepslate','Lantern','Hay Bale','Cobblestone','Glow Lichen','Dripstone','Sculk'];
   const HOT=[1,2,3,5,12,13,14,15,11];
-  const HOTSETS=[[1,2,3,5,6,4,8,9,10],[11,12,13,14,15,18,19,20,9]];
+  const HOTSETS=[
+    [1,2,3,5,6,4,8,9,10],
+    [11,12,13,14,15,18,19,20,9],
+    [21,22,23,24,25,26,27,28,29],
+    [30,31,32,33,34,35,36,37,38],
+    [39,40,41,42,43,44,45,46,47],
+    [48,49,50,51,52,53,54,55,56],
+    [57,58,59,60,61,62,63,64,5]
+  ];
   const HOT9=[...HOTSETS[0]];
   let hotbarPage=0;
   const COLORS={1:[.36,.69,.28],2:[.52,.34,.22],3:[.52,.56,.57],4:[.85,.76,.50],5:[.48,.32,.18],6:[.28,.55,.23],7:[.26,.56,.82],8:[.72,.34,.25],9:[.62,.85,.90],10:[.93,.79,.33],11:[.65,.47,.27],12:[.74,.19,.16],13:[.90,.43,.10],14:[.89,.66,.18],15:[.59,.42,.31],16:[.68,.18,.28],17:[.73,.55,.35]};
@@ -257,7 +703,7 @@
     {n:[0,0,1],v:[[1,0,1],[1,1,1],[0,1,1],[0,0,1]],shade:.83},
     {n:[0,0,-1],v:[[0,0,0],[0,1,0],[1,1,0],[1,0,0]],shade:.80}
   ];
-  const player={x:32.5,y:16,z:32.5,vy:0,yaw:.4,pitch:-.12,ground:false,fly:false};
+  const player={x:SPAWN+.5,y:18,z:SPAWN+.5,vy:0,yaw:.4,pitch:-.12,ground:false,fly:false};
   const keys=new Set(); let seed=85721, started=false, paused=true, selection=0, frameCount=0, lastTime=0, meshCount=0, vbo=null, savedEdits=new Map(), dirtySave=false, saveTimer=0, aim=null, notifications=0, dayClock=0, deltaViewX=0, deltaViewY=0;
   let gameMode='creative',health=20,hunger=20,hungerDrain=0,hungerPulse=0,healPulse=0;
   const inventory=new Uint16Array(NAMES.length);
@@ -288,46 +734,15 @@
   const rand=(x,z,s=seed)=>{let n=Math.imul(x+307,374761393)^Math.imul(z+811,668265263)^Math.imul(s,1274126177);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295};
   const lerp=(a,b,t)=>a+(b-a)*t;
   function noise(x,z,scale){let px=x/scale,pz=z/scale,ix=Math.floor(px),iz=Math.floor(pz),fx=px-ix,fz=pz-iz;fx=fx*fx*(3-2*fx);fz=fz*fz*(3-2*fz);return lerp(lerp(rand(ix,iz),rand(ix+1,iz),fx),lerp(rand(ix,iz+1),rand(ix+1,iz+1),fx),fz)}
-  function terrain(x,z){let h=5.4+noise(x,z,22)*6.9+noise(x+340,z-70,8)*3.1+noise(x-65,z+200,4)*1.15;return clamp(Math.floor(h),3,H-9)}
+  // The Atlas module owns the 36-biome, seed-deterministic world-generation pass.
+  let worldGeneration=null;
+  function terrain(x,z){return worldGeneration?.terrainAt(x,z)??SEA+2}
   function generate(){
     voxels.fill(0);savedEdits=new Map();
-    for(let x=0;x<W;x++)for(let z=0;z<D;z++){
-      let top=terrain(x,z),beach=top<=SEA+1;
-      for(let y=0;y<=top;y++){let id=y===top?(beach?4:1):y>top-3?(beach?4:2):3;set(x,y,z,id)}
-      for(let y=top+1;y<=SEA;y++)set(x,y,z,7);
-    }
-    // Thin winding cave pockets and embedded ore veins; never remove bottom layer.
-    for(let x=2;x<W-2;x++)for(let z=2;z<D-2;z++)for(let y=2;y<H-2;y++){
-      if(get(x,y,z)!==3)continue;
-      const cavern=noise(x+90+y*3,z+110-y*3,10)*.55+noise(x-y*2,z+y*3,5)*.45;
-      if(y<8&&cavern>.79){set(x,y,z,0);continue;}
-      const ore=rand(x*13+y*7,z*19+y*11);
-      if(ore>.968&&y<13)set(x,y,z,18);
-      else if(ore<.018&&y<9)set(x,y,z,19);
-    }
-    for(let x=4;x<W-4;x++)for(let z=4;z<D-4;z++){
-      let top=terrain(x,z); if(top<=SEA+1||get(x,top,z)!==1||rand(x*17,z*11)>.018||(Math.abs(x-32)<5&&Math.abs(z-32)<5))continue;
-      let height=3+Math.floor(rand(x*19,z*23)*3);
-      const poplar=noise(x+240,z-140,34)>.49;
-      if(poplar)height+=2;
-      const canopy=poplar?[12,13,14][Math.floor(rand(x*23,z*31)*3)]:6;
-      for(let y=top+1;y<=top+height;y++)set(x,y,z,poplar?15:5);
-      for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)for(let dy=-1;dy<=2;dy++){
-        let distance=Math.abs(dx)+Math.abs(dz)+Math.abs(dy)*.65;
-        if(distance>3.6||(Math.abs(dx)===2&&Math.abs(dz)===2)||rand(x+dx*4,z+dz*4)<.07)continue;
-        let xx=x+dx,zz=z+dz,yy=top+height+dy;
-        if(get(xx,yy,zz)===0)set(xx,yy,zz,canopy);
-      }
-    }
-    for(let x=3;x<W-3;x++)for(let z=3;z<D-3;z++){
-      const top=terrain(x,z);
-      if(top>SEA+1&&get(x,top,z)===1&&get(x,top+1,z)===0){
-        const v=rand(x*109,z*71);
-        if(v>.991)set(x,top+1,z,16);
-        else if(v<.009)set(x,top+1,z,17);
-      }
-    }
-    const top=terrain(32,32); player.x=32.5;player.z=32.5;player.y=top+2.5;player.vy=0;player.pitch=-.14;player.yaw=.6;player.fly=false;selection=0;
+    worldGeneration=window.MineWorldBiomes.generate({W,D,H,SEA,seed,set,get,noise,rand,clamp});
+    const top=terrain(SPAWN,SPAWN);
+    player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=top+2.5;
+    player.vy=0;player.pitch=-.14;player.yaw=.6;player.fly=false;selection=0;
     mobs=[];mobSerial=0;mobSpawnClock=0;spawnWildlife();
     buildMesh();updateHotbar();updateFlyButton();markSave();
   }
@@ -414,8 +829,14 @@
   }
   function performPlace(){if(paused||!aim||!aim.previous)return;let p=aim.previous,b=HOT9[selection];if(!inside(p.x,p.y,p.z)||get(p.x,p.y,p.z)!==0)return;if(gameMode==='survival'&&inventory[b]===0){toast('Mine resources to collect '+NAMES[b]);return;}if(setBlock(p.x,p.y,p.z,b)){if(gameMode==='survival'){inventory[b]--;updateHotbar();}toast('Placed '+NAMES[b]);timers.place=.2}}
   function markSave(){dirtySave=true}
-  function save(){if(window.MineWorldMultiplayer?.isShared())return;try{const edits=[...savedEdits.entries()];localStorage.setItem(STORAGE,JSON.stringify({seed,edits,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,version:3}));dirtySave=false;$('status').textContent='● Saved locally'}catch(e){$('status').textContent='● Storage unavailable'}}
-  function load(){try{let data=localStorage.getItem(STORAGE);if(!data)return false;let s=JSON.parse(data);if(!s||!Number.isInteger(s.seed)||!Array.isArray(s.edits))return false;seed=s.seed;generate();savedEdits.clear();for(let [i,b] of s.edits){if(Number.isInteger(i)&&i>=0&&i<voxels.length&&Number.isInteger(b)&&b>=0&&b<NAMES.length){voxels[i]=b;savedEdits.set(i,b)}}if(s.gameMode==='survival')gameMode='survival';if(['peaceful','easy','normal','hard'].includes(s.difficulty))difficulty=s.difficulty;if(Number.isFinite(s.dayClock))dayClock=s.dayClock; if(s.bag&&typeof s.bag==='object')for(const k of Object.keys(bag))bag[k]=clamp(Math.floor(Number(s.bag[k])||0),0,999);if(s.tools){for(const k of ['pickaxe','sword'])if(Object.hasOwn(toolLevels,s.tools[k]))tools[k]=s.tools[k]}if(['pickaxe','sword','none'].includes(s.equipped))equipped=s.equipped;if(Number.isFinite(s.health))health=clamp(s.health,1,20);if(Number.isFinite(s.hunger))hunger=clamp(s.hunger,0,20);if(Array.isArray(s.inventory))for(let i=0;i<inventory.length;i++)inventory[i]=Math.min(999,Math.max(0,Number(s.inventory[i])||0));updateModeButton();updateHotbar();updateSurvivalHUD();if(s.player){for(let k of ['x','y','z','yaw','pitch'])if(Number.isFinite(s.player[k]))player[k]=s.player[k];player.fly=gameMode==='creative'&&!!s.player.fly;player.x=clamp(player.x,.7,W-.7);player.z=clamp(player.z,.7,D-.7);player.y=clamp(player.y,3,H-3)}buildMesh();updateFlyButton();dirtySave=false;return true}catch(e){return false}}
+  function save(){if(window.MineWorldMultiplayer?.isShared())return;try{const edits=[...savedEdits.entries()];localStorage.setItem(STORAGE,JSON.stringify({seed,edits,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,version:4}));dirtySave=false;$('status').textContent='● Saved locally'}catch(e){$('status').textContent='● Storage unavailable'}}
+  function load(){try{let data=localStorage.getItem(STORAGE);if(!data)return false;let s=JSON.parse(data);if(!s||!Number.isInteger(s.seed)||!Array.isArray(s.edits))return false;
+      if((s.version||0)<4&&!localStorage.getItem('mineworld-backup-before-biomes'))localStorage.setItem('mineworld-backup-before-biomes',data);
+      seed=s.seed;generate();savedEdits.clear();for(let [i,b] of s.edits){
+      if((s.version||0)<4){const oldX=Math.floor(i/(64*27)),oldZ=Math.floor(i/27)%64,oldY=i%27;
+        if(oldX<0||oldX>=64||oldZ<0||oldZ>=64||oldY<0||oldY>=27)continue;
+        i=idx(oldX,oldY,oldZ);
+      }if(Number.isInteger(i)&&i>=0&&i<voxels.length&&Number.isInteger(b)&&b>=0&&b<NAMES.length){voxels[i]=b;savedEdits.set(i,b)}}if(s.gameMode==='survival')gameMode='survival';if(['peaceful','easy','normal','hard'].includes(s.difficulty))difficulty=s.difficulty;if(Number.isFinite(s.dayClock))dayClock=s.dayClock; if(s.bag&&typeof s.bag==='object')for(const k of Object.keys(bag))bag[k]=clamp(Math.floor(Number(s.bag[k])||0),0,999);if(s.tools){for(const k of ['pickaxe','sword'])if(Object.hasOwn(toolLevels,s.tools[k]))tools[k]=s.tools[k]}if(['pickaxe','sword','none'].includes(s.equipped))equipped=s.equipped;if(Number.isFinite(s.health))health=clamp(s.health,1,20);if(Number.isFinite(s.hunger))hunger=clamp(s.hunger,0,20);if(Array.isArray(s.inventory))for(let i=0;i<inventory.length;i++)inventory[i]=Math.min(999,Math.max(0,Number(s.inventory[i])||0));updateModeButton();updateHotbar();updateSurvivalHUD();if(s.player){for(let k of ['x','y','z','yaw','pitch'])if(Number.isFinite(s.player[k]))player[k]=s.player[k];player.fly=gameMode==='creative'&&!!s.player.fly;player.x=clamp(player.x,.7,W-.7);player.z=clamp(player.z,.7,D-.7);player.y=clamp(player.y,3,H-3)}buildMesh();updateFlyButton();dirtySave=false;return true}catch(e){return false}}
   function toggleInventory(){hotbarPage=(hotbarPage+1)%HOTSETS.length;HOT9.splice(0,HOT9.length,...HOTSETS[hotbarPage]);selection=0;updateHotbar();toast(hotbarPage?'Nature & extras':'Classic blocks');}
   function updateHotbar(){const root=$('hotbar');root.innerHTML='';HOT9.forEach((id,i)=>{const button=document.createElement('button');button.type='button';button.className='hot-item'+(i===selection?' active':'');button.setAttribute('aria-label',NAMES[id]);const tile=id*3,tx=((tile%8)/7*100).toFixed(2),ty=(Math.floor(tile/8)/7*100).toFixed(2),image=window.MineWorldAtlas.dataURL;
     button.innerHTML='<small>'+(gameMode==='survival'?inventory[id]:i+1)+'</small><div class="swatch" style="background-color:'+SWATCH[id]+';background-image:url('+image+');background-size:800% 800%;background-position:'+tx+'% '+ty+'%"></div><span>'+NAMES[id]+'</span>';button.addEventListener('pointerdown',e=>e.stopPropagation());button.addEventListener('click',()=>{selection=i;updateHotbar();toast(NAMES[HOT9[selection]])});root.appendChild(button)})}
@@ -499,7 +920,7 @@
     markSave();toast('Difficulty: '+level[0].toUpperCase()+level.slice(1));
   }
   function respawn(){
-    player.x=32.5;player.z=32.5;player.y=terrain(32,32)+3;
+    player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=terrain(SPAWN,SPAWN)+3;
     player.vy=0;player.fly=false;health=20;hunger=18;
     updateSurvivalHUD();toast('You respawned at your world spawn');
   }
@@ -541,7 +962,7 @@
       player.vy=0;
       if(player.ground){let snap=player.y;for(let i=0;i<40;i++){let low=snap-.025;if(blockAtFeet(player.x,low,player.z))break;snap=low}player.y=snap}
     }
-    if(player.y<1){player.x=32.5;player.z=32.5;player.y=terrain(32,32)+2;player.vy=0}
+    if(player.y<1){player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=terrain(SPAWN,SPAWN)+2;player.vy=0}
   }
   // Autonomous creatures are original low-poly models and simple local AI.
   // Intentionally not claimed to be server-authoritative multiplayer entities.
@@ -561,8 +982,8 @@
   function spawnWildlife(){
     const types=['cow','pig','sheep','chicken'];
     for(let i=0;i<12;i++){
-      const x=3+rand(i*29,seed+i*3)*58,z=3+rand(i*17,seed+i*11)*58;
-      if(Math.hypot(x-32,z-32)>6)spawnOne(types[i%4],x,z);
+      const x=3+rand(i*29,seed+i*3)*(W-6),z=3+rand(i*17,seed+i*11)*(D-6);
+      if(Math.hypot(x-SPAWN,z-SPAWN)>6)spawnOne(types[i%4],x,z);
     }
   }
   function nightTime(){return Math.sin(dayClock*.015-.9)<-.18}
@@ -588,7 +1009,7 @@
           }
         }
         if(mobs.filter(m=>SPECIES[m.kind].kind==='passive').length<9){
-          spawnOne(['cow','pig','sheep','chicken'][Math.floor(Math.random()*4)],3+Math.random()*58,3+Math.random()*58);
+          spawnOne(['cow','pig','sheep','chicken'][Math.floor(Math.random()*4)],3+Math.random()*(W-6),3+Math.random()*(D-6));
         }
       }
     }
@@ -650,7 +1071,7 @@
     const fresh=[];
     for(const v of data){
       if(!v||!Number.isInteger(v.id)||v.id<1||!SPECIES[v.kind])continue;
-      if(![v.x,v.y,v.z,v.hp].every(Number.isFinite)||v.x<0||v.x>64||v.y<0||v.y>30||v.z<0||v.z>64||v.hp<=0||v.hp>40)continue;
+      if(![v.x,v.y,v.z,v.hp].every(Number.isFinite)||v.x<0||v.x>W||v.y<0||v.y>H+3||v.z<0||v.z>D||v.hp<=0||v.hp>40)continue;
       fresh.push({id:v.id,kind:v.kind,x:v.x,y:v.y,z:v.z,hp:v.hp,heading:0,step:2,attack:2,anger:0});
     }
     mobs=fresh;return true;
@@ -800,9 +1221,40 @@
     drawMobs();
     drawHighlight(aimMob?null:aim);
     $('target-name').textContent=aimMob?'⚔ '+SPECIES[aimMob.kind].name+' · ♥ '+Math.ceil(aimMob.hp):aimPlayer?'⚔ '+aimPlayer.name+' · PvP enabled':aim?'⛏ '+NAMES[aim.b]+'  ·  '+aim.x+', '+aim.y+', '+aim.z:'Aim at a block or creature';
-    if((frameCount++%18)===0){$('coord-readout').textContent='X '+player.x.toFixed(0)+' · Y '+player.y.toFixed(0)+' · Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
+    if((frameCount++%18)===0){$('coord-readout').textContent='🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z,W,D).name+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
     saveTimer+=dt;if(saveTimer>8){saveTimer=0;if(dirtySave)save()}
   }
+  // Biome travel stays deterministic and works in the same peer-to-peer world.
+  let atlasWasPlaying=false;
+  const atlasGrid=$('atlas-grid');
+  const classifyBiome=b=>b.water?'water':/snow|frozen|ice|peak|grove|taiga|stony/i.test(b.name)?'cold':/desert|badlands|savanna|beach/i.test(b.name)?'arid':/mushroom|pale|cherry/i.test(b.name)?'mystic':'lush';
+  window.MineWorldBiomes.BIOMES.forEach((b,i)=>{
+    const tile=document.createElement('button');tile.type='button';tile.className='atlas-tile';tile.dataset.climate=classifyBiome(b);
+    const title=document.createElement('strong');title.textContent=b.name;tile.appendChild(title);
+    const landmark=document.createElement('small');landmark.textContent=b.feature?'🏛 '+window.MineWorldBiomes.STRUCTURE_NAMES[b.feature]:b.tree==='none'?'⛰ Explore landscape':'🌳 '+b.tree.replace(/[A-Z]/g,c=>' '+c.toLowerCase());
+    tile.appendChild(landmark);
+    tile.addEventListener('click',()=>{
+      const zID=Math.floor(i/window.MineWorldBiomes.COLS),xID=i%window.MineWorldBiomes.COLS;
+      const x=Math.floor((xID+.22)*W/window.MineWorldBiomes.COLS),z=Math.floor((zID+.22)*D/window.MineWorldBiomes.ROWS);
+      player.x=x+.5;player.z=z+.5;player.y=topAt(x,z)+3;player.vy=0;player.fly=false;
+      updateFlyButton();markSave();$('atlas-modal').classList.add('hidden');
+      start();toast('🧭 '+b.name+(b.feature?' · '+window.MineWorldBiomes.STRUCTURE_NAMES[b.feature]:''));
+    });
+    atlasGrid.appendChild(tile);
+  });
+  function openAtlas(){
+    atlasWasPlaying=started&&!paused;paused=true;keys.clear();movement.x=movement.y=0;
+    if(document.pointerLockElement)document.exitPointerLock();
+    const current=window.MineWorldBiomes.zone(player.x,player.z,W,D);
+    for(const [i,t] of [...atlasGrid.children].entries())t.classList.toggle('current',i===current);
+    $('atlas-modal').classList.remove('hidden');
+  }
+  function closeAtlas(){
+    $('atlas-modal').classList.add('hidden');
+    if(atlasWasPlaying)start();
+  }
+  for(const id of ['atlas-toggle','atlas-from-home','atlas-from-pause'])$(id).addEventListener('click',openAtlas);
+  $('close-atlas').addEventListener('click',closeAtlas);
   $('inventory-toggle').addEventListener('click',toggleInventory);
   $('start-btn').addEventListener('click',()=>{setGameMode('creative');start()});
   $('survival-start').addEventListener('click',()=>{setGameMode('survival');start()});
@@ -869,7 +1321,7 @@
     getMobs:mobSnapshot, setMobs:syncMobs, applyMobHit, grantLoot,
     applyDamage:(n,cause)=>{if(Number.isInteger(n)&&n>0&&n<=20)damage(n,String(cause||'Combat').slice(0,40))},
     getMode:()=>gameMode,
-    getSnapshot:()=>({seed,edits:[...savedEdits.entries()],dayClock,mobs:mobSnapshot()}),
+    getSnapshot:()=>({seed,version:4,edits:[...savedEdits.entries()],dayClock,mobs:mobSnapshot()}),
     resetPublicWorld:(newSeed)=>{
       if(!Number.isInteger(newSeed)||newSeed<1||newSeed>99999999)return false;
       seed=newSeed;generate();dirtySave=false;return true;
