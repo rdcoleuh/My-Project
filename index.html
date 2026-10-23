@@ -661,7 +661,7 @@
     try{
       const data=localStorage.getItem(STORAGE);if(!data)return false;
       const s=JSON.parse(data);if(!s||!Number.isInteger(s.seed)||!Array.isArray(s.edits))return false;
-      if((s.version||0)<5&&!localStorage.getItem('mineworld-backup-before-10k'))localStorage.setItem('mineworld-backup-before-10k',data);
+      if((s.version||0)<5){try{if(!localStorage.getItem('mineworld-backup-before-10k'))localStorage.setItem('mineworld-backup-before-10k',data);}catch(e){console.warn('Save backup could not be stored; continuing migration',e);}}
       seed=s.seed;seedLabel=String(s.seedLabel||s.seed);generate();savedEdits.clear();
       const legacy=(s.version||0)<5,oldW=(s.version||0)<4?64:96,oldH=(s.version||0)<4?27:36;
       for(let [i,b] of s.edits){
