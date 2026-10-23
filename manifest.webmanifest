@@ -1,0 +1,19 @@
+{
+  "name": "Minecraft Web — Browser Experiment",
+  "short_name": "Minecraft Web",
+  "description": "Unofficial launcher for experimental Minecraft browser clients on iPhone, iPad and desktop.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e1711",
+  "theme_color": "#172a1b",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
