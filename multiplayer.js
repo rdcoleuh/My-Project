@@ -12,9 +12,9 @@
   const attackTimes=new Map(), hitTimes=new Map();
   const MAX_GUESTS = 6;
   const PUBLIC = Object.freeze({
-    evergreen:{name:'Evergreen',id:'mineworld-pub-v21-evergreen',seed:17492331},
-    sunset:{name:'Sunset Valley',id:'mineworld-pub-v21-sunset',seed:8342193},
-    highlands:{name:'Highlands',id:'mineworld-pub-v21-highlands',seed:5173268}
+    evergreen:{name:'Evergreen',id:'mineworld-pub-v30-evergreen',seed:17492331},
+    sunset:{name:'Sunset Valley',id:'mineworld-pub-v30-sunset',seed:8342193},
+    highlands:{name:'Highlands',id:'mineworld-pub-v30-highlands',seed:5173268}
   });
   const publicParam = new URL(location.href).searchParams.get('server');
   const roomParam = new URL(location.href).searchParams.get('room');
@@ -90,13 +90,13 @@
     if(!data||typeof data!=='object')return null;
     const x=Number(data.x),y=Number(data.y),z=Number(data.z);
     if(![x,y,z].every(Number.isFinite))return null;
-    if(x<0||x>96||y<-2||y>43||z<0||z>96)return null;
+    if(x<0||x>10000||y<-2||y>48||z<0||z>10000)return null;
     return {x,y,z,yaw:Number.isFinite(data.yaw)?data.yaw:0, pitch:Number.isFinite(data.pitch)?data.pitch:0,mode:data.mode==='survival'?'survival':'creative',name:String(data.name||'Friend').replace(/[<>]/g,'').slice(0,16)};
   }
   function receiveHostData(conn,message) {
     if(!message||typeof message!=='object'||conn.peer!==host?.peer)return;
     if(message.t==='snapshot') {
-      if(bridge.acceptSnapshot(message.world)) {
+      if(message.world?.version===5 && message.world?.worldSize===10000 && bridge.acceptSnapshot(message.world)) {
         ready=true;pvp=!!message.pvp;peers.clear();
         for(const p of message.players||[])if(p && p.id && p.id!==peer.id){const state=cleanPlayer(p.state);if(state)peers.set(p.id,state)}
         setStatus(`Connected to ${publicWorld?PUBLIC[publicWorld].name:'room'}! ${publicWorld?'Public world is live.':'Shared world loaded.'} Tap Back to Game, then Play.`);
@@ -116,7 +116,7 @@
     }
     if(message.t==='leave'){peers.delete(message.id);updateUI();}
     if(message.t==='chat'){talk(message.name,message.text);}
-    if(message.t==='world' && bridge.acceptSnapshot(message.world)) {
+    if(message.t==='world' && message.world?.version===5 && message.world?.worldSize===10000 && bridge.acceptSnapshot(message.world)) {
       talk('','Host generated a new world!',true);
     }
     if(message.t==='reject'){setStatus('Host room is full or unavailable.');host?.close();}
@@ -124,7 +124,7 @@
   function receiveGuestData(conn,message) {
     if(!message||typeof message!=='object'||!sockets.has(conn.peer))return;
     if(message.t==='hello') {
-      const existing=peers.get(conn.peer)||{x:56,y:19,z:56,name:'Friend'};
+      const existing=peers.get(conn.peer)||{x:5000,y:22,z:5000,name:'Friend'};
       existing.name=String(message.name||'Friend').replace(/[<>]/g,'').trim().slice(0,16)||'Friend';
       peers.set(conn.peer,existing);
       send(conn,{t:'snapshot',world:bridge.getSnapshot(),pvp,players:[{id:peer.id,state:{...bridge.getPlayer(),name:label()}},...Array.from(peers.entries()).filter(([id])=>id!==conn.peer).map(([id,state])=>({id,state}))]});
@@ -162,7 +162,8 @@
     const level={none:0,wood:1,stone:2,iron:3}[data.weapon]||0;
     return {mode:'survival',damage:Math.max(1,kind==='sword'?2+level*3:kind==='pickaxe'?1+level:1.5)};
   }
-  // Host checks range, cooldowns, and valid mob IDs; not a hardened anti-cheat server.
+  // A host verifies proximity, rate limits, and authoritative mob IDs.
+  // This is basic validation, not a hardened anti-cheat system.
   function processMobAttack(from,message){
     if(role!=='host')return false;
     const attacker=peers.get(from),conn=sockets.get(from),now=performance.now();
