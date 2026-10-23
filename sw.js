@@ -1,5 +1,5 @@
-const VERSION='mineworld-survival-separate-worlds-v35-20261023-v9';
-const FILES=['./','./index.html','./multiplayer.js','./world-chunks.js','./nether-world.js','./overworld-ores.js','./end-world.js','./structure-loot.js','./villages.js','./manifest.webmanifest','./favicon.svg','./apple-touch-icon.png'];
+const VERSION='mineworld-backpack-crafting-rides-v36-20261023-v10';
+const FILES=['./','./index.html','./multiplayer.js','./world-chunks.js','./survival-catalog.js','./nether-world.js','./overworld-ores.js','./end-world.js','./structure-loot.js','./villages.js','./manifest.webmanifest','./favicon.svg','./apple-touch-icon.png'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(VERSION).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x.startsWith('mineworld-')&&x!==VERSION).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
