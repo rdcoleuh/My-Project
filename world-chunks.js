@@ -25,7 +25,7 @@
    let v=2166136261;for(const char of raw){v=Math.imul(v^char.charCodeAt(0),16777619)>>>0;}
    return (v%99999998)+1;
  }
- function setSeed(seed){worldSeed=clamp((Math.floor(Number(seed))||85721),1,99999999);return worldSeed;}
+ function setSeed(seed){worldSeed=clamp((Math.floor(Number(seed))||85721),1,99999999);window.MineWorldOres?.setSeed(worldSeed);return worldSeed;}
  function zone(x,z){
    const rx=Math.floor(x/REGION),rz=Math.floor(z/REGION);
    // Every 6x6 set of regions includes all 36 biomes, in a seed-dependent order.
@@ -125,8 +125,6 @@
        let b=y===top?biome.top:y>=top-3?biome.under:3;
        if(y<top-5&&y>3)b=y<8?58:b;
        if(/Badlands/.test(biome.name)&&y<top&&y>top-8)b=(y%4===0?27:25);
-       // Rock pockets and ore bands are deterministic, not generated from a preloaded world.
-       if(y>2&&y<top-3){const ore=rnd(x*19+y*7,z*13+y*11,901);if(ore>.992)b=19;else if(ore>.974)b=18;}
        put(x,y,z,b);
      }
      for(let y=top+1;y<=SEA;y++)put(x,y,z,biome.name==='Frozen Ocean'?22:7);
@@ -136,6 +134,9 @@
        if(cave>.745)put(x,y,z,0);
      }
    }
+   // Seeded mineral veins are distributed across depth bands and neighboring chunk edges.
+   // This runs after cave carving and before structures; saved edits are reapplied last.
+   window.MineWorldOres.generate({data,cx,cz,H,sea:SEA,biomeAt,terrainAt,protectedEdits:null});
    // Tree placement samples beyond the edges so canopy crosses adjacent chunks consistently.
    const stampTree=(x,z,kind)=>{
      const top=terrainAt(x,z,SEA,H),base=top+1;
@@ -198,6 +199,29 @@
      for(let dy=0;dy<3;dy++)put(ax,ty+dy,az-r,0);
      put(ax,ty+3,az-r,9);put(ax,ty+5,az,59);
      for(let dy=1;dy<3;dy++)for(const side of [-1,1])put(ax+side*r,ty+dy,az,9);
+     // Each generated structure has a single seed-specific chest.
+     put(ax+1,ty,az+1,119);
+     if(feature==='village'||feature==='savannaVillage'){
+       // Village farms: moist tilled soil, an irrigation trench, four crop kinds.
+       // Chunk clipping in put() makes the field deterministic across seams.
+       for(let fx=ax+7;fx<=ax+15;fx++)for(let fz=az-6;fz<=az+6;fz++){
+         for(let y=ty-2;y<ty;y++)put(fx,y,fz,2);
+         const water=(fx===ax+11);
+         put(fx,ty,fz,water?7:138);
+         if(!water){
+           const crop=(Math.floor((fz-(az-6))/4)%4);
+           const stage=(hash(fx,fz,301)%4);
+           put(fx,ty+1,fz,[139,143,147,151][crop]+stage);
+         }
+       }
+       // A workstation for each of the 13 working professions.
+       const stations=[155,156,157,158,159,160,161,162,163,164,165,166,167];
+       stations.forEach((block,j)=>{
+         const sx=ax-7+(j%7)*2,sz=az+8+Math.floor(j/7)*3;
+         const sy=Math.max(ty,terrainAt(sx,sz,SEA,H)+1);
+         put(sx,sy,sz,block);
+       });
+     }
    }
    // User edits always override generated terrain and structures, even when unloaded.
    if(edits && edits.size){
