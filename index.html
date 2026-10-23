@@ -183,8 +183,13 @@ body.in-nether #game-wrap{background:#290f19}
 .nether-mob-grid-button:focus-visible{outline:3px solid #f1c99e}
 @media(max-width:560px){#nether-mob-grid{grid-template-columns:repeat(3,1fr)}.nether-tools{grid-template-columns:1fr}}
 @media(max-width:680px){.nether-biomes{grid-template-columns:repeat(2,1fr)}.nether-biome{min-height:73px}.nether-biome span{font-size:23px}#dimension-indicator{top:58px;right:10px}}
+
+.end-page{max-height:94dvh;overflow:auto;text-align:center}.in-end #game-wrap{background:#100d1e}.end-page .main-button{background:#c7b2ff;border-color:#e0d8ff;color:#1a1133}.end-page .nether-biome{background:#35284b;color:#fff;border:1px solid #8a67b0}
+.village-page,.trade-page{max-height:94dvh;overflow-y:auto;width:min(96vw,690px);text-align:left;padding:clamp(14px,3vw,25px)}.village-page h2,.trade-page h2{font-size:clamp(25px,5vw,33px);margin:9px 0}.village-page h3{font-size:15px;margin:15px 0 7px;color:#d9f1bd}.village-page p,.trade-page p{font-size:12px;margin:8px 0;color:#cbe3ca}.village-professions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.village-professions button{background:#254b34;border:1px solid #638a69;border-radius:8px;color:#f6ffe8;padding:9px 8px;text-align:left;min-height:65px}.village-professions button strong{display:block;font-size:12px}.village-professions button small{display:block;font-size:10px;color:#c6e9cb;margin-top:3px}.farm-tools{display:flex;flex-wrap:wrap;gap:7px}.farm-tools button{border:1px solid #739e70;border-radius:8px;background:#31543a;color:#f7ffe9;padding:10px 12px;font-size:12px}.trade-offers{display:flex;flex-direction:column;gap:8px;max-height:53vh;overflow-y:auto}.trade-offer{display:flex;align-items:center;gap:9px;padding:10px;border:1px solid #6d9a6e;border-radius:9px;background:#233b2a;color:#f4ffe6;text-align:left}.trade-offer span{flex:1}.trade-offer strong{font-size:13px;display:block}.trade-offer small{font-size:11px;color:#c9ddc5;display:block}.trade-offer:disabled{opacity:.48}.trade-level{font-size:11px;color:#bbefa7;font-weight:850;letter-spacing:.08em;padding:10px 4px 2px}
+@media(max-width:560px){.village-professions{grid-template-columns:repeat(2,minmax(0,1fr))}.top-buttons{gap:3px}.top-buttons .ui-button.small{padding:9px 8px;font-size:11px}.trade-page{padding:14px}}
+.chest-contents{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin:10px 0}.chest-contents>div{background:#263b2a;border:1px solid #577a5d;border-radius:8px;padding:9px 10px;font-size:12px;color:#e9ffe0}
 </style>
-<title>MineWorld 3.0 — 10,000 × 10,000 Seeded Worlds</title>
+<title>MineWorld 3.4 — Villages, Survival & The End</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -192,7 +197,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="sky-decor" aria-hidden="true"><div class="sun"></div><div class="cloud cloud1"></div><div class="cloud cloud2"></div></div>
   <div id="top-ui">
     <div class="title-mark"><div class="block-symbol"></div><div><strong>MINEWORLD</strong><small>INDEPENDENT BLOCK SANDBOX</small></div></div>
-    <div class="top-buttons"><div id="status" class="status">● World loaded</div><button id="inventory-toggle" class="ui-button small">▣ Blocks</button><button id="portal-toggle" class="ui-button small" title="Travel between the Overworld and Nether" aria-label="Nether portal">🔥 Nether</button><button id="atlas-toggle" class="ui-button small" aria-label="Biome atlas and landmarks" title="Explore biomes and structures">🧭</button><button id="bag-toggle" class="ui-button small">🎒 Gear</button><button id="friends-toggle" class="ui-button small">👥 Friends <span id="online-count">0</span></button>
+    <div class="top-buttons"><div id="status" class="status">● World loaded</div><button id="inventory-toggle" class="ui-button small">▣ Blocks</button><button id="end-toggle" class="ui-button small" type="button">✦ End</button><button id="village-toggle" class="ui-button small" type="button" title="Villages, trading and farming">🏘</button><button id="portal-toggle" class="ui-button small" title="Travel between the Overworld and Nether" aria-label="Nether portal">🔥 Nether</button><button id="atlas-toggle" class="ui-button small" aria-label="Biome atlas and landmarks" title="Explore biomes and structures">🧭</button><button id="bag-toggle" class="ui-button small">🎒 Gear</button><button id="friends-toggle" class="ui-button small">👥 Friends <span id="online-count">0</span></button>
     <button id="menu-toggle" class="ui-button small" aria-label="Open game menu">☰ Menu</button></div>
   </div>
   <div id="crosshair" aria-hidden="true"></div>
@@ -224,7 +229,7 @@ body.in-nether #game-wrap{background:#290f19}
         <div class="mode-card creative"><div class="mode-illustration" aria-hidden="true"></div>
           <div class="mode-caption">Unlimited building</div><h2>✦ Creative</h2>
           <p>Build anything with unlimited blocks, explore freely and fly around your world.</p>
-          <button id="nether-from-home" class="ui-button nether-accent" style="width:100%;margin-bottom:10px">🔥 Enter the Nether · New dimension</button>
+          <button id="end-from-home" class="ui-button" style="width:100%;margin-bottom:10px">✦ Explore the End</button><button id="village-from-home" class="ui-button" style="width:100%;margin-bottom:10px">🏘 Villages, Trades & Farming</button><button id="nether-from-home" class="ui-button nether-accent" style="width:100%;margin-bottom:10px">🔥 Enter the Nether · New dimension</button>
           <button id="atlas-from-home" class="ui-button" style="width:100%;margin-bottom:12px">🧭 Explore biome atlas &amp; structures</button>
       <button id="start-btn" class="main-button" type="button">▶ PLAY CREATIVE</button>
         </div>
@@ -245,7 +250,7 @@ body.in-nether #game-wrap{background:#290f19}
       <p>Resume exploring, switch between Creative and Survival, or return to the home screen.</p>
       <button class="main-button" id="resume-btn">▶ &nbsp; Resume Game</button>
       <button id="home-btn" class="ui-button" style="width:100%;margin-top:10px">⌂ Home Screen · Choose Mode</button>
-      <button id="nether-from-pause" class="ui-button nether-accent" style="width:100%;margin-top:10px">🔥 Nether Portals &amp; Biomes</button>
+      <button id="end-from-pause" class="ui-button" style="width:100%;margin-top:10px">✦ End Portal & Dragon</button><button id="village-from-pause" class="ui-button" style="width:100%;margin-top:10px">🏘 Villagers & Farming</button><button id="nether-from-pause" class="ui-button nether-accent" style="width:100%;margin-top:10px">🔥 Nether Portals &amp; Biomes</button>
       <button id="atlas-from-pause" class="ui-button" style="width:100%;margin-top:10px">🧭 Biomes, Trees &amp; Structures</button>
       <button id="pause-friends" class="ui-button" style="width:100%;margin-top:10px">🌐 Public servers / Friends</button>
       <div class="menu-actions"><button id="fly-btn" class="ui-button">✦ Flying: Off</button><button id="save-btn" class="ui-button">↓ Save World</button></div>
@@ -258,9 +263,9 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="gear-panel" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Inventory and crafting">
     <section class="modal gear-modal">
       <div class="kicker">SURVIVAL · INVENTORY</div><h2>🎒 Gear & Crafting</h2>
-      <p>Gather wood, stone, coal, and iron. Craft your tools, cook food, and survive the night.</p>
+      <p>Mine ores and ancient debris, smelt Netherite scraps, upgrade your gear, and collect one-time treasures from generated structures.</p>
       <div id="resources-list" class="resources-list" aria-live="polite"></div>
-      <div class="gear-options"><button id="gear-pickaxe" class="ui-button">⛏ Pickaxe</button><button id="gear-sword" class="ui-button">⚔ Sword</button><button id="gear-none" class="ui-button">✊ Hands</button></div>
+      <div class="gear-options"><button id="gear-pickaxe" class="ui-button">⛏ Pickaxe</button><button id="gear-sword" class="ui-button">⚔ Sword</button><button id="gear-hoe" class="ui-button">🌾 Hoe</button><button id="gear-none" class="ui-button">✊ Hands</button></div>
       <div id="gear-current" class="gear-current"></div>
       <div class="recipes" id="recipes"></div>
       <button id="close-gear" class="main-button">Return to World</button>
@@ -306,7 +311,7 @@ body.in-nether #game-wrap{background:#290f19}
       <p>Explore all 36 themed regions in this miniature Overworld, with distinct trees, terrain and generated structures. Tap a biome to travel there.</p>
       <div class="atlas-counts"><span>🌲 36 Biome Types</span><span>🏛 Seeded Structures</span><span>🕳 3 Underground Types</span></div>
       <div id="atlas-grid" class="atlas-grid" role="list" aria-label="Travel to a biome"></div>
-      <p class="atlas-note">The atlas finds real regions across a 10,000 × 10,000 world. The same seed produces the same world for every player. The Nether is accessible using 🔥 Nether. The End is not included yet.</p>
+      <p class="atlas-note">The atlas finds real regions across a 10,000 × 10,000 world. The same seed produces the same world for every player. The Nether and End are accessible in the main and pause menus.</p>
       <button id="close-atlas" class="main-button" type="button">Back to World</button>
     </section>
   </div>
@@ -326,14 +331,36 @@ body.in-nether #game-wrap{background:#290f19}
       <p class="note">Original MineWorld-style Nether. Mob AI, structures and mechanics are simplified; this is not Mojang's source code. In public rooms the host coordinates shared creatures while in the same dimension.</p>
     </section>
   </div>
-  <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v3.1 · THE NETHER · 2 DIMENSIONS</div>
+  <div id="chest-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Treasure chest"><section class="modal trade-page"><div class="kicker">📦 TREASURE DISCOVERED</div><h2 id="chest-title">Chest Loot</h2><p>One-time rewards have been placed in your inventory.</p><div id="chest-contents" class="chest-contents"></div><button id="close-chest" class="main-button" style="margin-top:15px">Continue Exploring</button></section></div>
+<div id="end-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="The End and dragon quest"><section class="modal nether-page end-page">
+  <div class="kicker">✦ THE END · DRAGON QUEST</div><h2>The End</h2>
+  <p>Find the stronghold, craft Eyes of Ender, fill the twelve-frame portal and face the dragon. Explore seed-generated End islands, cities, ships, crystals and shulkers.</p>
+  <p id="end-portal-status">0/12 eyes placed</p><div class="menu-actions"><button id="find-stronghold" class="ui-button">🧭 Find Stronghold</button><button id="place-eyes" class="ui-button">👁 Place Eyes</button></div>
+  <button id="end-cross" class="main-button" type="button">✦ Enter the End</button><div id="end-biome-grid" class="nether-biomes"></div>
+  <p class="note">Survival requires an activated stronghold portal to enter the End. Creative can visit directly. The dragon and End structures are original simplified simulations.</p>
+  <button id="close-end" class="ui-button" style="width:100%;margin-top:12px">Close End Menu</button>
+</section></div>
+<div id="village-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Villages, trading and farming"><section class="modal village-page">
+  <div class="kicker">🏘 VILLAGES & FARMING</div><h2>Villagers & Trades</h2>
+  <p>13 working professions, unemployed and nitwit residents, five trade levels, emerald trading and growing crops. Find a village or approach a villager and tap Mine / press V to trade.</p>
+  <p id="village-location">Searching for nearest village…</p><div class="menu-actions"><button id="locate-village" class="ui-button">🧭 Locate Village</button><button id="travel-village" class="ui-button">🏘 Visit Village</button></div>
+  <h3>Residents · Profession Board</h3><div id="village-professions" class="village-professions"></div>
+  <h3>🌾 Farming</h3><p class="farm-hint">Craft and equip a hoe, tap Mine on grass to till it. Plant into farmland, let it grow, then mine ripe crops. Farmers tend the fields around villages.</p>
+  <div id="farm-tools" class="farm-tools"></div>
+  <button id="close-village" class="main-button" style="margin-top:12px">Back to Game</button>
+</section></div>
+<div id="trade-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Villager trades"><section class="modal trade-page">
+  <div class="kicker">💚 EMERALD MARKET</div><h2 id="trade-heading">Villager Trading</h2><p id="trade-description"></p>
+  <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
+</section></div>
+<div id="toast" aria-live="polite"></div>
+  <div class="version">MINEWORLD v3.4 · VILLAGERS, END & FARMING</div>
 </div>
 <script>
 /* MineWorld original procedural 16x16 voxel pixel-art atlas. No external assets. */
 (() => {
   'use strict';
-  const SIZE=16, COLUMNS=16, ROWS=19;
+  const SIZE=16, COLUMNS=16, ROWS=32;
   const clamp=(n)=>Math.max(0,Math.min(255,Math.round(n)));
   function hash(a,b,c){let x=(Math.imul(a+17,374761393)^Math.imul(b+29,668265263)^Math.imul(c+73,1442695041))|0;x=Math.imul(x^(x>>>13),1274126177);return ((x^(x>>>16))>>>0)/4294967295}
   function tileColor(b,face,x,y){
@@ -442,6 +469,51 @@ body.in-nether #game-wrap{background:#290f19}
       case 92:c=[119+v*.5,104+v*.5,99+v*.5];break;
       case 93:c=n>.4?[44+v*.3,183+v*.3,172+v*.25]:[25+v*.3,82+v*.3,94+v*.3];break;
       case 94:c=n>.4?[201+v*.3,46+v*.3,71+v*.3]:[84+v*.3,27+v*.2,39+v*.2];break;
+      case 95:case 96:case 97:case 98:case 99:case 100:
+      case 101:case 102:case 103:case 104:case 105:case 106:case 107:case 108:{
+        const isDeep=b>=101,oreType=isDeep?b-101:b-95;
+        const mineral=[[43,47,47],[180,116,54],[206,31,37],[41,73,181],[56,218,210],[32,186,82]][oreType]||[140,100,80];
+        // Coal / iron / copper / gold / redstone / lapis / diamond / emerald.
+        const palette={95:[199,118,65],96:[248,200,45],97:[214,36,43],98:[47,78,191],99:[78,232,218],100:[52,213,102],
+          101:[45,46,49],102:[201,147,101],103:[199,118,65],104:[248,200,45],105:[214,36,43],106:[47,78,191],107:[78,232,218],108:[52,213,102]};
+        const fleck=hash(Math.floor(x/2),Math.floor(y/2),b*7)>.66 || (n>.90&&m>.46);
+        const base=isDeep?[72+v*.65,74+v*.61,80+v*.6]:[124+v*.75,127+v*.76,132+v*.68];
+        const accent=palette[b];c=fleck?accent.map(k=>k+v*.40):base;
+        break;
+      }
+      case 109: {const lit=hash(Math.floor(x/3),Math.floor(y/3),b)>.38;c=lit?[235+v*.3,191+v*.2,78+v*.2]:[114+v*.4,81+v*.4,45+v*.3];break;}
+      case 110:c=[32+v*.3,57+v*.4,171+v*.3];if(n>.91)c=[105,121,230];break;
+      case 111:c=[26+v*.3,168+v*.6,79+v*.4];if(n>.85)c=[87,245,129];break;
+      case 112:c=[54+v*.4,192+v*.4,185+v*.4];if(n>.85)c=[116,253,247];break;
+      case 113:c=[177+v*.5,102+v*.45,57+v*.35];if(n>.87)c=[231,144,81];break;
+      case 114:c=[214+v*.5,166+v*.35,36+v*.2];if(n>.85)c=[255,227,90];break;
+      case 115:c=[191+v*.38,190+v*.38,187+v*.3];if(n>.86)c=[246,245,245];break;
+      case 116:c=[41+v*.23,43+v*.23,48+v*.2];break;
+      case 117:c=[152+v*.35,27+v*.28,30+v*.25];if(n>.84)c=[249,47,44];break;
+      case 118:c=[130+v*.4,79+v*.35,39+v*.25];if((x+y)%7===0)c=[89,62,43];break;
+      case 119:case 120:{const edge=x<2||x>13||y<2||y>13,latch=(x>6&&x<10&&y>6&&y<10);c=edge?[68+v*.3,43+v*.2,20+v*.2]:latch?[198,181,111]:[150+v*.4,96+v*.3,45+v*.2];if(b===120)c=c.map(v=>v*.70);break;}
+      case 121:c=[204+v*.31,205+v*.30,163+v*.28];break;
+      case 122:case 123:c=b===122?[107+v*.35,51+v*.25,126+v*.45]:[200+v*.28,140+v*.25,190+v*.3];break;
+      case 124:c=[178+v*.25,51+v*.19,194+v*.25];if(n>.55)c=[245,214,255];break;
+      case 125:c=n>.4?[61+v*.2,130+v*.24,123+v*.26]:[48+v*.3,61+v*.25,59+v*.24];break;
+      case 126:case 127:c=[17+v*.20,21+v*.24,41+v*.30];if(n>.91)c=[180,200,229];break;
+      case 128:c=[223+v*.2,208+v*.2,197+v*.2];break;
+      case 129:c=[40+v*.25,32+v*.2,53+v*.25];if(n>.93)c=[213,194,213];break;
+      case 130:c=[192+v*.36,193+v*.34,157+v*.3];if(x%8===0||y%8===0)c=[150,150,121];break;
+      case 131:c=[173+v*.4,105+v*.35,164+v*.4];break;
+      case 132:c=[166+v*.36,96+v*.3,154+v*.4];if(x%4===0)c=[115+v*.2,63+v*.2,116+v*.2];break;
+      case 133:c=[141+v*.3,85+v*.3,149+v*.4];break;
+      case 134:c=[49+v*.3,35+v*.3,46+v*.3];break;
+      case 135:c=[55+v*.2,52+v*.3,63+v*.2];if(n>.90)c=[113,100,113];break;
+      case 136:c=[110+v*.36,83+v*.3,61+v*.3];if(x%6<2||y%6<2)c=[59,65,66];break;
+      case 137:case 138:c=[83+v*.7,54+v*.6,37+v*.4];if(x%4===0||y%6===0)c=[57+v*.4,39+v*.3,28+v*.2];if(b===138&&n>.79)c=[66,77,59];break;
+      case 139:case 140:case 141:case 142:{const ripe=b===142,green=b-139;c=ripe?[208+v*.4,166+v*.3,63+v*.2]:[48+green*19+v*.3,105+green*13+v*.3,33+v*.3];if((x+y)%5===0)c=c.map(k=>k*.77);break;}
+      case 143:case 144:case 145:case 146:c=[32+v*.4,102+(b-143)*22+v*.3,42+v*.3];if(b===146&&n>.78)c=[221,109,36];break;
+      case 147:case 148:case 149:case 150:c=[48+v*.4,98+(b-147)*19+v*.3,38+v*.3];if(b===150&&n>.80)c=[171,146,72];break;
+      case 151:case 152:case 153:case 154:c=[46+v*.4,90+(b-151)*18+v*.3,48+v*.2];if(b===154&&n>.65)c=[166,46,63];break;
+      case 155:c=[118+v*.5,79+v*.4,49+v*.3];if(x<3||x>12||y<3||y>12)c=[65+v*.3,43+v*.3,29+v*.2];break;
+      case 156:case 157:case 158:case 159:case 160:case 161:case 162:case 163:case 164:case 165:case 166:case 167:{const k=b-156;c=[81+k*2+v*.4,88+(k%4)*13+v*.4,75+(k%3)*12+v*.3];if(x%5===0||y%5===0)c=[48+v*.3,43+v*.2,39+v*.2];break;}
+
 
     }
     return [clamp(c[0]),clamp(c[1]),clamp(c[2]),255];
@@ -450,7 +522,7 @@ body.in-nether #game-wrap{background:#290f19}
     const canvas=document.createElement('canvas');canvas.width=SIZE*COLUMNS;canvas.height=SIZE*ROWS;
     const ctx=canvas.getContext('2d',{willReadFrequently:true});if(!ctx)throw Error('2D canvas textures unavailable');
     const img=ctx.createImageData(canvas.width,canvas.height);
-    for(let b=1;b<=94;b++)for(let f=0;f<3;f++){
+    for(let b=1;b<=118;b++)for(let f=0;f<3;f++){
       const tile=b*3+f,col=tile%COLUMNS,row=Math.floor(tile/COLUMNS);
       for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
         const i=((row*SIZE+y)*canvas.width+col*SIZE+x)*4;
@@ -480,6 +552,10 @@ body.in-nether #game-wrap{background:#290f19}
 })();
 
 </script>
+<script src="./villages.js"></script>
+<script src="./structure-loot.js"></script>
+<script src="./end-world.js"></script>
+<script src="./overworld-ores.js"></script>
 <script src="./world-chunks.js"></script>
 <script src="./nether-world.js"></script>
 <script>
@@ -499,7 +575,7 @@ body.in-nether #game-wrap{background:#290f19}
   let lastChunkX=-1,lastChunkZ=-1,streamQueue=[],streamClock=0;
   const renderRadius=matchMedia('(pointer: coarse)').matches?1:2;
   const MAX_CHUNKS=matchMedia('(pointer: coarse)').matches?42:70;
-  const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace','Snow','Ice','Packed Ice','Sandstone','Terracotta','Red Sand','Red Terracotta','Podzol','Coarse Dirt','Spruce Log','Spruce Leaves','Birch Log','Birch Leaves','Acacia Log','Acacia Leaves','Jungle Log','Jungle Leaves','Mangrove Log','Mangrove Leaves','Cherry Log','Cherry Leaves','Pale Oak Log','Pale Oak Leaves','Cactus','Bamboo','Moss','Mud','Red Mushroom Cap','Brown Mushroom Cap','Netherrack','Obsidian','Dark Planks','Stone Bricks','Chiseled Sandstone','Prismarine','Copper','Clay','Deepslate','Lantern','Hay Bale','Cobblestone','Glow Lichen','Dripstone','Sculk','Nether Rock','Lava','Basalt','Blackstone','Polished Blackstone','Soul Sand','Soul Soil','Nether Bricks','Nether Wart','Chiseled Nether Bricks','Crimson Nylium','Warped Nylium','Crimson Roots','Crimson Stem','Nether Wart Block','Warped Stem','Warped Wart Block','Warped Roots','Quartz Ore','Nether Gold Ore','Ancient Debris','Bone Block','Portal','Magma Block','Soul Fire','Shroomlight','Gilded Blackstone','Gravel','Twisting Vines','Weeping Vines'];
+  const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace','Snow','Ice','Packed Ice','Sandstone','Terracotta','Red Sand','Red Terracotta','Podzol','Coarse Dirt','Spruce Log','Spruce Leaves','Birch Log','Birch Leaves','Acacia Log','Acacia Leaves','Jungle Log','Jungle Leaves','Mangrove Log','Mangrove Leaves','Cherry Log','Cherry Leaves','Pale Oak Log','Pale Oak Leaves','Cactus','Bamboo','Moss','Mud','Red Mushroom Cap','Brown Mushroom Cap','Netherrack','Obsidian','Dark Planks','Stone Bricks','Chiseled Sandstone','Prismarine','Copper','Clay','Deepslate','Lantern','Hay Bale','Cobblestone','Glow Lichen','Dripstone','Sculk','Nether Rock','Lava','Basalt','Blackstone','Polished Blackstone','Soul Sand','Soul Soil','Nether Bricks','Nether Wart','Chiseled Nether Bricks','Crimson Nylium','Warped Nylium','Crimson Roots','Crimson Stem','Nether Wart Block','Warped Stem','Warped Wart Block','Warped Roots','Quartz Ore','Nether Gold Ore','Ancient Debris','Bone Block','Portal','Magma Block','Soul Fire','Shroomlight','Gilded Blackstone','Gravel','Twisting Vines','Weeping Vines','Copper Ore','Gold Ore','Redstone Ore','Lapis Ore','Diamond Ore','Emerald Ore','Deepslate Coal Ore','Deepslate Iron Ore','Deepslate Copper Ore','Deepslate Gold Ore','Deepslate Redstone Ore','Deepslate Lapis Ore','Deepslate Diamond Ore','Deepslate Emerald Ore','Redstone Lamp','Lapis Block','Emerald Block','Diamond Block','Copper Block','Gold Block','Iron Block','Coal Block','Redstone Block','Raw Mineral Crate','Treasure Chest','Opened Chest','End Stone','Chorus Plant','Chorus Flower','End Crystal','End Portal Frame','End Portal','End Gateway','End Rod','Dragon Egg','End Stone Bricks','Purpur Block','Purpur Pillar','Shulker Shell Block','Dragon Head','Netherite Block','Smithing Table','Farmland','Hydrated Farmland','Wheat Sprouts','Wheat Growing','Wheat Tall','Ripe Wheat','Carrot Sprouts','Carrot Growing','Carrot Tall','Ripe Carrots','Potato Sprouts','Potato Growing','Potato Tall','Ripe Potatoes','Beetroot Sprouts','Beetroot Growing','Beetroot Tall','Ripe Beetroot','Composter','Blast Furnace','Smoker','Cartography Table','Brewing Stand','Barrel','Fletching Table','Cauldron','Lectern','Stonecutter','Loom','Toolsmith Smithing Table','Grindstone'];
   const HOT=[1,2,3,5,12,13,14,15,11];
   const HOTSETS=[
     [1,2,3,5,6,4,8,9,10],
@@ -511,7 +587,10 @@ body.in-nether #game-wrap{background:#290f19}
     [57,58,59,60,61,62,63,64,5],
     [65,67,68,70,72,75,76,78,80],
     [66,69,71,73,79,81,83,84,85],
-    [86,87,88,89,90,91,92,93,94]
+    [86,87,88,89,90,91,92,93,94],
+    [95,96,97,98,99,100,101,102,103],
+    [104,105,106,107,108,109,110,111,112],
+    [113,114,115,116,117,118,18,19,58]
   ];
   const HOT9=[...HOTSETS[0]];
   let hotbarPage=0;
@@ -528,11 +607,14 @@ body.in-nether #game-wrap{background:#290f19}
   const player={x:SPAWN+.5,y:18,z:SPAWN+.5,vy:0,yaw:.4,pitch:-.12,ground:false,fly:false};
   const keys=new Set(); let seed=85721, started=false, paused=true, selection=0, frameCount=0, lastTime=0, meshCount=0, vbo=null, savedEdits=new Map(), dirtySave=false, saveTimer=0, aim=null, notifications=0, dayClock=0, deltaViewX=0, deltaViewY=0;
   let gameMode='creative',health=20,hunger=20,hungerDrain=0,hungerPulse=0,healPulse=0;
-  let dimension='overworld',overworldEdits=savedEdits,netherEdits=new Map(),overworldPosition=null,netherPosition=null,lavaCooldown=0;
+  let dimension='overworld',overworldEdits=savedEdits,netherEdits=new Map(),endEdits=new Map(),overworldPosition=null,netherPosition=null,endPosition=null,lavaCooldown=0,dragonDefeated=false,eyesPlaced=0;
+  const villagerProgress=Object.create(null);let aimVillager=null,nearbyVillagers=[],villageUpdateClock=0,farmClock=0,farmerClock=0;
   const inventory=new Uint16Array(NAMES.length);
-  const bag={coal:0,iron:0,raw:0,cooked:0,bone:0,string:0,powder:0,sticks:0,quartz:0,gold:0,blazeRod:0,magmaCream:0,enderPearl:0,witherSkull:0};
-  const toolLevels={none:0,wood:1,stone:2,iron:3};
-  const tools={pickaxe:'none',sword:'none'};
+  const bag={coal:0,iron:0,rawIron:0,raw:0,cooked:0,bone:0,string:0,powder:0,sticks:0,quartz:0,gold:0,rawCopper:0,copper:0,rawGold:0,redstone:0,lapis:0,diamond:0,emerald:0,blazeRod:0,magmaCream:0,enderPearl:0,witherSkull:0,netheriteScrap:0,netheriteIngot:0,netheriteUpgrade:0,ancientDebris:0,elytra:0,dragonBreath:0,eyeOfEnder:0,shulkerShell:0,chorusFruit:0,dragonEgg:0,experience:0};
+  for(const key of ['paper','map','potato','compass','apple','goldenApple','wheat','spruceSapling','arrow','crossbow','sentryTrim','fishingRod','suspiciousSand','potterySherd','brick','bread','saddle','cherrySapling','resin','books','paleSapling','rope','dye','wayfinderTrim','duneTrim','rails','nameTag','pumpkinSeeds','goldNugget','obsidian','flintSteel','fireCharge','goldenGear','sugar','glassBottle','wildTrim','bamboo','mushroom','ribTrim','netherWart','pigstep','snoutTrim','gildedBlackstone','enchantedGear','spireTrim','beetrootSeeds','healingPotion','eyeTrim'])bag[key]=0;
+  for(const key of ['wheat','wheatSeeds','carrot','potato','beetroot','beetrootSeeds','bread','goldenCarrot','pumpkinPie','rottenFlesh','chicken','mutton','steak','sweetBerries','fish','tropicalFish','flint','leather','rabbitHide','rabbitFoot','wool','feather','clay','stone','granite','terracotta','inkSac','bookQuill','turtleScute','compass','lavaBucket','boat','tripwireHook','rabbitStew','glowstone','fish','wool','cookedFish','enchantedRod','tippedArrow','ironHelmet','ironChestplate','diamondBoots','diamondChestplate','shield','leatherCap','leatherTunic','leatherPants','leatherBoots','enchantedBook','wool','shears','bed','painting','stoneBricks','polishedStone','quartzBlock','glazedTerracotta','stonePickaxe','ironAxe','ironPickaxe','diamondAxe','diamondPickaxe','ironSword','diamondSword','experienceBottle','banner','globeBanner'])if(!Object.hasOwn(bag,key))bag[key]=0;
+  const toolLevels={none:0,wood:1,stone:2,iron:3,diamond:4,netherite:5};
+  const tools={pickaxe:'none',sword:'none',hoe:'none'};
   let equipped='pickaxe',difficulty='normal',mobSerial=0,mobs=[],mobSpawnClock=0,mobAttackClock=0,aimMob=null,aimPlayer=null,attackCooldown=0,playerHitCooldown=0;
   let lastMobSync=0;
   const SPECIES={
@@ -557,7 +639,10 @@ body.in-nether #game-wrap{background:#290f19}
    enderman:{name:'Enderman',kind:'neutral',hp:28,speed:1.45,damage:5,body:[.16,.11,.21],head:[.24,.18,.28],drop:'enderPearl'},
    wither:{name:'Wither Boss',kind:'boss',hp:40,speed:1.06,damage:8,body:[.17,.16,.18],head:[.25,.25,.27],drop:'witherSkull'},
    ghastling:{name:'Ghastling',kind:'passive',hp:8,speed:.5,body:[.92,.92,.89],head:[.98,.98,.96],drop:'powder'},
-   happy_ghast:{name:'Happy Ghast',kind:'passive',hp:20,speed:.55,body:[.94,.89,.84],head:[.99,.97,.91],drop:'powder'}
+   happy_ghast:{name:'Happy Ghast',kind:'passive',hp:20,speed:.55,body:[.94,.89,.84],head:[.99,.97,.91],drop:'powder'},
+   shulker:{name:'Shulker',kind:'hostile',hp:24,speed:.1,damage:3,body:[.47,.25,.54],head:[.75,.44,.81],drop:'shulkerShell'},
+   endermite:{name:'Endermite',kind:'hostile',hp:8,speed:1.7,damage:2,body:[.30,.18,.35],head:[.59,.29,.62],drop:'experience'},
+   ender_dragon:{name:'Ender Dragon',kind:'boss',hp:40,speed:2,damage:8,body:[.13,.10,.18],head:[.29,.22,.37],drop:'dragonBreath'}
   };
   const movement={x:0,y:0}, touchHold={mine:false,place:false}, timers={mine:0,place:0};
   const isTouch=matchMedia('(pointer: coarse)').matches;
@@ -570,7 +655,16 @@ body.in-nether #game-wrap{background:#290f19}
     if(cx<0||cz<0||cx>=Math.ceil(W/CHUNK)||cz>=Math.ceil(D/CHUNK))return null;
     const key=chunkKey(cx,cz);let chunk=chunkCache.get(key);
     if(chunk){chunk.last=performance.now();return chunk;}
-    const data=(dimension==='nether'?window.MineWorldNether.generateChunk({cx,cz,H,edits:savedEdits}):window.MineWorldBiomes.generateChunk({cx,cz,H,SEA,edits:savedEdits}));
+    let data;
+    if(dimension==='nether')data=window.MineWorldNether.generateChunk({cx,cz,H,edits:savedEdits});
+    else if(dimension==='end')data=window.MineWorldEnd.generateChunk({cx,cz,H,edits:savedEdits,dragonDefeated});
+    else{
+      data=window.MineWorldBiomes.generateChunk({cx,cz,H,SEA,edits:savedEdits});
+      window.MineWorldEnd.stampStronghold({data,cx,cz,H,eyeCount:eyesPlaced});
+      // Player-built edits take precedence over the stronghold structure, too.
+      for(const [i,b] of savedEdits){const x=Math.floor(i/(W*H)),z=Math.floor(i/H)%W,y=i%H;
+        if(Math.floor(x/CHUNK)===cx&&Math.floor(z/CHUNK)===cz)data[chunkIndex(x,y,z)]=b;}
+    }
     chunk={cx,cz,data,vbo:null,count:0,dirty:true,last:performance.now()};
     chunkCache.set(key,chunk);return chunk;
   }
@@ -620,15 +714,15 @@ body.in-nether #game-wrap{background:#290f19}
       for(const c of removable){if(chunkCache.size<=MAX_CHUNKS)break;if(c.vbo)gl.deleteBuffer(c.vbo);chunkCache.delete(chunkKey(c.cx,c.cz));}
     }
   }
-  const solid=b=>b!==0&&b!==7&&b!==66&&b!==87&&b!==89;
+  const solid=b=>b!==0&&b!==7&&b!==66&&b!==87&&b!==89&&b!==126&&!(b>=139&&b<=154);
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const rand=(x,z,s=seed)=>{let n=Math.imul(x+307,374761393)^Math.imul(z+811,668265263)^Math.imul(s,1274126177);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295};
   const lerp=(a,b,t)=>a+(b-a)*t;
   function noise(x,z,scale){let px=x/scale,pz=z/scale,ix=Math.floor(px),iz=Math.floor(pz),fx=px-ix,fz=pz-iz;fx=fx*fx*(3-2*fx);fz=fz*fz*(3-2*fz);return lerp(lerp(rand(ix,iz),rand(ix+1,iz),fx),lerp(rand(ix,iz+1),rand(ix+1,iz+1),fx),fz)}
   // A 10,000-block-wide world is never allocated at once. Every chunk is deterministic.
-  function terrain(x,z){return dimension==='nether'?window.MineWorldNether.surfaceAt(x,z):window.MineWorldBiomes.terrainAt(x,z,SEA,H)}
+  function terrain(x,z){return dimension==='nether'?window.MineWorldNether.surfaceAt(x,z):dimension==='end'?Math.max(1,window.MineWorldEnd.surfaceAt(x,z)):window.MineWorldBiomes.terrainAt(x,z,SEA,H)}
   function generate(){
-    window.MineWorldBiomes.setSeed(seed);window.MineWorldNether.setSeed(seed);dimension='overworld';document.body.classList.remove('in-nether');overworldEdits=new Map();netherEdits=new Map();savedEdits=overworldEdits;overworldPosition=netherPosition=null;unloadAllChunks();
+    window.MineWorldBiomes.setSeed(seed);window.MineWorldNether.setSeed(seed);window.MineWorldEnd.setSeed(seed);dimension='overworld';document.body.classList.remove('in-nether','in-end');overworldEdits=new Map();netherEdits=new Map();endEdits=new Map();savedEdits=overworldEdits;overworldPosition=netherPosition=endPosition=null;dragonDefeated=false;eyesPlaced=0;for(const k of Object.keys(villagerProgress))delete villagerProgress[k];unloadAllChunks();
     const top=terrain(SPAWN,SPAWN);
     player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=top+2.5;
     player.vy=0;player.pitch=-.14;player.yaw=.6;player.fly=false;selection=0;
@@ -641,7 +735,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(!inside(x,y,z)||y===0)return false;
     if(b!==0&&solid(b)&&x>=Math.floor(player.x-.3)&&x<=Math.floor(player.x+.3)&&z>=Math.floor(player.z-.3)&&z<=Math.floor(player.z+.3)&&y<player.y+1.9&&y+1>player.y)return false;
     const before=get(x,y,z);if(before===b)return false;
-    set(x,y,z,b);savedEdits.set(idx(x,y,z),b);dirtyAround(x,z);markSave();if(!remote)window.MineWorldMultiplayer?.localEdit(idx(x,y,z)+(dimension==='nether'?W*D*H:0),b);return true;
+    set(x,y,z,b);savedEdits.set(idx(x,y,z),b);dirtyAround(x,z);markSave();if(!remote)window.MineWorldMultiplayer?.localEdit(idx(x,y,z)+(dimension==='end'?2*W*D*H:dimension==='nether'?W*D*H:0),b);return true;
   }
   function pushFace(a,x,y,z,b,f){
     const face=f.n[1]===1?0:(f.n[1]===-1?2:1);
@@ -649,7 +743,9 @@ body.in-nether #game-wrap{background:#290f19}
     const vs=f.v;
     for(const i of [0,1,2,0,2,3]){
       const v=vs[i],uv=window.MineWorldAtlas.uv(b,face,i);
-      a.push(x+v[0],y+v[1],z+v[2],shade,shade,shade,uv[0],uv[1]);
+      const crop=window.MineWorldVillages.cropAt(b);
+      const px=crop?x+.14+v[0]*.72:x+v[0],py=crop?y+v[1]*(.22+crop.stage*.22):y+v[1],pz=crop?z+.14+v[2]*.72:z+v[2];
+      a.push(px,py,pz,shade,shade,shade,uv[0],uv[1]);
     }
   }
   function buildChunkMesh(chunk){
@@ -662,7 +758,7 @@ body.in-nether #game-wrap{background:#290f19}
         // Outside a chunk, read adjacent terrain without forcing an entire world mesh.
         const near=nx>=ax&&nx<ax+CHUNK&&nz>=az&&nz<az+CHUNK&&ny>=0&&ny<H?
           data[((nx-ax)*CHUNK+(nz-az))*H+ny]:get(nx,ny,nz);
-        if(near&&!(b!==7&&near===7)&&!(b===9&&near!==9))continue;
+        if(near&&!(b!==7&&near===7)&&!(b===9&&near!==9)&&!(b>=139&&b<=154))continue;
         if(b===7&&near===7)continue;
         pushFace(faces,x,y,z,b,face);
       }
@@ -713,31 +809,56 @@ body.in-nether #game-wrap{background:#290f19}
   function performMine(){
     if(paused)return;
     if(aimMob){attackMob(aimMob);return;}
+    if(aimVillager){openVillagerTrade(aimVillager);return;}
     if(!aim)return;
+    const crop=window.MineWorldVillages.cropAt(aim.b);
+    if(crop){harvestCrop(aim.x,aim.y,aim.z,crop);return;}
+    if(dimension==='overworld'&&equipped==='hoe'&&[1,2].includes(aim.b)){
+      if(setBlock(aim.x,aim.y,aim.z,137))toast('🌾 Tilled fertile soil');return;
+    }
+    if(aim.b===119){openTreasureChest(aim.x,aim.y,aim.z);return;}
+    if(aim.b===120){toast('This treasure chest is empty');return;}
+    if(aim.b===126){switchDimension(dimension==='end'?'overworld':'end');return;}
     if(aim.b===87){switchDimension(dimension==='nether'?'overworld':'nether');return;}
+    if(aim.b===124&&dimension==='end'){setBlock(aim.x,aim.y,aim.z,0);toast('✦ End crystal destroyed! '+endCrystalCount()+' remain');return;}
     if(attackCooldown>0)return;
     if(gameMode==='survival'){
-      if((aim.b===19||aim.b===18)&&toolLevels[tools.pickaxe]<(aim.b===19?2:1)){
-        toast('Craft a '+(aim.b===19?'stone':'wood')+' pickaxe for this ore');return;
+      if(aim.b===85&&toolLevels[tools.pickaxe]<toolLevels.diamond){toast('Ancient Debris requires a Diamond or Netherite pickaxe');return;}
+      const ore=window.MineWorldOres.ids.get(aim.b);
+      if(ore){
+        const required={Wood:1,Stone:2,Iron:3}[ore.tier];
+        if(toolLevels[tools.pickaxe]<required){toast('Need a '+ore.tier.toLowerCase()+' pickaxe or better to mine '+ore.name);return;}
       }
     }
     if(setBlock(aim.x,aim.y,aim.z,0)){
       if(gameMode==='survival'&&aim.b!==7){
         const found=aim.b===1?2:aim.b;
-        if(found===18)bag.coal++;else if(found===83)bag.quartz++;else if(found===84)bag.gold++;else inventory[found]=Math.min(inventory[found]+1,999);
+        const ore=window.MineWorldOres.ids.get(aim.b);
+        if(ore){
+          const kind=ore.name;
+          if(kind==='Coal')bag.coal++;
+          else if(kind==='Iron')bag.rawIron++;
+          else if(kind==='Copper')bag.rawCopper+=2+Math.floor(Math.random()*4);
+          else if(kind==='Gold')bag.rawGold++;
+          else if(kind==='Redstone')bag.redstone+=3+Math.floor(Math.random()*3);
+          else if(kind==='Lapis Lazuli')bag.lapis+=4+Math.floor(Math.random()*5);
+          else if(kind==='Diamond')bag.diamond++;
+          else if(kind==='Emerald')bag.emerald++;
+        }
+        else if(found===83)bag.quartz++;else if(found===84)bag.gold++;else if(found===124)toast('Crystal destroyed');else inventory[found]=Math.min(inventory[found]+1,999);
         updateHotbar();updateSurvivalHUD();markSave();
       }
       toast('Mined '+NAMES[aim.b]);
-      attackCooldown=gameMode==='creative'?.07:(tools.pickaxe==='iron'?.14:tools.pickaxe==='stone'?.23:tools.pickaxe==='wood'?.32:.47);
+      attackCooldown=gameMode==='creative'?.07:(tools.pickaxe==='netherite'?.075:tools.pickaxe==='diamond'?.10:tools.pickaxe==='iron'?.14:tools.pickaxe==='stone'?.23:tools.pickaxe==='wood'?.32:.47);
     }
   }
-  function performPlace(){if(paused||!aim||!aim.previous)return;let p=aim.previous,b=HOT9[selection];if(!inside(p.x,p.y,p.z)||get(p.x,p.y,p.z)!==0)return;if(dimension==='nether'&&b===7){toast('💨 Water instantly evaporates in the Nether');return;}if(gameMode==='survival'&&inventory[b]===0){toast('Mine resources to collect '+NAMES[b]);return;}if(setBlock(p.x,p.y,p.z,b)){if(gameMode==='survival'){inventory[b]--;updateHotbar();}toast('Placed '+NAMES[b]);timers.place=.2}}
+  function performPlace(){if(paused||!aim||!aim.previous)return;let p=aim.previous,b=HOT9[selection];if(b===119)b=120;if(!inside(p.x,p.y,p.z)||get(p.x,p.y,p.z)!==0)return;if(dimension==='nether'&&b===7){toast('💨 Water instantly evaporates in the Nether');return;}if(gameMode==='survival'&&inventory[b]===0){toast('Mine resources to collect '+NAMES[b]);return;}if(setBlock(p.x,p.y,p.z,b)){if(gameMode==='survival'){inventory[b]--;updateHotbar();}toast('Placed '+NAMES[b]);timers.place=.2}}
   function markSave(){dirtySave=true}
   function save(){
     if(window.MineWorldMultiplayer?.isShared())return;
     try{
       const edits=[...savedEdits.entries()];
-      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],dimension,overworldPosition,netherPosition,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,version:6});
+      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,villagerProgress,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,version:7});
       localStorage.setItem(STORAGE,payload);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';
     }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';}
   }
@@ -756,16 +877,20 @@ body.in-nether #game-wrap{background:#290f19}
         if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)overworldEdits.set(i,b);
       }
       if(Array.isArray(s.netherEdits))for(const pair of s.netherEdits){if(!Array.isArray(pair)||pair.length!==2)continue;const [i,b]=pair;if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)netherEdits.set(i,b)}
+      if(Array.isArray(s.endEdits))for(const pair of s.endEdits){if(!Array.isArray(pair)||pair.length!==2)continue;const [i,b]=pair;if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)endEdits.set(i,b)}
+      dragonDefeated=!!s.dragonDefeated;eyesPlaced=clamp(Number(s.eyesPlaced)||0,0,12);
+      if(s.villagerProgress&&typeof s.villagerProgress==='object')for(const [k,v] of Object.entries(s.villagerProgress).slice(0,500)){if(/^-?\d+,-?\d+:\d+$/.test(k)&&v&&typeof v==='object'){villagerProgress[k]={xp:clamp(Number(v.xp)||0,0,99999),uses:(v.uses&&typeof v.uses==='object'?v.uses:{}),restock:Number(v.restock)||0}}}
       if(s.overworldPosition&&Number.isFinite(s.overworldPosition.x))overworldPosition=s.overworldPosition;
       if(s.netherPosition&&Number.isFinite(s.netherPosition.x))netherPosition=s.netherPosition;
+      if(s.endPosition&&Number.isFinite(s.endPosition.x))endPosition=s.endPosition;
       // Regenerate nearby chunks with saved block edits so even older worlds survive migration.
       unloadAllChunks();scheduleChunks(true);streamChunks(5);
       if(s.gameMode==='survival')gameMode='survival';
       if(['peaceful','easy','normal','hard'].includes(s.difficulty))difficulty=s.difficulty;
       if(Number.isFinite(s.dayClock))dayClock=s.dayClock;
       if(s.bag&&typeof s.bag==='object')for(const k of Object.keys(bag))bag[k]=clamp(Math.floor(Number(s.bag[k])||0),0,999);
-      if(s.tools)for(const k of ['pickaxe','sword'])if(Object.hasOwn(toolLevels,s.tools[k]))tools[k]=s.tools[k];
-      if(['pickaxe','sword','none'].includes(s.equipped))equipped=s.equipped;
+      if(s.tools)for(const k of ['pickaxe','sword','hoe'])if(Object.hasOwn(toolLevels,s.tools[k]))tools[k]=s.tools[k];
+      if(['pickaxe','sword','hoe','none'].includes(s.equipped))equipped=s.equipped;
       if(Number.isFinite(s.health))health=clamp(s.health,1,20);if(Number.isFinite(s.hunger))hunger=clamp(s.hunger,0,20);
       if(Array.isArray(s.inventory))for(let i=0;i<inventory.length;i++)inventory[i]=clamp(Math.floor(Number(s.inventory[i])||0),0,999);
       updateModeButton();updateHotbar();updateSurvivalHUD();
@@ -774,47 +899,68 @@ body.in-nether #game-wrap{background:#290f19}
         player.fly=gameMode==='creative'&&!!s.player.fly;
         player.x=clamp(player.x,.7,W-.7);player.z=clamp(player.z,.7,D-.7);player.y=clamp(player.y,3,H-3);
       }
-      if(s.dimension==='nether'){overworldPosition=overworldPosition||{x:SPAWN+.5,z:SPAWN+.5,y:terrain(SPAWN,SPAWN)+3};dimension='nether';savedEdits=netherEdits;document.body.classList.add('in-nether');unloadAllChunks();scheduleChunks(true);streamChunks(5);mobs=[];spawnNetherWildlife()}
+      if(s.dimension==='nether'||s.dimension==='end'){
+        overworldPosition=overworldPosition||{x:SPAWN+.5,z:SPAWN+.5,y:terrain(SPAWN,SPAWN)+3};
+        dimension=s.dimension;savedEdits=dimension==='end'?endEdits:netherEdits;
+        unloadAllChunks();scheduleChunks(true);streamChunks(5);mobs=[];
+        if(dimension==='nether')spawnNetherWildlife();else spawnEndWildlife();
+      }
       updatePortalUI();scheduleChunks(true);streamChunks(5);updateFlyButton();updateSeedLabel();dirtySave=false;
       return true;
     }catch(e){console.warn('World save not loaded:',e);return false;}
   }
   function switchDimension(target){
-    const next=target==='nether'?'nether':'overworld';
+    const next=['overworld','nether','end'].includes(target)?target:'overworld';
     if(next===dimension)return;
     const prev=dimension;
     const pos={x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch};
-    if(prev==='overworld'){overworldPosition=pos;overworldEdits=savedEdits}
-    else{netherPosition=pos;netherEdits=savedEdits}
+    if(prev==='overworld'){overworldPosition=pos;overworldEdits=savedEdits;}
+    else if(prev==='nether'){netherPosition=pos;netherEdits=savedEdits;}
+    else{endPosition=pos;endEdits=savedEdits;}
     const shift=(v,toNether)=>clamp(SPAWN+(v-SPAWN)*(toNether?1/8:8),7,W-8);
-    dimension=next;savedEdits=next==='nether'?netherEdits:overworldEdits;
-    window.MineWorldBiomes.setSeed(seed);window.MineWorldNether.setSeed(seed);
-    let saved=next==='nether'?netherPosition:overworldPosition;
-    player.x=saved?.x??shift(pos.x,next==='nether');player.z=saved?.z??shift(pos.z,next==='nether');
+    dimension=next;
+    savedEdits=next==='nether'?netherEdits:next==='end'?endEdits:overworldEdits;
+    window.MineWorldBiomes.setSeed(seed);window.MineWorldNether.setSeed(seed);window.MineWorldEnd.setSeed(seed);
+    let saved=next==='nether'?netherPosition:next==='end'?endPosition:overworldPosition;
+    if(next==='end'){
+      player.x=saved?.x??window.MineWorldEnd.END_SPAWN.x+.5;
+      player.z=saved?.z??window.MineWorldEnd.END_SPAWN.z+.5;
+    }else{
+      player.x=saved?.x??shift(pos.x,next==='nether');player.z=saved?.z??shift(pos.z,next==='nether');
+    }
     unloadAllChunks();scheduleChunks(true);streamChunks(5);
     player.y=clamp(saved?.y??(terrain(Math.floor(player.x),Math.floor(player.z))+3),3,H-5);
-    player.vy=0;player.ground=false;player.fly=false;player.yaw=saved?.yaw??pos.yaw;player.pitch=saved?.pitch??pos.pitch;
-    mobs=[];mobSerial=0;mobSpawnClock=0;
-    if(next==='overworld')spawnWildlife();else if(!window.MineWorldMultiplayer?.isGuest())spawnNetherWildlife();
+    if(next==='end'&&!saved)player.y=28;
+    player.vy=0;player.ground=false;player.fly=false;
+    player.yaw=saved?.yaw??pos.yaw;player.pitch=saved?.pitch??pos.pitch;
+    mobs=[];mobSerial=0;mobSpawnClock=0;nearbyVillagers=[];
+    if(next==='overworld')spawnWildlife();else if(!window.MineWorldMultiplayer?.isGuest()){
+      if(next==='nether')spawnNetherWildlife();else spawnEndWildlife();
+    }
     updatePortalUI();updateFlyButton();updateHotbar();markSave();window.MineWorldMultiplayer?.flushMobs();
-    toast(next==='nether'?'🔥 You entered the Nether!':'🌿 Returned to the Overworld');
+    toast(next==='end'?'✦ You entered the End!':next==='nether'?'🔥 You entered the Nether!':'🌿 Returned to the Overworld');
   }
   function updatePortalUI(){
-    const nether=dimension==='nether';document.body.classList.toggle('in-nether',nether);
-    $('dimension-indicator').classList.toggle('hidden',!nether);
+    const nether=dimension==='nether',inEnd=dimension==='end';
+    document.body.classList.toggle('in-nether',nether);document.body.classList.toggle('in-end',inEnd);
+    $('dimension-indicator').classList.toggle('hidden',!nether&&!inEnd);
+    $('dimension-indicator').textContent=inEnd?'✦ THE END':'🔥 THE NETHER';
     $('portal-toggle').textContent=nether?'🌿 Overworld':'🔥 Nether';
     $('cross-portal').textContent=nether?'🌿 Return to the Overworld':'🔥 Enter the Nether';
     $('atlas-toggle').title=nether?'Travel between Nether biomes':'Explore Overworld biomes';
+    $('end-toggle').textContent=inEnd?'🌿 Leave End':'✦ The End';
+    $('end-cross').textContent=inEnd?'🌿 Return to Overworld':'✦ Enter the End';
+    $('end-portal-status').textContent=eyesPlaced+'/12 eyes placed · '+(eyesPlaced===12?'Portal activated':'Needs Eyes of Ender');
   }
   function toggleInventory(){hotbarPage=(hotbarPage+1)%HOTSETS.length;HOT9.splice(0,HOT9.length,...HOTSETS[hotbarPage]);selection=0;updateHotbar();toast(hotbarPage?'Nature & extras':'Classic blocks');}
-  function updateHotbar(){const root=$('hotbar');root.innerHTML='';HOT9.forEach((id,i)=>{const button=document.createElement('button');button.type='button';button.className='hot-item'+(i===selection?' active':'');button.setAttribute('aria-label',NAMES[id]);const tile=id*3,tx=((tile%16)/15*100).toFixed(2),ty=(Math.floor(tile/16)/18*100).toFixed(2),image=window.MineWorldAtlas.dataURL;
-    button.innerHTML='<small>'+(gameMode==='survival'?inventory[id]:i+1)+'</small><div class="swatch" style="background-color:'+SWATCH[id]+';background-image:url('+image+');background-size:1600% 1900%;background-position:'+tx+'% '+ty+'%"></div><span>'+NAMES[id]+'</span>';button.addEventListener('pointerdown',e=>e.stopPropagation());button.addEventListener('click',()=>{selection=i;updateHotbar();toast(NAMES[HOT9[selection]])});root.appendChild(button)})}
+  function updateHotbar(){const root=$('hotbar');root.innerHTML='';HOT9.forEach((id,i)=>{const button=document.createElement('button');button.type='button';button.className='hot-item'+(i===selection?' active':'');button.setAttribute('aria-label',NAMES[id]);const tile=id*3,tx=((tile%16)/15*100).toFixed(2),ty=(Math.floor(tile/16)/31*100).toFixed(2),image=window.MineWorldAtlas.dataURL;
+    button.innerHTML='<small>'+(gameMode==='survival'?inventory[id]:i+1)+'</small><div class="swatch" style="background-color:'+SWATCH[id]+';background-image:url('+image+');background-size:1600% 3200%;background-position:'+tx+'% '+ty+'%"></div><span>'+NAMES[id]+'</span>';button.addEventListener('pointerdown',e=>e.stopPropagation());button.addEventListener('click',()=>{selection=i;updateHotbar();toast(NAMES[HOT9[selection]])});root.appendChild(button)})}
   function toast(s){let x=$('toast');x.textContent=s;x.classList.add('show');notifications++;const n=notifications;setTimeout(()=>{if(n===notifications)x.classList.remove('show')},1250)}
   function updateSurvivalHUD(){
     $('survival-hud').classList.toggle('hidden',gameMode!=='survival');
     $('health-text').textContent='♥ '+Math.ceil(health)+'/20';
     $('hunger-text').textContent='🍖 '+Math.ceil(hunger)+'/20';
-    $('eat-btn').textContent='Eat '+(bag.cooked?'🍖 '+bag.cooked:bag.raw?'🥩 '+bag.raw:'🍄 '+inventory[17]);$('weapon-readout').textContent=equipped==='none'?'✊ Fists':(equipped==='sword'?'⚔ ':'⛏ ')+(tools[equipped]==='none'?'Hands':tools[equipped]+' '+equipped);
+    $('eat-btn').textContent='Eat '+(bag.cooked?'🍖 '+bag.cooked:bag.raw?'🥩 '+bag.raw:'🍄 '+inventory[17]);$('weapon-readout').textContent=equipped==='none'?'✊ Fists':(equipped==='sword'?'⚔ ':equipped==='hoe'?'🌾 ':'⛏ ')+(tools[equipped]==='none'?'Hands':tools[equipped]+' '+equipped);
   }
   function setGameMode(next){
     if(next!=='creative'&&next!=='survival')return;
@@ -835,8 +981,14 @@ body.in-nether #game-wrap{background:#290f19}
     let amount=0,food='';
     if(bag.cooked){bag.cooked--;amount=9;food='cooked food'}
     else if(bag.raw){bag.raw--;amount=3;food='raw food'}
+    else if(bag.bread){bag.bread--;amount=5;food='bread'}
+    else if(bag.goldenCarrot){bag.goldenCarrot--;amount=8;food='golden carrot'}
+    else if(bag.carrot){bag.carrot--;amount=3;food='carrot'}
+    else if(bag.potato){bag.potato--;amount=2;food='potato'}
+    else if(bag.beetroot){bag.beetroot--;amount=1;food='beetroot'}
+    else if(bag.apple){bag.apple--;amount=4;food='apple'}
     else if(inventory[17]){inventory[17]--;amount=4;food='mushroom'}
-    else{toast('Find mushrooms or hunt animals for food');return}
+    else{toast('Grow crops, trade for bread, or hunt animals for food');return}
     hunger=clamp(hunger+amount,0,20);
     updateHotbar();updateSurvivalHUD();markSave();toast('Ate '+food+' · +'+amount+' hunger');
   }
@@ -852,6 +1004,38 @@ body.in-nether #game-wrap{background:#290f19}
     {name:'🔥 Furnace',cost:{'block:3':8},give:{'block:20':1},tip:'8 stone → furnace'},
     {name:'🍖 Cook meat',cost:{raw:1,coal:1},give:{cooked:1},tip:'Raw meat + coal → cooked food'},
     {name:'⚒ Smelt iron',cost:{'block:19':1,coal:1},give:{iron:1},tip:'Iron ore + coal → iron ingot'},
+    {name:'⚒ Smelt raw iron',cost:{rawIron:1,coal:1},give:{iron:1},tip:'Raw iron + coal → iron ingot'},
+    {name:'⚒ Smelt deep iron',cost:{'block:102':1,coal:1},give:{iron:1},tip:'Deepslate iron ore + coal → iron ingot'},
+    {name:'🔥 Smelt copper',cost:{rawCopper:1,coal:1},give:{copper:1},tip:'Raw copper + coal → copper ingot'},
+    {name:'🔥 Smelt gold',cost:{rawGold:1,coal:1},give:{gold:1},tip:'Raw gold + coal → gold ingot'},
+    {name:'⛏ Diamond pickaxe',cost:{diamond:3,sticks:2},tool:['pickaxe','diamond'],tip:'3 diamonds + 2 sticks · highest mining tier'},
+    {name:'⚔ Diamond sword',cost:{diamond:2,sticks:1},tool:['sword','diamond'],tip:'2 diamonds + 1 stick'},
+    {name:'🔥 Smelt Netherite scrap',cost:{'block:85':1,coal:1},give:{netheriteScrap:1},tip:'Ancient Debris + coal → Netherite Scrap'},
+    {name:'⬛ Netherite ingot',cost:{netheriteScrap:4,gold:4},give:{netheriteIngot:1},tip:'4 Netherite Scrap + 4 gold ingots'},
+    {name:'⚒ Smithing table',cost:{iron:2,'block:11':4},give:{'block:136':1},tip:'2 iron ingots + 4 planks'},
+    {name:'⬛ Netherite pickaxe',cost:{netheriteUpgrade:1,netheriteIngot:1},tool:['pickaxe','netherite'],upgradeFrom:'diamond',requiresSmithing:true,tip:'Smithing table + diamond pickaxe + upgrade template + ingot'},
+    {name:'⚔ Netherite sword',cost:{netheriteUpgrade:1,netheriteIngot:1},tool:['sword','netherite'],upgradeFrom:'diamond',requiresSmithing:true,tip:'Smithing table + diamond sword + upgrade template + ingot'},
+    {name:'📜 Copy upgrade template',cost:{netheriteUpgrade:1,diamond:7,'block:65':1},give:{netheriteUpgrade:2},tip:'Upgrade template + 7 diamonds + netherrack'},
+    {name:'⬛ Netherite block',cost:{netheriteIngot:9},give:{'block:135':1},tip:'9 Netherite ingots'},
+    {name:'👁 Eye of Ender',cost:{enderPearl:1,blazeRod:1},give:{eyeOfEnder:1},tip:'Ender pearl + blaze rod (simplified blaze powder)'},
+    {name:'🌾 Wooden Hoe',cost:{'block:11':2,sticks:2},tool:['hoe','wood'],tip:'2 wooden planks + 2 sticks · till dirt for crop farming'},
+    {name:'🌾 Stone Hoe',cost:{'block:3':2,sticks:2},tool:['hoe','stone'],tip:'2 stone + 2 sticks · farming'},
+    {name:'🌾 Iron Hoe',cost:{iron:2,sticks:2},tool:['hoe','iron'],tip:'2 iron ingots + 2 sticks · farming'},
+    {name:'🌾 Diamond Hoe',cost:{diamond:2,sticks:2},tool:['hoe','diamond'],tip:'2 diamonds + 2 sticks · farming'},
+    {name:'🍞 Bake Bread',cost:{wheat:3},give:{bread:1},tip:'3 wheat · edible food'},
+    {name:'🌱 Wheat Seeds',cost:{wheat:1},give:{wheatSeeds:2},tip:'2 seeds from harvested wheat'},
+    {name:'🌱 Beetroot Seeds',cost:{beetroot:1},give:{beetrootSeeds:2},tip:'2 seeds from beetroot'},
+
+    {name:'💡 Redstone lamp',cost:{redstone:4,'block:10':1},give:{'block:109':1},tip:'4 redstone dust + 1 glowstone · lit decorative block'},
+    {name:'🟦 Lapis block',cost:{lapis:9},give:{'block:110':1},tip:'9 lapis lazuli'},
+    {name:'🟩 Emerald block',cost:{emerald:9},give:{'block:111':1},tip:'9 emeralds'},
+    {name:'💎 Diamond block',cost:{diamond:9},give:{'block:112':1},tip:'9 diamonds'},
+    {name:'🟧 Copper block',cost:{copper:9},give:{'block:113':1},tip:'9 copper ingots'},
+    {name:'🟨 Gold block',cost:{gold:9},give:{'block:114':1},tip:'9 gold ingots'},
+    {name:'⬜ Iron block',cost:{iron:9},give:{'block:115':1},tip:'9 iron ingots'},
+    {name:'⬛ Coal block',cost:{coal:9},give:{'block:116':1},tip:'9 coal'},
+    {name:'🔴 Redstone block',cost:{redstone:9},give:{'block:117':1},tip:'9 redstone dust · decorative'},
+    {name:'🥖 Trade emerald',cost:{emerald:1},give:{cooked:2},tip:'Exchange 1 emerald for two food (simplified trading)'},
     {name:'🧱 Nether bricks',cost:{'block:65':4},give:{'block:72':4},tip:'4 nether rock → 4 dark bricks'},
     {name:'✦ Soul torch',cost:{'block:71':1,sticks:1},give:{'block:89':4},tip:'Soul soil + stick → 4 soul flames'},
     {name:'🔥 Magma block',cost:{magmaCream:2,'block:68':1},give:{'block:88':2},tip:'2 magma cream + blackstone'},
@@ -864,12 +1048,349 @@ body.in-nether #game-wrap{background:#290f19}
     const cost={...recipe.cost};
     if(recipe.name==='⚒ Smelt iron'&&bag.iron>0&&inventory[19]===0){cost['block:19']=0;cost.iron=1;}
     if(recipe.tool&&toolLevels[tools[recipe.tool[0]]] >= toolLevels[recipe.tool[1]]){toast('Already own this tier or better');return;}
+    if(recipe.upgradeFrom&&tools[recipe.tool[0]]!==recipe.upgradeFrom){toast('First craft a diamond '+recipe.tool[0]);return;}
+    if(recipe.requiresSmithing&&!inventory[136]){toast('Craft and carry a Smithing Table to upgrade');return;}
     if(!Object.entries(cost).every(([key,n])=>amount(key)>=n)){toast('Need more resources');return}
     for(const [key,n]of Object.entries(cost))addResource(key,-n);
     if(recipe.give)for(const [key,n]of Object.entries(recipe.give))addResource(key,n);
     if(recipe.tool){tools[recipe.tool[0]]=recipe.tool[1];equipped=recipe.tool[0]}
     updateHotbar();updateSurvivalHUD();renderGear();markSave();toast('Crafted '+recipe.name.replace(/^[^ ]+ /,''));
   }
+  // Village residents are deterministic for a seed and village coordinates.
+  function villagerSites(radius=1900,x=player.x,z=player.z){
+    return window.MineWorldVillages.villageSites({x,z,seed,zone:window.MineWorldBiomes.zone,
+      biomes:window.MineWorldBiomes.BIOMES,terrain:(px,pz)=>window.MineWorldBiomes.terrainAt(px,pz,SEA,H),radius});
+  }
+  function resident(site,j){
+    const profession=[...window.MineWorldVillages.JOBS,...window.MineWorldVillages.NON_WORKING][j];
+    const x=j===0?site.x+8:j>=13?site.x+4+(j-13)*2:site.x-7+(j%7)*2;
+    const z=j===0?site.z+2:j>=13?site.z+13:site.z+6+Math.floor(j/7)*3;
+    const y=Math.max(site.y,window.MineWorldBiomes.terrainAt(x,z,SEA,H)+1);
+    return {id:site.id+':'+j,site,job:profession,x:x+.5,z:z+.5,y,j};
+  }
+  function updateVillagers(){
+    nearbyVillagers=dimension==='overworld'?villagerSites(115).flatMap(site=>[...window.MineWorldVillages.JOBS,...window.MineWorldVillages.NON_WORKING].map((_,j)=>resident(site,j))):[];
+  }
+  function targetVillager(eye,dir,block){
+    if(dimension!=='overworld')return null;
+    let best=null,bestD=4.9;const wall=block?Math.hypot(block.x+.5-eye[0],block.y+.5-eye[1],block.z+.5-eye[2]):Infinity;
+    for(const v of nearbyVillagers){
+      const vx=v.x+.4*Math.sin(dayClock*.38+v.j),vz=v.z+.4*Math.cos(dayClock*.27+v.j);
+      const delta=[vx-eye[0],v.y+1.22-eye[1],vz-eye[2]];
+      const d=delta[0]*dir[0]+delta[1]*dir[1]+delta[2]*dir[2];
+      if(d<0||d>bestD||d>wall+.2)continue;
+      if(Math.hypot(delta[0]-dir[0]*d,delta[1]-dir[1]*d,delta[2]-dir[2]*d)<.64){best=v;bestD=d}
+    }
+    return best;
+  }
+  function drawVillagers(){
+    if(!nearbyVillagers.length)return;
+    const vertices=[];
+    const cube=(x,y,z,w,h,d,c)=>{
+      for(const f of FACE)for(const i of [0,1,2,0,2,3]){const a=f.v[i],shade=f.shade;
+        vertices.push(x+a[0]*w,y+a[1]*h,z+a[2]*d,c[0]*shade,c[1]*shade,c[2]*shade)}
+    };
+    for(const v of nearbyVillagers){
+      if(Math.hypot(v.x-player.x,v.z-player.z)>35)continue;
+      const x=v.x+.4*Math.sin(dayClock*.38+v.j),z=v.z+.4*Math.cos(dayClock*.27+v.j),y=v.y;
+      const hex=v.job.color.slice(1),c=[0,2,4].map(i=>parseInt(hex.slice(i,i+2),16)/255);
+      cube(x-.27,y+.44,z-.24,.54,1.05,.48,c);cube(x-.22,y+1.47,z-.22,.44,.47,.44,[.77,.64,.48]);
+      cube(x-.12,y+1.52,z-.35,.24,.21,.14,[.62,.43,.29]); // prominent nose
+      cube(x-.34,y+.73,z-.31,.68,.20,.60,c.map(t=>t*.72)); // folded arms
+      cube(x-.25,y+.01,z-.19,.20,.45,.38,[.33,.24,.19]);cube(x+.05,y+.01,z-.19,.20,.45,.38,[.33,.24,.19]);
+      cube(x-.26,y+1.88,z-.24,.52,.14,.48,c.map(t=>Math.min(1,t+0.12)));
+      for(const side of [-1,1])cube(x+side*.11-.045,y+1.73,z-.245,.09,.06,.035,[.07,.13,.07]);
+    }
+    if(!vertices.length)return;
+    gl.bindBuffer(gl.ARRAY_BUFFER,avatarBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices),gl.DYNAMIC_DRAW);
+    setAttribs(false);gl.drawArrays(gl.TRIANGLES,0,vertices.length/6);
+  }
+  function tradeState(id){
+    if(!Object.hasOwn(villagerProgress,id))villagerProgress[id]={xp:0,uses:{},restock:0};
+    const state=villagerProgress[id],day=Math.floor(dayClock/220);
+    if(day>state.restock){state.uses={};state.restock=day;}
+    return state;
+  }
+  function villagerTier(xp){return xp>=130?4:xp>=70?3:xp>=32?2:xp>=10?1:0;}
+  let tradingWith=null,tradeFromBoard=false;
+  function openVillagerTrade(v,fromBoard=false){
+    if(!v)return;
+    if(!v.job.offers?.length){toast(v.job.name+' has no trades');return;}
+    if(gameMode==='survival'&&Math.hypot(player.x-v.x,player.z-v.z)>8){toast('Approach the '+v.job.name+' to trade');return;}
+    tradingWith=v;tradeFromBoard=fromBoard;
+    $('village-modal').classList.add('hidden');$('pause').classList.add('hidden');$('welcome').classList.add('hidden');
+    paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock();
+    renderTrades();$('trade-modal').classList.remove('hidden');
+  }
+  function renderTrades(){
+    if(!tradingWith)return;const v=tradingWith,st=tradeState(v.id),tier=villagerTier(st.xp);
+    $('trade-heading').textContent=v.job.name+' · '+window.MineWorldVillages.TIERS[tier];
+    $('trade-description').textContent=v.job.station+' workstation · '+Math.floor(st.xp)+' trade XP · Emeralds: '+bag.emerald+' · Restocks each game day';
+    const box=$('trade-offers');box.replaceChildren();
+    const levels=window.MineWorldVillages.TIERS;
+    for(let lvl=0;lvl<5;lvl++){
+      const hdr=document.createElement('div');hdr.className='trade-level';hdr.textContent=levels[lvl]+(lvl>tier?' · Locked':'');box.appendChild(hdr);
+      for(const [i,offer] of v.job.offers.entries()){
+        if(offer.tier!==lvl)continue;
+        const used=Number(st.uses[i]||0),locked=lvl>tier,has=gameMode==='creative'||amount(offer.cost.item)>=offer.cost.count;
+        const b=document.createElement('button');b.type='button';b.className='trade-offer';b.disabled=locked||used>=offer.max||!has;
+        const title=document.createElement('span'),strong=document.createElement('strong'),hint=document.createElement('small');
+        const label=k=>window.MineWorldLoot.label(k);
+        strong.textContent=offer.cost.count+' '+label(offer.cost.item)+' → '+offer.result.count+' '+label(offer.result.item);
+        hint.textContent=locked?'Requires '+levels[lvl]:used>=offer.max?'Sold out until next day':(offer.max-used)+' remaining · '+offer.xp+' XP';
+        title.append(strong,hint);b.append(title);b.addEventListener('click',()=>{
+          if(gameMode==='survival')addResource(offer.cost.item,-offer.cost.count);
+          const reward=offer.result.item;
+          if(/^(wood|stone|iron|diamond|netherite)(Pickaxe|Sword)$/.test(reward)){
+            const tierName=reward.match(/^(wood|stone|iron|diamond|netherite)/)[1];
+            const tool=reward.endsWith('Sword')?'sword':'pickaxe';
+            if(toolLevels[tierName]>toolLevels[tools[tool]])tools[tool]=tierName;
+          }else addResource(reward,offer.result.count);
+          st.uses[i]=(st.uses[i]||0)+1;st.xp+=offer.xp;markSave();updateSurvivalHUD();updateHotbar();renderTrades();
+          toast('Traded with '+v.job.name+' · +'+offer.xp+' XP');
+        });box.appendChild(b);
+      }
+    }
+  }
+  function closeTrade(){
+    $('trade-modal').classList.add('hidden');
+    if(tradeFromBoard)openVillage();else if(started)start();else $('welcome').classList.remove('hidden');
+  }
+  function nearestVillage(){
+    const sites=villagerSites(2600);
+    return sites[0]||null;
+  }
+  function updateVillageMenu(){
+    const site=nearestVillage();
+    $('village-location').textContent=site?'Nearest village: '+Math.round(site.x)+', '+Math.round(site.z)+' · '+Math.round(Math.hypot(site.x-player.x,site.z-player.z))+' blocks away':'No village found in this search radius';
+    const board=$('village-professions');board.replaceChildren();
+    if(site)window.MineWorldVillages.JOBS.forEach((job,i)=>{
+      const v=resident(site,i),s=tradeState(v.id),b=document.createElement('button');b.type='button';
+      const name=document.createElement('strong'),tip=document.createElement('small');
+      name.textContent=job.name;tip.textContent=job.station+' · '+window.MineWorldVillages.TIERS[villagerTier(s.xp)];
+      b.append(name,tip);b.addEventListener('click',()=>openVillagerTrade(v,true));board.appendChild(b);
+    });
+    renderFarmTools();
+  }
+  function openVillage(){
+    paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock();
+    $('trade-modal').classList.add('hidden');$('village-modal').classList.remove('hidden');updateVillageMenu();
+  }
+  function closeVillage(){
+    $('village-modal').classList.add('hidden');
+    if(started)start();else $('welcome').classList.remove('hidden');
+  }
+  function getFarmlandTarget(){
+    if(dimension!=='overworld')return null;
+    if(aim&&[137,138].includes(aim.b)&&get(aim.x,aim.y+1,aim.z)===0)return {x:aim.x,y:aim.y,z:aim.z};
+    let best=null,d=Infinity;
+    const px=Math.round(player.x),pz=Math.round(player.z);
+    for(let x=px-7;x<=px+7;x++)for(let z=pz-7;z<=pz+7;z++)for(let y=Math.max(3,Math.floor(player.y)-6);y<Math.min(H-3,Math.floor(player.y)+5);y++){
+      if((get(x,y,z)===137||get(x,y,z)===138)&&!get(x,y+1,z)){
+        const dd=Math.hypot(x-player.x,z-player.z)+Math.abs(y-player.y)*.35;
+        if(dd<d){best={x,y,z};d=dd;}
+      }
+    }
+    return best;
+  }
+  function tillSoil(){
+    if(dimension!=='overworld'){toast('Farming is available in the Overworld');return false;}
+    if(gameMode==='survival'&&tools.hoe==='none'){toast('Craft a hoe first');return false;}
+    let target=aim&&[1,2].includes(aim.b)?{x:aim.x,y:aim.y,z:aim.z}:null;
+    if(!target){const px=Math.floor(player.x),pz=Math.floor(player.z);
+      for(let dx=-3;dx<=3&&!target;dx++)for(let dz=-3;dz<=3&&!target;dz++){
+        const x=px+dx,z=pz+dz,y=topAt(x,z);
+        if([1,2].includes(get(x,y,z))&&!get(x,y+1,z))target={x,y,z};
+      }
+    }
+    if(!target){toast('Aim at grass or dirt with a hoe');return false;}
+    if(setBlock(target.x,target.y,target.z,137)){toast('🌱 Soil tilled');return true;}
+    return false;
+  }
+  function plantCrop(kind){
+    if(dimension!=='overworld'){toast('Plant crops in the Overworld');return false;}
+    const info=window.MineWorldVillages.CROPS[kind],p=getFarmlandTarget();
+    if(!info||!p){toast('Till dirt with a hoe or find an empty farm plot');return false;}
+    if(gameMode==='survival'&&amount(info.seed)<1){toast('Need '+window.MineWorldLoot.label(info.seed)+' to plant');return false;}
+    if(setBlock(p.x,p.y+1,p.z,info.blocks[0])){
+      if(gameMode==='survival')addResource(info.seed,-1);
+      markSave();toast('🌱 Planted '+info.name);return true;
+    }
+    return false;
+  }
+  function harvestCrop(x,y,z,crop,byFarmer=false){
+    if(crop.stage===3&&!byFarmer){
+      addResource(crop.produce,crop.key==='wheat'?2:crop.key==='potato'?3:2);
+      if(crop.key==='wheat'||crop.key==='beetroot')addResource(crop.seed,2);
+      toast('Harvested '+crop.name);markSave();
+    }else if(!byFarmer&&(crop.key==='wheat'||crop.key==='beetroot'))addResource(crop.seed,1);
+    const success=setBlock(x,y,z,byFarmer?crop.blocks[0]:0);
+    updateHotbar();return success;
+  }
+  function tickFarms(dt){
+    if(dimension!=='overworld'||window.MineWorldMultiplayer?.isGuest())return;
+    farmClock+=dt;farmerClock+=dt;
+    if(farmClock>=3){farmClock=0;
+      // Growth is local to the loaded player area. Stages are saved as ordinary block edits.
+      const x0=Math.floor(player.x),z0=Math.floor(player.z);
+      for(let n=0;n<22;n++){
+        const x=x0-11+Math.floor(Math.random()*23),z=z0-11+Math.floor(Math.random()*23);
+        const ty=topAt(x,z);for(const y of [ty+1,ty,ty-1,ty+2]){
+          const crop=window.MineWorldVillages.cropAt(get(x,y,z));
+          if(crop&&crop.stage<3&&Math.random()<(get(x,y-1,z)===138?.34:.18))setBlock(x,y,z,crop.blocks[crop.stage+1]);
+        }
+      }
+    }
+    if(farmerClock>=11){farmerClock=0;
+      for(const site of villagerSites(55)){
+        const ty=site.y;
+        for(let n=0;n<3;n++){
+          const x=site.x+7+(Math.floor(Math.random()*9)),z=site.z-6+Math.floor(Math.random()*13);
+          if(get(x,ty,z)!==138||get(x,ty+1,z)===7)continue;
+          const crop=window.MineWorldVillages.cropAt(get(x,ty+1,z));
+          if(crop&&crop.stage===3)harvestCrop(x,ty+1,z,crop,true);
+          else if(!get(x,ty+1,z)){
+            const index=Math.floor(Math.random()*4);setBlock(x,ty+1,z,Object.values(window.MineWorldVillages.CROPS)[index].blocks[0]);
+          }
+        }
+      }
+    }
+  }
+  function renderFarmTools(){
+    const root=$('farm-tools');root.replaceChildren();
+    const entry=(txt,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=txt;b.addEventListener('click',()=>{fn();renderFarmTools()});root.appendChild(b)};
+    entry('⚒ Craft wood hoe',()=>{if(gameMode==='survival'&&(inventory[11]<2||bag.sticks<2)){toast('Need 2 planks and 2 sticks');return;}if(gameMode==='survival'){inventory[11]-=2;bag.sticks-=2;}tools.hoe='wood';equipped='hoe';markSave();toast('Wooden hoe equipped')});
+    entry('🌱 Till soil',tillSoil);
+    for(const [key,c] of Object.entries(window.MineWorldVillages.CROPS))entry('🌾 '+c.name+' · '+(bag[c.seed]||0),()=>plantCrop(key));
+    entry('🍞 Bake bread (3 wheat)',()=>{if(gameMode==='survival'&&bag.wheat<3){toast('Need 3 wheat');return}if(gameMode==='survival')bag.wheat-=3;bag.bread++;markSave();toast('Bread crafted')});
+  }
+
+  function chestKindAt(x,z){
+    if(dimension==='end'){
+      const end=window.MineWorldEnd;
+      if(Math.hypot(x-end.STRONGHOLD.x,z-end.STRONGHOLD.z)<17)return 'stronghold';
+      const near=end.landmarkAt(x,z);return near?.type==='ship'?'endShip':'endCity';
+    }
+    if(dimension==='nether'){
+      const site=window.MineWorldNether.landmarkAt(x,z);
+      if(site.kind==='Bastion Remnant')return x<site.x?'bastionTreasure':'bastion';
+      return {'Nether Fortress':'fortress','Ruined Portal':'portal','Nether Fossil':'fossil','Lava Well':'wellNether'}[site.kind]||'fortress';
+    }
+    const grid=192;
+    for(let gx=Math.floor(x/grid)-1;gx<=Math.floor(x/grid)+1;gx++)for(let gz=Math.floor(z/grid)-1;gz<=Math.floor(z/grid)+1;gz++){
+      const seedHash=(xx,zz,salt)=>window.MineWorldVillages.hash(seed,xx,zz,salt);
+      const ax=gx*grid+40+(seedHash(gx,gz,180)%100),az=gz*grid+40+(seedHash(gx,gz,181)%100);
+      if(Math.hypot(x-ax,z-az)>21)continue;
+      const feature=window.MineWorldBiomes.BIOMES[window.MineWorldBiomes.zone(ax,az)]?.feature;
+      if(feature)return feature;
+    }
+    if(Math.hypot(x-window.MineWorldEnd.STRONGHOLD.x,z-window.MineWorldEnd.STRONGHOLD.z)<20)return 'stronghold';
+    return 'village';
+  }
+  function openTreasureChest(x,y,z){
+    if(get(x,y,z)!==119)return;
+    const kind=chestKindAt(x,z);
+    const contents=window.MineWorldLoot.roll(kind,seed,x,y,z);
+    // Mark and propagate as an edit BEFORE awarding any loot: no repeated opening.
+    if(!setBlock(x,y,z,120))return;
+    for(const entry of contents){
+      const key=entry.item,n=entry.count;
+      if(key==='ancientDebris')addResource('block:85',n);
+      else if(key==='obsidian')addResource('block:51',n);
+      else addResource(key,n);
+    }
+    updateHotbar();updateSurvivalHUD();markSave();
+    $('chest-title').textContent=(window.MineWorldLoot.label(kind))+' Chest';
+    $('chest-contents').replaceChildren();
+    for(const item of contents){const row=document.createElement('div');row.textContent='✦ '+item.count+' × '+window.MineWorldLoot.label(item.item);$('chest-contents').appendChild(row)}
+    paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock();
+    $('chest-modal').classList.remove('hidden');toast('📦 Treasure collected!');
+  }
+  function spawnEndWildlife(){
+    if(dimension!=='end')return;
+    const n=window.MineWorldEnd;
+    for(let i=0;i<13;i++){
+      const angle=i*2.398,rad=7+i%4*4,x=player.x+Math.cos(angle)*rad,z=player.z+Math.sin(angle)*rad;
+      if(n.surfaceAt(x,z)>0)spawnOne(i%5===0?'endermite':'enderman',x,z);
+    }
+    const close=n.landmarkAt(player.x,player.z);
+    if(Math.hypot(close.x-player.x,close.z-player.z)<38)for(let i=0;i<3;i++)spawnOne('shulker',close.x+2*i,close.z+3);
+    if(!dragonDefeated&&Math.hypot(player.x-n.CENTER,player.z-n.CENTER)<75){
+      const boss=spawnOne('ender_dragon',n.CENTER+16,n.CENTER);
+      if(boss){boss.y=32;boss.heading=0;boss.hp=40;}
+    }
+  }
+  function endCrystalCount(){
+    if(dimension!=='end')return 0;
+    let active=0;for(const site of window.MineWorldEnd.SPIRES)if(get(site.x,site.top+1,site.z)===124)active++;
+    return active;
+  }
+  function openEnd(){
+    paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock();
+    $('end-modal').classList.remove('hidden');updatePortalUI();
+  }
+  function closeEnd(){
+    $('end-modal').classList.add('hidden');if(started)start();else $('welcome').classList.remove('hidden');
+  }
+  function travelEnd(){
+    if(dimension==='end'){switchDimension('overworld');closeEnd();return;}
+    if(gameMode==='survival'&&eyesPlaced<12){toast('First fill the 12 stronghold portal frames');return;}
+    if(gameMode==='survival'&&dimension!=='overworld'){toast('Return to Overworld and find the stronghold');return;}
+    if(gameMode==='survival'&&Math.hypot(player.x-window.MineWorldEnd.STRONGHOLD.x,player.z-window.MineWorldEnd.STRONGHOLD.z)>20){toast('Stand at the stronghold to enter');return;}
+    switchDimension('end');$('end-modal').classList.add('hidden');start();
+  }
+  function endBossHit(id,strength){
+    const mob=mobs.find(m=>m.id===id);
+    if(mob?.kind!=='ender_dragon')return applyMobHit(id,strength);
+    const crystals=endCrystalCount();if(crystals){toast('Destroy the '+crystals+' End crystals before defeating the dragon!');return {hit:false};}
+    const result=applyMobHit(id,strength);
+    if(result.dead){dragonDefeated=true;bag.experience+=40;bag.dragonEgg++;
+      unloadAllChunks();scheduleChunks(true);streamChunks(4);markSave();
+      toast('✦ DRAGON DEFEATED! Portal activated and dragon egg claimed!');
+    }
+    return result;
+  }
+  for(const id of ['end-toggle','end-from-home','end-from-pause'])$(id).addEventListener('click',openEnd);
+  $('close-end').addEventListener('click',closeEnd);
+  $('end-cross').addEventListener('click',travelEnd);
+  $('find-stronghold').addEventListener('click',()=>{
+    const place=window.MineWorldEnd.STRONGHOLD;
+    if(gameMode==='creative'){
+      if(dimension!=='overworld')switchDimension('overworld');
+      player.x=place.x+.5;player.z=place.z+12.5;
+      scheduleChunks(true);streamChunks(5);player.y=topAt(player.x,player.z)+3;
+      $('end-modal').classList.add('hidden');start();toast('🧭 Stronghold located · '+place.x+', '+place.z);
+    }else toast('Stronghold at X '+place.x+', Z '+place.z+' · follow your compass');
+  });
+  $('place-eyes').addEventListener('click',()=>{
+    if(dimension!=='overworld'){toast('Stronghold portals are in the Overworld');return;}
+    const sh=window.MineWorldEnd.STRONGHOLD;
+    if(gameMode==='survival'&&Math.hypot(player.x-sh.x,player.z-sh.z)>18){toast('Place Eyes at stronghold X '+sh.x+', Z '+sh.z);return;}
+    const needed=12-eyesPlaced;
+    if(!needed){toast('Portal already activated');return;}
+    const count=gameMode==='creative'?needed:Math.min(needed,bag.eyeOfEnder||0);
+    if(!count){toast('Craft Eyes of Ender from Ender pearls and Blaze rods');return;}
+    if(gameMode==='survival')bag.eyeOfEnder-=count;
+    eyesPlaced+=count;markSave();if(Math.hypot(player.x-sh.x,player.z-sh.z)<35){unloadAllChunks();scheduleChunks(true);streamChunks(5)}
+    updatePortalUI();toast('👁 Placed '+count+' Eye(s) · '+eyesPlaced+'/12');
+  });
+  const endGrid=$('end-biome-grid');const endIcons=['✦','🏙','🏝','🪨','🌌'];
+  window.MineWorldEnd.BIOMES.forEach((bi,i)=>{
+    const b=document.createElement('button');b.className='nether-biome';b.type='button';
+    b.innerHTML='<span>'+endIcons[i]+'</span><strong>'+bi.name+'</strong><small>Explore →</small>';
+    b.addEventListener('click',()=>{
+      if(dimension!=='end'){
+        if(gameMode==='survival'&&eyesPlaced<12){toast('Activate the stronghold portal first');return;}
+        switchDimension('end');
+      }
+      const target=window.MineWorldEnd.destination(i);
+      player.x=target.x+.5;player.z=target.z+.5;unloadAllChunks();scheduleChunks(true);streamChunks(5);
+      player.y=Math.max(4,Math.min(H-5,window.MineWorldEnd.surfaceAt(target.x,target.z)+3));
+      mobs=[];spawnEndWildlife();$('end-modal').classList.add('hidden');start();toast('✦ '+bi.name);markSave();
+    });endGrid.appendChild(b);
+  });
+  $('close-chest').addEventListener('click',()=>{$('chest-modal').classList.add('hidden');if(started)start();else $('welcome').classList.remove('hidden')});
+
   function renderGear(){
     const list=[];
     for(let i=1;i<inventory.length;i++)if(inventory[i])list.push(NAMES[i]+' '+inventory[i]);
@@ -879,7 +1400,7 @@ body.in-nether #game-wrap{background:#290f19}
     const root=$('recipes');root.replaceChildren();
     for(const r of RECIPES){
       const b=document.createElement('button');b.type='button';b.className='recipe';
-      b.disabled=gameMode!=='survival'||Object.entries(r.cost).some(([key,n])=>amount(key)<n)||(r.tool&&toolLevels[tools[r.tool[0]]] >= toolLevels[r.tool[1]]);
+      b.disabled=gameMode!=='survival'||Object.entries(r.cost).some(([key,n])=>amount(key)<n)||(r.tool&&toolLevels[tools[r.tool[0]]] >= toolLevels[r.tool[1]])||(r.upgradeFrom&&tools[r.tool[0]]!==r.upgradeFrom)||(r.requiresSmithing&&!inventory[136]);
       const strong=document.createElement('strong');strong.textContent=r.name;const small=document.createElement('small');small.textContent=r.tip;
       b.append(strong,small);b.addEventListener('click',()=>craft(r));root.append(b);
     }
@@ -893,7 +1414,7 @@ body.in-nether #game-wrap{background:#290f19}
     markSave();toast('Difficulty: '+level[0].toUpperCase()+level.slice(1));
   }
   function respawn(){
-    if(dimension==='nether')switchDimension('overworld');
+    if(dimension!=='overworld')switchDimension('overworld');
     player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=terrain(SPAWN,SPAWN)+3;
     player.vy=0;player.fly=false;health=20;hunger=18;
     updateSurvivalHUD();toast('You respawned at your world spawn');
@@ -943,7 +1464,7 @@ body.in-nether #game-wrap{background:#290f19}
       player.vy=0;
       if(player.ground){let snap=player.y;for(let i=0;i<40;i++){let low=snap-.025;if(blockAtFeet(player.x,low,player.z))break;snap=low}player.y=snap}
     }
-    if(player.y<1){if(dimension==='nether')switchDimension('overworld');player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=terrain(SPAWN,SPAWN)+2;player.vy=0}
+    if(player.y<1){if(dimension!=='overworld')switchDimension('overworld');player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=terrain(SPAWN,SPAWN)+2;player.vy=0}
   }
   // Autonomous creatures are original low-poly models and simple local AI.
   // Intentionally not claimed to be server-authoritative multiplayer entities.
@@ -997,12 +1518,12 @@ body.in-nether #game-wrap{background:#290f19}
       mobSpawnClock+=dt;
       if(mobSpawnClock>8){
         mobSpawnClock=0;
-        if((dimension==='nether'||nightTime())&&difficulty!=='peaceful'&&mobs.filter(m=>SPECIES[m.kind].kind==='hostile'||SPECIES[m.kind].kind==='boss').length<(difficulty==='hard'?12:8)){
+        if((dimension==='nether'||dimension==='end'||nightTime())&&difficulty!=='peaceful'&&mobs.filter(m=>SPECIES[m.kind].kind==='hostile'||SPECIES[m.kind].kind==='boss').length<(difficulty==='hard'?12:8)){
           for(let attempt=0;attempt<4;attempt++){
             const target=living[Math.floor(Math.random()*living.length)];
             const a=Math.random()*Math.PI*2,r=12+Math.random()*11;
             const x=target.x+Math.cos(a)*r,z=target.z+Math.sin(a)*r;
-            const kinds=dimension==='nether'?window.MineWorldNether.biomeAt(x,z).mobs:['zombie','skeleton','spider','creeper'];
+            const kinds=dimension==='end'?['enderman','shulker','endermite']:dimension==='nether'?window.MineWorldNether.biomeAt(x,z).mobs:['zombie','skeleton','spider','creeper'];
             let kind=kinds[Math.floor(Math.random()*kinds.length)];
             if(dimension==='nether'){
               const landmark=window.MineWorldNether.landmarkAt(x,z);
@@ -1023,6 +1544,13 @@ body.in-nether #game-wrap{background:#290f19}
     for(let i=mobs.length-1;i>=0;i--){
       const m=mobs[i],type=SPECIES[m.kind];
       m.step-=dt;m.attack-=dt;m.anger=Math.max(0,m.anger-dt);
+      if(m.kind==='ender_dragon'){
+        const c=window.MineWorldEnd.CENTER;
+        const a=dayClock*.30+m.id*.17;
+        m.x=c+Math.cos(a)*24;m.z=c+Math.sin(a)*24;m.y=32+Math.sin(dayClock*.75)*2;
+        if(Math.hypot(player.x-m.x,player.z-m.z)<7&&m.attack<=0){damage(5,'Dragon breath');m.attack=2.6;}
+        continue;
+      }
       let target=null,dist=Infinity;
       if(type.kind==='hostile'||type.kind==='boss'||(type.kind==='neutral'&&m.anger>0)){
         for(const p of living){const d=Math.hypot(m.x-p.x,m.z-p.z);if(d<dist){dist=d;target=p}}
@@ -1058,8 +1586,14 @@ body.in-nether #game-wrap{background:#290f19}
     const m=mobs.find(x=>x.id===id);
     if(!m)return {hit:false};
     const amount=clamp(Number(strength)||1,1,20);
+    if(m.kind==='ender_dragon'&&endCrystalCount()>0)return {hit:false};
     m.hp-=amount;
     if(m.hp<=0){
+      if(m.kind==='ender_dragon'){
+        dragonDefeated=true;bag.dragonEgg++;bag.experience+=50;
+        unloadAllChunks();scheduleChunks(true);streamChunks(5);
+        markSave();toast('✦ DRAGON DEFEATED! Exit portal and dragon egg unlocked!');
+      }
       const drop=SPECIES[m.kind].drop,count=SPECIES[m.kind].count||1;
       mobs.splice(mobs.indexOf(m),1);
       if(attackerId===null&&gameMode==='survival')grantLoot(drop,count);
@@ -1137,6 +1671,20 @@ body.in-nether #game-wrap{background:#290f19}
     for(const m of mobs){
       if(Math.hypot(m.x-player.x,m.z-player.z)>39)continue;
       const type=SPECIES[m.kind],x=m.x,z=m.z,y=m.y,hostile=type.kind==='hostile'||type.kind==='neutral'||type.kind==='boss';
+      if(m.kind==='ender_dragon'){
+        const wing=Math.sin(dayClock*3)*.7;
+        cube(x-1.45,y+.1,z-.5,2.9,1.05,1.0,type.body);
+        cube(x-2.18,y+.1,z-.33,.85,.79,.66,type.head);
+        for(const side of [-1,1])cube(x+side*1.4-.1,y+.2+wing,z-.16,1.65,.18,1.9,[.22,.17,.29]);
+        for(let n=0;n<4;n++)cube(x+1.4+n*.47,y+.46-n*.10,z-.17,.5,.32,.34,type.body);
+        continue;
+      }
+      if(m.kind==='shulker'){
+        cube(x-.44,y+.10,z-.44,.88,1.02,.88,type.body);cube(x-.34,y+.64,z-.40,.68,.3,.81,type.head);continue;
+      }
+      if(m.kind==='endermite'){
+        cube(x-.24,y+.09,z-.29,.48,.27,.58,type.body);continue;
+      }
       if(['ghast','ghastling','happy_ghast'].includes(m.kind)){
         const scale=m.kind==='ghastling'?.55:m.kind==='happy_ghast'?.95:1;
         cube(x-0.68*scale,y+1.1*scale,z-.68*scale,1.36*scale,1.32*scale,1.36*scale,type.body);
@@ -1242,6 +1790,8 @@ body.in-nether #game-wrap{background:#290f19}
     scheduleChunks();
     updateSurvival(dt);
     updateMobs(dt);
+    villageUpdateClock+=dt;if(villageUpdateClock>1.5){villageUpdateClock=0;updateVillagers();}
+    tickFarms(dt);
     attackCooldown=Math.max(0,attackCooldown-dt);playerHitCooldown=Math.max(0,playerHitCooldown-dt);
     window.MineWorldMultiplayer?.tick(t);
     if(touchHold.mine&&timers.mine<=0){performMine();timers.mine=.20}
@@ -1251,20 +1801,21 @@ body.in-nether #game-wrap{background:#290f19}
     const dpr=Math.min(window.devicePixelRatio||1,isTouch?1.15:1.65);
     let dw=Math.min(Math.floor(w*dpr),2100),dh=Math.min(Math.floor(h*dpr),1300);
     if(canvas.width!==dw||canvas.height!==dh){canvas.width=dw;canvas.height=dh;gl.viewport(0,0,dw,dh)}
-    const {vp,eye,forward}=vpMatrix(dw,dh);aim=pointAtBlock(eye,forward,7);aimMob=targetMob(eye,forward,aim);aimPlayer=targetRemotePlayer(eye,forward,aim);
+    const {vp,eye,forward}=vpMatrix(dw,dh);aim=pointAtBlock(eye,forward,7);aimMob=targetMob(eye,forward,aim);aimVillager=targetVillager(eye,forward,aim);aimPlayer=targetRemotePlayer(eye,forward,aim);
     const sun=Math.sin(dayClock*.015-0.9);
     const skyTint=clamp((sun+0.4)/1.1,.13,1);
-    sky=dimension==='nether'?window.MineWorldNether.biomeAt(player.x,player.z).index===2?[.08,.22,.21]:window.MineWorldNether.biomeAt(player.x,player.z).index===3?[.17,.15,.22]:window.MineWorldNether.biomeAt(player.x,player.z).index===4?[.18,.17,.19]:[.24,.075,.09]:[.07+skyTint*.46,.09+skyTint*.67,.19+skyTint*.72];
-    $('sky-decor').style.opacity=dimension==='nether'?'0':String(clamp(skyTint*.75,0,1));
+    sky=dimension==='end'?[.025,.021,.052]:dimension==='nether'?window.MineWorldNether.biomeAt(player.x,player.z).index===2?[.08,.22,.21]:window.MineWorldNether.biomeAt(player.x,player.z).index===3?[.17,.15,.22]:window.MineWorldNether.biomeAt(player.x,player.z).index===4?[.18,.17,.19]:[.24,.075,.09]:[.07+skyTint*.46,.09+skyTint*.67,.19+skyTint*.72];
+    $('sky-decor').style.opacity=dimension==='nether'||dimension==='end'?'0':String(clamp(skyTint*.75,0,1));
     gl.clearColor(...sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,vp);gl.uniform3fv(uEye,eye);gl.uniform3fv(uSky,sky);
     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uAtlas,0);
     for(const chunk of visibleChunks){if(chunk.dirty)buildChunkMesh(chunk);gl.bindBuffer(gl.ARRAY_BUFFER,chunk.vbo);setAttribs(true);gl.drawArrays(gl.TRIANGLES,0,chunk.count);}
     drawRemotePlayers();
     drawMobs();
+    drawVillagers();
     drawHighlight(aimMob?null:aim);
-    $('target-name').textContent=aimMob?'⚔ '+SPECIES[aimMob.kind].name+' · ♥ '+Math.ceil(aimMob.hp):aimPlayer?'⚔ '+aimPlayer.name+' · PvP enabled':aim?'⛏ '+NAMES[aim.b]+'  ·  '+aim.x+', '+aim.y+', '+aim.z:'Aim at a block or creature';
-    if((frameCount++%18)===0){$('coord-readout').textContent=(dimension==='nether'?'🔥 '+window.MineWorldNether.biomeAt(player.x,player.z).name:'🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name)+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
+    $('target-name').textContent=aimVillager?'💚 '+aimVillager.job.name+' · Tap Mine / V to Trade':aimMob?'⚔ '+SPECIES[aimMob.kind].name+' · ♥ '+Math.ceil(aimMob.hp):aimPlayer?'⚔ '+aimPlayer.name+' · PvP enabled':aim?'⛏ '+NAMES[aim.b]+'  ·  '+aim.x+', '+aim.y+', '+aim.z:'Aim at a block or creature';
+    if((frameCount++%18)===0){$('coord-readout').textContent=(dimension==='end'?'✦ '+window.MineWorldEnd.biomeAt(player.x,player.z).name:dimension==='nether'?'🔥 '+window.MineWorldNether.biomeAt(player.x,player.z).name:'🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name)+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
     saveTimer+=dt;if(saveTimer>8){saveTimer=0;if(dirtySave)save()}
   }
   // Biome travel stays deterministic and works in the same peer-to-peer world.
@@ -1277,7 +1828,7 @@ body.in-nether #game-wrap{background:#290f19}
     const landmark=document.createElement('small');landmark.textContent=b.feature?'🏛 '+window.MineWorldBiomes.STRUCTURE_NAMES[b.feature]:b.tree==='none'?'⛰ Explore landscape':'🌳 '+b.tree.replace(/[A-Z]/g,c=>' '+c.toLowerCase());
     tile.appendChild(landmark);
     tile.addEventListener('click',()=>{
-      if(dimension==='nether')switchDimension('overworld');const {x,z}=window.MineWorldBiomes.atlasDestination(i);
+      if(dimension!=='overworld')switchDimension('overworld');const {x,z}=window.MineWorldBiomes.atlasDestination(i);
       player.x=x+.5;player.z=z+.5;scheduleChunks(true);streamChunks(5);player.y=topAt(x,z)+3;player.vy=0;player.fly=false;
       updateFlyButton();markSave();$('atlas-modal').classList.add('hidden');
       start();toast('🧭 '+b.name+(b.feature?' · '+window.MineWorldBiomes.STRUCTURE_NAMES[b.feature]:''));
@@ -1358,6 +1909,19 @@ body.in-nether #game-wrap{background:#290f19}
   for(const id of ['portal-toggle','nether-from-home','nether-from-pause'])$(id).addEventListener('click',openNether);
   $('close-nether').addEventListener('click',closeNether);
   $('cross-portal').addEventListener('click',()=>{switchDimension(dimension==='nether'?'overworld':'nether');$('nether-modal').classList.add('hidden');start()});
+
+  for(const id of ['village-toggle','village-from-home','village-from-pause'])$(id).addEventListener('click',openVillage);
+  $('close-village').addEventListener('click',closeVillage);
+  $('close-trade').addEventListener('click',closeTrade);
+  $('locate-village').addEventListener('click',()=>{const site=nearestVillage();toast(site?'Village X '+site.x+' Z '+site.z:'No village located');updateVillageMenu()});
+  $('travel-village').addEventListener('click',()=>{
+    if(dimension!=='overworld')switchDimension('overworld');
+    const site=nearestVillage();if(!site){toast('No village found');return;}
+    player.x=site.x+.5;player.z=site.z-13+.5;
+    unloadAllChunks();scheduleChunks(true);streamChunks(5);
+    player.y=topAt(player.x,player.z)+3;player.vy=0;
+    updateVillagers();markSave();$('village-modal').classList.add('hidden');start();toast('🏘 Arrived at village · 13 professions and farm plots');
+  });
   $('inventory-toggle').addEventListener('click',toggleInventory);
   let seedLabel='85721';
   function updateSeedLabel(){
@@ -1395,7 +1959,7 @@ body.in-nether #game-wrap{background:#290f19}
   $('menu-toggle').addEventListener('click',menu);
   $('save-btn').addEventListener('click',()=>{save();toast('Saved to this browser')});
   $('mode-btn').addEventListener('click',()=>{setGameMode(gameMode==='creative'?'survival':'creative');toast('Mode: '+gameMode)});
-  $('craft-btn').addEventListener('click',openGear);$('bag-toggle').addEventListener('click',openGear);$('close-gear').addEventListener('click',closeGear);for(const [btn,tool] of [['gear-pickaxe','pickaxe'],['gear-sword','sword'],['gear-none','none']])$(btn).addEventListener('click',()=>{equipped=tool;updateSurvivalHUD();renderGear();markSave()});$('home-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));$('pause-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));
+  $('craft-btn').addEventListener('click',openGear);$('bag-toggle').addEventListener('click',openGear);$('close-gear').addEventListener('click',closeGear);for(const [btn,tool] of [['gear-pickaxe','pickaxe'],['gear-sword','sword'],['gear-hoe','hoe'],['gear-none','none']])$(btn).addEventListener('click',()=>{equipped=tool;updateSurvivalHUD();renderGear();markSave()});$('home-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));$('pause-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));
   $('fly-btn').addEventListener('click',()=>{if(gameMode==='survival'){toast('Flying is only available in Creative');return;}player.fly=!player.fly;player.vy=0;updateFlyButton();markSave();toast(player.fly?'Flying enabled':'Flying disabled')});
   $('new-btn').addEventListener('click',()=>{
     if(window.MineWorldMultiplayer?.isShared()){toast('Leave multiplayer before creating a private world');return;}
@@ -1412,7 +1976,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(e.code==='Space'&&!e.repeat)jump();
     if(e.code==='KeyE'&&!e.repeat)toggleInventory();
     if(e.code==='KeyF'&&!e.repeat){if(gameMode==='survival'){toast('Flying is Creative only');}else{player.fly=!player.fly;player.vy=0;updateFlyButton();toast(player.fly?'Fly mode on':'Fly mode off')}}
-    if(e.code==='KeyQ'&&!e.repeat)eatFood();if(e.code==='KeyR'&&!e.repeat)attackMob(aimMob);if(e.code==='KeyI'&&!e.repeat)openGear();
+    if(e.code==='KeyQ'&&!e.repeat)eatFood();if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);else openVillage();}if(e.code==='KeyR'&&!e.repeat)attackMob(aimMob);if(e.code==='KeyI'&&!e.repeat)openGear();
     if(e.code.startsWith('Digit')){const i=Number(e.code.slice(5))-1;if(i>=0&&i<HOT9.length){selection=i;updateHotbar()}}
   });
   document.addEventListener('keyup',e=>keys.delete(e.code));
@@ -1450,44 +2014,48 @@ body.in-nether #game-wrap{background:#290f19}
     b.addEventListener('lostpointercapture',()=>touchHold[verb]=false);
   }
   updateModeButton();updateSurvivalHUD();
-  if(!load())generate();else $('status').textContent='● Previous world restored';setDifficulty(difficulty);updatePortalUI();updateSeedLabel();
+  if(!load())generate();else $('status').textContent='● Previous world restored';setDifficulty(difficulty);updatePortalUI();updateSeedLabel();updateVillagers();
   window.MineWorldBridge={
     getPlayer:()=>({x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly,mode:gameMode,dimension}),
     getCombatProfile:()=>({mode:gameMode,equipped,weapon:equipped==='sword'?tools.sword:equipped==='pickaxe'?tools.pickaxe:'none'}),
     getMobs:mobSnapshot, setMobs:syncMobs, applyMobHit, grantLoot,
     applyDamage:(n,cause)=>{if(Number.isInteger(n)&&n>0&&n<=20)damage(n,String(cause||'Combat').slice(0,40))},
     getMode:()=>gameMode,
-    getSnapshot:()=>({seed,version:6,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],dayClock,mobs:mobSnapshot(),hostDimension:dimension}),
+    getSnapshot:()=>({seed,version:7,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dragonDefeated,eyesPlaced,dayClock,mobs:mobSnapshot(),hostDimension:dimension}),
     resetPublicWorld:(newSeed)=>{
       if(!Number.isInteger(newSeed)||newSeed<1||newSeed>99999999)return false;
       seed=newSeed;seedLabel=String(newSeed);generate();dirtySave=false;return true;
     },
     acceptSnapshot:(snapshot)=>{
-      if(!snapshot||!Number.isInteger(snapshot.seed)||!Array.isArray(snapshot.edits)||snapshot.edits.length>250000||!Array.isArray(snapshot.netherEdits||[])||(snapshot.netherEdits||[]).length>250000)return false;
-      seed=snapshot.seed;seedLabel=String(seed);generate();overworldEdits.clear();netherEdits.clear();
+      if(!snapshot||!Number.isInteger(snapshot.seed)||!Array.isArray(snapshot.edits)||snapshot.edits.length>250000||!Array.isArray(snapshot.netherEdits||[])||(snapshot.netherEdits||[]).length>250000||!Array.isArray(snapshot.endEdits||[])||(snapshot.endEdits||[]).length>250000)return false;
+      seed=snapshot.seed;seedLabel=String(seed);generate();overworldEdits.clear();netherEdits.clear();endEdits.clear();dragonDefeated=!!snapshot.dragonDefeated;eyesPlaced=clamp(Number(snapshot.eyesPlaced)||0,0,12);
       for(const pair of snapshot.edits){
         if(!Array.isArray(pair)||pair.length!==2)continue;
         const [i,b]=pair;
         if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)overworldEdits.set(i,b);
       }
       for(const pair of snapshot.netherEdits||[]){if(Array.isArray(pair)&&pair.length===2){const [i,b]=pair;if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)netherEdits.set(i,b)}}
+      for(const pair of snapshot.endEdits||[]){if(Array.isArray(pair)&&pair.length===2){const [i,b]=pair;if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)endEdits.set(i,b)}}
       unloadAllChunks();scheduleChunks(true);streamChunks(5);
       if(Number.isFinite(snapshot.dayClock))dayClock=snapshot.dayClock;
       if(Array.isArray(snapshot.mobs))syncMobs(snapshot.mobs);
       dirtySave=false;updateSeedLabel();return true;
     },
     remoteEdit:(i,b)=>{
-      if(!Number.isSafeInteger(i)||i<0||i>=2*W*D*H||!Number.isInteger(b)||b<0||b>=NAMES.length)return false;
-      const target=i>=W*D*H?'nether':'overworld',localIndex=target==='nether'?i-W*D*H:i;
+      if(!Number.isSafeInteger(i)||i<0||i>=3*W*D*H||!Number.isInteger(b)||b<0||b>=NAMES.length)return false;
+      const target=i>=2*W*D*H?'end':i>=W*D*H?'nether':'overworld',localIndex=i-(target==='end'?2*W*D*H:target==='nether'?W*D*H:0);
       const x=Math.floor(localIndex/(D*H)),z=Math.floor(localIndex/H)%D,y=localIndex%H;
       if(y===0)return false;
-      (target==='nether'?netherEdits:overworldEdits).set(localIndex,b);
+      (target==='end'?endEdits:target==='nether'?netherEdits:overworldEdits).set(localIndex,b);
       if(target!==dimension)return true;
       const chunk=chunkCache.get(chunkKey(Math.floor(x/CHUNK),Math.floor(z/CHUNK)));
       if(chunk){chunk.data[chunkIndex(x,y,z)]=b;dirtyAround(x,z);}
       markSave();return true;
     },
     getDimension:()=>dimension,
+    getVillageResidents:()=>nearbyVillagers.map(v=>({id:v.id,job:v.job.name,x:v.x,z:v.z})),
+    getVillageTradeState:()=>Object.fromEntries(Object.entries(villagerProgress).map(([k,v])=>[k,{xp:v.xp,uses:v.uses}])),
+    getFarmingSummary:()=>({crops:Object.keys(window.MineWorldVillages.CROPS),hoe:tools.hoe,inventory:{wheat:bag.wheat,carrot:bag.carrot,potato:bag.potato,beetroot:bag.beetroot}}),
     isStarted:()=>started,
     start:()=>{if(!started)start()},
     announce:(msg)=>toast(msg)
