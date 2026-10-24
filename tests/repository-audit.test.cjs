@@ -1,4 +1,4 @@
-/* MineWorld 5.8: whole-repository syntax, asset and UI-reference audit.
+/* MineWorld 5.9: whole-repository syntax, asset and UI-reference audit.
    These tests are static guards, not proof that every gameplay bug is fixed. */
 const {test}=require('node:test'),assert=require('node:assert/strict'),
  fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
@@ -49,7 +49,7 @@ test('initially absent imported files still leave original 16x16 artwork and Web
  assert.ok(loaded.indexOf('sound-engine.js')>=0);
  assert.ok(loaded.indexOf('local-resource-pack.js')>=0);
  assert.ok(loaded.indexOf('local-resource-pack.js')>loaded.indexOf('sound-engine.js'));
- assert.ok(html.includes('MineWorld 5.8'));
+ assert.ok(html.includes('MineWorld 5.9'));
  assert.ok(read('pixel-materials.js').length>4000);
  assert.ok(read('classic-materials.js').length>4000);
 });
