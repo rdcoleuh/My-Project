@@ -88,7 +88,7 @@ test('browser game wires animals, audio, feeding, world saves and original clari
  }
  for(const marker of [
   'animalModels.draw(m,','animals.pickNatural(biome','function interactFarmAnimal(m)',
-  "emitAdvancement('breed',m.kind)","m.sheared=true","farmAnimals:mobs.filter",
+  "emitAdvancement('breed',m.kind)","m.sheared=true","snapshotFarmAnimals():preservedFarmAnimals",
   "Array.isArray(s.farmAnimals)","m.fleeTime>0","m.growTimer",
   'advancements:advancementEngine.snapshot()',"mineworld-selfhost-v1"
  ]){
