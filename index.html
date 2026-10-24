@@ -2185,6 +2185,39 @@ body.in-nether #game-wrap{background:#290f19}
     }
   }
   function nightTime(){return Math.sin(dayClock*.015-.9)<-.18}
+  // Mob detection is limited to a 25-block three-dimensional sight radius.
+  // Sample the voxel grid between eyes, so caves, walls and hills block aggro.
+  function mobHasLineOfSight(m,p){
+    if(!m||!p||(p.dimension||'overworld')!==dimension)return false;
+    const mx=m.x,my=m.y+(m.kind==='enderman'?2.15:1.22),mz=m.z;
+    const tx=p.x,ty=p.y+1.30,tz=p.z;
+    const dx=tx-mx,dy=ty-my,dz=tz-mz;
+    const distance=Math.hypot(dx,dy,dz);
+    if(distance>25||distance<.001)return false;
+    const steps=Math.ceil(distance/.65);
+    for(let i=2;i<steps-1;i++){
+      const t=i/steps;
+      const block=get(Math.floor(mx+dx*t),Math.floor(my+dy*t),Math.floor(mz+dz*t));
+      // Air, flowing water, transparent glass and small crops don't occlude vision.
+      if(block!==0&&block!==7&&block!==9&&!(block>=139&&block<=154))return false;
+    }
+    return true;
+  }
+  function mobVisibleTarget(m,players,dt){
+    m.sightClock=(m.sightClock??0)-dt;
+    if(m.sightClock<=0||m.sightTarget===undefined){
+      m.sightClock=.29+(m.id%5)*.085;
+      let best=null,bestDist=26;
+      for(const p of players){
+        const d=Math.hypot(p.x-m.x,p.y-m.y,p.z-m.z);
+        if(d<bestDist&&mobHasLineOfSight(m,p)){best=p;bestDist=d;}
+      }
+      m.sightTarget=best?(best.id===null?'__host__':String(best.id)):null;
+    }
+    if(m.sightTarget===null)return null;
+    const target=players.find(p=>(p.id===null?'__host__':String(p.id))===m.sightTarget);
+    return target&&Math.hypot(target.x-m.x,target.y-m.y,target.z-m.z)<=25?target:null;
+  }
   function updateMobs(dt){
     // In multiplayer, only the room host runs the shared creature simulation.
     // Guests draw authoritative snapshots and send attacks for host validation.
@@ -2241,12 +2274,19 @@ body.in-nether #game-wrap{background:#290f19}
         continue;
       }
       let target=null,dist=Infinity;
-      if(type.kind==='hostile'||type.kind==='boss'||(type.kind==='neutral'&&m.anger>0)){
-        for(const p of living){const d=Math.hypot(m.x-p.x,m.z-p.z);if(d<dist){dist=d;target=p}}
-        if(dimension==='overworld'&&!nightTime()&&dist>15){mobs.splice(i,1);continue}
-        if(target&&dist<16)m.heading=Math.atan2(target.z-m.z,target.x-m.x);
+      const aggressive=type.kind==='hostile'||type.kind==='boss'||(type.kind==='neutral'&&m.anger>0);
+      if(aggressive){
+        target=mobVisibleTarget(m,living,dt);
+        if(target){
+          dist=Math.hypot(m.x-target.x,m.z-target.z);
+          m.heading=Math.atan2(target.z-m.z,target.x-m.x);
+        }
+        // Despawn distant Overworld threats in daylight without using invisible targets.
+        if(dimension==='overworld'&&!nightTime()&&living.every(p=>Math.hypot(m.x-p.x,m.z-p.z)>25)){
+          mobs.splice(i,1);continue;
+        }
       }else if(m.step<=0){m.step=1.4+Math.random()*4;m.heading+=-1.5+Math.random()*3;}
-      const chase=(type.kind==='hostile'||type.kind==='boss'||(type.kind==='neutral'&&m.anger>0))&&!!target&&dist<16;
+      const chase=aggressive&&!!target&&dist<=25;
       const pace=(chase?type.speed:(!m.anger?.34:.8)*type.speed)*dt;
       const vx=Math.cos(m.heading)*pace,vz=Math.sin(m.heading)*pace;
       const nx=clamp(m.x+vx,1.6,W-1.6),nz=clamp(m.z+vz,1.6,D-1.6);
