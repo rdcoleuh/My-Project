@@ -25,6 +25,12 @@
 .status{color:#ddf5ce;font-size:11px;padding:11px 12px;background:#183524b3;border:1px solid #a3d3b74f;border-radius:10px;backdrop-filter:blur(6px)}
 #crosshair{pointer-events:none;position:absolute;z-index:3;left:50%;top:50%;transform:translate(-50%,-50%);width:23px;height:23px;filter:drop-shadow(0px 1px 2px #000b)}#crosshair:before,#crosshair:after{content:'';position:absolute;background:#fff;border-radius:2px}#crosshair:before{width:18px;height:3px;left:2.5px;top:10px}#crosshair:after{width:3px;height:18px;left:10px;top:2.5px}
 #target-name{position:absolute;z-index:3;left:50%;top:calc(50% + 23px);transform:translateX(-50%);font-size:11px;padding:4px 8px;background:#1227189c;border-radius:5px;text-align:center;white-space:nowrap;opacity:.9;pointer-events:none}
+#hotbar-row{display:flex;align-items:center;gap:7px;max-width:calc(100vw - 10px);pointer-events:auto}
+#quick-inventory{flex:0 0 49px;width:49px;height:63px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:#89928be8;border:3px solid #292f29;box-shadow:inset 2px 2px #e2e8de,inset -3px -3px #424b42,0 3px #141b14;color:#fff;text-shadow:1px 1px #293429;border-radius:3px;font-size:23px;touch-action:manipulation}
+#quick-inventory small{font-size:10px;font-weight:850;font-family:monospace;letter-spacing:.07em}
+#quick-inventory:hover{background:#789db6}#quick-inventory:active{transform:translateY(1px)}
+@media(pointer:coarse){#hotbar-row{gap:4px}#quick-inventory{width:42px;height:55px;flex-basis:42px;font-size:20px}#quick-inventory small{font-size:8px}}
+@media(max-width:550px){#hotbar{max-width:calc(100vw - 60px);padding:3px!important;gap:2px!important}.hot-item{width:clamp(27px,calc((100vw - 85px)/9),43px)!important;min-width:0;height:48px!important;padding:2px 0!important;gap:1px!important}.hot-item span{display:none!important}.hot-item small{display:block!important;font-size:9px!important;top:auto;bottom:2px;right:3px}.swatch{width:21px;height:21px;border:1px solid #0005}.hot-item-icon{font-size:19px!important}.hot-item-blank{height:23px}#quick-inventory{height:51px;flex-basis:40px;width:40px}}
 #hud-bottom{z-index:5;position:absolute;bottom:max(env(safe-area-inset-bottom),14px);left:50%;transform:translateX(-50%);display:flex;align-items:center;flex-direction:column;gap:10px;pointer-events:none;max-width:100vw}
 #hotbar{display:flex;gap:5px;padding:7px;background:#15261bca;border:1px solid #e0f2da69;border-radius:11px;backdrop-filter:blur(7px);box-shadow:0 5px 20px #0006;pointer-events:auto;max-width:calc(100vw - 15px);overflow-x:auto;scrollbar-width:none}#hotbar::-webkit-scrollbar{display:none}
 .hot-item{width:59px;height:63px;flex:0 0 auto;background:#334536d9;border:2px solid #66836b;border-radius:7px;color:#e9f5e8;position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;padding:4px 2px;box-shadow:inset 0 2px #ffffff0c}
@@ -333,7 +339,7 @@ body.in-nether #game-wrap{background:#290f19}
 @media(max-height:650px){#pause{align-items:flex-start}#pause .mw-pause-menu{max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}}
 
 </style>
-<title>MineWorld 4.1 — Pause Menu & Enhanced Pixel Textures</title>
+<title>MineWorld 4.2 — Crisp Blocks and 64-Item Survival Stacks</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -349,7 +355,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="mine-progress" class="hidden" role="progressbar" aria-label="Breaking block" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="mine-progress-fill"></div></div>
   <div id="hud-bottom">
     <div id="survival-hud" class="hidden" aria-live="polite"><span id="health-text">♥ 20/20</span><span id="hunger-text">🍖 20/20</span><span id="weapon-readout" title="Equipped gear">✊ Fists</span><button id="eat-btn" type="button" aria-label="Eat available food">Eat 🍄 0</button></div>
-    <div id="hotbar" role="toolbar" aria-label="Choose a building block"></div>
+    <div id="hotbar-row"><div id="hotbar" role="toolbar" aria-label="Nine inventory-backed hotbar slots"></div><button id="quick-inventory" type="button" aria-label="Open inventory" title="Open backpack (E)">🎒<small>INV</small></button></div>
     <div id="hints">WASD move · Left click break (hold to repeat) · Right click use / place · E inventory · Space jump · 1–9 items</div>
   </div>
   <div id="coord-readout">X 0 · Y 0 · Z 0</div>
@@ -562,6 +568,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div class="version">MINEWORLD v4.1 · PAUSE MENU · 16×16 PIXEL MATERIALS</div>
 </div>
 <script src="./pixel-materials.js"></script>
+<script src="./stack-inventory.js"></script>
 <script>
 /* MineWorld original procedural 16x16 voxel pixel-art atlas. No external assets. */
 (() => {
@@ -2798,6 +2805,7 @@ body.in-nether #game-wrap{background:#290f19}
     updateVillagers();markSave();$('village-modal').classList.add('hidden');start();toast('🏘 Arrived at village · 13 professions and farm plots');
   });
   $('inventory-toggle').addEventListener('click',toggleInventory);
+  $('quick-inventory').addEventListener('click',toggleInventory);
   let seedLabel='85721';
   function updateSeedLabel(){
     $('seed-current').textContent='Current seed: '+seedLabel+' · terrain ID '+seed;
@@ -2991,7 +2999,7 @@ body.in-nether #game-wrap{background:#290f19}
     '<button class="mw-pixel-btn" id="mw-multi" type="button">Multiplayer</button>'+
     '<button class="mw-pixel-btn" id="mw-creative" type="button">Creative World</button>'+
     '<div class="mw-2col"><button class="mw-pixel-btn" id="mw-options" type="button">Options…</button><button class="mw-pixel-btn" id="mw-return" type="button">World Atlas</button></div>'+
-    '</div><div class="mw-footer"><small>MineWorld 4.1 · Independent browser game</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
+    '</div><div class="mw-footer"><small>MineWorld 4.2 · Independent browser game</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
   welcome.appendChild(main);
   const worlds=document.createElement('div');
   worlds.id='mw-world-screen';worlds.className='mw-screen mw-screen--sub';
