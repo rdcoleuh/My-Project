@@ -300,6 +300,38 @@ body.in-nether #game-wrap{background:#290f19}
 #mine-progress{position:absolute;z-index:5;left:50%;top:calc(50% + 48px);transform:translateX(-50%);width:150px;height:10px;background:#192318df;border:2px solid #e6efd0a3;box-shadow:0 2px 8px #0008;pointer-events:none}
 #mine-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#8fd45d,#eaff8b);transition:width .055s linear}
 @media(pointer:coarse){#mine-progress{top:calc(50% + 37px);width:125px}}
+
+/* MineWorld 4.1: fullscreen gameplay with a single compact pause affordance. */
+#top-ui{left:auto;right:0;justify-content:flex-end;padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),11px) 0 0;pointer-events:none}
+#menu-toggle.mw-pause-trigger{pointer-events:auto;border:2px solid #292c26;border-radius:2px;background:#818d81ed;color:#fff;text-shadow:1px 1px #29302a;box-shadow:inset 2px 2px #c4cec1,inset -2px -2px #48564a,0 2px 8px #0008;font-family:monospace;font-size:14px;padding:9px 13px;min-height:40px}
+#menu-toggle.mw-pause-trigger:hover,#menu-toggle.mw-pause-trigger:focus-visible{background:#769ab3}
+#pause{background:#091410c2;backdrop-filter:blur(4px);padding:calc(8px + env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));align-items:center}
+#pause .mw-pause-menu{width:min(95vw,690px);max-height:calc(100dvh - 18px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow:auto;overscroll-behavior:contain;border-radius:0;padding:clamp(14px,2.2vw,23px);background:#262d27f2;border:3px solid #171d17;box-shadow:inset 2px 2px #748271,inset -2px -2px #101710,0 18px 70px #000b;text-align:center;color:#fff}
+#pause .mw-pause-header h2{font-family:monospace;font-size:clamp(23px,5vw,34px);margin:5px 0 8px;letter-spacing:.025em;text-shadow:2px 3px #101810}
+#pause .mw-pause-header .kicker{letter-spacing:.28em;color:#d4e1bd;font-family:monospace;font-size:11px}
+#pause #status{display:inline-block!important;font-family:monospace;margin-bottom:8px;background:none;color:#c6d4bf;padding:2px 7px;border:none}
+#pause .mw-resume,#pause .ui-button{min-height:44px;border-radius:0;border:2px solid #20231e;background:#818981;color:#fff;font-family:monospace;font-size:13px;font-weight:750;text-shadow:1px 2px #222b22;box-shadow:inset 2px 2px #c4c9be,inset -3px -3px #525a51,0 2px #151b15;padding:10px 12px;cursor:pointer;touch-action:manipulation}
+#pause .mw-resume{max-width:440px;margin:5px auto 12px;background:#527c50;box-shadow:inset 2px 2px #9ec89b,inset -3px -3px #375736,0 2px #151b15;font-size:17px}
+#pause .ui-button:hover,#pause .mw-resume:hover{background:#6894b0;border-color:#cad9df}
+#pause .ui-button:active,#pause .mw-resume:active{transform:translateY(1px);box-shadow:inset 2px 2px #364238,inset -2px -2px #cdd7c9}
+#pause .ui-button:disabled{opacity:.66;cursor:default}
+#pause .mw-pause-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;text-align:left}
+#pause .mw-pause-group{min-width:0;border:2px solid #495448;background:#1b251fd8;padding:11px}
+#pause .mw-pause-group:last-child{grid-column:1/-1}
+#pause .mw-pause-group h3{font:800 13px monospace;color:#d9e9c9;margin:0 0 10px;text-transform:uppercase}
+#pause .mw-menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+#pause .mw-menu-wide{grid-column:1/-1}
+#pause .mw-pause-full{width:100%}
+#pause .mw-world-actions{margin-top:7px}
+#pause .mw-difficulty{font:700 12px monospace;color:#fff;background:#525c51;border:2px solid #20231e;min-height:44px;display:flex;align-items:center;gap:7px;justify-content:space-around;padding:4px;box-shadow:inset 2px 2px #879687}
+#pause .mw-difficulty select{background:#1f2a1f;color:#fff;border:1px solid #b6c8aa;max-width:115px;min-height:30px;font:12px monospace}
+#pause .mw-pause-footer{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin:13px 0 5px}
+#pause .mw-pause-footer .danger{background:#65423c;box-shadow:inset 2px 2px #b98070,inset -3px -3px #482c29,0 2px #151b15}
+#pause .mw-pause-fine{font:11px/1.4 monospace;color:#afbdad;margin:9px 0 0}
+.mw-legacy-hooks{display:none!important}
+@media(max-width:590px){#pause .mw-pause-menu{width:100%;padding:12px}#pause .mw-pause-groups{grid-template-columns:1fr;gap:8px}#pause .mw-pause-group:last-child{grid-column:auto}#pause .mw-pause-group{padding:9px}#pause .mw-pause-group h3{font-size:12px;margin-bottom:7px}#pause .mw-menu-grid{gap:6px}#pause .ui-button{font-size:12px;padding:8px 7px;min-height:42px}#pause .mw-pause-footer{grid-template-columns:1fr}#menu-toggle.mw-pause-trigger{min-height:42px;font-size:13px}}
+@media(max-height:650px){#pause{align-items:flex-start}#pause .mw-pause-menu{max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}}
+
 </style>
 <title>MineWorld 4.0 — Survival Mining, Combat & Crafting Fixes</title>
 </head>
@@ -308,9 +340,7 @@ body.in-nether #game-wrap{background:#290f19}
   <canvas id="world" aria-label="Playable 3D block world"></canvas>
   <div id="sky-decor" aria-hidden="true"><div class="sun"></div><div class="cloud cloud1"></div><div class="cloud cloud2"></div></div>
   <div id="top-ui">
-    <div class="title-mark"><div class="block-symbol"></div><div><strong>MINEWORLD</strong><small>INDEPENDENT BLOCK SANDBOX</small></div></div>
-    <div class="top-buttons"><div id="status" class="status">● World loaded</div><button id="inventory-toggle" class="ui-button small">▣ Blocks</button><button id="end-toggle" class="ui-button small" type="button">✦ End</button><button id="village-toggle" class="ui-button small" type="button" title="Villages, trading and farming">🏘</button><button id="portal-toggle" class="ui-button small" title="Travel between the Overworld and Nether" aria-label="Nether portal">🔥 Nether</button><button id="atlas-toggle" class="ui-button small" aria-label="Biome atlas and landmarks" title="Explore biomes and structures">🧭</button><button id="bag-toggle" class="ui-button small">🎒 Gear</button><button id="friends-toggle" class="ui-button small">👥 Friends <span id="online-count">0</span></button>
-    <button id="menu-toggle" class="ui-button small" aria-label="Open game menu">☰ Menu</button></div>
+    <button id="menu-toggle" class="ui-button small mw-pause-trigger" type="button" aria-label="Pause game and open game menu" aria-haspopup="dialog" aria-controls="pause">⏸ Pause</button>
   </div>
   <div id="crosshair" aria-hidden="true"></div>
   <div id="online-hud" class="hidden">👥 Offline</div>
@@ -359,21 +389,58 @@ body.in-nether #game-wrap{background:#290f19}
       <p class="note"><strong>Survival and Creative are separate save files.</strong> Survival does not get Creative inventory, teleporting or flight. This is an independent voxel game, not Minecraft. Public worlds are peer-hosted and do not provide secure server-side anti-cheat.</p>
     </section>
   </div>
-  <div id="pause" class="modal-backdrop hidden">
-    <section class="modal menu-modal" aria-label="Game menu">
-      <div class="kicker">MINEWORLD</div><h2>Game menu</h2>
-      <p>Survival and Creative have independent saves. Return Home to open the other world; changing modes never transfers items or progress.</p>
-      <button class="main-button" id="resume-btn">▶ &nbsp; Resume Game</button>
-      <button id="home-btn" class="ui-button" style="width:100%;margin-top:10px">⌂ Home Screen · Choose Mode</button>
-      <button id="end-from-pause" class="ui-button" style="width:100%;margin-top:10px">✦ End Portal & Dragon</button><button id="village-from-pause" class="ui-button" style="width:100%;margin-top:10px">🏘 Villagers & Farming</button><button id="nether-from-pause" class="ui-button nether-accent" style="width:100%;margin-top:10px">🔥 Nether Portals &amp; Biomes</button>
-      <button id="atlas-from-pause" class="ui-button" style="width:100%;margin-top:10px">🧭 Biomes, Trees &amp; Structures</button>
-      <button id="pause-friends" class="ui-button" style="width:100%;margin-top:10px">🌐 Public servers / Friends</button>
-      <div class="menu-actions"><button id="fly-btn" class="ui-button">✦ Flying: Off</button><button id="save-btn" class="ui-button">↓ Save World</button></div>
-      <div class="menu-actions"><button id="mode-btn" class="ui-button" disabled title="World modes are separate saves. Return Home to choose another world.">World: Creative</button><button id="craft-btn" class="ui-button">⚒ Crafting & Gear</button></div>
-      <label class="difficulty-label" for="pause-difficulty">Survival difficulty</label><select id="pause-difficulty" class="difficulty-select"><option value="peaceful">Peaceful</option><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select>
-      <button id="new-btn" class="ui-button danger">↻ Create New World</button>
-      <p class="note">Survival progress, inventory, dimension unlocks and edits save separately from Creative. Your 10,000 × 10,000 terrain regenerates from its seed as you explore.</p>
+  <div id="pause" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Paused game menu">
+    <section class="modal menu-modal mw-pause-menu">
+      <div class="mw-pause-header">
+        <div class="kicker">MINEWORLD</div>
+        <h2>Game Menu</h2>
+        <div id="status" class="status">● World saved</div>
+      </div>
+      <button class="main-button mw-resume" id="resume-btn" type="button">▶ Resume Game</button>
+      <div class="mw-pause-groups">
+        <section class="mw-pause-group" aria-label="Inventory and crafting">
+          <h3>Inventory &amp; Crafting</h3>
+          <div class="mw-menu-grid">
+            <button id="inventory-toggle" class="ui-button" type="button">🎒 Inventory</button>
+            <button id="bag-toggle" class="ui-button" type="button">⚒ Gear &amp; Crafting</button>
+            <button id="craft-btn" class="ui-button mw-menu-wide" type="button">⚒ Crafting Table &amp; Tools</button>
+          </div>
+        </section>
+        <section class="mw-pause-group" aria-label="Explore your world">
+          <h3>Explore &amp; Travel</h3>
+          <div class="mw-menu-grid">
+            <button id="end-from-pause" class="ui-button" type="button">✦ The End</button>
+            <button id="nether-from-pause" class="ui-button" type="button">🔥 The Nether</button>
+            <button id="village-from-pause" class="ui-button" type="button">🏘 Villages &amp; Farms</button>
+            <button id="atlas-from-pause" class="ui-button" type="button">🧭 Biome Atlas</button>
+          </div>
+        </section>
+        <section class="mw-pause-group" aria-label="Multiplayer and game settings">
+          <h3>Friends &amp; World Settings</h3>
+          <button id="pause-friends" class="ui-button mw-pause-full" type="button">🌐 Multiplayer / Friends</button>
+          <div class="mw-menu-grid mw-world-actions">
+            <button id="fly-btn" class="ui-button" type="button">✦ Fly</button>
+            <button id="save-btn" class="ui-button" type="button">↓ Save World</button>
+            <button id="mode-btn" class="ui-button" type="button" disabled>World: Survival</button>
+            <label class="mw-difficulty" for="pause-difficulty">Difficulty
+              <select id="pause-difficulty" class="difficulty-select"><option value="peaceful">Peaceful</option><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select>
+            </label>
+          </div>
+        </section>
+      </div>
+      <div class="mw-pause-footer">
+        <button id="home-btn" class="ui-button mw-pause-full" type="button">⌂ Save &amp; Return to Main Menu</button>
+        <button id="new-btn" class="ui-button danger mw-pause-full" type="button">↻ Create a New World</button>
+      </div>
+      <p class="mw-pause-fine">Creative and Survival use separate saves. World generation and multiplayer remain unchanged.</p>
     </section>
+  </div>
+  <div class="mw-legacy-hooks" hidden aria-hidden="true">
+    <button id="end-toggle" type="button">End</button>
+    <button id="village-toggle" type="button">Village</button>
+    <button id="portal-toggle" type="button">Nether</button>
+    <button id="atlas-toggle" type="button">Atlas</button>
+    <button id="friends-toggle" type="button">Friends <span id="online-count">0</span></button>
   </div>
   <div id="gear-panel" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Inventory and crafting">
     <section class="modal gear-modal">
