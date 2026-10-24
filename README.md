@@ -1,3 +1,23 @@
+# MineWorld 5.6 — Square Pixels, Custom Skins & Multiple Saved Worlds
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+### New in MineWorld 5.6
+
+- **Uniform pixel scale**: source block faces still use original 16×16 procedural textures, with WebGL nearest-neighbor filtering. Cropped/partial block faces now display the correctly sized portion of the texture (one texel per 1/16 of a block) instead of squeezing all 16 pixels across a short face. No Minecraft image files are included.
+- **Player Skin Studio**: tap **Customize Player Skin** on the home screen or **Edit Player Skin** in Pause. Paint the front, back, sides, tops and bottoms of six body parts using square pixels on an original, editable 64×64 skin sheet. Select colors, use your finger or mouse, import a 64×64 PNG you own, export PNG, reset, and **Save skin**. Third-person (F5 or View button) displays your actual painted player skin via a nearest-neighbor GPU texture.
+- **Multiple world saves**: tap **My Worlds** on the home screen or **Save Slots & My Worlds** from Pause. Create, name, switch between, duplicate, rename and delete additional Creative or Survival worlds. Each keeps separate terrain edits, seed, inventory, hotbar and progression. Maximum **20 slots per mode**.
+- **Existing worlds are safe**: old save keys `mineworld-selfhost-v1-slot-creative-v1` and `mineworld-selfhost-v1-slot-survival-v1` are preserved as protected "Original Creative" and "Original Survival" worlds, not overwritten or migrated. New world metadata uses `mineworld-world-library-v1`. The skin is shared across worlds using `mineworld-avatar-skin-v1`.
+- **Offline**: `sw.js` precaches the new skin editor and world manager; refresh the page after this release.
+
+### Important
+
+All worlds and the custom skin are saved **locally in this browser and device**, not synced to an account. Different browsers/devices have separate saves; clearing site data, using private browsing, or running out of browser storage can lose them. Keep an exported PNG backup of your customized skin. Duplicating worlds consumes more browser storage. The original game is an independent voxel sandbox with independently drawn materials, not Minecraft Java Edition itself.
+
+Automated tests cover 64×64 skin pixel painting and persistence, GPU pixelated sampling, and independent multiple-world saves including legacy world protection. Run `node --test tests/*.test.cjs` from a repository checkout.
+
+---
+
 # MineWorld 5.5 — Original Classic Sandbox Gameplay Update
 
 **Play:** https://rdcoleuh.github.io/My-Project/
