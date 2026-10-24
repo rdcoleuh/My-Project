@@ -3197,10 +3197,13 @@ body.in-nether #game-wrap{background:#290f19}
   function drawOwnAvatar(){
     if(!currentCameraMode)return;
     const a=[],x=player.x,y=player.y,z=player.z;
+    const cy=Math.cos(player.yaw),sy=Math.sin(player.yaw);
     const box=(ox,oy,oz,w,h,d,c)=>{
       for(const face of FACE)for(const i of [0,1,2,0,2,3]){
         const v=face.v[i],shade=face.shade;
-        a.push(x+ox+v[0]*w,y+oy+v[1]*h,z+oz+v[2]*d,
+        const px=ox+v[0]*w,pz=oz+v[2]*d;
+        // Turn the independently drawn MineWorld traveler with the heading.
+        a.push(x+px*cy-pz*sy,y+oy+v[1]*h,z+px*sy+pz*cy,
           c[0]*shade,c[1]*shade,c[2]*shade);
       }
     };
@@ -3228,10 +3231,13 @@ body.in-nether #game-wrap{background:#290f19}
       if(drop.dimension!==dimension||count>=48||Math.abs(drop.x-player.x)>28||Math.abs(drop.z-player.z)>28)continue;
       count++;
       const b=drop.key.startsWith('block:')?Number(drop.key.slice(6)):0;
-      const c=COLORS[b]||[.79,.67,.34],size=.25;
-      const x=drop.x-size/2,y=drop.y+.10+Math.sin(dayClock*3+count)*.075,z=drop.z-size/2;
+      const pixel=b?window.MineWorldPixelMaterials.paint(b,1,5,7):null;
+      const c=pixel?pixel.slice(0,3).map(channel=>channel/255):[.79,.67,.34],size=.25;
+      const y=drop.y+.10+Math.sin(dayClock*3+count)*.075;
+      const angle=dayClock*1.7+count*.31,cs=Math.cos(angle),sn=Math.sin(angle);
       for(const face of FACE)for(const k of [0,1,2,0,2,3]){
-        const v=face.v[k];out.push(x+v[0]*size,y+v[1]*size,z+v[2]*size,
+        const v=face.v[k],px=(v[0]-.5)*size,pz=(v[2]-.5)*size;
+        out.push(drop.x+px*cs-pz*sn,y+v[1]*size,drop.z+px*sn+pz*cs,
           c[0]*face.shade,c[1]*face.shade,c[2]*face.shade);
       }
     }
