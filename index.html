@@ -606,6 +606,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./chunk-planner.js"></script>
 <script src="./stack-inventory.js"></script>
 <script src="./movement-modes.js"></script>
+<script src="./survival-hunger.js"></script>
 <script src="./block-models.js"></script>
 <script>
 /* MineWorld original procedural 16x16 voxel pixel-art atlas. No external assets. */
@@ -888,7 +889,7 @@ body.in-nether #game-wrap{background:#290f19}
   ];
   const player={x:SPAWN+.5,y:18,z:SPAWN+.5,vy:0,yaw:.4,pitch:-.12,ground:false,fly:false};
   const keys=new Set(); let seed=85721, started=false, paused=true, selection=0, frameCount=0, lastTime=0, meshCount=0, vbo=null, savedEdits=new Map(), dirtySave=false, saveTimer=0, aim=null, notifications=0, dayClock=0, deltaViewX=0, deltaViewY=0;
-  let gameMode='creative',health=20,hunger=20,hungerDrain=0,hungerPulse=0,healPulse=0;
+  let gameMode='creative',health=20,hunger=20,hungerSaturation=5,hungerDrain=0,hungerPulse=0,healPulse=0;
   let dimension='overworld',overworldEdits=savedEdits,netherEdits=new Map(),endEdits=new Map(),overworldPosition=null,netherPosition=null,endPosition=null,lavaCooldown=0,dragonDefeated=false,eyesPlaced=0,netherPortalBuilt=false,netherPortalPosition=null;
   const villagerProgress=Object.create(null);let aimVillager=null,nearbyVillagers=[],villageUpdateClock=0,farmClock=0,farmerClock=0;
   const inventory=new Uint16Array(NAMES.length);
@@ -1149,7 +1150,7 @@ body.in-nether #game-wrap{background:#290f19}
     scheduleChunks(true);streamChunks(5);spawnWildlife();updateHotbar();updateFlyButton();markSave();
     updateSeedLabel();
   }
-  function blockAtFeet(x,y,z,height=isCrouching?1.44:1.72){
+  function blockAtFeet(x,y,z,height=isCrouching?1.5:1.8){
     const r=.27,feet=y+.02,head=y+height;
     const xa=Math.floor(x-r),xb=Math.floor(x+r);
     const za=Math.floor(z-r),zb=Math.floor(z+r);
@@ -1237,7 +1238,7 @@ body.in-nether #game-wrap{background:#290f19}
   function mul(a,b){let o=new Float32Array(16);for(let col=0;col<4;col++)for(let row=0;row<4;row++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+row]*b[col*4+k];o[col*4+row]=s}return o}
   function vpMatrix(w,h){
     const yaw=player.yaw,pitch=player.pitch,cp=Math.cos(pitch),sp=Math.sin(pitch),cy=Math.cos(yaw),sy=Math.sin(yaw);
-    const forward=[sy*cp,sp,-cy*cp],right=[cy,0,sy],up=[-sy*sp,cp,cy*sp],eye=[player.x,player.y+(isCrouching?1.27:1.61),player.z];
+    const forward=[sy*cp,sp,-cy*cp],right=[cy,0,sy],up=[-sy*sp,cp,cy*sp],eye=[player.x,player.y+(isCrouching?1.27:1.62),player.z];
     const view=new Float32Array([right[0],up[0],-forward[0],0,right[1],up[1],-forward[1],0,right[2],up[2],-forward[2],0,-dot(right,eye),-dot(up,eye),dot(forward,eye),1]);
     const f=1/Math.tan(72*Math.PI/360),aspect=w/h,near=.07,far=140;
     const proj=new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+near)/(near-far),-1,0,0,2*far*near/(near-far),0]);
@@ -1302,6 +1303,7 @@ body.in-nether #game-wrap{background:#290f19}
       return false;
     }
     if(!setBlock(target.x,target.y,target.z,0))return false;
+    if(gameMode==='survival')hungerDrain+=.005;
     if(gameMode==='survival'&&target.b!==7){
       const found=target.b===1?2:target.b;
       const ore=window.MineWorldOres.ids.get(target.b);
@@ -1390,7 +1392,7 @@ body.in-nether #game-wrap{background:#290f19}
     try{
       reconcileItemStacks();
       const edits=[...savedEdits.entries()];
-      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,inventory:[...inventory],itemStacks:stackStore.snapshot(),survivalHotbar:[...survivalHotbar],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:11});
+      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,inventory:[...inventory],itemStacks:stackStore.snapshot(),survivalHotbar:[...survivalHotbar],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,saturation:hungerSaturation,exhaustion:hungerDrain,bag,tools,equipped,difficulty,dayClock,armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:12});
       localStorage.setItem(slotKey(gameMode),payload);localStorage.setItem(LAST_SLOT,gameMode);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';
     }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';}
   }
@@ -1429,7 +1431,7 @@ body.in-nether #game-wrap{background:#290f19}
       vehicles=Array.isArray(s.vehicles)?s.vehicles.filter(v=>v&&['boat','raft','minecart','chestMinecart','hopperMinecart','furnaceMinecart','spruceBoat','cherryBoat'].includes(v.kind)&&v.dimension&&Number.isFinite(v.x)&&Number.isFinite(v.z)).slice(0,80):[];vehicleSerial=vehicles.reduce((n,v)=>Math.max(n,Number(v.id)||0),0);mount=null;
       stabledMounts=Array.isArray(s.tamedMounts)?s.tamedMounts.filter(v=>v&&typeof v.kind==='string'&&Number.isFinite(v.x)&&Number.isFinite(v.z)).slice(0,60):[];
       if(['pickaxe','sword','hoe','none'].includes(s.equipped))equipped=s.equipped;
-      if(Number.isFinite(s.health))health=clamp(s.health,1,20);if(Number.isFinite(s.hunger))hunger=clamp(s.hunger,0,20);
+      if(Number.isFinite(s.health))health=clamp(s.health,1,20);if(Number.isFinite(s.hunger))hunger=clamp(s.hunger,0,20);hungerSaturation=Number.isFinite(s.saturation)?clamp(s.saturation,0,hunger):Math.min(hunger,5);hungerDrain=Number.isFinite(s.exhaustion)?clamp(s.exhaustion,0,3.999):0;
       if(Array.isArray(s.inventory))for(let i=0;i<inventory.length;i++)inventory[i]=clamp(Math.floor(Number(s.inventory[i])||0),0,65535);
       if(Number(s.bag?.craftingTable)>0){inventory[168]=clamp(inventory[168]+Number(s.bag.craftingTable),0,65535);bag.craftingTable=0;}
       stackStore.restore(s.itemStacks,inventoryTotals());
@@ -1557,7 +1559,7 @@ body.in-nether #game-wrap{background:#290f19}
   function updateSurvivalHUD(){
     $('survival-hud').classList.toggle('hidden',gameMode!=='survival');
     $('health-text').textContent='♥ '+Math.ceil(health)+'/20';
-    $('hunger-text').textContent='🍖 '+Math.ceil(hunger)+'/20';
+    $('hunger-text').textContent='🍖 '+Math.ceil(hunger)+'/20';$('hunger-text').title='Saturation: '+hungerSaturation.toFixed(1)+' · exhaustion: '+hungerDrain.toFixed(2);
     $('eat-btn').textContent='Eat '+(bag.cooked?'🍖 '+bag.cooked:bag.raw?'🥩 '+bag.raw:'🍄 '+inventory[17]);$('weapon-readout').textContent=equipped==='none'?'✊ Fists':(equipped==='sword'?'⚔ ':equipped==='hoe'?'🌾 ':equipped==='axe'?'🪓 ':'⛏ ')+(tools[equipped]==='none'?'Hands':tools[equipped]+' '+equipped);
   }
   function setGameMode(next){
@@ -1586,7 +1588,7 @@ body.in-nether #game-wrap{background:#290f19}
     else if(bag.apple){bag.apple--;amount=4;food='apple'}
     else if(inventory[17]){inventory[17]--;amount=4;food='mushroom'}
     else{toast('Grow crops, trade for bread, or hunt animals for food');return}
-    hunger=clamp(hunger+amount,0,20);
+    const fed=window.MineWorldHunger.eat(hunger,hungerSaturation,amount);hunger=fed.hunger;hungerSaturation=fed.saturation;
     updateHotbar();updateSurvivalHUD();markSave();toast('Ate '+food+' · +'+amount+' hunger');
   }
   const RECIPES=[
@@ -1712,7 +1714,7 @@ body.in-nether #game-wrap{background:#290f19}
   function useHeldFood(key){
     if(!(key in FOOD))return false;
     if(hunger>=20&&health>=20){toast('You are not hungry');return true;}
-    if(addResource(key,-1,survivalHotbar[selection])!==-1)return false;hunger=clamp(hunger+FOOD[key],0,20);
+    if(addResource(key,-1,survivalHotbar[selection])!==-1)return false;const fed=window.MineWorldHunger.eat(hunger,hungerSaturation,FOOD[key]);hunger=fed.hunger;hungerSaturation=fed.saturation;
     if(key==='goldenApple')health=clamp(health+4,0,20);
     updateSurvivalHUD();updateHotbar();markSave();toast('Ate '+itemLabel(key));return true;
   }
@@ -2151,7 +2153,7 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function consumeSelection(){const item=inventorySelection();if(!item)return;let key=item.key;if(!(key in FOOD)){toast('This item is not food');return}
     if(hunger>=20&&health>=20){toast('You are not hungry');return}
-    if(addResource(key,-1,item.id)!==-1)return;hunger=clamp(hunger+FOOD[key],0,20);if(key==='goldenApple')health=clamp(health+4,0,20);
+    if(addResource(key,-1,item.id)!==-1)return;const fed=window.MineWorldHunger.eat(hunger,hungerSaturation,FOOD[key]);hunger=fed.hunger;hungerSaturation=fed.saturation;if(key==='goldenApple')health=clamp(health+4,0,20);
     toast('Ate '+itemLabel(key));updateSurvivalHUD();updateHotbar();markSave();renderGear();
   }
   function dropSelection(stack=false){
@@ -2393,7 +2395,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(mount)dismount(true);
     if(dimension!=='overworld')switchDimension('overworld');
     player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=terrain(SPAWN,SPAWN)+3;
-    player.vy=0;player.fly=false;health=20;hunger=18;
+    player.vy=0;player.fly=false;health=20;hunger=18;hungerSaturation=5;hungerDrain=0;
     updateSurvivalHUD();toast('You respawned at your world spawn');
   }
   function damage(amount,cause){
@@ -2413,13 +2415,14 @@ body.in-nether #game-wrap{background:#290f19}
       }
     }
     if(gameMode!=='survival'){sprintHungerSpent=0;return;}
-    if(difficulty==='peaceful'){sprintHungerSpent=0;health=clamp(health+dt*.75,0,20);hunger=20;updateSurvivalHUD();return;}
+    if(difficulty==='peaceful'){sprintHungerSpent=0;hungerDrain=0;hungerSaturation=20;health=clamp(health+dt*.75,0,20);hunger=20;updateSurvivalHUD();return;}
     const moving=keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||Math.hypot(movement.x,movement.y)>.08;
-    // MineWorld uses a direct food meter rather than Minecraft saturation/exhaustion.
-    // Sprinting consumes extra food based on distance traveled, not just the toggle.
-    hungerDrain+=dt*(moving?.067:.028)+sprintHungerSpent;
-    sprintHungerSpent=0;
-    if(hungerDrain>=1){hunger=clamp(hunger-Math.floor(hungerDrain),0,20);hungerDrain%=1;updateSurvivalHUD();markSave();}
+    // Wiki-informed exhaustion: 4 points consume one hidden saturation, then one hunger.
+    const activity=dt*(moving?.008:0)+sprintHungerSpent+hungerDrain;
+    sprintHungerSpent=0;hungerDrain=0;
+    const nutrition=window.MineWorldHunger.consume(hunger,hungerSaturation,0,activity);
+    if(nutrition.hunger!==hunger){hunger=nutrition.hunger;updateSurvivalHUD();markSave();}
+    hungerSaturation=nutrition.saturation;hungerDrain=nutrition.exhaustion;
     hungerPulse+=dt;healPulse+=dt;
     if(hunger===0&&hungerPulse>=4){hungerPulse=0;damage(1,'Starving')}
     if(hunger>=16&&health<20&&healPulse>=9){healPulse=0;health=clamp(health+1,0,20);updateSurvivalHUD();}
@@ -2427,7 +2430,7 @@ body.in-nether #game-wrap{background:#290f19}
   function updateFlyButton(){$('fly-btn').textContent='✦ Flying: '+(player.fly?'On':'Off')}
   function start(){if(!started){started=true;requestAnimationFrame(render)}lastTime=performance.now();paused=false;$('welcome').classList.add('hidden');$('pause').classList.add('hidden');if(!isTouch&&canvas.requestPointerLock)canvas.requestPointerLock()?.catch?.(()=>{});toast('World ready — have fun!')}
   function menu(){paused=true;isSprinting=false;updateMovementUI();cancelMining();mouseMiningHeld=false;keys.clear();movement.x=0;movement.y=0;touchHold.mine=false;touchHold.place=false;updateRenderSettingsUI();$('pause').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock();save()}
-  function jump(){if(paused)return;if(mount){mountLift=.28;return;}if(player.fly){player.y+=.7;return}if(player.ground){player.vy=8;player.ground=false}}
+  function jump(){if(paused)return;if(mount){mountLift=.28;return;}if(player.fly){player.y+=.7;return}if(player.ground){player.vy=8;player.ground=false;if(gameMode==='survival')hungerDrain+=isSprinting?.2:.05;}}
   const RIDE_KINDS={horse:{speed:10,saddle:true},donkey:{speed:7,saddle:true},mule:{speed:8,saddle:true},camel:{speed:8,saddle:true},llama:{speed:3,saddle:false,unsteerable:true},pig:{speed:5,saddle:true,control:'carrotStick'},strider:{speed:6,saddle:true,control:'fungusStick'},skeleton_horse:{speed:10,saddle:false},zombie_horse:{speed:9,saddle:true},happy_ghast:{speed:10,harness:true,flying:true}};
   const VEHICLE_KINDS=new Set(['boat','raft','minecart','spruceBoat','cherryBoat','chestMinecart','hopperMinecart','furnaceMinecart']);
   function dismount(silent=false){if(!mount)return;const kind=mount.kind;mount=null;mountLift=0;$('mount-readout').classList.add('hidden');$('ride-btn').textContent='🐎 RIDE';if(!silent)toast('Dismounted '+kind);markSave();}
@@ -2490,7 +2493,7 @@ body.in-nether #game-wrap{background:#290f19}
     let fw=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)-movement.y;
     let strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+movement.x;
     const len=Math.hypot(fw,strafe);if(len>1){fw/=len;strafe/=len}
-    const canStand=!isCrouching||!blockAtFeet(player.x,player.y,player.z,1.72);
+    const canStand=!isCrouching||!blockAtFeet(player.x,player.y,player.z,1.8);
     const state=window.MineWorldMovement.resolve({
       forward:fw,strafe,
       holdSprint:keys.has('ControlLeft')||keys.has('ControlRight'),
@@ -2794,6 +2797,7 @@ body.in-nether #game-wrap{background:#290f19}
     }
     const result=applyMobHit(m.id,combatStrength());
     if(!result.hit)return;
+    if(gameMode==='survival')hungerDrain+=.1;
     attackCooldown=gameMode==='creative'?.12:.48;
     toast(result.dead?'Defeated '+SPECIES[result.kind].name:'Hit '+SPECIES[result.kind].name+' · '+Math.ceil(result.hp)+' health');
     window.MineWorldMultiplayer?.flushMobs();
@@ -3132,7 +3136,7 @@ body.in-nether #game-wrap{background:#290f19}
     for(const k of Object.keys(bag))bag[k]=0;
     tools.pickaxe=tools.sword=tools.hoe=tools.axe=tools.shovel='none';equipped='none';
     for(const k of Object.keys(armor))armor[k]='';inventoryOrder.length=0;vehicles=[];vehicleSerial=0;mount=null;stabledMounts=[];backpackPage=0;selectedStackKey='';selectedStackId=null;stackStore.clear();
-    health=20;hunger=20;hungerDrain=hungerPulse=healPulse=0;
+    health=20;hunger=20;hungerSaturation=5;hungerDrain=hungerPulse=healPulse=0;
     dayClock=0;hotbarPage=0;HOT9.splice(0,HOT9.length,...HOTSETS[0]);survivalHotbar.fill(null);selection=0;
   }
   function switchWorldSlot(next){
