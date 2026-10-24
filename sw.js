@@ -1,5 +1,5 @@
-const VERSION='mineworld-accurate-pixel-surfaces-20261024-v21';
-const FILES=['./','./index.html','./pixel-materials.js','./stack-inventory.js','./multiplayer.js','./world-chunks.js','./survival-catalog.js','./nether-world.js','./overworld-ores.js','./end-world.js','./structure-loot.js','./villages.js','./manifest.webmanifest','./favicon.svg','./apple-touch-icon.png'];
+const VERSION='mineworld-render-distance-textures-20261024-v22';
+const FILES=['./','./index.html','./pixel-materials.js','./chunk-planner.js','./stack-inventory.js','./multiplayer.js','./world-chunks.js','./survival-catalog.js','./nether-world.js','./overworld-ores.js','./end-world.js','./structure-loot.js','./villages.js','./manifest.webmanifest','./favicon.svg','./apple-touch-icon.png'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(VERSION).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x.startsWith('mineworld-')&&x!==VERSION).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
