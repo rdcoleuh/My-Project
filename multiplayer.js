@@ -23,7 +23,8 @@
   const publicParam = new URL(location.href).searchParams.get('server');
   const roomParam = new URL(location.href).searchParams.get('room');
   function validId(id) { return /^[A-Za-z0-9][A-Za-z0-9_-]{0,100}[A-Za-z0-9]$/.test(id) || /^[A-Za-z0-9]$/.test(id); }
-  function label() { return nickname.replace(/[<>]/g,'').trim().slice(0,16)||'Builder'; }
+  function label() { return chatRules.name(nickname); }
+  function readNickname(){nickname=chatRules.name($('player-name').value);$('player-name').value=nickname;return nickname;}
   function setStatus(message) { $('room-status').textContent = message; }
   function setChatOpen(next,focus=false){
     chatOpen=!!next;
@@ -83,8 +84,7 @@
   function openLobby() {
     $('lobby').classList.remove('hidden');
     if(document.pointerLockElement) document.exitPointerLock();
-    try { nickname = ($('player-name').value||'Builder').trim().slice(0,16)||'Builder'; }
-    catch(_){}
+    try{readNickname()}catch(_){}
     if(role==='offline'&&!isConnectingPublic)setStatus('Choose a public world, or create a private room.');
     updateUI();
   }
@@ -268,7 +268,7 @@
   }
   async function createRoom() {
     if(role!=='offline'){setStatus('Leave the current room before hosting another.');return}
-    nickname=label();$('host-room').disabled=true;
+    readNickname();$('host-room').disabled=true;
     setStatus('Creating room… Connecting to free PeerJS signaling server.');
     try{
       const Peer=await peerLibrary();
@@ -289,7 +289,7 @@
     let code=$('room-code').value.trim();
     if(code.includes('://')){try{code=new URL(code).searchParams.get('room')||''}catch(_){}}
     if(!validId(code)){setStatus('Paste a valid MineWorld invite link or room code.');return}
-    nickname=label();$('join-room').disabled=true;
+    readNickname();$('join-room').disabled=true;
     setStatus('Connecting to '+code+'…');
     try{
       const Peer=await peerLibrary();role='guest';guestWorld=true;roomId=code;
@@ -315,7 +315,7 @@
     if(!cfg){setStatus('That public world does not exist.');return;}
     if(role!=='offline'){setStatus('Leave your current world before joining another.');return;}
     if(isConnectingPublic)return;
-    isConnectingPublic=true;publicWorld=which;nickname=label();role='connecting';
+    isConnectingPublic=true;publicWorld=which;readNickname();role='connecting';
     document.querySelectorAll('[data-public]').forEach(b=>b.disabled=true);
     setStatus('Finding public world: '+cfg.name+'…');
     try{
@@ -424,9 +424,9 @@
   });
   $('player-name').addEventListener('keydown',e=>e.stopPropagation());
   $('room-code').addEventListener('keydown',e=>e.stopPropagation());
-  $('player-name').addEventListener('change',()=>{nickname=label();try{localStorage.setItem('mineworld-name',nickname)}catch(_){}updateUI()});
+  $('player-name').addEventListener('change',()=>{readNickname();try{localStorage.setItem('mineworld-name',nickname)}catch(_){}updateUI()});
   try {const saved=localStorage.getItem('mineworld-name');if(saved)$('player-name').value=saved.slice(0,16)}catch(_){}
-  nickname=label();
+  readNickname();
   if(publicParam && PUBLIC[publicParam]){
     $('lobby').classList.remove('hidden');
     setStatus('Joining public world '+PUBLIC[publicParam].name+'…');
