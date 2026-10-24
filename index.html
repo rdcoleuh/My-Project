@@ -628,7 +628,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v5.5 · CLASSIC GAMEPLAY · ORIGINAL ART</div>
+  <div class="version">MINEWORLD v5.6 · PIXEL-PERFECT · SKINS · MULTIPLE WORLDS</div>
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./texture-refinement.js"></script>
@@ -3567,8 +3567,8 @@ body.in-nether #game-wrap{background:#290f19}
     const requestedSeed=typed!==previousLabel?typed:'';
     if(requestedSeed&&requestedSeed!==seedLabel){
       if(window.MineWorldMultiplayer?.isShared()){toast('Leave your multiplayer world to change seeds');return;}
-      if(!confirm('Start a NEW '+mode+' world with seed "'+requestedSeed+'"? Your current '+mode+' world will be backed up.'))return;
-      createSeededWorld(requestedSeed);
+      if(!confirm('Create a SEPARATE '+mode+' world using seed "'+requestedSeed+'"? Your existing saved worlds will remain.'))return;
+      if(!createNamedWorld(mode,'Seed '+requestedSeed.slice(0,20),requestedSeed,false))return;
     }
     setGameMode(mode);start();
   }
@@ -3867,5 +3867,6 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
 })();
 </script>
 <script src="./block-guide.js"></script>
+<script src="./world-manager-ui.js"></script>
 </body>
 </html>
