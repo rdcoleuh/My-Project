@@ -150,3 +150,11 @@ Rendering refinements:
 Pixel textures were further refined with original 16×16 textures: bark and log end-grain for more wood species, oak/spruce boards, foliage clusters, sandstone bands, glowing magma cracks and End-stone pits. These are independent Minecraft-inspired pixel patterns, not Mojang assets.
 
 **Verification:** Script syntax, planner determinism, 10–50 visible counts and boundary behavior, no extra chunks from mesh-neighbor reads, cache cap under movement, and all 129,024 atlas pixel color values were tested. Physical iPhone graphics and long-running 50-chunk frame rates have not been measured on a physical device.
+
+## 4.9 — Wiki-informed block appearance
+
+- Reviewed Minecraft Wiki's block and block-texture catalog to match the familiar 16×16 pixel resolution, different top/side/bottom faces, and material categories.
+- New `texture-refinement.js` supplies original, deterministic 16px patterns for grass/dirt, stone/deepslate, cobblestone, sand/gravel, logs, planks, water/lava, and ore varieties. Existing `pixel-materials.js` still covers every one of MineWorld's 168 currently defined block IDs.
+- Official Minecraft texture images are not included or copied. The wiki describes many more block types than MineWorld currently implements; this update does not claim to add every Minecraft block.
+- Sprint and sneak controls already exist: desktop Ctrl or G to sprint, Shift or X to crouch; on mobile, use the SPRINT and SNEAK toggles. Sprinting costs extra hunger while moving and cannot start at 6 hunger or less. Sneaking slows movement and helps prevent stepping off ledges.
+- The 10–50 chunk slider and automatic frame-rate adjustment remain in the game menu. Actual performance varies with the device.
