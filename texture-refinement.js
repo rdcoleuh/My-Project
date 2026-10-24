@@ -100,7 +100,7 @@
      99:[[24,106,112],[51,180,191],[100,232,229]],
      100:[[21,101,60],[42,170,96],[95,221,141]]
    };
-   const deepOre=b>=101&&b<=108,kind=deepOre?b-8:b;
+   const deepOre=b>=101&&b<=108,kind=deepOre?[18,19,95,96,97,98,99,100][b-101]:b;
    const colors=minerals[kind]||minerals[18];
    const cx=x>>2,cy=y>>2;
    const seed=hash(cx,cy,kind+601);
