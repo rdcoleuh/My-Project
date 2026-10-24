@@ -1,3 +1,27 @@
+# MineWorld 5.3 — Original Texture Workshop, Animated Blocks & Block Guide
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+MineWorld is an independent voxel sandbox for iPhone and desktop. This version continues the existing Creative/Survival game without resetting save keys, world seeds, stack inventories, or multiplayer.
+
+### New in 5.3
+
+- **All 169 placeable block IDs** have distinct original side textures. Independently designed details improve ores, host rocks, crafting stations, trees, hay, End stone, purple End materials, soil, and stone.
+- **Searchable Block Guide** in the Pause menu and main Options screen: block name/ID, original top and side pixels, and current rendered model sizes in 16-pixel units. Crop sizes reflect growth stage.
+- **Animated original textures:** tiny GPU atlas tile updates animate water, lava, magma, and portal effects; stronger devices animate prismarine, sculk, sea lantern, and End portal surfaces. Slow phones automatically reduce work.
+- **Performance:** preserves existing adaptive 10–50 **total visible chunk** slider and chunk-streaming optimizations. 50 is not a 50-chunk radius.
+- **Compatibility:** preserves existing browser storage keys, 64-item survival stacks, hotbar assignments, saves, seeds, and touch/desktop sprint and sneak controls.
+- **Offline:** the service worker precaches new guide and texture modules.
+- **Regression tests:** run node --test tests/*.test.cjs to check colors, dimensions, animation bounds, chunk planning and inventory restoration.
+
+### Original-art policy and research
+
+The research starting points were the [Minecraft Wiki Block page](https://minecraft.wiki/w/Block), [List of block textures](https://minecraft.wiki/w/List_of_block_textures), [Textures](https://minecraft.wiki/w/Textures), [Solid block model sizes](https://minecraft.wiki/w/Solid_block), [Hitbox](https://minecraft.wiki/w/Hitbox), [Farmland](https://minecraft.wiki/w/Farmland), and [Soul Sand](https://minecraft.wiki/w/Soul_Sand). Most block faces use a 16×16 source-pixel grid; typical full cubes are 16×16×16 units. Partial blocks need custom dimensions, and animated materials vary over time. No Minecraft asset files were copied, downloaded, or modified by one pixel; all MineWorld art is independently generated.
+
+**Scope:** The Block Guide covers all **169 blocks implemented in MineWorld**, not every block in the official Minecraft registry. Some models remain simplified (for example a one-block bed and box-based vegetation), and visuals/collision are not perfectly equivalent to every official model. The guide shows MineWorld's rendered dimensions, not a guarantee of exact Mojang hitboxes. Saves are local to the browser; clearing site data may erase them.
+
+---
+
 # MineWorld 5.1 — Survival Beds, Weather, Experience & Original Pixel Blocks
 
 **Play:** https://rdcoleuh.github.io/My-Project/
