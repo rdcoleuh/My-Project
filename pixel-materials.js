@@ -768,3 +768,298 @@ atlas.paint=draw;
 atlas.version='4.3-original-classic-pixels';
 atlas.originalArt=true;
 })();
+
+
+/*
+ * MineWorld 4.4 — original, finer classic-style 16px pixel art.
+ * Deliberately drawn geometry and restricted color ramps, not third-party
+ * textures or a pixel-for-pixel copy of Minecraft art.
+ */
+(()=>{
+'use strict';
+const atlas=window.MineWorldPixelMaterials;
+const previous=atlas.paint;
+const clamp=v=>Math.min(255,Math.max(0,Math.round(v)));
+const rgba=a=>[a[0],a[1],a[2],255];
+function h(x,y,z=0){
+  let n=Math.imul((x|0)+371,374761393)^Math.imul((y|0)+733,668265263)^Math.imul((z|0)+881,1274126177);
+  n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295;
+}
+const lighter=(c,n)=>[clamp(c[0]+n),clamp(c[1]+n),clamp(c[2]+n)];
+function pick(p,x,y,seed=0){
+  const r=h(x>>2,y>>2,seed)*.48+h(x>>1,y>>1,seed+137)*.38+h(x,y,seed+539)*.14;
+  const idx=Math.min(p.length-1,Math.floor(r*p.length));
+  return rgba(p[idx]);
+}
+const DIRT_PALETTE=[[72,48,32],[96,66,43],[120,84,53],[143,102,65],[165,124,80]];
+const GRASS_PALETTE=[[37,89,28],[52,115,36],[70,139,45],[94,163,55],[116,185,65]];
+const ROCK_PALETTE=[[70,73,72],[94,96,95],[121,124,123],[146,149,146],[171,173,171]];
+const DARK_ROCK=[[31,36,42],[50,55,63],[70,76,85],[92,99,105],[118,124,131]];
+function dirt(x,y,coarse=false){
+  const p=h(x>>1,y>>1,31)*.44+h(x>>2,y>>2,59)*.4+h(x,y,104)*.16;
+  const r=Math.min(4,Math.floor(p*5));
+  if(coarse&&h(x>>1,y>>1,101)>.74)return rgba([[93,89,79],[113,111,102],[138,133,120]][(h(x,y,77)*3)|0]);
+  if(h(x,y,201)>.978)return rgba([182,133,82]);
+  return rgba(DIRT_PALETTE[r]);
+}
+function grass(x,y,muted=false){
+  const p=h(x>>2,y>>2,20)*.42+h(x>>1,y>>1,27)*.43+h(x,y,39)*.15;
+  const c=GRASS_PALETTE[Math.min(4,Math.floor(p*5))];
+  if(h(x,y,78)>.979)return rgba(muted?[166,175,74]:[132,193,79]);
+  return rgba(muted?[clamp(c[0]+31),clamp(c[1]-18),clamp(c[2]+3)]:c);
+}
+function grassSide(x,y){
+  // Ragged top dirt/grass silhouette, with scattered thin downward blades.
+  const heights=[4,5,3,4,6,4,3,5,6,4,5,3,4,6,5,4];
+  const fringe=heights[x];
+  const dangling=(y===fringe+1&&(x%5===2||x===8||x===13));
+  if(y<fringe||dangling)return grass(x,y);
+  if(y===fringe)return rgba(h(x,0,7)>.55?[66,135,37]:[99,154,49]);
+  return dirt(x,y);
+}
+function stone(x,y,dark=false){
+  const palette=dark?DARK_ROCK:ROCK_PALETTE;
+  let patch=h(x>>2,y>>2,dark?227:61),speck=h(x>>1,y>>1,dark?228:62);
+  let i=patch>.7?1:patch<.29?3:2;
+  if(speck>.86)i=Math.max(0,i-1);else if(speck<.13)i=Math.min(4,i+1);
+  const crack=(h((x+2)>>2,(y+1)>>2,dark?801:802)>.79&&((x+1)%4===0||y%4===1));
+  if(crack)i=0;
+  if(h(x,y,801+Number(dark))>.971)i=4;
+  return rgba(palette[i]);
+}
+const ROCKS=[
+ [2.4,2.3,1.4],[8.4,1.5,1.1],[13.2,3.0,1.3],[4.9,7.1,1.5],
+ [11.3,8.1,1.5],[2.0,13.1,1.1],[8.0,13.8,1.25],[14.9,13.2,1.2]
+];
+function cobble(x,y,black=false){
+  // Jagged large stones outlined by narrow grout. Curves are tileable at edges.
+  let a=Infinity,b=Infinity,k=0;
+  for(let i=0;i<ROCKS.length;i++){
+    const s=ROCKS[i];
+    const dx=Math.min(Math.abs(x-s[0]),16-Math.abs(x-s[0]));
+    const dy=Math.min(Math.abs(y-s[1]),16-Math.abs(y-s[1]));
+    const dist=(dx*dx+dy*dy)/s[2]+(h(x>>1,y>>1,i+404)-.5)*.63;
+    if(dist<a){b=a;a=dist;k=i;}else if(dist<b)b=dist;
+  }
+  const p=black?[[22,24,29],[37,40,46],[55,60,68],[77,81,90],[99,104,113]]:
+    [[57,59,57],[74,78,78],[103,109,108],[131,136,132],[160,166,161]];
+  if(b-a<2.2)return rgba(p[0]);
+  const light=(h(x>>1,y>>1,k+215)>.68)+(h(x,y,k+223)>.77);
+  const i=b-a<3.4?1:Math.min(4,2+light);
+  return rgba(p[i]);
+}
+const WOOD={
+  oak:[[54,36,25],[84,53,31],[117,77,43],[150,105,58],[185,141,84]],
+  spruce:[[39,28,24],[62,43,31],[89,59,41],[120,85,54],[154,119,75]],
+  birch:[[61,58,51],[132,129,114],[182,175,153],[218,210,184],[238,230,207]],
+  jungle:[[56,37,25],[87,56,34],[120,79,44],[161,111,65],[185,137,85]],
+  acacia:[[58,56,49],[84,79,68],[118,111,91],[152,142,120],[183,174,151]],
+  cherry:[[89,44,58],[117,64,78],[152,87,101],[191,118,129],[226,165,164]],
+  pale:[[71,71,67],[99,102,97],[142,146,137],[178,183,170],[214,216,201]],
+  crimson:[[48,18,31],[75,25,40],[110,37,53],[148,53,72],[187,79,94]],
+  warped:[[18,35,42],[25,57,67],[32,88,98],[43,120,122],[65,154,152]]
+};
+function logSide(x,y,type){
+  const pal=WOOD[type]||WOOD.oak;
+  if(type==='birch'||type==='pale'){
+    const scar=(y===2||y===6||y===11)&&h(x>>1,y,type.length)>.29&&
+      (x>1&&x<14&&(x%5!==0));
+    const vertical=(x===4||x===11)&&h(x>>2,y>>2,139)>.68;
+    if(scar)return rgba(pal[0]);
+    if(vertical)return rgba(pal[1]);
+    return rgba(pal[h(x>>1,y>>1,93)>.58?4:3]);
+  }
+  const fibers=[1,1,0,2,3,1,0,1,2,3,2,1,0,2,1,0];
+  let i=fibers[x];
+  if(h(x>>1,y>>2,type.length+803)>.83)i=Math.min(4,i+1);
+  if((x===4||x===11)&&(y%5<3))i=0;
+  if((x===7||x===13)&&h(x,y>>1,111)>.73)i=4;
+  return rgba(pal[i]);
+}
+function logEnd(x,y,type){
+  const pal=WOOD[type]||WOOD.oak;
+  const dx=Math.abs(x-7.5),dy=Math.abs(y-7.5);
+  const radius=Math.max(dx,dy)+(h(x>>1,y>>1,40)-.5)*.65;
+  if(radius>6.65)return rgba(pal[0]);
+  if(radius<1.3)return rgba(pal[1]);
+  const r=Math.floor(radius*1.27)%3;
+  return rgba(pal[[3,2,4][r]]);
+}
+function planks(x,y,material='oak'){
+  const base=WOOD[material]||WOOD.oak;
+  const row=Math.floor(y/4);
+  if(y%4===0)return rgba(base[0]);
+  const offset=[2,9,5,12][row],join=(x+offset)%15===0;
+  if(join)return rgba(base[1]);
+  const grain=h(x>>1,row,44)+h(x>>2,y>>1,49);
+  if((x+y*2)%13===0)return rgba(base[1]);
+  if(grain>1.45)return rgba(base[4]);
+  return rgba(base[grain>.92?3:2]);
+}
+const LEAFPALETTE={
+ oak:[[22,56,18],[35,84,26],[52,110,35],[76,143,44],[105,170,57]],
+ spruce:[[13,42,28],[24,65,44],[34,88,55],[51,116,72],[75,144,88]],
+ birch:[[41,73,25],[59,99,34],[81,125,44],[108,155,55],[134,181,72]],
+ jungle:[[14,57,21],[27,82,27],[37,113,34],[52,142,43],[74,166,50]],
+ acacia:[[53,65,25],[70,90,33],[92,117,39],[123,146,49],[154,176,61]],
+ mangrove:[[20,58,34],[33,80,46],[44,110,58],[65,139,77],[90,167,95]],
+ cherry:[[129,60,87],[168,86,113],[201,116,143],[230,150,174],[250,199,208]],
+ pale:[[74,95,84],[102,125,108],[131,154,137],[165,186,165],[202,220,202]]
+};
+function leaves(x,y,name){
+  const p=LEAFPALETTE[name]||LEAFPALETTE.oak;
+  const shape=h(x>>2,y>>2,name.length*72);
+  const cell=h(x>>1,y>>1,name.length*51+2);
+  let i=shape>.7?3:shape<.27?1:2;
+  if(cell>.8)i=Math.min(4,i+1);
+  else if(cell<.15)i=Math.max(0,i-1);
+  if(h(x,y,name.length*75)>.96)i=0;
+  return rgba(p[i]);
+}
+const ORES={
+  18:[['coal'],[24,26,29],[60,62,67]],
+  19:[['iron'],[172,116,80],[231,175,126]],
+  95:[['copper'],[193,111,68],[74,147,126]],
+  96:[['gold'],[233,180,55],[255,223,113]],
+  97:[['redstone'],[176,29,35],[246,60,50]],
+  98:[['lapis'],[31,64,162],[66,114,224]],
+  99:[['diamond'],[39,174,184],[93,232,225]],
+  100:[['emerald'],[33,159,80],[89,218,121]],
+  83:[['quartz'],[202,185,162],[251,237,216]],
+  84:[['gold'],[227,166,53],[255,220,111]]
+};
+for(let i=101;i<=108;i++)ORES[i]=ORES[[18,19,95,96,97,98,99,100][i-101]];
+const ORE_SPOTS=[
+ [3,4,2,2],[11,3,2,1],[7,8,1,2],[12,11,2,2],[4,13,2,1]
+];
+function ore(x,y,id,deep=false,nether=false){
+  const [name,lo,hi]=ORES[id],kind=name[0];
+  const oreField=nether?rgba([118,47,46]):stone(x,y,deep);
+  let best=Infinity,chosen=0;
+  for(let i=0;i<ORE_SPOTS.length;i++){
+    const [sx,sy,rx,ry]=ORE_SPOTS[i],dx=Math.abs(x-sx),dy=Math.abs(y-sy);
+    const shape=(dx/rx)+(dy/ry)+h(x,y,id+i)*.55;
+    if(shape<best){best=shape;chosen=i;}
+  }
+  const threshold=kind==='emerald'?.87:kind==='diamond'?1.15:kind==='redstone'?1.26:1.13;
+  if(best>threshold)return oreField;
+  if(best>.91)return rgba(lighter(lo,-39));
+  if(h(x>>1,y>>1,id+chosen*11)>.55||best<.41)return rgba(hi);
+  if(kind==='copper'&&h(x,y,613)>.67)return rgba(hi);
+  return rgba(lo);
+}
+function flatGrain(x,y,pal,seed){
+  const n=h(x>>1,y>>1,seed)*.62+h(x,y,seed+19)*.38;
+  return rgba(pal[Math.min(pal.length-1,Math.floor(n*pal.length))]);
+}
+function craftingBench(x,y,face){
+  if(face===0){
+    // Four-tile cutting-board top with dark seams, corner squares and tool marks.
+    const rim=x<2||x>13||y<2||y>13;
+    const cross=x===7||x===8||y===7||y===8;
+    if(rim)return rgba([94,60,35]);
+    if(cross)return rgba([91,60,38]);
+    const tool1=y===5&&x>=3&&x<=6||x===4&&y>=3&&y<=5;
+    const tool2=y===10&&x>=10&&x<=12||x===12&&y>=10&&y<=12;
+    if(tool1||tool2)return rgba([82,79,73]);
+    return planks(x,y);
+  }
+  const frame=x<2||x>13||y<2||y>13;
+  const shadow=x===3||x===12||y===3||y===12;
+  const tool=(x===8&&y>=5&&y<=10)||(y===6&&x>=6&&x<=10)||(x===6&&y>=6&&y<=8);
+  if(frame)return rgba([73,47,29]);
+  if(shadow)return rgba([118,80,51]);
+  if(tool)return rgba([87,94,95]);
+  if(x>3&&x<12&&y>4&&y<12)return rgba([158,125,85]);
+  return planks(x,y);
+}
+function furnace(x,y,face){
+  if(face===0)return cobble(x,y);
+  const edge=x<2||x>13||y<2||y>13;
+  const mouth=x>=4&&x<=11&&y>=6&&y<=12;
+  const dark=x>=5&&x<=10&&y>=7&&y<=11;
+  if(dark)return rgba([28,27,28]);
+  if(mouth)return rgba([58,58,58]);
+  if(edge)return rgba([86,89,88]);
+  return stone(x,y);
+}
+function diamondBlock(x,y,type){
+  const colors={
+    110:[[22,48,123],[38,74,181],[66,101,218],[38,68,154]],
+    111:[[18,95,58],[37,157,97],[65,210,136],[25,124,69]],
+    112:[[24,109,119],[61,184,199],[113,226,221],[43,140,164]],
+    113:[[93,60,45],[166,102,70],[208,137,88],[125,74,50]],
+    114:[[139,107,25],[226,169,53],[255,214,97],[181,132,37]],
+    115:[[109,110,105],[179,184,180],[225,230,219],[144,150,151]],
+    116:[[17,19,20],[39,43,48],[63,69,73],[28,31,34]],
+    117:[[105,15,25],[173,37,47],[227,58,67],[130,23,31]]
+  };
+  const p=colors[type];
+  const rim=(x===0||y===0||x===15||y===15);
+  const glimmer=x===2||y===2;
+  const cell=(Math.floor(x/4)+Math.floor(y/4))%2;
+  return rgba(p[rim?0:glimmer?2:cell?1:3]);
+}
+function newArt(id,face,x,y){
+  x&=15;y&=15;const top=face===0,bottom=face===2;
+  if(id===1)return top?grass(x,y):bottom?dirt(x,y):grassSide(x,y);
+  if(id===2)return dirt(x,y);
+  if(id===28)return top?grass(x,y,true):dirt(x,y);
+  if(id===29)return dirt(x,y,true);
+  if(id===3)return stone(x,y);
+  if(id===58)return stone(x,y,true);
+  if(id===61)return cobble(x,y);
+  if(id===68)return cobble(x,y,true);
+  const trunks={5:'oak',15:'oak',30:'spruce',32:'birch',34:'acacia',36:'jungle',38:'jungle',40:'cherry',42:'pale',78:'crimson',80:'warped'};
+  if(Object.hasOwn(trunks,id))return top||bottom?logEnd(x,y,trunks[id]):logSide(x,y,trunks[id]);
+  if(id===11||id===52)return planks(x,y,id===52?'spruce':'oak');
+  const foliage={6:'oak',12:'oak',13:'acacia',14:'birch',31:'spruce',33:'birch',35:'acacia',37:'jungle',39:'mangrove',41:'cherry',43:'pale'};
+  if(Object.hasOwn(foliage,id))return leaves(x,y,foliage[id]);
+  if(Object.hasOwn(ORES,id))return ore(x,y,id,id>=101&&id<=108,id===83||id===84);
+  if(id===168)return craftingBench(x,y,face);
+  if(id===20||id===156||id===157)return furnace(x,y,face);
+  if(id>=110&&id<=117)return diamondBlock(x,y,id);
+  if(id===4||id===26)return flatGrain(x,y,id===26?
+    [[144,65,43],[178,88,53],[202,111,66],[220,134,85],[240,161,109]]:
+    [[177,162,127],[200,186,147],[219,207,167],[235,222,185],[248,238,204]],id+200);
+  if(id===92)return flatGrain(x,y,[[82,79,73],[102,99,94],[118,115,106],[140,139,130],[163,162,149]],id);
+  if(id===9){
+    const border=x===0||x===15||y===0||y===15;
+    const reflection=(x===3&&y>=4&&y<=11)||(y===4&&x>=3&&x<=11);
+    return rgba(border?[126,165,181]:reflection?[234,248,248]:[186,218,228]);
+  }
+  if(id===50||id===65){
+    return flatGrain(x,y,[[68,26,29],[90,31,34],[111,38,41],[129,49,52],[150,57,59]],id);
+  }
+  if(id===51){
+    const crack=h(x>>2,y>>2,51)>.7&&((x+y)%6===0||x%5===2);
+    return rgba(crack?[93,43,107]:h(x>>1,y>>1,21)>.67?[51,29,66]:[31,24,42]);
+  }
+  if(id===70||id===71){
+    const eye=id===70&&((x>=3&&x<=5&&y>=6&&y<=9)||(x>=10&&x<=12&&y>=6&&y<=9));
+    return rgba(eye?[64,57,51]:h(x>>2,y>>2,id)>.57?[113,100,85]:[83,75,65]);
+  }
+  if(id===121){
+    const pit=h(x>>2,y>>2,121)>.73&&(x%4===1||y%4===2);
+    return rgba(pit?[166,165,121]:h(x>>2,y>>2,311)>.59?[223,216,170]:[203,202,159]);
+  }
+  if(id===7){
+    const ripple=(y+(x>>2))%8===0;
+    return rgba(ripple?[87,150,204]:h(x>>2,y>>1,7)>.55?[48,105,181]:[31,88,158]);
+  }
+  if(id===66){
+    const seam=(x+2*y)%13<3;
+    return rgba(seam?[254,205,62]:h(x>>1,y>>1,66)>.5?[245,128,31]:[206,64,13]);
+  }
+  if(id===53||id===130||id===131||id===72||id===74||id===69){
+    const p={53:[139,144,141],130:[206,203,157],131:[174,112,163],72:[104,42,49],74:[102,37,45],69:[65,62,66]}[id];
+    const offset=(Math.floor(y/4)%2)*4;
+    const grout=y%4===0||(x+offset)%8===0;
+    return rgba(lighter(p,grout?-37:h(x>>2,y>>2,id)>.64?13:-6));
+  }
+  return null;
+}
+atlas.paint=(id,face,x,y)=>newArt(id,face,x,y)||previous(id,face,x,y);
+atlas.version='4.4-classic-block-details';
+atlas.originalArt=true;
+})();
