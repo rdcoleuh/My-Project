@@ -1,4 +1,4 @@
-# MineWorld 4.1 — Pause Menu & 16px Block Textures
+# MineWorld 4.2 — Real 64-Item Stacks & Pixel Textures
 
 **Play:** https://rdcoleuh.github.io/My-Project/
 
@@ -71,3 +71,21 @@ The menu landscape, texture, lettering and art are independently generated and d
 - These are original textures inspired by familiar voxel-block aesthetics. They are **not** copies of official Minecraft textures or a pixel-exact reproduction of the official game's copyrighted pixel patterns.
 
 The existing 10,000 × 10,000 worlds, Survival/Creative saves, inventory, crafting, mobs, shared multiplayer and Nether/End generation are preserved. Physical-iPhone behavior and Internet peer-to-peer combat still require real-device checks.
+
+
+## 4.2 — Pickups stack at 64 and consume to zero
+
+- Inventory is opened from a large **🎒 INV** button located immediately to the right of the nine-slot hotbar, including on iPhones.
+- Survival inventory now has real per-stack entries with distinct stable IDs. **All placeable blocks stack to 64 items**; further pickups create additional stacks of the same block (for example 130 stone becomes **64 + 64 + 2**).
+- Individually nonstackable equipment and transportation objects get separate 1-item stacks. Other ordinary collectible materials generally stack to 64.
+- Hotbar slots refer to specific stacks. Placing or eating uses one item from the chosen stack; when that stack reaches **zero**, its hotbar slot empties. A second stack stays available in the backpack or another slot, not infinitely refilling the first.
+- A fresh pickup automatically occupies a free hotbar slot when it creates a new stack. A full hotbar leaves excess stacks in the backpack. Manual selection from backpack assigns exactly that stack to a chosen slot.
+- Crafting and trading still use total resources, taking the costs from owned stacks; dropping a single item or a full stack targets the selected stack.
+- Legacy inventory totals and older name-based hotbar assignments migrate to the new ID-based stacks. Stack entries and IDs are saved with the Survival world (version 11).
+- Item storage has 36-slot **pages**, so the total number of pages is not yet limited to Minecraft's fixed inventory capacity. Aggregate per-item totals currently cap at 65,535, and displayed hotbar stack counts cap at 64.
+
+## Improved pixel-art materials
+
+- Refined 16×16 game-original textures with larger hard-edged pixel clusters instead of smooth color noise; richer grass/dirt edges, more irregular rocky cobblestone, clearer ore flecks, distinct tree and leaf patterns, and improved End stone.
+- Every defined block type keeps its own original nearest-neighbor texture. Hotbar tile thumbnails now sit squarely aligned to the 16px atlas instead of being rotated.
+- MineWorld does not ship or reuse official Minecraft texture files; these are independently authored approximations of the same recognizable blocky aesthetic.
