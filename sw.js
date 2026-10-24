@@ -1,5 +1,5 @@
-const VERSION='mineworld-wiki-survival-beds-weather-xp-20261024-v27';
-const FILES=['./','./index.html','./survival-hunger.js','./survival-world-rules.js','./survival-weather-visual.js','./block-models.js','./movement-modes.js','./texture-details.js','./pixel-materials.js','./texture-refinement.js','./chunk-planner.js','./stack-inventory.js','./multiplayer.js','./world-chunks.js','./survival-catalog.js','./nether-world.js','./overworld-ores.js','./end-world.js','./structure-loot.js','./villages.js','./manifest.webmanifest','./favicon.svg','./apple-touch-icon.png'];
+const VERSION='mineworld-5-2-original-pixels-adaptive-chunks-20261024';
+const FILES=['./','./index.html','./survival-hunger.js','./survival-world-rules.js','./survival-weather-visual.js','./block-models.js','./movement-modes.js','./texture-details.js','./texture-polish.js','./pixel-materials.js','./texture-refinement.js','./chunk-planner.js','./stack-inventory.js','./multiplayer.js','./world-chunks.js','./survival-catalog.js','./nether-world.js','./overworld-ores.js','./end-world.js','./structure-loot.js','./villages.js','./manifest.webmanifest','./favicon.svg','./apple-touch-icon.png'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(VERSION).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x.startsWith('mineworld-')&&x!==VERSION).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
