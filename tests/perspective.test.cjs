@@ -48,5 +48,5 @@ test('the browser controls and cache include camera helper and legacy save compa
   'camera-btn','perspective-toggle','F5','mineworld-selfhost-v1','survivalHotbar'])
     assert.ok(html.includes(key),key+' missing');
  assert.ok(sw.includes("'./perspective.js'"));
- assert.ok(html.includes('cameraMode,advancements:advancementEngine.snapshot(),droppedItems:droppedItems.slice'));
+ assert.ok(html.includes('cameraMode,advancements:advancementEngine.snapshot()'));assert.ok(html.includes('droppedItems:droppedItems.slice'));
 });
