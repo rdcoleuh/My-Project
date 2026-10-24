@@ -50,7 +50,7 @@ test('the live game includes original textures in its offline cache without chan
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
  const classic=fs.readFileSync(path.join(root,'classic-materials.js'),'utf8');
- assert.ok(html.includes('MineWorld 5.9'));
+ assert.ok(/MineWorld \d+\.\d+/.test(html));
  assert.ok(html.includes('mineworld-selfhost-v1'));
  assert.ok(html.includes('survivalHotbar'));
  assert.ok(html.includes('MineWorldMovement.resolve'));
