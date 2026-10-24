@@ -1,3 +1,23 @@
+# MineWorld 5.4 — Classic-Inspired Original Pixel Textures
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+MineWorld is an independent browser voxel sandbox for desktop and iPhone. Version 5.4 is published on the existing GitHub Pages branch and preserves the 5.3 world saves, inventory format and gameplay.
+
+### What's new in 5.4
+
+- The new **classic-materials.js** layer replaces procedural pixels with more material-specific, 16×16, original artwork for grass tops and grassy dirt sides, natural dirt, cave stone, sand, gravel, logs and cut wood, different leaf species, masonry, colored ores, polished mineral blocks, glass, snow, ice, cactus and nether terrain.
+- **91 block IDs** show changed sample pixels from 5.3 in the tested comparison; all **169 block IDs still have different side textures**.
+- Faces reflect their material: logs show end-grain rings on their top/bottom and bark on their sides, grass has a grassy top and root soil underneath, ores remain clearly distinguishable.
+- Earlier block faces and decorative patterns remain in the game where they were already distinct.
+- All textures are **independently generated art**, not copied Mojang PNGs or one-pixel changes. Style research used Minecraft Wiki descriptions of block texture categories and common 16×16 source-pixel resolution: https://minecraft.wiki/w/Textures and https://minecraft.wiki/w/List_of_block_textures.
+- The 5.3 block encyclopedia, animated fluids, desktop/mobile controls, and 10–50 adaptive visible chunks remain intact.
+- No change to serialized world seeds, inventories, 64-stacks, localStorage keys or survival mode. Reload the browser to refresh the service-worker cache.
+
+Run automated checks locally with `node --test tests/*.test.cjs`; GitHub Actions also runs this suite after code changes.
+
+---
+
 # MineWorld 5.3 — Original Texture Workshop, Animated Blocks & Block Guide
 
 **Play:** https://rdcoleuh.github.io/My-Project/
