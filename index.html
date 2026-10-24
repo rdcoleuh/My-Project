@@ -34,7 +34,7 @@
 #hud-bottom{z-index:5;position:absolute;bottom:max(env(safe-area-inset-bottom),14px);left:50%;transform:translateX(-50%);display:flex;align-items:center;flex-direction:column;gap:10px;pointer-events:none;max-width:100vw}
 #hotbar{display:flex;gap:5px;padding:7px;background:#15261bca;border:1px solid #e0f2da69;border-radius:11px;backdrop-filter:blur(7px);box-shadow:0 5px 20px #0006;pointer-events:auto;max-width:calc(100vw - 15px);overflow-x:auto;scrollbar-width:none}#hotbar::-webkit-scrollbar{display:none}
 .hot-item{width:59px;height:63px;flex:0 0 auto;background:#334536d9;border:2px solid #66836b;border-radius:7px;color:#e9f5e8;position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;padding:4px 2px;box-shadow:inset 0 2px #ffffff0c}
-.hot-item.active{border-color:#dfff90;box-shadow:0 0 0 2px #e9ffb9,inset 0 2px #ffffff24;background:#44623d}.hot-item span{font-size:10px;text-align:center;white-space:nowrap;letter-spacing:.015em}.hot-item small{position:absolute;right:4px;top:2px;font-size:9px;color:#bde0b6}.swatch{width:25px;height:24px;border:2px solid #0004;box-shadow:inset -6px -5px #0002,inset 4px 3px #ffffff24;image-rendering:pixelated;transform:rotate(-4deg)}
+.hot-item.active{border-color:#dfff90;box-shadow:0 0 0 2px #e9ffb9,inset 0 2px #ffffff24;background:#44623d}.hot-item span{font-size:10px;text-align:center;white-space:nowrap;letter-spacing:.015em}.hot-item small{position:absolute;right:4px;top:2px;font-size:9px;color:#bde0b6}.swatch{width:26px;height:26px;border:1px solid #0008;box-shadow:inset -3px -3px #0003,inset 2px 2px #ffffff1f;image-rendering:pixelated;transform:none;flex-shrink:0}
 #hints{font-size:10px;color:#f4fff3;text-shadow:0 1px 4px #07170c;background:#1024177d;padding:5px 10px;border-radius:6px;white-space:nowrap}
 #coord-readout{position:absolute;z-index:3;left:16px;bottom:16px;background:#122a1bb5;padding:8px 11px;border-radius:8px;font-size:11px;color:#d7efd2;pointer-events:none}
 #mobile-controls{display:none;pointer-events:none;position:absolute;inset:0;z-index:4}
@@ -565,7 +565,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v4.1 · PAUSE MENU · 16×16 PIXEL MATERIALS</div>
+  <div class="version">MINEWORLD v4.2 · INVENTORY STACKS OF 64 · CRISP PIXEL BLOCKS</div>
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./stack-inventory.js"></script>
@@ -1338,8 +1338,8 @@ body.in-nether #game-wrap{background:#290f19}
       const button=document.createElement('button');button.type='button';
       button.className='hot-item'+(i===selection?' active':'')+(!key?' empty':'');
       button.setAttribute('aria-label','Slot '+(i+1)+': '+label+(survival?' ('+count+')':''));
-      button.title='Slot '+(i+1)+' · '+(key?label:'Empty — pick up items');
-      const qty=document.createElement('small');qty.textContent=survival?(count?Math.min(count,64):''):(i+1);
+      button.title='Slot '+(i+1)+' · '+(key?label+(survival?' ×'+count+' / '+stackLimit(key):''):'Empty — pick up items');
+      const qty=document.createElement('small');qty.textContent=survival?(count?String(count):''):(i+1);
       button.appendChild(qty);
       if(id!==null&&Number.isInteger(id)){
         const swatch=document.createElement('div');swatch.className='swatch';
