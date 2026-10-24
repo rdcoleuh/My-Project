@@ -1267,3 +1267,99 @@ atlas.originalArt=true;
  atlas.version='4.6-classic-material-finishing';
  atlas.hasTransparentGlass=true;
 })();
+
+
+/* MineWorld 4.7 — original hand-placed pixel motifs for bark, leaves, planks,
+   sandstone, glowing magma and End stone. No third-party game texture files. */
+(()=>{
+  'use strict';
+  const atlas=window.MineWorldPixelMaterials,prior=atlas.paint;
+  const rgb=c=>[c[0],c[1],c[2],255];
+  function h(x,y,s=0){let n=Math.imul(x+137,374761393)^Math.imul(y+283,668265263)^Math.imul(s+71,1274126177);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295}
+  const woods={
+    5:[[54,36,25],[85,55,33],[120,83,49],[157,111,67],[187,147,94]],
+    15:[[79,60,40],[118,92,64],[151,123,89],[180,153,111],[207,177,134]],
+    30:[[38,29,24],[65,44,32],[93,64,43],[123,91,57],[153,120,76]],
+    32:[[52,51,48],[127,124,113],[178,171,151],[217,206,183],[235,227,205]],
+    34:[[49,53,47],[84,79,65],[120,108,85],[150,124,95],[181,156,115]],
+    36:[[49,37,28],[80,55,37],[115,83,50],[150,113,69],[188,148,96]],
+    38:[[44,39,35],[70,63,52],[108,87,75],[139,113,98],[168,141,123]],
+    40:[[59,40,44],[103,68,75],[146,99,108],[186,136,147],[221,180,189]],
+    42:[[57,57,53],[97,98,91],[139,136,123],[170,169,155],[205,203,194]],
+    78:[[48,25,35],[86,39,53],[129,61,79],[161,86,99],[195,118,128]],
+    80:[[19,43,53],[34,77,86],[52,115,126],[70,148,153],[98,177,175]]
+  };
+  function timber(x,y,id,face){
+    const p=woods[id],end=face!==1;
+    if(end){
+      const ring=Math.max(Math.abs(x-7.5),Math.abs(y-7.5))+h(x>>1,y>>1,id)*.85;
+      const i=ring>6.5?0:ring<1.8?1:Math.floor(ring*1.4)%3===0?1:Math.floor(ring*1.4)%3===1?3:2;
+      return rgb(p[i]);
+    }
+    if(id===32){
+      const mark=(x>=2&&x<=4&&y===5)||(x>=10&&x<=13&&y===10)||(x===8&&y<4)||(x>=5&&x<=7&&y===13);
+      return rgb(p[mark?0:(x===1||x===14)?1:h(x>>1,y>>1,id)>.66?4:3]);
+    }
+    const row=y>>2,bend=h(row,x>>2,id+301)>.65?1:0;
+    const groove=(x+bend)%7===0||(x+bend)%11===3;
+    const knot=id===5&&x>=7&&x<=9&&y>=6&&y<=10;
+    const highlight=(x+row)%5===2&&h(x>>1,row,id+11)>.35;
+    return rgb(p[knot?0:groove?1:highlight?4:h(x>>1,y>>2,id+21)>.58?3:2]);
+  }
+  function boards(x,y,dark){
+    const p=woods[dark?30:5],row=y>>2,offset=[0,9,3,12][row];
+    if(y%4===0)return rgb(p[0]);
+    if((x+offset)%16===0)return rgb(p[1]);
+    const grain=(y%4===2&&x>=3&&x<=6)||(y%4===1&&x>=9&&x<=13);
+    return rgb(p[grain?1:h(x>>1,row,dark?521:520)>.63?4:3]);
+  }
+  const leaves={
+    6:[[30,69,24],[46,102,30],[64,133,41],[89,164,48],[113,184,59]],
+    12:[[77,23,28],[126,35,32],[171,56,43],[202,76,54],[226,105,75]],
+    13:[[94,42,28],[157,65,32],[199,93,37],[218,126,47],[244,161,76]],
+    14:[[98,79,31],[147,125,36],[190,159,49],[225,188,68],[243,212,111]],
+    31:[[19,61,33],[35,86,48],[56,115,63],[75,143,79],[114,171,103]],
+    33:[[65,90,42],[95,128,51],[129,160,61],[158,184,75],[192,211,95]],
+    35:[[68,91,34],[115,133,42],[151,157,51],[182,181,63],[212,196,78]],
+    37:[[18,65,25],[33,99,32],[51,132,43],[75,157,56],[108,182,72]],
+    39:[[23,59,37],[39,94,57],[56,121,75],[80,147,89],[114,177,104]],
+    41:[[120,83,99],[171,122,143],[211,160,180],[232,186,201],[247,220,226]],
+    43:[[77,98,91],[112,137,126],[142,166,153],[170,186,172],[203,211,199]]
+  };
+  function leaf(x,y,id){
+    const a=h(x>>2,y>>2,id+7),b=h(x>>1,y>>1,id+23);
+    let index=a>.74?3:a<.23?1:2;
+    if(b>.76)index++;else if(b<.16)index--;
+    if(h(x,y,id+91)>.979)index=0;
+    return rgb(leaves[id][Math.max(0,Math.min(4,index))]);
+  }
+  function sandstone(x,y,id,face){
+    const pal=[[152,139,102],[174,159,119],[196,181,139],[216,201,158],[232,218,175]];
+    const grain=h(x>>2,y>>2,24);
+    if(face===1&&(y===3||y===4||y===11))return rgb(pal[1]);
+    if(id===54&&face===1&&((x===4||x===11)&&y>=5&&y<=10||(y===5||y===10)&&x>=4&&x<=11))return rgb(pal[0]);
+    if(h(x,y,342)>.976)return rgb(pal[0]);
+    return rgb(pal[grain>.8?4:grain>.52?3:grain>.23?2:1]);
+  }
+  function magma(x,y){
+    const glow=((x+Math.floor(y/3)*2)%7===0)||(y%6===0&&x%3!==0);
+    if(glow)return rgb(h(x>>1,y>>1,190)>.48?[254,168,56]:[223,108,31]);
+    return rgb(h(x>>2,y>>2,88)>.54?[84,44,35]:[58,34,36]);
+  }
+  function endStone(x,y){
+    const a=h(x>>2,y>>2,121),b=h(x>>1,y>>1,121);
+    const pit=a>.73&&(x%4===2||y%4===1);
+    return rgb([[154,152,118],[177,174,131],[193,192,148],[211,207,162],[224,220,174],[234,231,186]][pit?0:b>.73?5:a>.65?4:a>.31?3:2]);
+  }
+  atlas.paint=(id,face,x,y)=>{
+    x&=15;y&=15;
+    if(Object.hasOwn(woods,id))return timber(x,y,id,face);
+    if(id===11||id===52)return boards(x,y,id===52);
+    if(Object.hasOwn(leaves,id))return leaf(x,y,id);
+    if(id===24||id===54)return sandstone(x,y,id,face);
+    if(id===88)return magma(x,y);
+    if(id===121)return endStone(x,y);
+    return prior(id,face,x,y);
+  };
+  atlas.version='4.7-classic-inspired-original-pixels';
+})();
