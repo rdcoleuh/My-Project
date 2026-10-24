@@ -386,6 +386,10 @@ body.in-nether #game-wrap{background:#290f19}
 .mw-customization-actions button{flex:1 1 190px;min-height:43px}
 .swatch,.item-icon,#mw-skin-editor,#mw-skin-sheet{image-rendering:pixelated}
 #world{image-rendering:pixelated}
+/* Item stack quantity overlays belong within the item thumbnail and remain visible on phones. */
+.hot-item .swatch,.hot-item .hot-item-icon{position:relative;overflow:visible}
+.hot-item .hot-stack-number{display:block!important;position:absolute!important;top:auto!important;right:-5px!important;bottom:-5px!important;z-index:2;min-width:12px;text-align:center;font:900 12px/1.05 monospace!important;letter-spacing:-.5px;color:#fff!important;background:#0b1609ce;border-radius:3px;padding:1px 2px;text-shadow:1px 1px #000,-1px -1px #000;pointer-events:none}
+@media(pointer:coarse){.hot-item .hot-stack-number{display:block!important;font-size:12px!important}}
 </style>
 <title>MineWorld 5.9 — Advancements & Clear Stack Counts</title>
 </head>
@@ -1770,18 +1774,22 @@ body.in-nether #game-wrap{background:#290f19}
       button.className='hot-item'+(i===selection?' active':'')+(!key?' empty':'');
       button.setAttribute('aria-label','Slot '+(i+1)+': '+label+(survival?' ('+count+')':''));
       button.title='Slot '+(i+1)+' · '+(key?label+(survival?' ×'+count+' / '+stackLimit(key):''):'Empty — pick up items');
-      const qty=document.createElement('small');qty.textContent=survival?(count?String(count):''):(i+1);
-      button.appendChild(qty);
+      const qty=document.createElement('small');
+      qty.className=survival?'hot-stack-number':'hot-slot-index';
+      qty.textContent=survival?(count?String(count):''):(i+1);
+      if(!survival)button.appendChild(qty);
       if(id!==null&&Number.isInteger(id)){
         const swatch=document.createElement('div');swatch.className='swatch';
         const tile=id*3,tx=((tile%16)/15*100).toFixed(2),ty=(Math.floor(tile/16)/31*100).toFixed(2);
         swatch.style.backgroundColor=SWATCH[id]||'#777';
         swatch.style.backgroundImage='url('+window.MineWorldAtlas.dataURL+')';
         swatch.style.backgroundSize='1600% 3200%';swatch.style.backgroundPosition=tx+'% '+ty+'%';
+        if(survival&&count>0)swatch.appendChild(qty);
         button.appendChild(swatch);
       }else{
         const icon=document.createElement('div');icon.className='hot-item-icon';
         icon.textContent=key?stackIcon(key):'';
+        if(survival&&count>0)icon.appendChild(qty);
         button.appendChild(icon);
       }
       const name=document.createElement('span');name.textContent=key?label:'—';button.appendChild(name);
