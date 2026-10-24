@@ -369,7 +369,7 @@ body.in-nether #game-wrap{background:#290f19}
 #xp-label{font-size:9px;color:#c8dbb4}
 @media(pointer:coarse){#xp-track{width:min(30vw,135px)}#xp-label{font-size:8px}}
 </style>
-<title>MineWorld 5.3 — Block Encyclopedia, Detailed Pixels & Animated Fluids</title>
+<title>MineWorld Texture Lab — Local Asset Import Experiment</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -1292,6 +1292,8 @@ body.in-nether #game-wrap{background:#290f19}
   if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
   const aPos=gl.getAttribLocation(program,'aPos'),aColor=gl.getAttribLocation(program,'aColor'),aUV=gl.getAttribLocation(program,'aUV'),uVP=gl.getUniformLocation(program,'uVP'),uEye=gl.getUniformLocation(program,'uEye'),uSky=gl.getUniformLocation(program,'uSky'),uAtlas=gl.getUniformLocation(program,'uAtlas'),uTextured=gl.getUniformLocation(program,'uTextured'),uFogEnd=gl.getUniformLocation(program,'uFogEnd');
   const atlasTexture=window.MineWorldAtlas.create(gl);
+  // Local experiment only: exposes the already-created atlas without touching saved worlds.
+  window.MineWorldExperimentalAtlas={gl,texture:atlasTexture,baseURL:window.MineWorldAtlas.dataURL};
   vbo=gl.createBuffer();const aimBuffer=gl.createBuffer(),avatarBuffer=gl.createBuffer();
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
   function mul(a,b){let o=new Float32Array(16);for(let col=0;col<4;col++)for(let row=0;row<4;row++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+row]*b[col*4+k];o[col*4+row]=s}return o}
@@ -3139,7 +3141,8 @@ body.in-nether #game-wrap{background:#290f19}
     gl.uniform1f(uFogEnd,Math.min(110,Math.max(35,Math.sqrt(activeChunks/Math.PI)*CHUNK+18)));
     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uAtlas,0);
     // Original fluid and luminous pixel animations; tiny GPU atlas uploads.
-    window.MineWorldTextureMotion?.update(gl,atlasTexture,t,currentFPS,isTouch);
+    if(!window.MineWorldLocalTextures?.active)
+      window.MineWorldTextureMotion?.update(gl,atlasTexture,t,currentFPS,isTouch);
     // Rebuild at most one mobile mesh (two on desktop) per animation frame.
     // Existing meshes remain visible until their replacement finishes.
     const meshStart=performance.now();
@@ -3619,5 +3622,6 @@ body.in-nether #game-wrap{background:#290f19}
 })();
 </script>
 <script src="./block-guide.js"></script>
+<script src="./local-texture-pack.js"></script>
 </body>
 </html>
