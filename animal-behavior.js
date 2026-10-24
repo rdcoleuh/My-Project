@@ -7,7 +7,7 @@ const FOOD={
  pig:['carrot','potato','beetroot'],
  chicken:['wheatSeeds','beetrootSeeds','pumpkinSeeds'],
  horse:['goldenCarrot','goldenApple'],donkey:['goldenCarrot','goldenApple'],mule:[],
- camel:['cactus'],llama:['hayBale'],
+ camel:['block:44'],llama:['block:60'],
  skeleton_horse:[],zombie_horse:[]
 };
 const NATURAL=['cow','sheep','pig','chicken','horse','donkey','llama','camel'];
