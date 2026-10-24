@@ -1063,3 +1063,176 @@ atlas.paint=(id,face,x,y)=>newArt(id,face,x,y)||previous(id,face,x,y);
 atlas.version='4.4-classic-block-details';
 atlas.originalArt=true;
 })();
+
+
+/* MineWorld 4.5 — classic-inspired hand-drawn silhouettes, independently authored.
+   Refines surface identity and face-specific details without third-party game assets. */
+(()=>{
+'use strict';
+const atlas=window.MineWorldPixelMaterials,prior=atlas.paint;
+const rgb=c=>[c[0],c[1],c[2],255];
+const clamp=x=>Math.max(0,Math.min(255,Math.round(x)));
+const shade=(c,n)=>rgb(c.map(v=>clamp(v+n)));
+function h(x,y,s=0){let z=Math.imul(x+177,374761393)^Math.imul(y+83,668265263)^Math.imul(s+911,1274126177);z=Math.imul(z^(z>>>13),1274126177);return((z^(z>>>16))>>>0)/4294967295}
+function pix(p,x,y,seed=0){
+  const v=h(x>>2,y>>2,seed)*.44+h(x>>1,y>>1,seed+31)*.4+h(x,y,seed+83)*.16;
+  return rgb(p[Math.min(p.length-1,Math.floor(v*p.length))]);
+}
+const DIRT=[[75,49,32],[97,64,40],[117,78,49],[137,96,61],[157,113,72],[177,132,85]];
+const GRASS=[[39,89,28],[52,110,35],[67,131,43],[82,150,48],[103,169,57],[122,185,70]];
+function earth(x,y){const r=pix(DIRT,x,y,2);if(h(x,y,8)>.974)return rgb([68,47,31]);if(h(x,y,9)>.977)return rgb([183,141,95]);return r}
+function turf(x,y){
+  const n=h(x>>2,y>>2,19),fine=h(x>>1,y>>1,21);
+  const i=n>.76?1:n<.17?4:fine>.7?2:3;
+  if(h(x,y,81)>.963)return rgb(GRASS[i===1?0:5]);
+  return rgb(GRASS[i]);
+}
+function turfSide(x,y){
+  const edge=[3,4,3,5,4,3,6,4,3,5,4,3,5,4,3,4][x];
+  if(y<edge)return turf(x,y);
+  if(y===edge&&(x%3!==0))return rgb([67,125,40]);
+  if(y===edge+1&&(x===2||x===6||x===10||x===14))return rgb([69,125,41]);
+  if(y===edge+2&&(x===6||x===14))return rgb([77,127,42]);
+  return earth(x,y);
+}
+function rock(x,y,deep=false){
+  const p=deep?[[39,42,48],[53,56,62],[69,72,79],[84,88,93],[103,106,111]]:
+    [[81,82,82],[102,104,102],[121,123,122],[143,145,143],[161,162,159]];
+  const a=h(x>>2,y>>2,30+(deep?15:0)),b=h(x>>1,y>>1,31+(deep?15:0));
+  let i=a>.75?1:a<.21?3:2;
+  if(b>.87)i=Math.max(0,i-1);
+  if(b<.12)i=Math.min(4,i+1);
+  if((x===3||x===9||y===5||y===13)&&h((x+1)>>2,(y+2)>>2,48+(deep?15:0))>.75)i=0;
+  return rgb(p[i]);
+}
+function gravel(x,y){
+  const v=h(x>>1,y>>1,54),fine=h(x,y,55);
+  const pal=[[65,64,63],[91,89,86],[114,111,108],[142,140,135],[172,170,164],[195,193,187]];
+  const i=v>.85?5:v>.64?4:v>.38?2:v>.17?3:1;
+  return rgb(pal[fine>.94?0:i]);
+}
+function snow(x,y){
+  const pal=[[181,193,201],[202,214,220],[222,231,234],[236,244,244],[250,253,250]];
+  return pix(pal,x,y,72);
+}
+function ice(x,y,packed=false){
+  const rim=(x===1||x===14||y===1||y===14),diagonal=((x+y)%11===0||((x-y+16)%13===0));
+  if(rim)return rgb(packed?[108,152,190]:[123,179,206]);
+  if(diagonal&&h(x>>2,y>>2,33)>.31)return rgb([221,246,248]);
+  return pix(packed?[[98,157,189],[130,181,207],[160,202,220],[189,223,236]]:
+    [[110,172,200],[149,200,220],[185,224,236],[213,241,245]],x,y,packed?36:37);
+}
+function water(x,y){
+  const wave=((y+(x>>2))%7===0)||((y+(x>>1)+2)%9===0);
+  if(wave&&h(x>>2,y>>2,7)>.28)return rgb([86,157,214]);
+  return pix([[29,75,151],[37,91,170],[47,112,187],[60,128,196]],x,y,9);
+}
+function lava(x,y){
+  const line=(y+(x>>2)*2)%9,bright=line===0||line===1;
+  if(bright)return rgb([255,205,74]);
+  if((x+2*y)%11<3)return rgb([248,152,37]);
+  return pix([[164,47,15],[207,66,15],[235,95,22],[247,128,27]],x,y,66);
+}
+function obsidian(x,y){
+  const line=((x+2*y)%11===0)&&h(x>>2,y>>2,51)>.4;
+  const fleck=h(x>>1,y>>1,51);
+  return rgb(line?[91,49,113]:fleck>.82?[58,40,80]:fleck<.19?[17,16,25]:[31,24,43]);
+}
+function moss(x,y){
+  const p=[[35,78,33],[49,97,37],[63,114,43],[77,131,52],[102,146,65]];
+  if(h(x,y,46)>.96)return rgb([24,64,28]);
+  return pix(p,x,y,44);
+}
+function mud(x,y){
+  const p=[[38,46,49],[49,55,56],[61,64,62],[72,72,66],[84,81,70]];
+  if((x+y)%7===0&&h(x>>2,y>>2,47)>.63)return rgb([37,42,46]);
+  return pix(p,x,y,47);
+}
+function netherrack(x,y){
+  const p=[[57,22,26],[80,29,33],[101,35,40],[123,43,47],[143,52,53]];
+  if(h(x>>2,y>>2,50)>.73&&(x%4===1||y%4===0))return rgb([59,24,29]);
+  return pix(p,x,y,50);
+}
+function basalt(x,y,face){
+  if(face===0||face===2){
+    const ring=Math.max(Math.abs(x-7.5),Math.abs(y-7.5));
+    const pal=[[36,39,42],[51,55,57],[71,75,77],[89,92,94]];
+    return rgb(pal[Math.min(3,Math.floor(ring/2))]);
+  }
+  const stripe=x===2||x===7||x===12||((x+Math.floor(y/3))%9===0);
+  return rgb(stripe?[39,41,43]:h(x>>1,y>>2,67)>.57?[86,87,88]:[65,67,68]);
+}
+function soulSand(x,y){
+  const eye=(y===6||y===7)&&(x===4||x===11);
+  const mouth=y>=10&&y<=12&&x>=6&&x<=9;
+  if(eye||mouth)return rgb([54,46,40]);
+  return pix([[70,61,52],[86,73,59],[103,88,71],[120,103,81]],x,y,70);
+}
+function glass(x,y){
+  const edge=x===0||y===0||x===15||y===15;
+  const gleam=(x===3&&y>=2&&y<=10)||(y===3&&x>=3&&x<=11)||(x===11&&y>=9&&y<=13);
+  if(edge)return rgb([138,183,200]);
+  if(gleam)return rgb([229,249,249]);
+  return rgb([187,219,227]);
+}
+function bricks(x,y,base,w=8,ht=4){
+  const row=Math.floor(y/ht),off=(row%2)*(w>>1),grout=y%ht===0||(x+off)%w===0;
+  const n=h((x+off)>>2,y>>2,base[0]);
+  if(grout)return shade(base,-46);
+  if(n>.82)return shade(base,16);
+  if(n<.15)return shade(base,-14);
+  return rgb(base);
+}
+function ore(x,y,id,deep){
+  const base=rock(x,y,deep);
+  const colors={
+    18:[[23,25,28],[54,56,61]],19:[[164,109,74],[232,173,124]],
+    95:[[172,95,56],[66,142,121]],96:[[217,160,43],[255,224,102]],
+    97:[[158,22,33],[250,55,46]],98:[[24,58,157],[71,117,224]],
+    99:[[25,150,168],[105,231,224]],100:[[29,151,73],[95,225,115]],
+    83:[[191,179,157],[250,237,216]],84:[[206,147,42],[253,217,96]]
+  };
+  const original=id>=101&&id<=108?[18,19,95,96,97,98,99,100][id-101]:id;
+  const c=colors[original];if(!c)return base;
+  const centers=[[3,3],[12,4],[7,8],[4,12],[12,12]];
+  let closest=10;
+  for(const [cx,cy] of centers){
+    const dx=Math.abs(x-cx),dy=Math.abs(y-cy);
+    const dist=dx+dy+(h(x,y,id+cx+cy)-.5)*.65;
+    closest=Math.min(closest,dist);
+  }
+  const limit=original===100?1.45:original===99?1.85:2.15;
+  if(closest>limit)return base;
+  if(closest>limit-.55)return shade(c[0],-26);
+  return rgb(h(x>>1,y>>1,id)>.55?c[1]:c[0]);
+}
+function paint(id,face,x,y){
+  x&=15;y&=15;
+  if(id===1)return face===0?turf(x,y):face===2?earth(x,y):turfSide(x,y);
+  if(id===2)return earth(x,y);
+  if(id===3)return rock(x,y);
+  if(id===4)return pix([[179,164,126],[199,185,147],[217,203,162],[232,220,184],[244,233,199]],x,y,4);
+  if(id===7)return water(x,y);
+  if(id===9)return glass(x,y);
+  if(id===21)return snow(x,y);
+  if(id===22||id===23)return ice(x,y,id===23);
+  if(id===46)return moss(x,y);
+  if(id===47)return mud(x,y);
+  if(id===50||id===65)return netherrack(x,y);
+  if(id===51)return obsidian(x,y);
+  if(id===53)return bricks(x,y,[143,146,145],8,4);
+  if(id===57)return pix([[120,118,113],[141,139,132],[157,155,147],[175,173,164]],x,y,57);
+  if(id===58)return rock(x,y,true);
+  if(id===66)return lava(x,y);
+  if(id===67)return basalt(x,y,face);
+  if(id===70||id===71)return soulSand(x,y);
+  if(id===72||id===74)return bricks(x,y,[114,46,49],8,4);
+  if(id===92)return gravel(x,y);
+  if(id===121)return pix([[162,158,119],[187,183,139],[204,202,155],[223,220,171],[236,233,187]],x,y,121);
+  if((id>=95&&id<=108)||id===18||id===19||id===83||id===84)return ore(x,y,id,id>=101&&id<=108);
+  return null;
+}
+atlas.paint=(id,face,x,y)=>paint(id,face,x,y)||prior(id,face,x,y);
+atlas.version='4.5-classic-voxel-surface-pass';
+atlas.originalArt=true;
+})();
