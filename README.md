@@ -1,4 +1,4 @@
-# MineWorld 4.0 — Mining, Mob Sight & Crafting Repairs
+# MineWorld 4.1 — Pause Menu & 16px Block Textures
 
 **Play:** https://rdcoleuh.github.io/My-Project/
 
@@ -54,3 +54,20 @@ The menu landscape, texture, lettering and art are independently generated and d
 - Existing Creative and Survival save formats are not replaced by this update. The map, inventory, seed, dimensions and multiplayer integrations remain unchanged.
 
 **Limitations:** These mining times and craft recipes are original MineWorld approximations, not Mojang's exact hardness and recipe database. Combat and crafting have not been checked on a physical iPhone or with two real remote multiplayer devices.
+
+
+## 4.1 — Uncluttered pause menu and original 16px block materials
+
+**Pause menu**
+- Only the **⏸ Pause** button remains in the upper-right corner of live gameplay (within iPhone safe-area insets). The crosshair, health/hunger, collected-item hotbar and mobile movement/action controls stay visible.
+- Pausing opens a compact game-menu overlay organized into **Inventory & Crafting**, **Explore & Travel**, and **Friends & World Settings**.
+- Inventory, blocks, gear and recipes, Nether, End, biome atlas, villages, multiplayer, saving, difficulty, creative flight, world mode, home screen and new-world actions remain accessible.
+- The menu scrolls on short mobile screens and adapts from 2 columns to 1 column for portrait smartphones. **Resume Game** returns to gameplay; Escape still toggles the game menu on desktop.
+
+**Pixel materials**
+- The pixel-materials.js file supplies 16×16 pixel-art materials for **every defined game block**, all independently generated. The file is precached for offline/Home Screen play.
+- Detailed texture families include top/side/bottom grass, cobbled and smooth stone, dirt, sand, spruce/birch/cherry bark grain and end-grain, wooden planks, leaf clusters, ores with larger veins, deepslate, Nether materials, End stone, farmland, crop stages, glass, decorative workstations, and many others.
+- Texturing uses **nearest-neighbor** WebGL filtering, pixelated hotbar thumbnails, deterministic procedural variation and coherent 16px motifs rather than indiscriminate smooth gradients.
+- These are original textures inspired by familiar voxel-block aesthetics. They are **not** copies of official Minecraft textures or a pixel-exact reproduction of the official game's copyrighted pixel patterns.
+
+The existing 10,000 × 10,000 worlds, Survival/Creative saves, inventory, crafting, mobs, shared multiplayer and Nether/End generation are preserved. Physical-iPhone behavior and Internet peer-to-peer combat still require real-device checks.
