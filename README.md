@@ -1,3 +1,28 @@
+# MineWorld 5.5 — Original Classic Sandbox Gameplay Update
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+The live 5.5 update adds familiar voxel-sandbox controls and world interactions while maintaining MineWorld's own materials, artwork and branding.
+
+### New controls
+
+- **Middle mouse / P / ▣ Pick:** Pick the block under the crosshair. Creative selects it from existing hotbar slots or replaces the current slot without leaving the game. Survival may equip only a real matching stack already owned; picking never grants free Survival inventory.
+- **Q:** Toss one currently equipped Survival item into the world. **Ctrl+Q** drops that hotbar stack; **H** now performs the previous quick-eat action. E remains backpack/inventory. Dropping from the Survival backpack now spawns a recoverable world item rather than deleting it.
+- **F3:** Show/hide in-game debug information (FPS, XYZ, chunk, compass direction, biome, seed, mode, health, food and targets). Touch players can toggle this from Pause.
+- **F5 / ◉ View:** Cycle first-person, third-person behind and front-facing. The third-person camera shifts closer to the player near walls, and all mining/attacking continues to target from the character's eye position rather than the camera.
+- **Mining:** Extra procedurally drawn 3D fracture lines build up over blocks as the timed break progresses.
+- **Dropped items:** Original-color miniature spinning block cubes hover on the ground, with short pickup delay, gravity, automatic nearby pickup and a five-minute lifetime. Solo-world drops persist through local saves and restores. Multiplayer item tossing is disabled because drops are not server-synchronized.
+
+The original MineWorld traveler avatar wears a teal coat, warm-orange gloves and slate boots, distinct from any proprietary player skin. The original classic 16×16 textures from 5.4, 169-block guide, 64-item stacks, hunger/XP, existing mobs, dimensions, sprint and crouch, and adaptive 10–50 visible chunks remain.
+
+### Testing and limits
+
+All additions use independently authored code, geometry and procedural artwork. Familiar input conventions and gameplay mechanics were researched against the [Minecraft Wiki controls](https://minecraft.wiki/w/Controls) and [breaking mechanics](https://minecraft.wiki/w/Breaking), but this game does not use Minecraft's code, sounds, textures, skins, branding, or recipe registry. It is not an exact Java Edition recreation.
+
+The saved world still uses the `mineworld-selfhost-v1` keys, and its old inventory fields continue to load without a conversion. Optional `droppedItems` and `cameraMode` fields are backward-compatible. Existing game fields, tools and modes were retained. Run tests with `node --test tests/*.test.cjs`.
+
+---
+
 # MineWorld 5.4 — Classic-Inspired Original Pixel Textures
 
 **Play:** https://rdcoleuh.github.io/My-Project/
