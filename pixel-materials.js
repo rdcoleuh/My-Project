@@ -9,9 +9,13 @@
   }
   function scatter(x,y,s){return rnd(x,y,s)*.24+rnd(x>>1,y>>1,s+43)*.37+rnd(x>>2,y>>2,s+174)*.39;}
   function tone(base,x,y,s,contrast=1){
-    const p=(scatter(x,y,s)-.47)*76*contrast;
-    const fl=rnd(x,y,s+311)>.967?-24:0;
-    return [clamp(base[0]+p+fl),clamp(base[1]+p+fl*.79),clamp(base[2]+p+fl*.7),255];
+    // Tightly grouped pixel colors with coherent 2x2 and 4x4 clusters,
+    // avoiding the continuous 'static' noise that made older blocks look blurry.
+    const cluster=rnd(x>>2,y>>2,s+213)*.53+rnd(x>>1,y>>1,s+417)*.35+rnd(x,y,s+729)*.12;
+    const delta=Math.round(((cluster-.48)*71*contrast)/9)*9;
+    const fleck=rnd(x,y,s+311)>.979?-18:0;
+    const c=base.map((v,i)=>clamp(v+delta*(i===0?1:i===1?.87:.81)+fleck));
+    return [c[0],c[1],c[2],255];
   }
   function withShade(base,delta){return [clamp(base[0]+delta),clamp(base[1]+delta),clamp(base[2]+delta)];}
   function earth(x,y,variant=0){
@@ -30,12 +34,14 @@
     return tone(base,x,y,88+variant*.3,.58);
   }
   function stone(x,y,dark=false,s=0){
-    const base=dark?[71,75,81]:[124,126,125],cluster=scatter(x,y,501+s);
-    let c=cluster>.65?withShade(base,-28):cluster<.32?withShade(base,19):base;
-    const crack=rnd(x>>2,y>>1,s+163)>.69&&(x%4===0||(y%4===0&&x%2===0));
-    if(crack)c=withShade(base,-36);
-    if(rnd(x,y,s+57)>.965)c=withShade(base,31);
-    return tone(c,x,y,s+712,.55);
+    const base=dark?[73,75,79]:[126,127,124];
+    const large=rnd(x>>2,y>>2,s+501),small=rnd(x>>1,y>>1,s+589);
+    let c=large>.67?withShade(base,-29):large<.28?withShade(base,21):base;
+    const crack=(small>.77&&((x+1)%4===0||y%4===1))||
+      (rnd((x+1)>>2,(y+3)>>2,s+163)>.83&&x%3===1&&y%3===0);
+    if(crack)c=withShade(base,-38);
+    if(rnd(x,y,s+57)>.977)c=withShade(base,34);
+    return tone(c,x,y,s+712,.30);
   }
   function sand(x,y,red=false){
     const base=red?[187,100,65]:[218,204,152];
@@ -60,13 +66,11 @@
     return tone(withShade(base,stripe+grain+darkSplice),x,y,s,.39);
   }
   function leaves(x,y,base,s){
-    const n=scatter(x,y,s+225),b=rnd(x>>1,y>>1,s+14);
-    let c=base;
-    if(n>.65)c=withShade(base,18);
-    if(n<.34)c=withShade(base,-25);
-    if(b>.84)c=withShade(base,28);
-    if(rnd(x,y,s+630)>.973)c=withShade(base,-55);
-    return tone(c,x,y,s,.58);
+    const cluster=rnd(x>>2,y>>2,s+225),leaves=rnd(x>>1,y>>1,s+14);
+    let c=cluster>.68?withShade(base,28):cluster<.26?withShade(base,-31):base;
+    if(leaves>.86)c=withShade(base,32);
+    if(rnd(x,y,s+630)>.971)c=withShade(base,-52);
+    return tone(c,x,y,s,.27);
   }
   function plank(x,y,base,s){
     const row=Math.floor(y/4),seam=y%4===0,offset=row%2?8:0;
@@ -84,18 +88,23 @@
     return tone(c,x,y,s,.47);
   }
   function cobble(x,y,s=71){
-    const row=Math.floor(y/5),off=row%2?3:0;
-    const grout=y%5===0||(x+off)%6===0;
-    const depth=(x+off)%6>=4||y%5===4;
-    let c=grout?[62,66,64]:depth?[114,119,118]:[151,154,150];
-    return tone(c,x,y,s,.5);
+    // Irregular staggered rock cobbles, not the earlier repeated stone-brick grid.
+    const rows=[0,5,10,15],row=y<5?0:y<10?1:y<15?2:3;
+    const yLocal=y-rows[row],offset=[0,4,1,5][row],width=[6,7,5,6][row];
+    const xx=x+offset,col=Math.floor(xx/width),local=xx%width;
+    const rough=rnd(col,row,s+94),edge=(yLocal===0||local===0||
+      (yLocal===4&&rough>.35)||(local===width-1&&rough>.48));
+    const seam=local===1||yLocal===1;
+    const center=rough>.62?[156,160,158]:rough<.32?[126,134,135]:[145,150,146];
+    const c=edge?[69,72,72]:seam?withShade(center,-20):center;
+    return tone(c,x,y,s,.31);
   }
   function oreMask(x,y,s){
-    const g=rnd(x>>2,y>>2,s+105);
-    const n=rnd(x>>1,y>>1,s+449),v=rnd(x,y,s+313);
-    const a=(g>.62&&n>.37)||(g>.48&&n>.78)||(v>.94&&g>.44);
-    const edge=g>.60&&n>.3&&v<.12;
-    return a?(edge?1:2):0;
+    // Small bright multi-pixel mineral clusters on recognizably solid host stone.
+    const g=rnd(x>>2,y>>2,s+105),n=rnd(x>>1,y>>1,s+449),v=rnd(x,y,s+313);
+    const vein=(g>.59&&n>.37)||(g>.42&&n>.85)||(v>.97&&g>.44);
+    const shadow=(g>.58&&n>.36&&v<.16);
+    return vein?(shadow?1:2):0;
   }
   function ore(x,y,base,metal,s){
     const m=oreMask(x,y,s);
@@ -208,7 +217,10 @@
     if(b===72||b===74)return brick(x,y,[101,40,43],b,5,8);
     if(b===130)return brick(x,y,[194,196,156],b,5,8);
     if(b===131)return brick(x,y,[172,116,171],b,5,8);
-    if(b===121)return tone([212,211,169],x,y,121,.63);
+    if(b===121){
+      const scratch=rnd(x>>2,y>>2,121)>.63&&(x%4===0||y%4===1);
+      return tone(scratch?[180,176,137]:[216,214,169],x,y,121,.48);
+    }
     if(b===132)return plank(x,y,[153,92,147],b);
     if(b===137||b===138)return farms(x,y,b===138);
     if(b>=139&&b<=154)return crop(x,y,b);
