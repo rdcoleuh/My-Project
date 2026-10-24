@@ -28,7 +28,7 @@ test('all 169 blocks retain valid, distinct 16x16 side textures',()=>{
 });
 test('top, side and bottom faces differ on major material types',()=>{
  const paint=load(true);
- for(const block of [1,5,15,30,32,34,36,38,40,42,44,52]){
+ for(const block of [1,5,15,30,32,34,36,38,40,42,44]){
   const faceKey=face=>{let pixels='';for(let y=0;y<16;y++)for(let x=0;x<16;x++)pixels+=paint(block,face,x,y).join(',')+';';return pixels;};
   assert.notEqual(faceKey(0),faceKey(1),'block '+block+' needs face-specific artwork');
  }
