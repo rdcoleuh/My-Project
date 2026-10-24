@@ -873,7 +873,9 @@ body.in-nether #game-wrap{background:#290f19}
     return value;
   }
   const initialRenderPrefs=loadRenderPrefs();
-  let targetChunks=initialRenderPrefs.chunks,activeChunks=targetChunks,autoAdjustChunks=initialRenderPrefs.auto;
+  let targetChunks=initialRenderPrefs.chunks,autoAdjustChunks=initialRenderPrefs.auto;
+  // Restore the user's preferred ceiling, but stream conservatively on first load.
+  let activeChunks=autoAdjustChunks?Math.min(targetChunks,matchMedia('(pointer: coarse)').matches?18:32):targetChunks;
   let lastChunkX=-1,lastChunkZ=-1,streamQueue=[],streamClock=0;
   let currentFPS=0,frameSamples=0,frameTimeSum=0;
   const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace','Snow','Ice','Packed Ice','Sandstone','Terracotta','Red Sand','Red Terracotta','Podzol','Coarse Dirt','Spruce Log','Spruce Leaves','Birch Log','Birch Leaves','Acacia Log','Acacia Leaves','Jungle Log','Jungle Leaves','Mangrove Log','Mangrove Leaves','Cherry Log','Cherry Leaves','Pale Oak Log','Pale Oak Leaves','Cactus','Bamboo','Moss','Mud','Red Mushroom Cap','Brown Mushroom Cap','Netherrack','Obsidian','Dark Planks','Stone Bricks','Chiseled Sandstone','Prismarine','Copper','Clay','Deepslate','Lantern','Hay Bale','Cobblestone','Glow Lichen','Dripstone','Sculk','Nether Rock','Lava','Basalt','Blackstone','Polished Blackstone','Soul Sand','Soul Soil','Nether Bricks','Nether Wart','Chiseled Nether Bricks','Crimson Nylium','Warped Nylium','Crimson Roots','Crimson Stem','Nether Wart Block','Warped Stem','Warped Wart Block','Warped Roots','Quartz Ore','Nether Gold Ore','Ancient Debris','Bone Block','Portal','Magma Block','Soul Fire','Shroomlight','Gilded Blackstone','Gravel','Twisting Vines','Weeping Vines','Copper Ore','Gold Ore','Redstone Ore','Lapis Ore','Diamond Ore','Emerald Ore','Deepslate Coal Ore','Deepslate Iron Ore','Deepslate Copper Ore','Deepslate Gold Ore','Deepslate Redstone Ore','Deepslate Lapis Ore','Deepslate Diamond Ore','Deepslate Emerald Ore','Redstone Lamp','Lapis Block','Emerald Block','Diamond Block','Copper Block','Gold Block','Iron Block','Coal Block','Redstone Block','Raw Mineral Crate','Treasure Chest','Opened Chest','End Stone','Chorus Plant','Chorus Flower','End Crystal','End Portal Frame','End Portal','End Gateway','End Rod','Dragon Egg','End Stone Bricks','Purpur Block','Purpur Pillar','Shulker Shell Block','Dragon Head','Netherite Block','Smithing Table','Farmland','Hydrated Farmland','Wheat Sprouts','Wheat Growing','Wheat Tall','Ripe Wheat','Carrot Sprouts','Carrot Growing','Carrot Tall','Ripe Carrots','Potato Sprouts','Potato Growing','Potato Tall','Ripe Potatoes','Beetroot Sprouts','Beetroot Growing','Beetroot Tall','Ripe Beetroot','Composter','Blast Furnace','Smoker','Cartography Table','Brewing Stand','Barrel','Fletching Table','Cauldron','Lectern','Stonecutter','Loom','Toolsmith Smithing Table','Grindstone','Crafting Table','Red Bed'];
@@ -3394,7 +3396,7 @@ body.in-nether #game-wrap{background:#290f19}
     else if(e.button===2)performPlace();
   });
   window.addEventListener('mouseup',e=>{if(e.button===0)mouseMiningHeld=false;});
-  window.addEventListener('blur',()=>{mouseMiningHeld=false;touchHold.mine=false;cancelMining();});
+  window.addEventListener('blur',()=>{mouseMiningHeld=false;touchHold.mine=false;keys.clear();movement.x=0;movement.y=0;cancelMining();});
   canvas.addEventListener('wheel',e=>{if(paused)return;e.preventDefault();selectHotbarSlot((selection+(e.deltaY>0?1:-1)+9)%9)},{passive:false});
   let lookPointer=null,lastLook=null;
   canvas.addEventListener('pointerdown',e=>{if(paused||e.pointerType==='mouse')return;lookPointer=e.pointerId;lastLook=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);e.preventDefault()});
