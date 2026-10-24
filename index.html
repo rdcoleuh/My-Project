@@ -320,7 +320,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="hud-bottom">
     <div id="survival-hud" class="hidden" aria-live="polite"><span id="health-text">♥ 20/20</span><span id="hunger-text">🍖 20/20</span><span id="weapon-readout" title="Equipped gear">✊ Fists</span><button id="eat-btn" type="button" aria-label="Eat available food">Eat 🍄 0</button></div>
     <div id="hotbar" role="toolbar" aria-label="Choose a building block"></div>
-    <div id="hints">WASD · Mouse look · Left mine · Right place · E blocks · Space jump · F Creative fly · Q eat · 1–9 select</div>
+    <div id="hints">WASD move · Left click break (hold to repeat) · Right click use / place · E inventory · Space jump · 1–9 items</div>
   </div>
   <div id="coord-readout">X 0 · Y 0 · Z 0</div>
   <div id="mount-readout" class="hidden" aria-live="polite"></div>
@@ -391,7 +391,7 @@ body.in-nether #game-wrap{background:#290f19}
       <div id="gear-current" class="gear-current"></div>
       <section class="craft-workspace" id="craft-workspace" aria-label="Crafting work area">
         <h3 id="craft-heading">🪓 Inventory Crafting · 2 × 2</h3>
-        <p id="craft-description">Tap a backpack item, then tap crafting squares to fill them. Select a recipe below to show the correct layout. A placed workbench enables 3 × 3 crafting.</p>
+        <p id="craft-description">Select an ingredient and tap a square to add one. Turn on Remove to subtract. Place a workbench for the 3 × 3 grid, then tap the output to craft.</p>
         <div class="craft-row">
           <div id="craft-grid" class="craft-grid" role="group" aria-label="2 by 2 crafting input"></div>
           <span class="craft-arrow" aria-hidden="true">➜</span>
@@ -2064,8 +2064,8 @@ body.in-nether #game-wrap{background:#290f19}
   $('item-equip').addEventListener('click',equipSelection);$('item-use').addEventListener('click',consumeSelection);
   $('item-drop').addEventListener('click',()=>dropSelection());$('item-drop-stack').addEventListener('click',()=>dropSelection(true));
   for(const id of ['recipe-search','recipe-category','recipe-craftable'])$(id).addEventListener(id==='recipe-search'?'input':'change',renderRecipes);
-  function openGear(){if(gameMode!=='survival'){toast('The Survival backpack and recipes are only available in Survival. Use ▣ Blocks to build in Creative.');return;}craftRemoveMode=false;enterCraftStation();renderGear();$('gear-panel').classList.remove('hidden');paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock()}
-  function closeGear(){$('gear-panel').classList.add('hidden');if(started)start();else $('welcome').classList.remove('hidden')}
+  function openGear(){if(gameMode!=='survival'){toast('The Survival backpack and recipes are only available in Survival. Use ▣ Blocks to build in Creative.');return;}cancelMining();mouseMiningHeld=false;touchHold.mine=false;craftRemoveMode=false;enterCraftStation();renderGear();$('gear-panel').classList.remove('hidden');paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock()}
+  function closeGear(){craftCells=Array(9).fill(null);preferredCraft=null;craftRemoveMode=false;$('gear-panel').classList.add('hidden');if(started)start();else $('welcome').classList.remove('hidden')}
   function setDifficulty(level){
     if(!['peaceful','easy','normal','hard'].includes(level))return;
     difficulty=level;$('home-difficulty').value=level;$('pause-difficulty').value=level;
