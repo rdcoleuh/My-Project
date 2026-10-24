@@ -1,4 +1,4 @@
-# MineWorld 5.0 — Wiki-guided Block Materials, Movement & Performance
+# MineWorld 5.1 — Survival Beds, Weather, Experience & Original Pixel Blocks
 
 **Play:** https://rdcoleuh.github.io/My-Project/
 
@@ -171,3 +171,37 @@ Pixel textures were further refined with original 16×16 textures: bark and log 
 Minecraft Wiki references: [Blocks](https://minecraft.wiki/w/Block), [Sneaking](https://minecraft.wiki/w/Sneaking), [Sprinting](https://minecraft.wiki/w/Sprinting), [Hunger](https://minecraft.wiki/w/Hunger). This is an independent interpretation of relevant documented mechanics, not the full Wiki or Minecraft engine.
 
 Validation: JavaScript syntax, 129,024 texture pixels, block dimensions, raycasts, edited chunk indexing, the 10–50 chunk planner, and saturation/exhaustion module were checked. Physical iPhone render performance and long multiplayer sessions were not tested.
+
+
+## 5.1 — Minecraft Wiki-informed survival features
+
+This feature pass is **not a Minecraft port**. MineWorld remains an independently implemented browser voxel game with original art. Minecraft Wiki pages on [beds](https://minecraft.wiki/w/Bed), [daylight](https://minecraft.wiki/w/Daylight_cycle), [weather](https://minecraft.wiki/w/Weather) and [experience](https://minecraft.wiki/w/Experience) informed the behavior.
+
+### Functional red beds
+- Craft one red bed at a 3×3 crafting table with **three wool and three wooden planks**, arranged in two rows. Sheep in Survival drop one wool alongside their existing food drop.
+- Bed item **block 169** has its own hand-authored 16×16 pillow, red cover and wooden-frame texture with a **9/16 block tall** collision model.
+- **Place** the bed from the hotbar, then **use/interact** with it using right-click or the mobile Place button while aiming at it. Daytime interaction sets a personal respawn point; at night, solo use also skips to morning and clears the rain.
+- On death in Survival, you respawn beside the saved bed if it is still present and has free adjacent standing space; otherwise, respawn defaults to your original world spawn. A saved bed in the Nether/End cannot be used to sleep.
+- Beds are simplified **single-block** props, not Minecraft's exact two-block bed meshes. Multiplayer night-skipping is disabled because MineWorld doesn't implement cross-player sleep voting. Survival saves store their new bed-spawn coordinates; an old generic `bed` backpack item is migrated to a placeable bed once when the save loads.
+
+### Weather and day/night
+- MineWorld now uses a **20-minute game day** aligned to Minecraft Wiki's 24,000-tick cycle, rather than its older roughly 7-minute sunrise/sunset approximation. Older save times are converted to retain their approximate previous day/night phase.
+- The Overworld cycles between **clear, rain and storms**. Cold biome precipitation appears as snow. Darkened storm skies and a light, resolution-capped weather overlay are included; the number of particles falls on slower devices.
+- Rain/storm durations are deliberately **shorter than Minecraft's real timers** so the weather can be seen in normal browser sessions. Creative's pause menu can change weather immediately; Survival follows a predictable dynamic cycle. Weather state persists with each saved world.
+- Nether and End are not given Overworld precipitation.
+
+### Experience levels
+- New compact green **XP bar** and level number appear above the Survival hotbar.
+- Experience is earned by mining resource ores, defeating creatures, and smelting. Level thresholds follow the Minecraft Wiki experience formulas, including **level 16 at 352 XP** and **level 31 at 1,507 XP**. Rewards are simplified per action. Experience is lost on death.
+- Total XP is kept separately from the old collectible `experience` resource and saved with the current Survival world.
+
+### Original block textures
+- Retains 16×16 nearest-neighbor texture atlas, with a new **red bed** and more distinct snow, ice, terracotta, hay bale, bone, redstone lamp and raw-mineral crate pixel patterns. These hand-authored motifs complement the grass, dirt, stone, wood and ore refinement layers.
+- **No Minecraft texture files have been copied** from the Wiki or the game. Texture likeness remains an original interpretation of the materials, not pixel-for-pixel official art.
+
+### Existing functionality retained
+- Sprint and sneak with saturation/exhaustion logic (Ctrl/G and Shift/X, or mobile toggles)
+- 10–50 simultaneously visible 16×16 terrain chunks, frame-budget streaming and adaptive rendering
+- Separate Survival/Creative saves, actual 64-item stacks, 2×2/3×3 crafting, Nether/End, village trading, mobs and peer-hosted multiplayer
+
+**Not yet implemented:** the complete Minecraft block/item catalog, full redstone circuits, exact chunk-radius rendering, all official mobs, tool durability/enchanting/anvils, hunger/loot details in every circumstance, two-block bed meshes or fully simulated Java/Bedrock multiplayer servers. Performance and touch behavior should be verified on a physical phone. Save payload version: **13**.
