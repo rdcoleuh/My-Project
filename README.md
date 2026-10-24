@@ -1,4 +1,4 @@
-# MineWorld 4.2 — Real 64-Item Stacks & Pixel Textures
+# MineWorld 4.3 — Classic-Style Pixel Textures
 
 **Play:** https://rdcoleuh.github.io/My-Project/
 
@@ -89,3 +89,19 @@ The existing 10,000 × 10,000 worlds, Survival/Creative saves, inventory, crafti
 - Refined 16×16 game-original textures with larger hard-edged pixel clusters instead of smooth color noise; richer grass/dirt edges, more irregular rocky cobblestone, clearer ore flecks, distinct tree and leaf patterns, and improved End stone.
 - Every defined block type keeps its own original nearest-neighbor texture. Hotbar tile thumbnails now sit squarely aligned to the 16px atlas instead of being rotated.
 - MineWorld does not ship or reuse official Minecraft texture files; these are independently authored approximations of the same recognizable blocky aesthetic.
+
+
+## 4.3 texture remake
+
+The entire 16×16 texture atlas has been revalidated across all 168 defined MineWorld block types. The new original artwork replaces generic random-noise colors with hand-arranged pixel motifs, distinct palettes and per-face variants.
+
+- Grass and podzol: recognizable green top, irregular hanging grass fringe on earthy sides, dark underside.
+- Stone and deepslate: hand-designed dark-light mineral patches; cobblestone and blackstone: outlined chunky stone shapes.
+- Wood: individual oak, spruce, birch, acacia, jungle, cherry, pale oak, crimson and warped species, with vertical bark, species highlights, and rings on log ends.
+- Ore faces: separate coal, iron, copper, gold, redstone, lapis lazuli, diamond, emerald, quartz and Nether gold shapes against stone/deepslate.
+- Leaves: distinct green and pink clustered foliage; planks: visible seams and grain; snow, ice, sand, gravel and terracotta: cleaner hard-edged pixel coloration.
+- Nether and End: netherrack, basalt, soul sand, magma, portals, nylium, wart blocks, end stone, End gateways and crystal details.
+- Crafting table, chests, stone bricks, glass, resource blocks and workstations have stronger visual signatures.
+- The game retains nearest-neighbor filtering, separate top/side/bottom UV mapping, the same saved block IDs, and all existing 64-item stack behavior.
+
+This work is an independent classic 16x16 pixel-art approximation. No official Minecraft resource files, textures, or copyrighted pixel patterns are copied or included. Water, glass and portal transparency/animation still differ from the original game because the MineWorld engine currently renders opaque block faces.
