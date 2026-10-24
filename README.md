@@ -1,4 +1,4 @@
-# MineWorld 4.3 — Classic-Style Pixel Textures
+# MineWorld 4.4 — More Recognizable Classic Block Textures
 
 **Play:** https://rdcoleuh.github.io/My-Project/
 
@@ -105,3 +105,17 @@ The entire 16×16 texture atlas has been revalidated across all 168 defined Mine
 - The game retains nearest-neighbor filtering, separate top/side/bottom UV mapping, the same saved block IDs, and all existing 64-item stack behavior.
 
 This work is an independent classic 16x16 pixel-art approximation. No official Minecraft resource files, textures, or copyrighted pixel patterns are copied or included. Water, glass and portal transparency/animation still differ from the original game because the MineWorld engine currently renders opaque block faces.
+
+
+## MineWorld 4.4 — classic-style block art refinement (October 24, 2026)
+
+The existing pixel-art engine is preserved and now includes an additional original-art rendering pass for the most familiar blocks, while all other materials continue to use 4.3's distinct texture families.
+
+- Grass blocks have a higher-contrast grass top with an uneven green overhang down a brown dirt side.
+- Stone, deepslate, blackstone and cobblestone have larger hand-shaped-looking rock regions instead of uniform speckled textures; cobblestone uses jagged, outlined stone pieces.
+- Ore rocks have clear distinct coal, iron, copper, gold, redstone, lapis, diamond, emerald, quartz and Nether-gold colored clusters; the ores remain embedded in stone or deepslate.
+- Wood has more recognizable birch markings, grooves in bark, end grain, plank seam rows and type-specific timber colors. Leaf blocks are grouped into readable foliage patterns.
+- Crafting table, furnace, glass, water, lava, obsidian, sandstone, soul sand, End stone and resource blocks receive additional clear details.
+- **Preserved gameplay:** Inventory button beside the hotbar, 64-block stacks, Survival saves, Creative building, 3×3 crafting, mining break timers, mobs, multiplayer, dimensions, and all 168 block IDs remain unchanged.
+
+This is original pixel art modeled on familiar block-based motifs and does not include or copy the official Minecraft texture files. It aims for better recognizability, not an exact copyrighted texture replica. MineWorld still has limitations in transparent water/glass rendering and fluid animation versus Minecraft.
