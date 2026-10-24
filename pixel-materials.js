@@ -235,6 +235,114 @@
       const minerals={110:[37,67,179],111:[41,174,95],112:[80,198,199],113:[178,110,66],114:[212,177,57],115:[192,196,190],116:[40,42,46],117:[175,43,46]};
       return mineralBlock(x,y,minerals[b],b);
     }
+    // Additional distinct 16-pixel materials for every remaining placeable block.
+    if(b===10||b===90||b===109){
+      const light=rnd(x>>2,y>>2,b)>.48;
+      const c=b===109?(light?[238,192,72]:[126,88,49]):b===90?(light?[241,190,102]:[217,130,79]):(light?[239,211,144]:[174,135,85]);
+      const darker=(x%5===0||y%6===0)?-18:0;
+      return tone(withShade(c,darker),x,y,b,.44);
+    }
+    if(b===16||b===17||b===62||b===73||b===77||b===82||b===93||b===94){
+      const palettes={16:[163,58,70],17:[185,165,129],62:[61,157,140],73:[164,49,63],77:[188,46,68],82:[33,169,166],93:[35,172,160],94:[185,42,76]};
+      const c=palettes[b],leaf=(rnd(x>>1,y>>1,b+25)>.42);
+      const stem=(x%5===2||x%7===3);
+      return tone(leaf?c:stem?withShade(c,-29):[51,43,39],x,y,b,.62);
+    }
+    if(b===44||b===45){
+      if(top){
+        const rim=x<3||x>12||y<3||y>12;
+        return tone(rim?[42,106,46]:[98,150,61],x,y,b,.4);
+      }
+      const stripe=b===44?x%5===1:x%4===1;
+      const joint=b===45&&y%6===0;
+      const spike=b===44&&y%8===3&&x%5===2;
+      const c=spike?[182,189,104]:joint?[87,137,56]:stripe?[38,102,45]:[87,153,69];
+      return tone(c,x,y,b,.43);
+    }
+    if(b===46||b===47){
+      const c=b===46?[66,111,55]:[77,67,58];
+      return tone(c,x,y,b,.93);
+    }
+    if(b===48||b===49){
+      const red=b===48,spot=rnd(x>>1,y>>1,b+112)>.88;
+      const cap=red?[174,53,52]:[131,99,65];
+      return tone(spot?[233,220,197]:cap,x,y,b,.48);
+    }
+    if(b===55||b===56){
+      if(b===55)return brick(x,y,[77,153,149],b,5,8);
+      return mineralBlock(x,y,[179,113,69],b);
+    }
+    if(b===59||b===89||b===128){
+      const frame=x<3||x>12||y<2||y>13;
+      const glow=b===89?[43,189,199]:b===128?[233,216,178]:[249,202,91];
+      const c=frame?[74,68,55]:glow;
+      return tone(c,x,y,b,.29);
+    }
+    if(b===60){
+      const tie=top?x===5||x===10:y===5||y===11;
+      const straw=top?y%3===0:x%3===0;
+      const c=tie?[122,101,60]:straw?[184,146,70]:[223,191,99];
+      return tone(c,x,y,b,.5);
+    }
+    if(b===63){
+      const r=rnd(x>>2,y>>2,b);
+      return tone(r>.57?[144,118,92]:[88,75,63],x,y,b,.82);
+    }
+    if(b===64){
+      const bright=rnd(x>>1,y>>1,b)> .90||(x+y)%13===0;
+      return tone(bright?[35,134,156]:[25,44,58],x,y,b,.52);
+    }
+    if(b===69)return brick(x,y,[70,63,68],b,6,7);
+    if(b===86){
+      const stripe=face===1?(x%5===0||x%5===1):(y%4===0);
+      return tone(stripe?[181,170,145]:[220,212,182],x,y,b,.33);
+    }
+    if(b===87||b===126||b===127){
+      const purple=b===87,glow=rnd(x>>1,y>>2,b+414)>.67;
+      const spark=rnd(x,y,b+288)>.967;
+      const c=spark?[206,198,251]:purple?glow?[133,72,196]:[77,38,137]:glow?[58,64,111]:[17,25,49];
+      return tone(c,x,y,b,.65);
+    }
+    if(b===88){
+      const crack=(x+Math.floor(y/3)*2)%6<2||y%7===0;
+      return tone(crack?[233,117,34]:[68,39,33],x,y,b,.5);
+    }
+    if(b===91){
+      const gold=rnd(x>>1,y>>1,221)>.88||(x+y)%11===0;
+      return tone(gold?[212,158,63]:[51,47,51],x,y,b,.49);
+    }
+    if(b===118)return tone((x%5===0||y%5===0)?[97,67,45]:[164,116,66],x,y,b,.54);
+    if(b===122||b===123){
+      const band=y%6===0,tip=b===123&&y<5;
+      return tone(tip?[222,175,194]:band?[101,63,101]:[151,112,153],x,y,b,.55);
+    }
+    if(b===124){
+      const core=(Math.abs(x-8)+Math.abs(y-8)<7);
+      return tone(core?[231,198,246]:[123,69,155],x,y,b,.48);
+    }
+    if(b===125){
+      const eye=top&&Math.abs(x-8)<4&&Math.abs(y-8)<4;
+      const rim=x<3||y<3||x>12||y>12;
+      return tone(eye?[75,154,143]:rim?[49,61,49]:[89,130,111],x,y,b,.42);
+    }
+    if(b===129||b===134){
+      const scales=rnd(x>>1,y>>1,b+21)>.72;
+      return tone(scales?[84,66,94]:[50,40,57],x,y,b,.64);
+    }
+    if(b===133||b===135){
+      const a=b===133?[139,87,146]:[57,54,63];
+      const inset=(x>=3&&x<=12&&y>=3&&y<=12);
+      return mineralBlock(x,y,inset?a:withShade(a,-35),b);
+    }
+    if(b===136||b===155||b>=158&&b<=167){
+      const wood=[136,155,158,160,161,163,165].includes(b);
+      const ring=x<2||x>13||y<2||y>13;
+      const tool=(x>3&&x<12&&y>4&&y<12);
+      const base=wood?[144,104,64]:[119,122,119];
+      const center=wood?[105,83,69]:[76,86,91];
+      const stripes=(x+y+b)%6===0;
+      return tone(ring?withShade(base,-40):tool?(stripes?withShade(center,22):center):base,x,y,b,.45);
+    }
     return null; // Retain the existing individually-authored fallback for other special blocks.
   }
   window.MineWorldPixelMaterials={paint,version:'4.1',size:16};
