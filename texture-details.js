@@ -112,6 +112,19 @@
     return null;
   }
   function special(b,face,x,y){
+    if(b===169){
+      const rim=x===0||y===0||x===15||y===15;
+      if(face===0){
+        if(y<=4)return color(226+(h(x,y,169)>.7?15:0),224,216);
+        if(rim)return color(87,43,36);
+        const fold=y===5||y===6||(y===12&&x>2&&x<13);
+        return fold?color(149,37,49):ink([[113,27,39,255],[172,40,51,255],[189,48,61,255],[218,72,72,255]],x,y,169);
+      }
+      if(face===2)return ink([[61,43,28,255],[94,62,37,255],[125,87,48,255],[144,104,65,255]],x,y,169);
+      if(y<=4)return ink([[115,28,37,255],[161,37,48,255],[192,54,64,255],[213,69,74,255]],x,y,169);
+      if(y>=13)return color(73,48,29);
+      return ink([[76,47,30,255],[101,64,39,255],[129,88,52,255],[151,110,68,255]],x,y,169);
+    }
     if([8,24,53,54,72,74,130].includes(b))return masonry(b,x,y);
     if(b===51)return charcoal(x,y,b);
     if([50,65,68,69,70,71].includes(b))return netherrack(x,y,b);
