@@ -301,7 +301,7 @@ body.in-nether #game-wrap{background:#290f19}
 #mine-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#8fd45d,#eaff8b);transition:width .055s linear}
 @media(pointer:coarse){#mine-progress{top:calc(50% + 37px);width:125px}}
 </style>
-<title>MineWorld 3.9 — Collected Item Hotbar</title>
+<title>MineWorld 4.0 — Survival Mining, Combat & Crafting Fixes</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -1418,7 +1418,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(recipe.upgradeFrom&&tools[recipe.tool[0]]!==recipe.upgradeFrom){toast('First craft a diamond '+recipe.tool[0]);return false;}
     if(recipe.requiresSmithing&&!inventory[136]){toast('Craft and carry a Smithing Table to upgrade');return false;}
     if(recipe.station&&!hasCraftingStation(recipe.station)){toast('Need '+stationName(recipe.station)+' nearby or in inventory');return false;}
-    if(!Object.entries(cost).every(([key,n])=>amount(key)>=n)){toast('Need more resources');return}
+    if(!Object.entries(cost).every(([key,n])=>amount(key)>=n)){toast('Need more resources');return false}
     for(const [key,n]of Object.entries(cost))addResource(key,-n);
     if(recipe.give)for(const [key,n]of Object.entries(recipe.give))addResource(key,n);
     if((recipe.tool||recipe.giveEquipment)&&(!recipe.give||!Object.keys(recipe.give).length)){
@@ -1998,7 +1998,7 @@ body.in-nether #game-wrap{background:#290f19}
   function placeCraftingTable(){
     if(gameMode!=='survival')return;
     if(!inventory[168]&&bag.craftingTable>0){
-      addResource('craftingTable',-1);addResource('block:168',1);
+      bag.craftingTable--;addResource('block:168',1);
     }
     if(inventory[168]<=0){toast('Craft a table first: four planks in the 2 × 2 grid');return;}
     // Find a nearby ground tile instead of placing three diagonally distant blocks away.
@@ -2921,7 +2921,7 @@ body.in-nether #game-wrap{background:#290f19}
     '<button class="mw-pixel-btn" id="mw-multi" type="button">Multiplayer</button>'+
     '<button class="mw-pixel-btn" id="mw-creative" type="button">Creative World</button>'+
     '<div class="mw-2col"><button class="mw-pixel-btn" id="mw-options" type="button">Options…</button><button class="mw-pixel-btn" id="mw-return" type="button">World Atlas</button></div>'+
-    '</div><div class="mw-footer"><small>MineWorld 3.9 · Independent browser game</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
+    '</div><div class="mw-footer"><small>MineWorld 4.0 · Independent browser game</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
   welcome.appendChild(main);
   const worlds=document.createElement('div');
   worlds.id='mw-world-screen';worlds.className='mw-screen mw-screen--sub';
