@@ -1536,7 +1536,7 @@ body.in-nether #game-wrap{background:#290f19}
     }
     dayClock=survivalRules.nextMorning(dayClock);
     worldWeather={type:'clear',seconds:300,step:(worldWeather?.step||0)+1};
-    toast('🌅 Slept until morning · Respawn point saved');
+    emitAdvancement('sleep','any');toast('🌅 Slept until morning · Respawn point saved');
     updateWeatherHUD();markSave();
   }
   function findBedRespawn(){
@@ -1710,7 +1710,7 @@ body.in-nether #game-wrap{background:#290f19}
       if(next==='nether')spawnNetherWildlife();else spawnEndWildlife();
     }
     updatePortalUI();updateFlyButton();updateHotbar();markSave();window.MineWorldMultiplayer?.flushMobs();
-    toast(next==='end'?'✦ You entered the End!':next==='nether'?'🔥 You entered the Nether!':'🌿 Returned to the Overworld');
+    emitAdvancement('dimension',next);toast(next==='end'?'✦ You entered the End!':next==='nether'?'🔥 You entered the Nether!':'🌿 Returned to the Overworld');
   }
   function updatePortalUI(){
     const portalControl=$('craft-nether-portal');
@@ -1833,7 +1833,7 @@ body.in-nether #game-wrap{background:#290f19}
     else if(inventory[17]){inventory[17]--;amount=4;food='mushroom'}
     else{toast('Grow crops, trade for bread, or hunt animals for food');return}
     const fed=window.MineWorldHunger.eat(hunger,hungerSaturation,amount);hunger=fed.hunger;hungerSaturation=fed.saturation;
-    sound?.play('eat');updateHotbar();updateSurvivalHUD();markSave();toast('Ate '+food+' · +'+amount+' hunger');
+    sound?.play('eat');emitAdvancement('eat',food,{total:Object.keys(FOOD).length});updateHotbar();updateSurvivalHUD();markSave();toast('Ate '+food+' · +'+amount+' hunger');
   }
   const RECIPES=[
     {name:'🪵 4 planks',cost:{'block:5':1},give:{'block:11':4},tip:'1 wood log → 4 planks'},
@@ -2045,7 +2045,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(hunger>=20&&health>=20){toast('You are not hungry');return true;}
     if(addResource(key,-1,survivalHotbar[selection])!==-1)return false;const fed=window.MineWorldHunger.eat(hunger,hungerSaturation,FOOD[key]);hunger=fed.hunger;hungerSaturation=fed.saturation;
     if(key==='goldenApple')health=clamp(health+4,0,20);
-    sound?.play('eat');updateSurvivalHUD();updateHotbar();markSave();toast('Ate '+itemLabel(key));return true;
+    sound?.play('eat');emitAdvancement('eat',key,{total:Object.keys(FOOD).length});updateSurvivalHUD();updateHotbar();markSave();toast('Ate '+itemLabel(key));return true;
   }
   function craft(recipe){
     if(gameMode!=='survival'){toast('Choose Survival to craft tools');return false;}
@@ -2063,8 +2063,9 @@ body.in-nether #game-wrap{background:#290f19}
       const gearKey=(tier==='wood'?'wooden':tier)+kind[0].toUpperCase()+kind.slice(1);
       addResource(gearKey,1);
     }
-    if(recipe.tool){tools[recipe.tool[0]]=recipe.tool[1];equipped=recipe.tool[0]}
-    if(recipe.giveEquipment){tools[recipe.giveEquipment.kind]=recipe.giveEquipment.tier;equipped=recipe.giveEquipment.kind;}
+    if(recipe.tool){tools[recipe.tool[0]]=recipe.tool[1];equipped=recipe.tool[0];emitAdvancement('tool',recipe.tool[0]+':'+recipe.tool[1]);}
+    if(recipe.giveEquipment){tools[recipe.giveEquipment.kind]=recipe.giveEquipment.tier;equipped=recipe.giveEquipment.kind;emitAdvancement('tool',recipe.giveEquipment.kind+':'+recipe.giveEquipment.tier);}
+    emitAdvancement('craft',recipe.name.replace(/^[^ ]+ /,''));
     if(recipe.station==='furnace')gainExperience(2);
     updateHotbar();updateSurvivalHUD();renderGear();markSave();toast('Crafted '+recipe.name.replace(/^[^ ]+ /,''));
     return true;
@@ -2161,7 +2162,7 @@ body.in-nether #game-wrap{background:#290f19}
             if(toolLevels[tierName]>toolLevels[tools[tool]])tools[tool]=tierName;
           }else addResource(reward,offer.result.count);
           st.uses[i]=(st.uses[i]||0)+1;st.xp+=offer.xp;markSave();updateSurvivalHUD();updateHotbar();renderTrades();
-          toast('Traded with '+v.job.name+' · +'+offer.xp+' XP');
+          emitAdvancement('trade','any');toast('Traded with '+v.job.name+' · +'+offer.xp+' XP');
         });box.appendChild(b);
       }
     }
@@ -2231,7 +2232,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(gameMode==='survival'&&amount(info.seed)<1){toast('Need '+window.MineWorldLoot.label(info.seed)+' to plant');return false;}
     if(setBlock(p.x,p.y+1,p.z,info.blocks[0])){
       if(gameMode==='survival')addResource(info.seed,-1);
-      markSave();toast('🌱 Planted '+info.name);return true;
+      emitAdvancement('plant',kind);markSave();toast('🌱 Planted '+info.name);return true;
     }
     return false;
   }
@@ -2318,7 +2319,7 @@ body.in-nether #game-wrap{background:#290f19}
       else if(key==='obsidian')addResource('block:51',n);
       else addResource(key,n);
     }
-    sound?.play('open');updateHotbar();updateSurvivalHUD();markSave();
+    emitAdvancement('chest',kind.startsWith('bastion')?'bastion':kind);sound?.play('open');updateHotbar();updateSurvivalHUD();markSave();
     $('chest-title').textContent=(window.MineWorldLoot.label(kind))+' Chest';
     $('chest-contents').replaceChildren();
     for(const item of contents){const row=document.createElement('div');row.textContent='✦ '+item.count+' × '+window.MineWorldLoot.label(item.item);$('chest-contents').appendChild(row)}
@@ -2774,7 +2775,7 @@ body.in-nether #game-wrap{background:#290f19}
   function startMount(kind,id,vehicle=false){
     if(mount)dismount(true);mount={kind,id,vehicle,dimension};
     $('mount-readout').textContent='🐎 Riding '+(SPECIES[kind]?.name||itemLabel(kind))+' · M or Ride to dismount';$('mount-readout').classList.remove('hidden');$('ride-btn').textContent='↘ EXIT';
-    markSave();toast('Mounted '+(SPECIES[kind]?.name||itemLabel(kind))+' · steer with joystick/WASD');
+    emitAdvancement('ride',kind);markSave();toast('Mounted '+(SPECIES[kind]?.name||itemLabel(kind))+' · steer with joystick/WASD');
   }
   function tryRide(){
     if(paused)return;if(mount){dismount();return;}
@@ -2786,7 +2787,7 @@ body.in-nether #game-wrap{background:#290f19}
       if(details.harness&&!bag.harness){toast('Craft a Happy Ghast Harness before riding');return}
       if(details.saddle&&!m.saddled){if(!bag.saddle){toast('Find or craft a saddle first');return;}bag.saddle--;m.saddled=true;}
       if(details.control&&!bag[details.control]){toast('Need '+itemLabel(details.control)+' to steer this mount');return}
-      if(['horse','donkey','mule','llama','skeleton_horse','zombie_horse'].includes(kind)&&!m.tamed){if(!bag.wheat&&!bag.carrot){toast('Feed wheat or carrots to tame this mount');return;}const food=bag.wheat?'wheat':'carrot';bag[food]--;m.tamed=true;toast('Mount tamed');}
+      if(['horse','donkey','mule','llama','skeleton_horse','zombie_horse'].includes(kind)&&!m.tamed){if(!bag.wheat&&!bag.carrot){toast('Feed wheat or carrots to tame this mount');return;}const food=bag.wheat?'wheat':'carrot';bag[food]--;m.tamed=true;emitAdvancement('tame',kind);toast('Mount tamed');}
     }
     startMount(kind,m.id,!!m.vehicle);
   }
@@ -3066,6 +3067,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(m.kind==='ender_dragon'&&endCrystalCount()>0)return {hit:false};
     m.hp-=amount;
     if(m.hp<=0){
+      if(attackerId===null)emitAdvancement('kill',m.kind,{hostile:['hostile','boss'].includes(SPECIES[m.kind]?.kind)});
       if(m.kind==='ender_dragon'){
         dragonDefeated=true;bag.dragonEgg++;bag.experience+=50;
         unloadAllChunks();scheduleChunks(true);streamChunks(5);
