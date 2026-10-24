@@ -683,6 +683,85 @@ function draw(id,face,x,y){
     const mortar=y%4===0||(x+off)%8===0;
     return shade([173,78,63],mortar?-45:hash(x>>2,y>>2,8)>.65?19:0);
   }
+
+  // Crop stages, flowers, mushrooms and specialized workshop faces.
+  if(id>=139&&id<=154){
+    const crop=Math.floor((id-139)/4),stage=(id-139)%4;
+    const planted=(x%5===2||x%5===3||x%7===1);
+    const growing=y>=(13-stage*4)&&planted;
+    const tip=stage>=2&&y<=5&&planted;
+    const soil=[78,57,39],green=[61,135,44];
+    const head=crop===0?[215,179,83]:crop===1?[217,116,43]:crop===2?[159,144,83]:[164,58,94];
+    if(growing)return rgba(tip||stage===3&&y>8?head:shade(green,hash(x,y,id)>.5?18:-20).slice(0,3));
+    return shade(soil,hash(x>>2,y>>2,id)>.65?12:-10);
+  }
+  if(id===16||id===77||id===82){
+    const p=id===16?[157,49,64]:id===77?[170,49,71]:[34,146,151];
+    const stem=(x%5===2||x%7===1)&&y>4;
+    return rgba(stem?shade(p,hash(x,y,id)>.65?25:-11).slice(0,3):[46,48,36]);
+  }
+  if(id===17||id===48||id===49){
+    const red=id===48,cap=id===49?[118,86,62]:red?[175,44,43]:[145,90,63];
+    const spot=red&&hash(x>>1,y>>1,48)>.77,edge=y===0||y===15;
+    return rgba(spot?[241,234,208]:edge?shade(cap,-36).slice(0,3):shade(cap,hash(x>>2,y>>2,id)>.55?11:-10).slice(0,3));
+  }
+  if(id===20){
+    const mouth=!top&&x>=4&&x<=11&&y>=5&&y<=12,glow=mouth&&y>=9&&y<=11;
+    const border=x===0||x===15||y===0||y===15;
+    return rgba(mouth?(glow?[194,103,43]:[39,40,40]):border?[80,85,86]:
+      hash(x>>2,y>>2,20)>.5?[143,147,148]:[111,118,121]);
+  }
+  if(id===55){
+    const p=hash(x>>2,y>>2,55);
+    return rgba(p>.76?[104,180,169]:p>.42?[78,155,153]:p>.18?[64,122,126]:[47,94,111]);
+  }
+  if(id===56){
+    const pat=hash(x>>2,y>>2,56),oxidized=pat>.85;
+    return rgba(oxidized?[79,153,132]:pat>.54?[217,145,93]:[179,102,69]);
+  }
+  if(id===59){
+    const rim=x<=3||x>=12||y<=2||y>=13;
+    const wick=x>=6&&x<=9&&y>=4&&y<=11;
+    return rgba(rim?[63,53,44]:wick?[242,198,81]:[112,81,52]);
+  }
+  if(id===60){
+    const belt=top?x===6||x===9:y===6||y===11;
+    const grain=top?y%3===0:x%3===0;
+    return rgba(belt?[115,98,64]:grain?[174,143,67]:[217,188,96]);
+  }
+  if(id===62){
+    const lichen=(x+y)%7===0||hash(x>>1,y>>1,62)>.75;
+    return rgba(lichen?[88,161,126]:[45,90,74]);
+  }
+  if(id===73){
+    const nodule=hash(x>>1,y>>1,73)>.65;
+    return rgba(nodule?[172,39,65]:hash(x>>2,y>>2,73)>.48?[110,24,41]:[65,24,31]);
+  }
+  if(id===118){
+    const plank=x%5===0||y%5===0;
+    const latch=x>=6&&x<=9&&y>=6&&y<=10;
+    return rgba(latch?[197,150,61]:plank?[89,62,40]:[163,114,67]);
+  }
+  if(id===132){
+    return rgba(x%4===0?[117,80,115]:hash(x>>2,y>>2,132)>.56?[187,141,182]:[159,106,156]);
+  }
+  if(id===133){
+    const shell=x<3||y<3||x>12||y>12;
+    const fold=x===8||y===8;
+    return rgba(shell?[101,58,105]:fold?[138,77,145]:[181,119,180]);
+  }
+  if(id===134){
+    const eye=face!==0&&((x>=3&&x<=5&&y>=5&&y<=7)||(x>=10&&x<=12&&y>=5&&y<=7));
+    const mouth=face!==0&&x>=5&&x<=11&&y>=11&&y<=13;
+    return rgba(eye?[185,93,202]:mouth?[25,22,30]:hash(x>>2,y>>2,134)>.57?[71,54,83]:[46,39,63]);
+  }
+  if(id===136){
+    if(top){
+      const edge=x<2||y<2||x>13||y>13,metal=x>4&&x<11&&y>3&&y<12;
+      return rgba(edge?[83,55,44]:metal?[122,145,153]:[119,82,57]);
+    }
+    return rgba(x<3||x>12||y<3||y>12?[74,54,42]:[106,97,80]);
+  }
   return prior(id,face,x,y);
 }
 atlas.paint=draw;
