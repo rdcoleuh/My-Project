@@ -50,6 +50,8 @@ class Element{
  replaceChildren(...xs){this.children=[];this.append(...xs);}
  append(...xs){xs.forEach(x=>this.appendChild(x));}
  setAttribute(){}
+ setCustomValidity(){}
+ reportValidity(){return true}
  focus(){this.doc.activeElement=this;}
  blur(){if(this.doc.activeElement===this)this.doc.activeElement=null;}
  select(){}
@@ -104,6 +106,7 @@ test('real host and guest data-channel handlers relay chat in both directions an
  assert.ok(host.$('chat-entry').value==='');
  guest.api.closeChat();assert.equal(guest.api.isTyping(),false);
  assert.equal(guest.$('chatbox').classList.contains('mw-chat-collapsed'),true);
+ await new Promise(resolve=>setTimeout(resolve,810));
  host.$('chat-entry').value='More news';host.api.sendChat();await settle();
  assert.equal(guest.$('chat-unread').classList.contains('hidden'),false);
  assert.equal(guest.$('chat-unread').textContent,'1 new');
