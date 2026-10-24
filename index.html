@@ -1890,7 +1890,7 @@ body.in-nether #game-wrap{background:#290f19}
   // The Backpack projects them into 64-item stacks with a searchable, accessible 36-slot grid.
   function itemLabel(key){return key.startsWith('block:')?(NAMES[Number(key.slice(6))]||'Block'):catalog.label(key)}
   const FOOD={cooked:9,raw:3,bread:5,carrot:3,potato:2,beetroot:1,apple:4,goldenApple:8,goldenCarrot:8,steak:8,cookedChicken:6,cookedMutton:6,cookedFish:5,bakedPotato:5,cookie:2,cake:8,pumpkinPie:8,mushroomStew:6,rabbitStew:10,beetrootSoup:6,sweetBerries:2,fish:2};
-  function stackLimit(key){return /sword|pickaxe|axe|shovel|hoe|helmet|chestplate|leggings|boots|armor|elytra|shield|saddle|harness|rod|boat|raft|minecart|enchanted/i.test(key)?1:64}
+  function stackLimit(key){if(key.startsWith('block:'))return 64;return /sword|pickaxe|axe|shovel|hoe|helmet|chestplate|leggings|boots|armor|elytra|shield|saddle|harness|fishingRod|enchantedRod|boat|raft|minecart|enchanted/i.test(key)?1:64}
   function stackIcon(key){
     if(key.startsWith('block:')){const id=Number(key.slice(6));return [1,2,3,4,5,6,7,9,10,11].includes(id)?'🧱':id>=65&&id<95?'🔥':id>=119&&id<137?'🟪':'▦'}
     if(key in FOOD)return '🍖';if(/horse|saddle|harness|boat|raft|minecart|stick/i.test(key))return '🐎';
@@ -1899,47 +1899,53 @@ body.in-nether #game-wrap{background:#290f19}
     if(/diamond|gold|iron|copper|coal|lapis|redstone|emerald|netherite/i.test(key))return '💎';return '🎒';
   }
   function backpackStacks(){
-    const resource=[];for(let i=1;i<inventory.length;i++)if(inventory[i]>0)resource.push(['block:'+i,inventory[i]]);
-    for(const [k,n] of Object.entries(bag))if(n>0)resource.push([k,n]);
-    const ordered=new Map(resource);const keys=[...new Set([...inventoryOrder,...resource.map(x=>x[0])])].filter(k=>ordered.has(k));
-    const result=[];for(const key of keys){let remaining=ordered.get(key),n=stackLimit(key);while(remaining>0){let size=Math.min(n,remaining);result.push({key,size});remaining-=size}}
-    return result;
+    reconcileItemStacks();
+    return stackStore.entries.map(st=>({id:st.id,key:st.key,size:st.qty}));
   }
-  function inventorySelection(){const key=selectedStackKey;if(!key)return null;const count=amount(key);return count>0?{key,count}:null}
+  function inventorySelection(){
+    const stack=stackStore.byId(selectedStackId);
+    return stack?{id:stack.id,key:stack.key,count:stack.qty,total:amount(stack.key)}:null;
+  }
   function renderBackpack(){
     const root=$('inventory-grid');root.replaceChildren();
     const stacks=backpackStacks().filter(x=>!backpackFilter||itemLabel(x.key).toLowerCase().includes(backpackFilter));
     const pages=Math.max(1,Math.ceil(stacks.length/36));backpackPage=clamp(backpackPage,0,pages-1);
     const subset=stacks.slice(backpackPage*36,backpackPage*36+36);
     for(let i=0;i<36;i++){
-      const stack=subset[i],button=document.createElement('button');button.type='button';button.className='inventory-slot'+(!stack?' empty':stack.key===selectedStackKey?' selected':'');
+      const stack=subset[i],button=document.createElement('button');button.type='button';button.className='inventory-slot'+(!stack?' empty':stack.id===selectedStackId?' selected':'');
       if(stack){button.title=itemLabel(stack.key)+' ×'+stack.size;button.setAttribute('aria-label',button.title);button.draggable=true;
         const icon=document.createElement('span');icon.className='item-icon';icon.textContent=stackIcon(stack.key);
         const name=document.createElement('span');name.className='item-name';name.textContent=itemLabel(stack.key);
         const n=document.createElement('span');n.className='stack-size';n.textContent=stack.size;button.append(icon,name,n);
-        button.addEventListener('click',()=>{selectedStackKey=stack.key;renderBackpack();if($('craft-ingredient')){ $('craft-ingredient').value=stack.key;}});
-        button.addEventListener('dragstart',e=>{e.dataTransfer?.setData('text/plain',stack.key)});
+        button.addEventListener('click',()=>{selectedStackId=stack.id;selectedStackKey=stack.key;renderBackpack();if($('craft-ingredient')){$('craft-ingredient').value=stack.key;}});
+        button.addEventListener('dragstart',e=>{e.dataTransfer?.setData('text/plain',String(stack.id))});
         button.addEventListener('dragover',e=>e.preventDefault());
-        button.addEventListener('drop',e=>{e.preventDefault();const from=e.dataTransfer?.getData('text/plain');if(!from||from===stack.key)return;
-          for(const k of [from,stack.key])if(!inventoryOrder.includes(k))inventoryOrder.push(k);
-          const a=inventoryOrder.indexOf(from),b=inventoryOrder.indexOf(stack.key);[inventoryOrder[a],inventoryOrder[b]]=[inventoryOrder[b],inventoryOrder[a]];
-          markSave();renderBackpack();});
+        button.addEventListener('drop',e=>{
+          e.preventDefault();
+          const id=Number(e.dataTransfer?.getData('text/plain'));
+          const from=stackStore.entries.findIndex(entry=>entry.id===id);
+          const to=stackStore.entries.findIndex(entry=>entry.id===stack.id);
+          if(from<0||to<0||from===to)return;
+          const [moved]=stackStore.entries.splice(from,1);
+          stackStore.entries.splice(to,0,moved);
+          markSave();renderBackpack();
+        });
       }else{button.tabIndex=-1;button.setAttribute('aria-hidden','true')}
       root.appendChild(button);
     }
     $('inventory-page').textContent='Page '+(backpackPage+1)+' / '+pages+' · '+stacks.length+' stacks';
     $('inventory-prev').disabled=backpackPage===0;$('inventory-next').disabled=backpackPage>=pages-1;
-    const selected=inventorySelection();$('inventory-detail').textContent=selected?itemLabel(selected.key)+' · '+selected.count+' total':'Select a stack to use, equip or drop';
+    const selected=inventorySelection();$('inventory-detail').textContent=selected?itemLabel(selected.key)+' · '+selected.count+' in this stack · '+selected.total+' total':'Select a stack to use, equip or drop';
     $('item-equip').disabled=!selected;$('item-use').disabled=!selected;$('item-drop').disabled=!selected;$('item-drop-stack').disabled=!selected;
     $('armor-readout').textContent='Armor: '+Object.entries(armor).map(([slot,key])=>slot+' '+(key?itemLabel(key):'empty')).join(' · ');
   }
   function armorSlot(key){return /helmet|cap/i.test(key)?'head':/chestplate|tunic/i.test(key)?'chest':/leggings|pants/i.test(key)?'legs':/boots/i.test(key)?'feet':''}
   function equipSelection(){const item=inventorySelection();if(!item)return;
     const {key}=item,slot=armorSlot(key);
-    if(slot){if(armor[slot])addResource(armor[slot],1);addResource(key,-1);armor[slot]=key;toast('Equipped '+itemLabel(key));}
+    if(slot){if(armor[slot])addResource(armor[slot],1);if(addResource(key,-1,item.id)!==-1)return;armor[slot]=key;toast('Equipped '+itemLabel(key));}
     else{
-      for(let i=0;i<9;i++)if(i!==selection&&survivalHotbar[i]===key)survivalHotbar[i]=null;
-      survivalHotbar[selection]=key;
+      for(let i=0;i<9;i++)if(i!==selection&&survivalHotbar[i]===item.id)survivalHotbar[i]=null;
+      survivalHotbar[selection]=item.id;
       if(/sword|pickaxe|shovel|hoe|axe/i.test(key)){
         const kind=/sword/i.test(key)?'sword':/pickaxe/i.test(key)?'pickaxe':/shovel/i.test(key)?'shovel':/hoe/i.test(key)?'hoe':'axe';
         equipped=kind;
@@ -1952,11 +1958,16 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function consumeSelection(){const item=inventorySelection();if(!item)return;let key=item.key;if(!(key in FOOD)){toast('This item is not food');return}
     if(hunger>=20&&health>=20){toast('You are not hungry');return}
-    addResource(key,-1);hunger=clamp(hunger+FOOD[key],0,20);if(key==='goldenApple')health=clamp(health+4,0,20);
+    if(addResource(key,-1,item.id)!==-1)return;hunger=clamp(hunger+FOOD[key],0,20);if(key==='goldenApple')health=clamp(health+4,0,20);
     toast('Ate '+itemLabel(key));updateSurvivalHUD();updateHotbar();markSave();renderGear();
   }
-  function dropSelection(stack=false){const selected=inventorySelection();if(!selected)return;const qty=stack?Math.min(stackLimit(selected.key),selected.count):1;
-    addResource(selected.key,-qty);toast('Dropped '+qty+' '+itemLabel(selected.key));if(!amount(selected.key))selectedStackKey='';updateHotbar();updateSurvivalHUD();markSave();renderGear();
+  function dropSelection(stack=false){
+    const selected=inventorySelection();if(!selected)return;
+    const qty=stack?selected.count:1;
+    if(addResource(selected.key,-qty,selected.id)!==-qty)return;
+    toast('Dropped '+qty+' '+itemLabel(selected.key));
+    if(!stackStore.byId(selected.id)){selectedStackId=null;selectedStackKey='';}
+    updateHotbar();updateSurvivalHUD();markSave();renderGear();
   }
   function stationName(station){return {table:'a Crafting Table',furnace:'a Furnace',smithing:'a Smithing Table'}[station]||station}
   function hasCraftingStation(station){return station==='table'?nearbyCraftTable():station==='furnace'?inventory[20]>0||inventory[156]>0||inventory[157]>0:station==='smithing'?inventory[136]>0:true}
