@@ -1,4 +1,4 @@
-/* MineWorld 5.8 — vertical stacking, true 64-item inventory stacks and player chat. */
+/* MineWorld 5.9 — vertical stacking, true 64-item inventory stacks and player chat. */
 const {test}=require('node:test'),assert=require('node:assert/strict'),
 fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8');
@@ -79,6 +79,6 @@ test('chat and vertical building are wired into the live game and offline cache'
    'openChat,isTyping','chat-trigger','chat-toggle']){
   assert.ok(multi.includes(marker),'missing chat relay '+marker);
  }
- assert.ok(html.includes('MineWorld 5.8'));
+ assert.ok(html.includes('MineWorld 5.9'));
  for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))if(m[1].trim())new Function(m[1]);
 });
