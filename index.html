@@ -1434,8 +1434,40 @@ body.in-nether #game-wrap{background:#290f19}
       breakBlockNow(completed);
     }
   }
+  function useBed(target){
+    if(!target||target.b!==169)return;
+    if(dimension!=='overworld'){toast('Beds only work in the Overworld');return;}
+    bedSpawn={x:target.x,y:target.y,z:target.z};
+    markSave();
+    if(!survivalRules.canSleep(dayClock,worldWeather?.type||'clear')){
+      toast('🛏 Respawn point set · Sleep at night');
+      return;
+    }
+    if(window.MineWorldMultiplayer?.isShared()){
+      toast('🛏 Respawn point set · Night skip requires solo world');
+      return;
+    }
+    dayClock=survivalRules.nextMorning(dayClock);
+    worldWeather={type:'clear',seconds:300,step:(worldWeather?.step||0)+1};
+    toast('🌅 Slept until morning · Respawn point saved');
+    updateWeatherHUD();markSave();
+  }
+  function findBedRespawn(){
+    if(!bedSpawn||get(bedSpawn.x,bedSpawn.y,bedSpawn.z)!==169)return null;
+    const {x,y,z}=bedSpawn;
+    const adjacent=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+    for(const [dx,dz] of adjacent){
+      const px=x+dx,pz=z+dz;
+      for(const py of [y,y+1,y-1]){
+        if(!inside(px,py,pz)||py<2||!solid(get(px,py-1,pz)))continue;
+        if(!blockAtFeet(px+.5,py,pz+.5,1.8))return {x:px+.5,y:py,z:pz+.5};
+      }
+    }
+    return null;
+  }
   function performPlace(){
     if(paused)return;
+    if(aim?.b===169){cancelMining();useBed(aim);return;}
     if(gameMode==='survival'&&aim?.b===168){cancelMining();openGear();return;}
     if(gameMode==='survival'&&aim?.b===119){cancelMining();openTreasureChest(aim.x,aim.y,aim.z);return;}
     if(aim?.b===126){cancelMining();switchDimension(dimension==='end'?'overworld':'end');return;}
@@ -2495,9 +2527,13 @@ body.in-nether #game-wrap{background:#290f19}
   function respawn(){
     if(mount)dismount(true);
     if(dimension!=='overworld')switchDimension('overworld');
-    player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=terrain(SPAWN,SPAWN)+3;
+    const home=findBedRespawn();
+    player.x=home?.x??(SPAWN+.5);
+    player.z=home?.z??(SPAWN+.5);
+    player.y=home?.y??(terrain(SPAWN,SPAWN)+3);
     player.vy=0;player.fly=false;health=20;hunger=18;hungerSaturation=5;hungerDrain=0;
-    updateSurvivalHUD();toast('You respawned at your world spawn');
+    updateSurvivalHUD();markSave();
+    toast(home?'🛏 Respawned by your bed':'Respawned at world spawn · home bed missing or blocked');
   }
   function damage(amount,cause){
     if(gameMode!=='survival'||amount<=0)return;
