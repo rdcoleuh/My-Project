@@ -1,4 +1,4 @@
-# MineWorld 3.9 — Earned Survival Hotbar
+# MineWorld 4.0 — Mining, Mob Sight & Crafting Repairs
 
 **Play:** https://rdcoleuh.github.io/My-Project/
 
@@ -42,3 +42,15 @@ The menu landscape, texture, lettering and art are independently generated and d
 - Any type of backpack item, not only placeable blocks, can be assigned. Food can be eaten with the mobile PLACE button while held in Survival. Block placement consumes an owned block. Newly crafted tool items are now recorded in the inventory and can be equipped from the hotbar.
 - Hotbar slot assignments save with your **Survival-only** world. Older saves migrate to inventory-backed slots using their genuinely owned resources; Creative remains unlimited and unchanged.
 - The 10,000×10,000 seeded world, iPhone/iPad controls, multiplayer, crafting, Nether and End remain part of MineWorld. The game is still independent of Minecraft and does not use Mojang assets.
+
+
+## MineWorld 4.0 — timed mining and crafting fixes
+
+- Survival block breaking now takes actual time, with a visible progress bar. Click once to begin a break; hold the mouse button or touch MINE button to continue mining blocks. The active block and held tool must stay the same while a break is in progress. Switching targets or tools resets progress. Creative still breaks blocks instantly.
+- All accessible blocks except the protected y=0 foundation can be broken with hands or any tool tier. Speed increases in this order: hand, wood, stone, iron, gold, diamond, netherite. Tough materials take longer. Mineable ore and other drops flow through the owned-item inventory so they appear on the Survival hotbar when space is available.
+- Hostile creatures acquire visible Survival players within **25 three-dimensional blocks**, checking blocks between the creature and player for line of sight. Opaque blocks prevent new targeting; water and glass do not. Detection is recalculated a few times per second. Public multiplayer still uses peer-hosted simulation and has no 24/7 dedicated host.
+- **Crafting fixes:** 2×2 inventory grid versus 3×3 only near a placed crafting table; tapping repeatedly adds ingredients, the **− Remove** toggle subtracts them; chosen ingredient defaults to an available owned item; taking the output consumes inventory ingredients once and clears the virtual input grid. Closing crafting now clears virtual ingredient reservations without losing items.
+- The **Place / interact** control (right-click on desktop or PLACE on mobile) opens a targeted crafting table, chest, or dimension portal; the **Mine** control breaks it. A crafted table is placed on nearby clear ground using the gear panel's **Place Crafting Table** button.
+- Existing Creative and Survival save formats are not replaced by this update. The map, inventory, seed, dimensions and multiplayer integrations remain unchanged.
+
+**Limitations:** These mining times and craft recipes are original MineWorld approximations, not Mojang's exact hardness and recipe database. Combat and crafting have not been checked on a physical iPhone or with two real remote multiplayer devices.
