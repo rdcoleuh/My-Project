@@ -70,6 +70,66 @@ function endwork(b,f,x,y){
  return null;
 }
 function distinctive(b,f,x,y){
+ if(b===155){ // composter: dark recessed wooden container
+   if(f===0&&x>2&&x<13&&y>2&&y<13)return palette([[24,37,25],[36,52,30],[54,64,37],[70,77,46]],x,y,b);
+   const stave=x%4===0||x===1||x===14;
+   const rim=y<3||y>13;
+   return stave?color(72,50,28):rim?color(95,67,33):
+     palette([[79,56,29],[119,80,42],[152,105,56],[183,132,72]],x,y,b);
+ }
+ if(b===158){ // mapmaker: neatly divided charts and tool drawers
+   if(f===0){if(x===7||y===7)return color(106,72,40);if(x>2&&x<13&&y>2&&y<13)return palette([[135,130,92],[181,162,109],[206,182,126],[227,201,148]],x,y,b);}
+   if(y===5||y===12)return color(88,64,40);
+   return palette([[68,49,32],[116,81,50],[146,106,66],[174,129,82]],x,y,b);
+ }
+ if(b===159){ // brewing stand: dark stand, bright glass bottles
+   const glass=(x===4||x===8||x===12)&&y>=4&&y<=11;
+   const metal=(x>=6&&x<=9)||y>=12;
+   return glass?color(121,176,177):metal?color(72,76,72):
+     palette([[56,48,36],[96,80,53],[141,110,69],[174,135,83]],x,y,b);
+ }
+ if(b===160){ // barrel: metal hoops and circular end grain
+   if(f!==1){const d=Math.max(Math.abs(x-7.5),Math.abs(y-7.5));return d>5?color(65,64,61):d<2?color(110,76,47):palette([[75,53,37],[115,79,51],[151,110,68],[184,137,83]],x,y,b);}
+   if(y===3||y===12)return color(81,83,81);
+   return x%4===0?color(72,47,29):palette([[73,49,27],[119,81,43],[157,110,59],[184,139,80]],x,y,b);
+ }
+ if(b===161){ // fletching station: crossed arrow quills and pale trim
+   const border=x<2||y<2||x>13||y>13;
+   if(f===0){if(border)return color(98,63,35);
+     const arrow=(x===y||x+y===15)&&(x>=4&&x<=11);
+     return arrow?color(208,210,181):palette([[104,75,39],[147,103,49],[175,129,72],[204,162,106]],x,y,b);}
+   if(border)return color(97,59,37);
+   if(y>=6&&y<=10&&x>=5&&x<=10)return color(152,167,144);
+   return palette([[87,60,37],[126,88,49],[169,119,72],[199,151,93]],x,y,b);
+ }
+ if(b===162){ // cauldron: inset dark basin and slate iron walls
+   if(f===0&&x>2&&x<13&&y>2&&y<13)return palette([[14,18,21],[25,34,37],[40,49,54],[57,69,74]],x,y,b);
+   if(x<3||x>12||y<3||y>12)return color(75,79,81);
+   return palette([[37,42,44],[54,58,60],[76,83,83],[104,109,106]],x,y,b);
+ }
+ if(b===163){ // lectern: open book on warm wood
+   if(f===0&&x>2&&x<13&&y>3&&y<13){
+     if(x===7||x===8)return color(108,88,57);
+     return palette([[170,164,136],[213,206,172],[235,227,198],[247,244,226]],x,y,b);
+   }
+   return x%5===0?color(76,51,31):palette([[92,61,36],[123,80,48],[160,112,65],[194,145,90]],x,y,b);
+ }
+ if(b===164){ // stonecutter: toothed saw across gray tabletop
+   if(f===0){const blade=(x===7||x===8)&&y>2&&y<14;
+     return blade?color(201,207,197):palette([[77,81,82],[112,119,115],[137,144,141],[168,176,169]],x,y,b);}
+   return palette([[81,70,53],[117,93,68],[141,119,84],[168,145,104]],x,y,b);
+ }
+ if(b===165){ // loom: intersecting woven threads
+   if(f===0&&(x%4===0||y%4===0))return color(214,187,140);
+   if(x===3||x===12||y===3||y===12)return color(92,64,38);
+   return palette([[68,49,32],[113,81,50],[151,108,66],[193,146,96]],x,y,b);
+ }
+ if(b===167){ // grindstone: bright center of a radial gray wheel
+   const rim=Math.max(Math.abs(x-7.5),Math.abs(y-7.5));
+   if(f===0&&rim<5)return rim<2?color(74,79,80):palette([[91,93,94],[121,124,125],[152,156,155],[177,183,179]],x,y,b);
+   if(y===7||y===8)return color(185,185,173);
+   return palette([[56,56,57],[86,86,87],[117,117,117],[149,149,147]],x,y,b);
+ }
  if(b===51){ // obsidian: deep purple, fractured mineral glass
    const crack=(x===4&&y>=2&&y<=10)||(y===9&&x>=4&&x<=12)||(x===11&&y>=9);
    if(crack&&hash(x>>2,y>>2,51)>.28)return color(74,47,107);
