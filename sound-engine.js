@@ -107,4 +107,23 @@ function setEnabled(v){enabled=!!v;persist();return state()}
 function setVolume(v){volume=Math.max(0,Math.min(1,Number(v)||0));persist();return state()}
 function step(material=''){const now=performance.now();if(now-lastStep<270)return false;lastStep=now;return play('step',material)}
 window.MineWorldSound=Object.freeze({play,step,loadSound,clearSamples,setEnabled,setVolume,state,types:[...typeSet],classify});
+function addSoundControls(){
+ const host=document.querySelector('#pause .mw-render-panel')?.parentNode;if(!host)return;
+ const section=document.createElement('section');
+ section.style.cssText='border:1px solid #6a916e;padding:10px;margin:9px 0;border-radius:5px;color:#e5f4e2;background:#1a3024';
+ const heading=document.createElement('strong');heading.textContent='♫ Original sound effects';
+ const toggle=document.createElement('button');toggle.type='button';toggle.className='ui-button';
+ toggle.style.margin='6px 10px 6px 0';
+ const slider=document.createElement('input');slider.type='range';slider.min='0';slider.max='100';slider.value=String(Math.round(volume*100));
+ slider.setAttribute('aria-label','Game sound volume');
+ slider.style.cssText='vertical-align:middle;width:min(180px,90%)';
+ const test=document.createElement('button');test.className='ui-button';test.type='button';test.textContent='♪ Test Sound';
+ test.style.margin='6px 0';
+ const update=()=>{toggle.textContent=enabled?'🔊 Sounds: On':'🔇 Sounds: Off';toggle.setAttribute('aria-pressed',String(enabled));};
+ toggle.addEventListener('click',()=>{setEnabled(!enabled);update();if(enabled)play('pickup')});
+ slider.addEventListener('input',()=>setVolume(Number(slider.value)/100));
+ test.addEventListener('click',()=>play('pickup'));
+ update();section.append(heading,document.createElement('br'),toggle,slider,document.createElement('br'),test);host.appendChild(section);
+}
+addSoundControls();
 })();
