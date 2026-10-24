@@ -603,6 +603,7 @@ body.in-nether #game-wrap{background:#290f19}
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./texture-refinement.js"></script>
+<script src="./texture-details.js"></script>
 <script src="./chunk-planner.js"></script>
 <script src="./stack-inventory.js"></script>
 <script src="./movement-modes.js"></script>
@@ -1154,7 +1155,7 @@ body.in-nether #game-wrap{background:#290f19}
   $('render-chunks-slider').addEventListener('input',e=>setRenderChunkTarget(e.target.value));
   $('render-chunks-auto').addEventListener('change',e=>setRenderAuto(e.target.checked));
   updateRenderSettingsUI();
-  const solid=b=>b!==0&&b!==7&&b!==66&&b!==87&&b!==89&&b!==126&&!(b>=139&&b<=154);
+  const solid=b=>b!==0&&![7,16,17,45,62,66,77,82,87,89,93,94,122,123,124,126].includes(b)&&!(b>=139&&b<=154);
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const rand=(x,z,s=seed)=>{let n=Math.imul(x+307,374761393)^Math.imul(z+811,668265263)^Math.imul(s,1274126177);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295};
   const lerp=(a,b,t)=>a+(b-a)*t;
@@ -1186,7 +1187,12 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function setBlock(x,y,z,b,remote=false){
     if(!inside(x,y,z)||y===0)return false;
-    if(b!==0&&solid(b)&&x>=Math.floor(player.x-.3)&&x<=Math.floor(player.x+.3)&&z>=Math.floor(player.z-.3)&&z<=Math.floor(player.z+.3)&&y<player.y+1.9&&y+1>player.y)return false;
+    if(b!==0&&solid(b)){
+      const shape=window.MineWorldBlockModels.shape(b),r=.29;
+      const left=x+shape.left,right=x+shape.right,front=z+shape.front,back=z+shape.back;
+      if(player.x+r>left&&player.x-r<right&&player.z+r>front&&player.z-r<back&&
+         player.y<y+shape.top&&player.y+(isCrouching?1.5:1.8)>y+shape.bottom)return false;
+    }
     const before=get(x,y,z);if(before===b)return false;
     set(x,y,z,b);savedEdits.set(idx(x,y,z),b);savedChunkEditIndex.delete(savedEdits);dirtyAround(x,z);markSave();if(!remote)window.MineWorldMultiplayer?.localEdit(idx(x,y,z)+(dimension==='end'?2*W*D*H:dimension==='nether'?W*D*H:0),b);return true;
   }
@@ -1228,7 +1234,7 @@ body.in-nether #game-wrap{background:#290f19}
         const near=nx>=ax&&nx<ax+CHUNK&&nz>=az&&nz<az+CHUNK&&ny>=0&&ny<H?
           data[((nx-ax)*CHUNK+(nz-az))*H+ny]:blockForMesh(nx,ny,nz);
         // Draw the face behind transparent glass so panes really reveal neighboring blocks.
-        if(near&&!(b!==7&&near===7)&&!(b===9&&near!==9)&&!(near===9&&b!==9)&&!(b>=139&&b<=154)&&!(window.MineWorldBlockModels.isPartial(near)&&!window.MineWorldBlockModels.isPartial(b)))continue;
+        if(near&&!(b!==7&&near===7)&&!(b===9&&near!==9)&&!(near===9&&b!==9)&&!(b>=139&&b<=154)&&!(window.MineWorldBlockModels.isPartial(near)||window.MineWorldBlockModels.isPartial(b)))continue;
         if(b===7&&near===7)continue;
         pushFace(faces,x,y,z,b,face,tintBiomes?tintBiomes[dx*CHUNK+dz]:'');
       }
@@ -1265,16 +1271,42 @@ body.in-nether #game-wrap{background:#290f19}
     return {vp:mul(proj,view),eye,forward};
   }
   function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]}
+  function rayIntersectsBlock(origin,dir,x,y,z,box,minDistance,maxDistance){
+    const lo=[x+box.left,y+box.bottom,z+box.front];
+    const hi=[x+box.right,y+box.top,z+box.back];
+    let near=0,far=maxDistance;
+    for(let axis=0;axis<3;axis++){
+      const direction=dir[axis],o=origin[axis];
+      if(Math.abs(direction)<1e-8){
+        if(o<lo[axis]||o>hi[axis])return false;
+        continue;
+      }
+      let first=(lo[axis]-o)/direction,last=(hi[axis]-o)/direction;
+      if(first>last){const temp=first;first=last;last=temp;}
+      near=Math.max(near,first);far=Math.min(far,last);
+      if(far<near)return false;
+    }
+    return far>=Math.max(minDistance-.001,0)&&near<=maxDistance+.001;
+  }
   function pointAtBlock(origin,dir,maxDistance=6){
-    let x=Math.floor(origin[0]),y=Math.floor(origin[1]),z=Math.floor(origin[2]);let last=null;
+    let x=Math.floor(origin[0]),y=Math.floor(origin[1]),z=Math.floor(origin[2]),last=null;
     const steps=dir.map(d=>d>0?1:d<0?-1:0);
     const tD=dir.map(d=>d===0?Infinity:Math.abs(1/d));
-    const bounds=[x,y,z];const tM=dir.map((d,i)=>d>0?(bounds[i]+1-origin[i])/d:d<0?(bounds[i]-origin[i])/d:Infinity);
+    const bounds=[x,y,z],tM=dir.map((d,i)=>d>0?(bounds[i]+1-origin[i])/d:d<0?(bounds[i]-origin[i])/d:Infinity);
     let distance=0;
     for(let i=0;i<35&&distance<maxDistance;i++){
-      if(get(x,y,z)&&get(x,y,z)!==7)return {x,y,z,b:get(x,y,z),previous:last};
-      last={x,y,z};let axis=0;if(tM[1]<tM[axis])axis=1;if(tM[2]<tM[axis])axis=2;
-      distance=tM[axis];tM[axis]+=tD[axis];if(axis===0)x+=steps[axis];else if(axis===1)y+=steps[axis];else z+=steps[axis];
+      const block=get(x,y,z);
+      const stepLimit=Math.min(maxDistance,tM[0],tM[1],tM[2]);
+      if(block&&block!==7){
+        const shape=window.MineWorldBlockModels.shape(block);
+        if(!window.MineWorldBlockModels.isPartial(block)||
+           rayIntersectsBlock(origin,dir,x,y,z,shape,distance,stepLimit))
+          return {x,y,z,b:block,previous:last};
+      }
+      last={x,y,z};
+      let axis=0;if(tM[1]<tM[axis])axis=1;if(tM[2]<tM[axis])axis=2;
+      distance=tM[axis];tM[axis]+=tD[axis];
+      if(axis===0)x+=steps[axis];else if(axis===1)y+=steps[axis];else z+=steps[axis];
     }
     return null;
   }
