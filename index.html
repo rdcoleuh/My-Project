@@ -376,7 +376,7 @@ body.in-nether #game-wrap{background:#290f19}
 .swatch,.item-icon,#mw-skin-editor,#mw-skin-sheet{image-rendering:pixelated}
 #world{image-rendering:pixelated}
 </style>
-<title>MineWorld 5.7 — Local Resource Packs, Sounds & Reliability Fixes</title>
+<title>MineWorld 5.8 — Room Chat & Vertical Block Stacking</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -385,7 +385,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="sky-decor" aria-hidden="true"><div class="sun"></div><div class="cloud cloud1"></div><div class="cloud cloud2"></div></div>
   <div id="top-ui">
     <button id="menu-toggle" class="ui-button small mw-pause-trigger" type="button" aria-label="Pause game and open game menu" aria-haspopup="dialog" aria-controls="pause">⏸ Pause</button>
-    <button id="quick-pick" class="ui-button small" type="button" aria-label="Select the block under the crosshair">▣ Pick</button><button id="camera-btn" class="ui-button small" type="button" aria-label="Cycle first and third person views">◉ View</button>
+    <button id="quick-pick" class="ui-button small" type="button" aria-label="Select the block under the crosshair">▣ Pick</button><button id="camera-btn" class="ui-button small" type="button" aria-label="Cycle first and third person views">◉ View</button><button id="stack-above" class="ui-button small" type="button" title="Place directly above the targeted block (B)">▤ Stack ↑</button><button id="chat-trigger" class="ui-button small hidden" type="button" title="Open room chat (T)">💬 Chat</button>
   </div>
   <div id="weather-status" class="hidden" aria-live="polite">☔ Rain</div>
   <div id="crosshair" aria-hidden="true"></div>
@@ -397,7 +397,7 @@ body.in-nether #game-wrap{background:#290f19}
     <div id="survival-hud" class="hidden" aria-live="polite"><span id="health-text">♥ 20/20</span><span id="hunger-text">🍖 20/20</span><span id="weapon-readout" title="Equipped gear">✊ Fists</span><button id="eat-btn" type="button" aria-label="Eat available food">Eat 🍄 0</button></div>
     <div id="xp-display" class="hidden" title="Experience points"><span id="xp-level">0</span><span id="xp-track"><span id="xp-fill"></span></span><span id="xp-label">0 / 7 XP</span></div>
     <div id="hotbar-row"><div id="hotbar" role="toolbar" aria-label="Nine inventory-backed hotbar slots"></div><button id="quick-inventory" type="button" aria-label="Open inventory" title="Open backpack (E)">🎒<small>INV</small></button></div>
-    <div id="hints">WASD · Ctrl sprint · Shift sneak · E bag · Space jump · 1–9 items · Middle click pick · Q drop · H eat · F3 debug · F5 view</div>
+    <div id="hints">WASD · Ctrl sprint · Shift sneak · E bag · Space jump · 1–9 items · B stack · T chat · Middle click pick · Q drop · H eat · F3 debug · F5 view</div>
   </div>
   <div id="movement-indicator" class="hidden" role="status" aria-live="polite"></div>
   <aside id="mw-debug" class="hidden" aria-label="Game debug information"></aside>
@@ -574,9 +574,10 @@ body.in-nether #game-wrap{background:#290f19}
       <p class="note">Public worlds are live browser-hosted sessions, not 24/7 dedicated servers. They reset when all players leave; anyone can edit, and there is no moderation. Combat and mobs synchronize through the browser host; PvP is optional. Connections use PeerJS Cloud and WebRTC and may fail on restrictive networks. Maximum 7 players per world; host departure ends combat and the session.</p>
     </section>
   </div>
-  <div id="chatbox" class="hidden" aria-label="Multiplayer chat">
-    <div id="chat-log" aria-live="polite"></div>
-    <div class="chat-row"><input id="chat-entry" maxlength="160" autocomplete="off" placeholder="Message friends…"><button id="chat-send" type="button">Send</button></div>
+  <div id="chatbox" class="hidden mw-chat-collapsed" aria-label="Multiplayer chat">
+    <div id="chat-header"><strong>💬 Room Chat</strong><span id="chat-unread" class="hidden" aria-live="polite">0 new</span><button id="chat-toggle" type="button" aria-label="Open chat messages" aria-expanded="false">Open</button></div>
+    <div id="chat-log" role="log" aria-live="polite" aria-relevant="additions"></div>
+    <div class="chat-row"><input id="chat-entry" maxlength="160" autocomplete="off" spellcheck="true" aria-label="Message everyone in this room" placeholder="Message everyone in this room…"><button id="chat-send" type="button">Send</button></div>
   </div>
   <div id="atlas-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="World biome atlas">
     <section class="modal atlas-panel">
@@ -628,7 +629,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v5.7 · RESOURCE PACKS · SOUNDS · RELIABILITY</div>
+  <div class="version">MINEWORLD v5.8 · ROOM CHAT · VERTICAL BLOCK STACKING</div>
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./texture-refinement.js"></script>
@@ -639,6 +640,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./texture-motion.js"></script>
 <script src="./sound-engine.js"></script>
 <script src="./classic-interactions.js"></script>
+<script src="./block-placement.js"></script>
 <script src="./perspective.js"></script>
 <script src="./world-library.js"></script>
 <script src="./skin-editor.js"></script>
@@ -3734,6 +3736,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
 })();
 
 </script>
+<script src="./chat-rules.js"></script>
 <script src="./multiplayer.js"></script>
 <script>
 /* Original MineWorld Java-style title screen: keeps all existing gameplay and handlers. */
