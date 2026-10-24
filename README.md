@@ -1,3 +1,15 @@
+# MineWorld 5.7 — Original Audio, Local Resource Packs & Reliability
+
+**Play the game:** https://rdcoleuh.github.io/My-Project/
+
+This release adds original synthesized sounds and a **local resource ZIP importer** for optional PNG block textures and OGG sound files selected by the player on their own device. No Eaglercraft or Minecraft audio or art is bundled or fetched. The importer is available from the home screen and Pause menu; its imported replacements are session-only, and its ZIP asset inputs never leave your browser. See [RESOURCE-PACKS.md](RESOURCE-PACKS.md) for supported formats, setup, asset rights, and limitations.
+
+**Bug fixes and audits:** more robust ZIP size handling, correct migration into protected Original Creative/Survival slots, Block Guide previews of locally imported textures, preservation of imported animated tiles, plus a whole-repository JavaScript syntax and UI-identifier audit. Sound volume and mute controls are in Pause. Automated tests run via GitHub Actions, but no automated suite can rule out every possible bug.
+
+The 16×16 original texture grid, 64×64 skin editor, multiple saved world slots, hunger, crafting, mobs, sprint, crouch, and three camera views remain.
+
+---
+
 # MineWorld 5.6 — Square Pixels, Custom Skins & Multiple Saved Worlds
 
 **Play:** https://rdcoleuh.github.io/My-Project/
