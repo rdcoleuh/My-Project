@@ -657,6 +657,8 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./classic-interactions.js"></script>
 <script src="./block-placement.js"></script>
 <script src="./advancements.js"></script>
+<script src="./animal-behavior.js"></script>
+<script src="./animal-models.js"></script>
 <script src="./perspective.js"></script>
 <script src="./world-library.js"></script>
 <script src="./skin-editor.js"></script>
@@ -992,6 +994,8 @@ body.in-nether #game-wrap{background:#290f19}
   const tools={pickaxe:'none',sword:'none',hoe:'none',axe:'none',shovel:'none'};
   let equipped='pickaxe',difficulty='normal',mobSerial=0,mobs=[],mobSpawnClock=0,mobAttackClock=0,aimMob=null,aimPlayer=null,attackCooldown=0,playerHitCooldown=0;
   let lastMobSync=0;
+  const animals=window.MineWorldAnimalBehavior;
+  const animalModels=window.MineWorldAnimalModels;
   const SPECIES={
    horse:{name:'Horse',kind:'passive',hp:20,speed:1.6,drop:'leather',body:[.45,.31,.20],head:[.55,.39,.27]},
    donkey:{name:'Donkey',kind:'passive',hp:18,speed:1.25,drop:'leather',body:[.44,.40,.37],head:[.53,.49,.44]},
@@ -2944,10 +2948,11 @@ body.in-nether #game-wrap{background:#290f19}
     stabledMounts=remain;
   }
   function spawnWildlife(){
-    const types=['cow','pig','sheep','chicken','horse','donkey','mule','camel','llama','skeleton_horse','zombie_horse'];
     for(let i=0;i<18;i++){
       const x=SPAWN-24+rand(i*29,seed+i*3)*48,z=SPAWN-24+rand(i*17,seed+i*11)*48;
-      if(Math.hypot(x-SPAWN,z-SPAWN)>6)spawnOne(types[i%types.length],x,z);
+      if(Math.hypot(x-SPAWN,z-SPAWN)<=6)continue;
+      const biome=window.MineWorldBiomes.biomeAt(x,z)?.name||'Plains';
+      spawnOne(animals.pickNatural(biome,seed+i*2027),x,z);
     }
   }
   function spawnNetherWildlife(){
@@ -3029,7 +3034,11 @@ body.in-nether #game-wrap{background:#290f19}
           }
         }
         if(dimension==='overworld'&&mobs.filter(m=>SPECIES[m.kind].kind==='passive').length<9){
-          {const nearby=living[Math.floor(Math.random()*living.length)]||player;spawnOne(['cow','pig','sheep','chicken','horse','donkey','mule','camel','llama'][Math.floor(Math.random()*9)],clamp(nearby.x+Math.random()*35-17,3,W-4),clamp(nearby.z+Math.random()*35-17,3,D-4));}
+          {const nearby=living[Math.floor(Math.random()*living.length)]||player;
+            const x=clamp(nearby.x+Math.random()*35-17,3,W-4),z=clamp(nearby.z+Math.random()*35-17,3,D-4);
+            const biome=window.MineWorldBiomes.biomeAt(x,z)?.name||'Plains';
+            spawnOne(animals.pickNatural(biome,Math.random()*100000),x,z);
+          }
         }
       }
     }
@@ -3045,7 +3054,18 @@ body.in-nether #game-wrap{background:#290f19}
     }
     for(let i=mobs.length-1;i>=0;i--){
       const m=mobs[i],type=SPECIES[m.kind];
-      if((mount&&!mount.vehicle&&mount.id===m.id)||m.tamed||m.riderId){m.step=4;continue;}
+      if((mount&&!mount.vehicle&&mount.id===m.id)||m.riderId){m.step=4;continue;}
+      if(animals.FOOD[m.kind]){
+        m.gait=(m.gait||0)+dt*4.3;
+        if(m.baby){m.growTimer=(m.growTimer||1200)-dt;if(m.growTimer<=0)m.baby=false;}
+        if(m.loveTime>0)m.loveTime=Math.max(0,m.loveTime-dt);
+        if(m.breedCooldown>0)m.breedCooldown=Math.max(0,m.breedCooldown-dt);
+        if(m.fleeTime>0)m.fleeTime=Math.max(0,m.fleeTime-dt);
+        if(m.kind==='sheep'&&m.sheared&&get(Math.floor(m.x),Math.max(0,Math.floor(m.y)-1),Math.floor(m.z))===1&&Math.random()<dt/65){
+          m.sheared=false;markSave();
+        }
+      }
+      if(m.tamed){m.step=4;continue;}
       m.step-=dt;m.attack-=dt;m.anger=Math.max(0,m.anger-dt);
       if(m.kind==='ender_dragon'){
         const c=window.MineWorldEnd.CENTER;
@@ -3066,9 +3086,16 @@ body.in-nether #game-wrap{background:#290f19}
         if(dimension==='overworld'&&!nightTime()&&living.every(p=>Math.hypot(m.x-p.x,m.z-p.z)>25)){
           mobs.splice(i,1);continue;
         }
+      }else if(animals.FOOD[m.kind]){
+        const dx=player.x-m.x,dz=player.z-m.z,meters=Math.hypot(dx,dz);
+        const held=gameMode==='survival'?stackAtHotbar(selection)?.key:null;
+        if(m.fleeTime>0){m.step=.55;}
+        else if(animals.following(m.kind,held,meters)){m.heading=Math.atan2(dz,dx);m.step=.65;m.following=true;}
+        else{m.following=false;if(m.step<=0){m.step=1.4+Math.random()*4;m.heading+=-1.5+Math.random()*3;}}
       }else if(m.step<=0){m.step=1.4+Math.random()*4;m.heading+=-1.5+Math.random()*3;}
       const chase=aggressive&&!!target&&dist<=25;
-      const pace=(chase?type.speed:(!m.anger?.34:.8)*type.speed)*dt;
+      const flight=m.fleeTime>0?1.75:1,approach=m.following?1.12:1;
+      const pace=(chase?type.speed:(!m.anger?.34:.8)*type.speed)*dt*flight*approach;
       const vx=Math.cos(m.heading)*pace,vz=Math.sin(m.heading)*pace;
       const nx=clamp(m.x+vx,1.6,W-1.6),nz=clamp(m.z+vz,1.6,D-1.6);
       const ground=topAt(nx,nz)+1;
@@ -3098,6 +3125,10 @@ body.in-nether #game-wrap{background:#290f19}
     const amount=clamp(Number(strength)||1,1,20);
     if(m.kind==='ender_dragon'&&endCrystalCount()>0)return {hit:false};
     m.hp-=amount;
+    if(animals.FOOD[m.kind]&&m.hp>0){
+      Object.assign(m,animals.reactionAfterHit(m,player.x,player.z));
+      m.step=.5;
+    }
     if(m.hp<=0){
       if(attackerId===null)emitAdvancement('kill',m.kind,{hostile:['hostile','boss'].includes(SPECIES[m.kind]?.kind)});
       if(m.kind==='ender_dragon'){
@@ -3236,6 +3267,10 @@ body.in-nether #game-wrap{background:#290f19}
         cube(x-.54,y+1.20,z-.22,1.08,.44,.44,type.body);
         for(const ox of [-.77,0,.77])cube(x+ox-.22,y+1.66,z-.23,.44,.43,.45,type.head);
         for(let i=0;i<3;i++)cube(x-.3+i*.3,y+.58,z-.17,.14,.66,.3,type.body);
+        continue;
+      }
+      if(animalModels.MODELS[m.kind]){
+        animalModels.draw(m,(px,py,pz,r,g,b)=>a.push(px,py,pz,r,g,b),dayClock);
         continue;
       }
       if(hostile){
