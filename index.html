@@ -368,8 +368,11 @@ body.in-nether #game-wrap{background:#290f19}
 #xp-fill{height:100%;width:0%;display:block;background:linear-gradient(90deg,#4d9829,#b4e961);transition:width .2s}
 #xp-label{font-size:9px;color:#c8dbb4}
 @media(pointer:coarse){#xp-track{width:min(30vw,135px)}#xp-label{font-size:8px}}
+#mw-debug{position:absolute;right:max(12px,env(safe-area-inset-right));top:calc(max(12px,env(safe-area-inset-top)) + 55px);z-index:8;pointer-events:none;white-space:pre-line;background:#111b1add;border:1px solid #a4bbaa99;border-radius:5px;color:#e8f4e4;padding:10px 12px;max-width:min(340px,calc(100vw - 25px));font:11px/1.55 monospace;text-shadow:1px 1px #0a120a;box-shadow:0 8px 22px #0006}
+#quick-pick{pointer-events:auto!important;white-space:nowrap}
+@media(max-width:620px){#mw-debug{top:calc(max(12px,env(safe-area-inset-top)) + 46px);font-size:10px;line-height:1.4;padding:7px 8px;max-width:min(260px,60vw)}#quick-pick{font-size:11px!important;padding:7px!important}}
 </style>
-<title>MineWorld 5.4 — Classic-Inspired Original Block Textures</title>
+<title>MineWorld 5.5 — Classic Game Interactions & Voxel Feedback</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -378,6 +381,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="sky-decor" aria-hidden="true"><div class="sun"></div><div class="cloud cloud1"></div><div class="cloud cloud2"></div></div>
   <div id="top-ui">
     <button id="menu-toggle" class="ui-button small mw-pause-trigger" type="button" aria-label="Pause game and open game menu" aria-haspopup="dialog" aria-controls="pause">⏸ Pause</button>
+    <button id="quick-pick" class="ui-button small" type="button" aria-label="Select the block under the crosshair">▣ Pick</button>
   </div>
   <div id="weather-status" class="hidden" aria-live="polite">☔ Rain</div>
   <div id="crosshair" aria-hidden="true"></div>
@@ -389,9 +393,10 @@ body.in-nether #game-wrap{background:#290f19}
     <div id="survival-hud" class="hidden" aria-live="polite"><span id="health-text">♥ 20/20</span><span id="hunger-text">🍖 20/20</span><span id="weapon-readout" title="Equipped gear">✊ Fists</span><button id="eat-btn" type="button" aria-label="Eat available food">Eat 🍄 0</button></div>
     <div id="xp-display" class="hidden" title="Experience points"><span id="xp-level">0</span><span id="xp-track"><span id="xp-fill"></span></span><span id="xp-label">0 / 7 XP</span></div>
     <div id="hotbar-row"><div id="hotbar" role="toolbar" aria-label="Nine inventory-backed hotbar slots"></div><button id="quick-inventory" type="button" aria-label="Open inventory" title="Open backpack (E)">🎒<small>INV</small></button></div>
-    <div id="hints">WASD move · Ctrl/G sprint · Shift/X crouch · E inventory · Space jump · 1–9 items · Left mine · Right place</div>
+    <div id="hints">WASD · Ctrl sprint · Shift sneak · E bag · Space jump · 1–9 items · Middle click pick · Q drop · H eat · F3 debug</div>
   </div>
   <div id="movement-indicator" class="hidden" role="status" aria-live="polite"></div>
+  <aside id="mw-debug" class="hidden" aria-label="Game debug information"></aside>
   <div id="coord-readout">X 0 · Y 0 · Z 0</div>
   <div id="mount-readout" class="hidden" aria-live="polite"></div>
   <button id="ride-btn" type="button" aria-label="Mount or dismount nearby rideable animal or vehicle">🐎 RIDE</button>
@@ -478,6 +483,7 @@ body.in-nether #game-wrap{background:#290f19}
             <label class="mw-render-auto"><input type="checkbox" id="render-chunks-auto" checked> Automatically lower load if FPS drops</label>
             <small id="render-chunks-status" class="mw-render-status" aria-live="polite">Loading performance settings…</small>
           </div>
+          <button id="debug-toggle" type="button" class="ui-button mw-pause-full">◫ Debug view: Off</button>
         </section>
       </div>
       <div class="mw-pause-footer">
@@ -611,7 +617,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v5.4 · CLASSIC PIXEL MATERIALS · BLOCK GUIDE</div>
+  <div class="version">MINEWORLD v5.5 · CLASSIC GAMEPLAY · ORIGINAL ART</div>
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./texture-refinement.js"></script>
@@ -620,6 +626,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./texture-workshop.js"></script>
 <script src="./classic-materials.js"></script>
 <script src="./texture-motion.js"></script>
+<script src="./classic-interactions.js"></script>
 <script src="./chunk-planner.js"></script>
 <script src="./stack-inventory.js"></script>
 <script src="./movement-modes.js"></script>
@@ -910,6 +917,9 @@ body.in-nether #game-wrap{background:#290f19}
     {n:[0,0,1],v:[[1,0,1],[1,1,1],[0,1,1],[0,0,1]],shade:.83},
     {n:[0,0,-1],v:[[0,0,0],[0,1,0],[1,1,0],[1,0,0]],shade:.80}
   ];
+  const classic=window.MineWorldClassicInteractions;
+  if(!classic)throw Error("Missing classic interaction helpers");
+  const droppedItems=[];let showDebug=false;
   const player={x:SPAWN+.5,y:18,z:SPAWN+.5,vy:0,yaw:.4,pitch:-.12,ground:false,fly:false};
   const keys=new Set(); let seed=85721, started=false, paused=true, selection=0, frameCount=0, lastTime=0, meshCount=0, vbo=null, savedEdits=new Map(), dirtySave=false, saveTimer=0, aim=null, notifications=0, dayClock=0, deltaViewX=0, deltaViewY=0;
   let gameMode='creative',health=20,hunger=20,hungerSaturation=5,hungerDrain=0,hungerPulse=0,healPulse=0;
@@ -1197,6 +1207,7 @@ body.in-nether #game-wrap{background:#290f19}
   function terrain(x,z){return dimension==='nether'?window.MineWorldNether.surfaceAt(x,z):dimension==='end'?Math.max(1,window.MineWorldEnd.surfaceAt(x,z)):window.MineWorldBiomes.terrainAt(x,z,SEA,H)}
   function generate(){
     experienceTotal=0;bedSpawn=null;worldWeather=survivalRules.newWeather(seed);
+    droppedItems.length=0;
     window.MineWorldBiomes.setSeed(seed);window.MineWorldNether.setSeed(seed);window.MineWorldEnd.setSeed(seed);dimension='overworld';document.body.classList.remove('in-nether','in-end');overworldEdits=new Map();netherEdits=new Map();endEdits=new Map();savedEdits=overworldEdits;overworldPosition=netherPosition=endPosition=null;dragonDefeated=false;eyesPlaced=0;netherPortalBuilt=false;netherPortalPosition=null;for(const k of Object.keys(villagerProgress))delete villagerProgress[k];unloadAllChunks();
     const top=terrain(SPAWN,SPAWN);
     player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=top+2.5;
@@ -1511,7 +1522,7 @@ body.in-nether #game-wrap{background:#290f19}
     try{
       reconcileItemStacks();
       const edits=[...savedEdits.entries()];
-      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,experienceTotal,bedSpawn,weather:worldWeather,inventory:[...inventory],itemStacks:stackStore.snapshot(),survivalHotbar:[...survivalHotbar],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,saturation:hungerSaturation,exhaustion:hungerDrain,bag,tools,equipped,difficulty,dayClock,armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:13});
+      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,experienceTotal,bedSpawn,weather:worldWeather,inventory:[...inventory],itemStacks:stackStore.snapshot(),survivalHotbar:[...survivalHotbar],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,saturation:hungerSaturation,exhaustion:hungerDrain,bag,tools,equipped,difficulty,dayClock,droppedItems:droppedItems.slice(0,80),armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:13});
       localStorage.setItem(slotKey(gameMode),payload);localStorage.setItem(LAST_SLOT,gameMode);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';
     }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';}
   }
@@ -1564,6 +1575,12 @@ body.in-nether #game-wrap{background:#290f19}
       // Older decorative 'bed' items become new functional, placeable beds once.
       if(bag.bed>0){inventory[169]=clamp(inventory[169]+bag.bed,0,65535);bag.bed=0;}
       stackStore.restore(s.itemStacks,inventoryTotals());
+      // Optional 5.5 field; older saves simply have zero dropped items.
+      droppedItems.length=0;
+      if(Array.isArray(s.droppedItems))for(const raw of s.droppedItems.slice(0,80)){
+        const drop=classic.sanitizeDrop(raw,validHotbarKey,W,H);
+        if(drop)droppedItems.push(drop);
+      }
       survivalHotbar.fill(null);
       const reservedIds=new Set();
       if(Array.isArray(s.survivalHotbar))for(let i=0;i<9;i++){
@@ -1856,6 +1873,81 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function hotbarKey(){
     return gameMode==='survival'?(stackAtHotbar(selection)?.key||null):('block:'+HOT9[selection]);
+  }
+  function pickLookedAtBlock(){
+    if(paused||!aim||!Number.isInteger(aim.b)){toast('Aim at a block to pick it');return;}
+    const picks=classic.pickPlan(gameMode,aim.b,selection,
+      gameMode==='creative'?HOT9:survivalHotbar,
+      gameMode==='survival'?stackStore.entries:[]);
+    if(picks.type==='select'){selectHotbarSlot(picks.slot);}
+    else if(picks.type==='replace'&&gameMode==='creative'){
+      HOT9[picks.slot]=aim.b;HOTSETS[hotbarPage][picks.slot]=aim.b;selectHotbarSlot(picks.slot);
+    }else if(picks.type==='equip'&&gameMode==='survival'){
+      // Reassign the actual existing stack. No free items in Survival.
+      for(let i=0;i<9;i++)if(i!==picks.slot&&survivalHotbar[i]===picks.id)survivalHotbar[i]=null;
+      survivalHotbar[picks.slot]=picks.id;selectHotbarSlot(picks.slot);markSave();
+    }else{toast(picks.reason||'Cannot pick that block');return;}
+    toast('Picked '+NAMES[aim.b]);
+  }
+  function spawnDroppedItem(key,qty){
+    const out=classic.createDrop({key,count:qty,x:player.x,y:player.y,z:player.z,yaw:player.yaw,dimension});
+    if(!out)return false;
+    if(droppedItems.length>=80)droppedItems.shift();
+    droppedItems.push(out);markSave();return true;
+  }
+  function dropHeldItem(all=false){
+    if(paused||gameMode!=='survival'){toast('Dropping requires an active Survival world');return;}
+    if(window.MineWorldMultiplayer?.isShared()){toast('Item drops are available in private worlds');return;}
+    const stack=stackAtHotbar(selection);
+    if(!stack){toast('The selected slot is empty');return;}
+    const qty=all?stack.qty:1;
+    if(addResource(stack.key,-qty,stack.id)!==-qty)return;
+    spawnDroppedItem(stack.key,qty);
+    updateHotbar();toast('Tossed '+qty+' '+itemLabel(stack.key));
+  }
+  function tickDroppedItems(dt){
+    if(!droppedItems.length)return;
+    for(let i=droppedItems.length-1;i>=0;i--){
+      const old=droppedItems[i];
+      if(old.age>=300||old.y<-.5){droppedItems.splice(i,1);markSave();continue;}
+      if(old.dimension!==dimension)continue;
+      const next=classic.advanceDrop(old,dt,(x,y,z)=>
+        x>1&&x<W-1&&z>1&&z<D-1&&y>=0&&y<H&&solid(get(Math.floor(x),Math.floor(y),Math.floor(z))));
+      droppedItems[i]=next;
+      if(gameMode==='survival'&&classic.shouldCollect(next,{x:player.x,y:player.y,z:player.z,dimension})){
+        const taken=addResource(next.key,next.count);
+        if(taken>0){
+          next.count-=taken;toast('Picked up '+taken+' '+itemLabel(next.key));
+          updateHotbar();
+          if(!next.count)droppedItems.splice(i,1);
+          markSave();
+        }
+      }
+    }
+  }
+  function updateDebugView(){
+    if(!showDebug)return;
+    const biome=dimension==='overworld'?window.MineWorldBiomes.biomeAt(player.x,player.z).name:
+      dimension==='nether'?window.MineWorldNether.biomeAt(player.x,player.z).name:window.MineWorldEnd.biomeAt(player.x,player.z).name;
+    const info=[
+      'MINEWORLD 5.5 / DEBUG  [F3]',
+      'FPS '+Math.round(currentFPS||0)+' · '+visibleChunks.length+' / '+targetChunks+' chunks',
+      'XYZ '+player.x.toFixed(2)+' / '+player.y.toFixed(2)+' / '+player.z.toFixed(2),
+      'Chunk '+Math.floor(player.x/CHUNK)+', '+Math.floor(player.z/CHUNK)+' · 16×16',
+      'Facing '+classic.facing(player.yaw)+' · yaw '+player.yaw.toFixed(2),
+      'Biome '+biome+' · '+dimension,
+      'Seed '+seedLabel+' · time '+Math.floor(dayClock%survivalRules.DAY),
+      'Mode '+gameMode+' · '+(player.fly?'Flying':isSprinting?'Sprinting':isCrouching?'Sneaking':'Walking'),
+      'Health '+Math.round(health)+'/20 · Food '+Math.round(hunger)+'/20',
+      'XP '+experienceTotal+' · Mobs '+mobs.length+' · Drops '+droppedItems.length,
+      'Target '+(aim?NAMES[aim.b]+' ['+aim.b+']':'none')
+    ];
+    $('mw-debug').textContent=info.join('\n');
+  }
+  function toggleDebug(){
+    showDebug=!showDebug;$('mw-debug').classList.toggle('hidden',!showDebug);
+    $('debug-toggle').textContent='◫ Debug view: '+(showDebug?'On':'Off');
+    if(showDebug)updateDebugView();
   }
   function selectHotbarSlot(i){
     if(!Number.isInteger(i)||i<0||i>=9)return;
@@ -2320,9 +2412,11 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function dropSelection(stack=false){
     const selected=inventorySelection();if(!selected)return;
+    if(window.MineWorldMultiplayer?.isShared()){toast('Item drops are available in private worlds');return;}
     const qty=stack?selected.count:1;
     if(addResource(selected.key,-qty,selected.id)!==-qty)return;
-    toast('Dropped '+qty+' '+itemLabel(selected.key));
+    spawnDroppedItem(selected.key,qty);
+    toast('Tossed '+qty+' '+itemLabel(selected.key));
     if(!stackStore.byId(selected.id)){selectedStackId=null;selectedStackKey='';}
     updateHotbar();updateSurvivalHUD();markSave();renderGear();
   }
@@ -3080,9 +3174,34 @@ body.in-nether #game-wrap{background:#290f19}
     gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices),gl.DYNAMIC_DRAW);
     setAttribs();gl.drawArrays(gl.TRIANGLES,0,vertices.length/6);
   }
+  function drawDroppedItems(){
+    if(!droppedItems.length)return;
+    const out=[];
+    let count=0;
+    for(const drop of droppedItems){
+      if(drop.dimension!==dimension||count>=48||Math.abs(drop.x-player.x)>28||Math.abs(drop.z-player.z)>28)continue;
+      count++;
+      const b=drop.key.startsWith('block:')?Number(drop.key.slice(6)):0;
+      const c=COLORS[b]||[.79,.67,.34],size=.25;
+      const x=drop.x-size/2,y=drop.y+.10+Math.sin(dayClock*3+count)*.075,z=drop.z-size/2;
+      for(const face of FACE)for(const k of [0,1,2,0,2,3]){
+        const v=face.v[k];out.push(x+v[0]*size,y+v[1]*size,z+v[2]*size,
+          c[0]*face.shade,c[1]*face.shade,c[2]*face.shade);
+      }
+    }
+    if(out.length){
+      gl.bindBuffer(gl.ARRAY_BUFFER,avatarBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(out),gl.DYNAMIC_DRAW);
+      setAttribs(false);gl.drawArrays(gl.TRIANGLES,0,out.length/6);
+    }
+  }
   function drawHighlight(target){if(!target)return;const {x,y,z}=target;const a=[],e=.004;
     const p=[[x-e,y-e,z-e],[x+1+e,y-e,z-e],[x+1+e,y+1+e,z-e],[x-e,y+1+e,z-e],[x-e,y-e,z+1+e],[x+1+e,y-e,z+1+e],[x+1+e,y+1+e,z+1+e],[x-e,y+1+e,z+1+e]];
     for(let [u,v] of [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]]){for(let i of [u,v])a.push(...p[i],1,.96,.72)}
+    if(mineJob&&mineTargetSame(mineJob,target)){
+      for(const point of classic.crackLines(target,mineJob.elapsed/Math.max(.01,mineJob.total)))
+        a.push(...point,.18,.14,.12);
+    }
     gl.bindBuffer(gl.ARRAY_BUFFER,aimBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.DYNAMIC_DRAW);setAttribs();gl.drawArrays(gl.LINES,0,a.length/6);
   }
   function setAttribs(textured=false){
@@ -3116,6 +3235,7 @@ body.in-nether #game-wrap{background:#290f19}
     cameraFov+=( (isSprinting?78:72)-cameraFov )*Math.min(1,dt*8);
     scheduleChunks();
     updateSurvival(dt);
+    tickDroppedItems(dt);
     updateMobs(dt);
     villageUpdateClock+=dt;if(villageUpdateClock>1.5){villageUpdateClock=0;updateVillagers();}
     tickFarms(dt);
@@ -3167,9 +3287,10 @@ body.in-nether #game-wrap{background:#290f19}
     drawRemotePlayers();
     drawMobs();
     drawVillagers();
+    drawDroppedItems();
     drawHighlight(aimMob?null:aim);
     $('target-name').textContent=aimVillager?'💚 '+aimVillager.job.name+' · Tap Mine / V to Trade':aimMob?'⚔ '+SPECIES[aimMob.kind].name+' · ♥ '+Math.ceil(aimMob.hp):aimPlayer?'⚔ '+aimPlayer.name+' · PvP enabled':aim?'⛏ '+NAMES[aim.b]+'  ·  '+aim.x+', '+aim.y+', '+aim.z:'Aim at a block or creature';
-    if((frameCount++%18)===0){if(gameMode==='survival'){const changed=syncSurvivalHotbar(),signature=stackSignature();if(changed||signature!==hotbarSignature)updateHotbar();}$('coord-readout').textContent=(dimension==='end'?'✦ '+window.MineWorldEnd.biomeAt(player.x,player.z).name:dimension==='nether'?'🔥 '+window.MineWorldNether.biomeAt(player.x,player.z).name:'🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name)+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
+    if((frameCount++%18)===0){updateDebugView();if(gameMode==='survival'){const changed=syncSurvivalHotbar(),signature=stackSignature();if(changed||signature!==hotbarSignature)updateHotbar();}$('coord-readout').textContent=(dimension==='end'?'✦ '+window.MineWorldEnd.biomeAt(player.x,player.z).name:dimension==='nether'?'🔥 '+window.MineWorldNether.biomeAt(player.x,player.z).name:'🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name)+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
     saveTimer+=dt;if(saveTimer>8){saveTimer=0;if(dirtySave)save()}
   }
   // Biome travel stays deterministic and works in the same peer-to-peer world.
@@ -3381,7 +3502,11 @@ body.in-nether #game-wrap{background:#290f19}
     if(e.code==='KeyG'&&!e.repeat)toggleMovementMode('sprint');
     if(e.code==='KeyX'&&!e.repeat)toggleMovementMode('crouch');
     if(e.code==='KeyF'&&!e.repeat){if(gameMode==='survival'){toast('Flying is Creative only');}else{player.fly=!player.fly;player.vy=0;updateFlyButton();toast(player.fly?'Fly mode on':'Fly mode off')}}
-    if(e.code==='KeyQ'&&!e.repeat)eatFood();if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);else openVillage();}if(e.code==='KeyR'&&!e.repeat)attackMob(aimMob);if(e.code==='KeyM'&&!e.repeat)tryRide();if(e.code==='ShiftLeft'&&mount&&!e.repeat)dismount();if(e.code==='KeyI'&&!e.repeat)openGear();
+    if(e.code==='F3'&&!e.repeat){e.preventDefault();toggleDebug();}
+    if(e.code==='KeyP'&&!e.repeat)pickLookedAtBlock();
+    if(e.code==='KeyH'&&!e.repeat)eatFood();
+    if(e.code==='KeyQ'&&!e.repeat){e.preventDefault();dropHeldItem(e.ctrlKey);}
+if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);else openVillage();}if(e.code==='KeyR'&&!e.repeat)attackMob(aimMob);if(e.code==='KeyM'&&!e.repeat)tryRide();if(e.code==='ShiftLeft'&&mount&&!e.repeat)dismount();if(e.code==='KeyI'&&!e.repeat)openGear();
     if(e.code.startsWith('Digit')){const i=Number(e.code.slice(5))-1;if(i>=0&&i<9)selectHotbarSlot(i)}
   });
   document.addEventListener('keyup',e=>keys.delete(e.code));
@@ -3398,9 +3523,13 @@ body.in-nether #game-wrap{background:#290f19}
     if(!isTouch&&document.pointerLockElement!==canvas){(canvas.requestPointerLock()?.catch?.(()=>{}));return}
     if(e.button===0){mouseMiningHeld=true;performMine();}
     else if(e.button===2)performPlace();
+    else if(e.button===1){e.preventDefault();pickLookedAtBlock();}
   });
   window.addEventListener('mouseup',e=>{if(e.button===0)mouseMiningHeld=false;});
   window.addEventListener('blur',()=>{mouseMiningHeld=false;touchHold.mine=false;keys.clear();movement.x=0;movement.y=0;cancelMining();});
+  $('quick-pick').addEventListener('click',pickLookedAtBlock);
+  $('debug-toggle').addEventListener('click',toggleDebug);
+  canvas.addEventListener('auxclick',e=>{if(e.button===1)e.preventDefault();});
   canvas.addEventListener('wheel',e=>{if(paused)return;e.preventDefault();selectHotbarSlot((selection+(e.deltaY>0?1:-1)+9)%9)},{passive:false});
   let lookPointer=null,lastLook=null;
   canvas.addEventListener('pointerdown',e=>{if(paused||e.pointerType==='mouse')return;lookPointer=e.pointerId;lastLook=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);e.preventDefault()});
