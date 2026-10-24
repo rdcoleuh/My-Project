@@ -967,7 +967,7 @@ body.in-nether #game-wrap{background:#290f19}
   const isTouch=matchMedia('(pointer: coarse)').matches;
   let dynamicResolution=isTouch?1.12:1.6;
   const minResolution=isTouch?.70:.88,maxResolution=isTouch?1.16:1.68;
-  let sky=[.57,.78,.91];
+  let sky=[.57,.78,.91],cameraFov=72;
   const idx=(x,y,z)=>(x*D+z)*H+y;
   const inside=(x,y,z)=>Number.isInteger(x)&&Number.isInteger(y)&&Number.isInteger(z)&&x>=0&&x<W&&z>=0&&z<D&&y>=0&&y<H;
   const chunkKey=(cx,cz)=>cx+','+cz;
@@ -1266,7 +1266,7 @@ body.in-nether #game-wrap{background:#290f19}
     const yaw=player.yaw,pitch=player.pitch,cp=Math.cos(pitch),sp=Math.sin(pitch),cy=Math.cos(yaw),sy=Math.sin(yaw);
     const forward=[sy*cp,sp,-cy*cp],right=[cy,0,sy],up=[-sy*sp,cp,cy*sp],eye=[player.x,player.y+(isCrouching?1.27:1.62),player.z];
     const view=new Float32Array([right[0],up[0],-forward[0],0,right[1],up[1],-forward[1],0,right[2],up[2],-forward[2],0,-dot(right,eye),-dot(up,eye),dot(forward,eye),1]);
-    const f=1/Math.tan(72*Math.PI/360),aspect=w/h,near=.07,far=140;
+    const f=1/Math.tan(cameraFov*Math.PI/360),aspect=w/h,near=.07,far=140;
     const proj=new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+near)/(near-far),-1,0,0,2*far*near/(near-far),0]);
     return {vp:mul(proj,view),eye,forward};
   }
@@ -2987,6 +2987,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(!underPressure||streamClock%(isTouch?3:2)===0)
       streamChunks(isTouch?1:(frameMs<17&&currentFPS>48?2:1));
     move(dt);
+    cameraFov+=( (isSprinting?78:72)-cameraFov )*Math.min(1,dt*8);
     scheduleChunks();
     updateSurvival(dt);
     updateMobs(dt);
