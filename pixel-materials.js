@@ -1363,3 +1363,122 @@ atlas.originalArt=true;
   };
   atlas.version='4.7-classic-inspired-original-pixels';
 })();
+
+
+/* MineWorld 4.8: hand-shaped classic-style terrain tiles.
+   These are independently authored pixel motifs, not copied game textures. */
+(()=>{
+ 'use strict';
+ const atlas=window.MineWorldPixelMaterials,previous=atlas.paint;
+ const palette={
+  dirt:[[72,48,32],[92,61,40],[111,75,48],[128,88,58],[148,106,70],[164,121,81]],
+  grass:[[42,91,31],[56,113,37],[72,130,42],[88,147,48],[105,161,55],[132,173,70]],
+  stone:[[66,69,69],[87,90,90],[105,109,108],[124,126,126],[143,145,142],[165,166,160]],
+  deep:[[37,41,46],[50,55,60],[65,69,74],[80,83,86],[96,98,101],[112,114,115]],
+  sand:[[154,139,99],[182,165,118],[203,187,138],[218,203,155],[231,217,174],[242,231,191]],
+  gravel:[[57,54,53],[81,78,76],[103,102,98],[127,124,119],[153,151,145],[183,181,171]],
+  water:[[18,58,125],[26,76,150],[32,91,172],[42,111,189],[65,135,205],[99,162,214]],
+  lava:[[100,35,18],[151,43,15],[199,58,12],[239,91,13],[251,150,31],[255,204,66]]
+ };
+ const rgb=a=>[a[0],a[1],a[2],255];
+ function h(x,y,s){
+  let n=Math.imul(x+101,374761393)^Math.imul(y+197,668265263)^Math.imul(s+131,1274126177);
+  n=Math.imul(n^(n>>>13),1274126177);
+  return ((n^(n>>>16))>>>0)/4294967295;
+ }
+ const clamp=n=>Math.max(0,Math.min(5,n|0));
+ function index(x,y,s){
+  const big=h(x>>2,y>>2,s),small=h(x>>1,y>>1,s+101),fine=h(x,y,s+307);
+  return clamp(Math.floor(big*3.6+small*1.8+fine*.8));
+ }
+ function dirt(x,y,s=2){
+  let v=index(x,y,s);
+  const stone=h(x>>1,y>>1,s+233);
+  if(stone>.88&&((x+y)%3===0||y%3===1))v=clamp(v-2);
+  if(h(x,y,s+13)>.974)v=clamp(v+2);
+  return rgb(palette.dirt[v]);
+ }
+ function grass(x,y,face){
+  if(face===2)return dirt(x,y);
+  if(face===0){
+   const v=index(x,y,61),blade=h(x>>1,y>>1,90)>.72&&(x+y)%4===0;
+   return rgb(palette.grass[clamp(v+(blade?1:0))]);
+  }
+  const edge=2+Math.floor(h(x>>2,0,132)*2)+(h(x,0,144)>.71?1:0);
+  const longBlade=(x%5===2&&h(x>>1,0,121)>.31)?2:0;
+  if(y<edge+longBlade){
+   let v=index(x,y,62);
+   if(y===edge+longBlade-1)v=clamp(v-1);
+   return rgb(palette.grass[v]);
+  }
+  return dirt(x,y,2);
+ }
+ function rock(x,y,dark=false,s=3){
+  const base=dark?palette.deep:palette.stone;
+  const major=h(x>>2,y>>2,s+16),minor=h(x>>1,y>>1,s+39);
+  let v=clamp(Math.floor(major*3.1+minor*2.1));
+  const vein=(major>.67&&minor<.31&&((x+y)%4<2))||
+    (h((x+2)>>2,(y+1)>>2,s+57)>.85&&x%4===1&&y%4<3);
+  if(vein)v=clamp(v-2);
+  if(h(x,y,s+299)>.986)v=clamp(v+2);
+  return rgb(base[v]);
+ }
+ function sand(x,y,s=4){
+  let v=index(x,y,s);
+  const speck=h(x,y,s+800);
+  if(speck>.955)v=clamp(v-2);
+  if(speck<.036)v=clamp(v+1);
+  return rgb(palette.sand[v]);
+ }
+ function gravel(x,y){
+  const g=h(x>>2,y>>2,900),s=h(x>>1,y>>1,902);
+  let v=clamp(Math.floor(g*3+s*2.6));
+  if((x+y)%5===0&&s>.7)v=clamp(v-2);
+  return rgb(palette.gravel[v]);
+ }
+ const minerals={
+  18:[[26,28,29],[39,41,43],[56,58,60],[73,75,76]],
+  19:[[106,76,57],[145,104,75],[180,135,94],[217,166,118]],
+  95:[[112,65,45],[154,88,53],[192,121,70],[230,157,96]],
+  96:[[120,88,28],[180,127,31],[229,173,48],[251,216,99]],
+  97:[[110,26,29],[159,35,38],[202,46,48],[241,90,85]],
+  98:[[30,47,124],[41,65,176],[54,91,224],[99,133,249]],
+  99:[[22,105,112],[27,147,156],[48,196,198],[129,233,222]],
+  100:[[25,94,56],[37,137,73],[48,185,97],[118,232,145]]
+ };
+ for(let i=101;i<=108;i++)minerals[i]=minerals[i-83]||minerals[18];
+ function ore(x,y,id){
+  const deep=id>=101,original=id>=101?id-83:id;
+  const mineral=minerals[original]||minerals[18];
+  const x0=(x+2)>>2,y0=(y+1)>>2;
+  const seed=original*71;
+  const a=h(x0,y0,seed),b=h(x>>1,y>>1,seed+31),c=h(x,y,seed+19);
+  const cluster=(a>.63&&b>.37)||(a>.46&&b>.84)||(a>.79&&c>.63);
+  if(!cluster)return rock(x,y,deep,original);
+  const edge=(b<.51||c<.21);
+  const brightness=edge?0:b>.78?3:c>.61?2:1;
+  return rgb(mineral[brightness]);
+ }
+ function liquid(x,y,lava){
+  const a=h(x>>2,(y+(x>>2))>>2,lava?609:607);
+  const b=h(x>>1,y>>1,lava?611:613);
+  const wave=((y+(x>>2))%7===0)||(y%9===2&&x%4!==0);
+  let v=clamp(Math.floor(a*3+b*2));
+  if(wave)v=clamp(v+2);
+  return rgb((lava?palette.lava:palette.water)[v]);
+ }
+ atlas.paint=(id,face,x,y)=>{
+  x&=15;y&=15;
+  if(id===1)return grass(x,y,face);
+  if(id===2||id===29)return dirt(x,y,id);
+  if(id===3)return rock(x,y,false,3);
+  if(id===58)return rock(x,y,true,58);
+  if(id===4)return sand(x,y);
+  if(id===92)return gravel(x,y);
+  if(Object.hasOwn(minerals,id))return ore(x,y,id);
+  if(id===7)return liquid(x,y,false);
+  if(id===66)return liquid(x,y,true);
+  return previous(id,face,x,y);
+ };
+ atlas.version='4.8-classic-style-terrain';
+})();
