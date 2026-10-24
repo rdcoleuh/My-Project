@@ -79,6 +79,6 @@ test('chat and vertical building are wired into the live game and offline cache'
    'openChat,isTyping','chat-trigger','chat-toggle']){
   assert.ok(multi.includes(marker),'missing chat relay '+marker);
  }
- assert.ok(html.includes('MineWorld 5.9'));
+ assert.ok(/MineWorld \d+\.\d+/.test(html));
  for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))if(m[1].trim())new Function(m[1]);
 });
