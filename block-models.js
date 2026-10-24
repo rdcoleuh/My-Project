@@ -31,6 +31,7 @@
     163:make(3,0,3,13,15,13), // Lectern body
     164:make(0,0,0,16,9,16), // Stonecutter: waist-high work surface
     167:make(2,0,2,14,14,14), // Grindstone assembly
+    169:make(0,0,0,16,9,16), // red bed: 9-pixel-high simplified single-block bed
     137:make(0,0,0,16,15,16), // dry farmland: 15/16 tall
     138:make(0,0,0,16,15,16), // hydrated farmland
   });
