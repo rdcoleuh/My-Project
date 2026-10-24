@@ -361,7 +361,7 @@ body.in-nether #game-wrap{background:#290f19}
 @media(max-width:600px){#touch-movement-modes{left:12px;bottom:calc(210px + env(safe-area-inset-bottom))}#touch-movement-modes button{height:39px;min-width:56px;font-size:15px}#touch-movement-modes small{font-size:8px}}
 @media(orientation:landscape) and (max-height:420px){#touch-movement-modes{bottom:calc(12px + env(safe-area-inset-bottom));left:calc(130px + env(safe-area-inset-left))}#touch-movement-modes button{min-width:49px}}
 </style>
-<title>MineWorld 4.9 — Sharper Pixel Blocks, Sprint and Sneak</title>
+<title>MineWorld 5.0 — Classic Blocks, Sprint Hunger & Chunk Settings</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -599,7 +599,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v4.7 · 10–50 CHUNK SETTINGS · REFINED 16px BLOCKS</div>
+  <div class="version">MINEWORLD v5.0 · 10–50 CHUNK SETTINGS · WIKI-INFORMED BLOCKS</div>
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./texture-refinement.js"></script>
@@ -1454,6 +1454,7 @@ body.in-nether #game-wrap{background:#290f19}
       const s=JSON.parse(data);if(!s||!Number.isInteger(s.seed)||!Array.isArray(s.edits))return false;
       if((s.version||0)<5&&!localStorage.getItem('mineworld-backup-before-10k'))localStorage.setItem('mineworld-backup-before-10k',data);
       if((s.version||0)<6&&!localStorage.getItem('mineworld-backup-before-nether'))localStorage.setItem('mineworld-backup-before-nether',data);
+      if((s.version||0)<12){try{const backup="mineworld-backup-before-hunger-v12-"+slot;if(!localStorage.getItem(backup))localStorage.setItem(backup,data);}catch(_){/* Device storage might be limited. */}}
       if((s.version||0)<9){try{const backup='mineworld-backup-before-biome-v37-'+slot;if(!localStorage.getItem(backup))localStorage.setItem(backup,data);}catch(_){/* Backups need available device storage. */}}
       seed=s.seed;seedLabel=String(s.seedLabel||s.seed);generate();overworldEdits.clear();
       const legacy=(s.version||0)<5,oldW=(s.version||0)<4?64:96,oldH=(s.version||0)<4?27:36;
@@ -3368,7 +3369,7 @@ body.in-nether #game-wrap{background:#290f19}
     '<button class="mw-pixel-btn" id="mw-multi" type="button">Multiplayer</button>'+
     '<button class="mw-pixel-btn" id="mw-creative" type="button">Creative World</button>'+
     '<div class="mw-2col"><button class="mw-pixel-btn" id="mw-options" type="button">Options…</button><button class="mw-pixel-btn" id="mw-return" type="button">World Atlas</button></div>'+
-    '</div><div class="mw-footer"><small>MineWorld 4.7 · Independent browser game</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
+    '</div><div class="mw-footer"><small>MineWorld 5.0 · Independent browser game</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
   welcome.appendChild(main);
   const worlds=document.createElement('div');
   worlds.id='mw-world-screen';worlds.className='mw-screen mw-screen--sub';
