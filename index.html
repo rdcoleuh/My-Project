@@ -338,6 +338,19 @@ body.in-nether #game-wrap{background:#290f19}
 @media(max-width:590px){#pause .mw-pause-menu{width:100%;padding:12px}#pause .mw-pause-groups{grid-template-columns:1fr;gap:8px}#pause .mw-pause-group:last-child{grid-column:auto}#pause .mw-pause-group{padding:9px}#pause .mw-pause-group h3{font-size:12px;margin-bottom:7px}#pause .mw-menu-grid{gap:6px}#pause .ui-button{font-size:12px;padding:8px 7px;min-height:42px}#pause .mw-pause-footer{grid-template-columns:1fr}#menu-toggle.mw-pause-trigger{min-height:42px;font-size:13px}}
 @media(max-height:650px){#pause{align-items:flex-start}#pause .mw-pause-menu{max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}}
 
+
+/* MineWorld 4.7 adaptive draw distance: readable on phones without moving other controls. */
+.mw-render-panel{margin-top:11px;border:2px solid #485747;padding:12px;display:flex;flex-direction:column;gap:7px;background:#131e17;color:#d7e9ce;text-align:left;font:700 12px/1.35 monospace}
+.mw-render-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mw-render-heading output{font-weight:900;color:#f4ffb7;font-size:15px;white-space:nowrap}
+.mw-render-panel input[type=range]{width:100%;height:30px;cursor:pointer;touch-action:pan-x;accent-color:#a9e38d}
+.mw-render-scale{display:flex;justify-content:space-between;font-size:10px;color:#a6c2a0}
+.mw-render-auto{display:flex;align-items:center;gap:8px;font-size:11px;cursor:pointer;font-weight:600}
+.mw-render-auto input{width:17px;height:17px;accent-color:#89c781}
+.mw-render-status{font-size:10px;line-height:1.4;color:#b0cbb3}
+#welcome .mw-render-panel{width:100%;margin:0;border-color:#69746b;background:#172018}
+#welcome .mw-render-panel .mw-render-heading,#welcome .mw-render-panel .mw-render-auto{color:#ebf0e6}
+
 </style>
 <title>MineWorld 4.6 — Authentic-Looking Original Pixel Blocks</title>
 </head>
@@ -431,6 +444,13 @@ body.in-nether #game-wrap{background:#290f19}
             <label class="mw-difficulty" for="pause-difficulty">Difficulty
               <select id="pause-difficulty" class="difficulty-select"><option value="peaceful">Peaceful</option><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select>
             </label>
+          </div>
+          <div class="mw-render-panel" aria-label="Rendering and performance settings">
+            <label for="render-chunks-slider" class="mw-render-heading">Render distance <output id="render-chunks-value" for="render-chunks-slider">25 chunks</output></label>
+            <input type="range" id="render-chunks-slider" min="10" max="50" step="1" value="25" aria-label="Maximum nearby map chunks to render">
+            <div class="mw-render-scale"><span>10 · Faster</span><span>50 · Farther</span></div>
+            <label class="mw-render-auto"><input type="checkbox" id="render-chunks-auto" checked> Automatically lower load if FPS drops</label>
+            <small id="render-chunks-status" class="mw-render-status" aria-live="polite">Loading performance settings…</small>
           </div>
         </section>
       </div>
@@ -3115,6 +3135,12 @@ body.in-nether #game-wrap{background:#290f19}
     '<p><strong>Move:</strong> <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> · <strong>Look:</strong> mouse / swipe · <strong>Jump:</strong> <kbd>Space</kbd> · <strong>Mine:</strong> click / tap Mine · <strong>Place:</strong> right-click / tap Place</p>'+
     '<p><strong>Inventory:</strong> use Backpack/Gear · <strong>Mobile:</strong> move using the joystick and swipe to look · <strong>Multiplayer:</strong> open Friends to join public worlds.</p>'+
     '<div class="mw-options-row"><button class="mw-pixel-secondary" id="mw-motion" type="button">Panorama: On</button><button class="mw-pixel-secondary" id="mw-fullscreen" type="button">Fullscreen</button></div>'+
+    '<div class="mw-render-panel"><label class="mw-render-heading" for="mw-render-chunks-slider">Render distance <output id="mw-render-chunks-value">25 chunks</output></label>'+
+    '<input type="range" id="mw-render-chunks-slider" min="10" max="50" step="1" value="25" aria-label="Render distance: ten to fifty visible chunks">'+
+    '<div class="mw-render-scale"><span>10 · Faster</span><span>50 · Farther</span></div>'+
+    '<label class="mw-render-auto"><input id="mw-render-chunks-auto" type="checkbox" checked> Automatically optimize rendering for this device</label>'+
+    '<small class="mw-render-status" id="mw-render-chunks-status">16 × 16 blocks per chunk. Loading performance settings…</small></div>'+
+    '<p>Performance adapts to your device and the world. Setting 50 is a maximum, not a promise of 60 FPS.</p>'+
     '<p>Creative and Survival are separate saves. Minecraft-inspired art is generated independently; official Minecraft files are not included.</p></div>'+
     '<button type="button" class="mw-pixel-secondary mw-back" id="mw-back-options">← Back to Main Menu</button></div>';
   welcome.appendChild(options);
@@ -3139,6 +3165,13 @@ body.in-nether #game-wrap{background:#290f19}
     const target=document.getElementById('game-wrap');
     if(typeof target.requestFullscreen==='function'){const result=target.requestFullscreen();result?.catch?.(()=>{});}
   });
+  // Home options are created after the engine, so sync these controls now.
+  const perf=window.MineWorldRenderSettings;
+  if(perf){
+    document.getElementById('mw-render-chunks-slider').addEventListener('input',e=>perf.setTarget(e.target.value));
+    document.getElementById('mw-render-chunks-auto').addEventListener('change',e=>perf.setAuto(e.target.checked));
+    perf.syncUI();
+  }
   const motion=document.getElementById('mw-motion');
   let reduced=false;try{reduced=localStorage.getItem('mineworld-menu-still')==='1'}catch(_){}
   function motionUpdate(){welcome.classList.toggle('mw-reduced-motion',reduced);motion.textContent=reduced?'Panorama: Still':'Panorama: On'}
