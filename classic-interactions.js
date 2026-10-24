@@ -43,7 +43,7 @@
  }
  function facing(yaw){
    const a=((Number(yaw)||0)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
-   const compass=['South','Southwest','West','Northwest','North','Northeast','East','Southeast'];
+   const compass=['North','Northeast','East','Southeast','South','Southwest','West','Northwest'];
    return compass[Math.round(a/(Math.PI/4))%8];
  }
  function crackLines(target,progress){
