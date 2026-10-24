@@ -1195,8 +1195,9 @@ body.in-nether #game-wrap{background:#290f19}
   function save(){
     if(window.MineWorldMultiplayer?.isShared())return;
     try{
+      reconcileItemStacks();
       const edits=[...savedEdits.entries()];
-      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,inventory:[...inventory],survivalHotbar:[...survivalHotbar],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:10});
+      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,inventory:[...inventory],itemStacks:stackStore.snapshot(),survivalHotbar:[...survivalHotbar],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:11});
       localStorage.setItem(slotKey(gameMode),payload);localStorage.setItem(LAST_SLOT,gameMode);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';
     }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';}
   }
@@ -1227,7 +1228,7 @@ body.in-nether #game-wrap{background:#290f19}
       gameMode=slot==='survival'?'survival':'creative';
       if(['peaceful','easy','normal','hard'].includes(s.difficulty))difficulty=s.difficulty;
       if(Number.isFinite(s.dayClock))dayClock=s.dayClock;
-      if(s.bag&&typeof s.bag==='object')for(const k of Object.keys(bag))bag[k]=clamp(Math.floor(Number(s.bag[k])||0),0,999);
+      if(s.bag&&typeof s.bag==='object')for(const k of Object.keys(bag))bag[k]=clamp(Math.floor(Number(s.bag[k])||0),0,65535);
       // Old 3.6 saves stored crafting tables as a non-placeable bag object. Migrate it once.
       if(s.tools)for(const k of ['pickaxe','sword','hoe','axe','shovel'])if(Object.hasOwn(toolLevels,s.tools[k]))tools[k]=s.tools[k];
       if(s.armor&&typeof s.armor==='object')for(const k of Object.keys(armor))armor[k]=typeof s.armor[k]==='string'?s.armor[k].slice(0,35):'';
@@ -1236,10 +1237,25 @@ body.in-nether #game-wrap{background:#290f19}
       stabledMounts=Array.isArray(s.tamedMounts)?s.tamedMounts.filter(v=>v&&typeof v.kind==='string'&&Number.isFinite(v.x)&&Number.isFinite(v.z)).slice(0,60):[];
       if(['pickaxe','sword','hoe','none'].includes(s.equipped))equipped=s.equipped;
       if(Number.isFinite(s.health))health=clamp(s.health,1,20);if(Number.isFinite(s.hunger))hunger=clamp(s.hunger,0,20);
-      if(Array.isArray(s.inventory))for(let i=0;i<inventory.length;i++)inventory[i]=clamp(Math.floor(Number(s.inventory[i])||0),0,999);
-      if(Number(s.bag?.craftingTable)>0){inventory[168]=clamp(inventory[168]+Number(s.bag.craftingTable),0,999);bag.craftingTable=0;}
+      if(Array.isArray(s.inventory))for(let i=0;i<inventory.length;i++)inventory[i]=clamp(Math.floor(Number(s.inventory[i])||0),0,65535);
+      if(Number(s.bag?.craftingTable)>0){inventory[168]=clamp(inventory[168]+Number(s.bag.craftingTable),0,65535);bag.craftingTable=0;}
+      stackStore.restore(s.itemStacks,inventoryTotals());
       survivalHotbar.fill(null);
-      if(Array.isArray(s.survivalHotbar))for(let i=0;i<9;i++)if(validHotbarKey(s.survivalHotbar[i]))survivalHotbar[i]=s.survivalHotbar[i];
+      const reservedIds=new Set();
+      if(Array.isArray(s.survivalHotbar))for(let i=0;i<9;i++){
+        const ref=s.survivalHotbar[i];
+        const stack=Number.isInteger(ref)?stackStore.byId(ref):
+          validHotbarKey(ref)?stackStore.entries.find(entry=>entry.key===ref&&!reservedIds.has(entry.id)):null;
+        if(stack&&!reservedIds.has(stack.id)){survivalHotbar[i]=stack.id;reservedIds.add(stack.id);}
+      }
+      if((s.version||0)<11){
+        for(const st of stackStore.entries){
+          if(reservedIds.has(st.id))continue;
+          const free=survivalHotbar.indexOf(null);
+          if(free<0)break;
+          survivalHotbar[free]=st.id;reservedIds.add(st.id);
+        }
+      }
       updateModeButton();updateHotbar();updateSurvivalHUD();
       if(s.player){for(let k of ['x','y','z','yaw','pitch'])if(Number.isFinite(s.player[k]))player[k]=s.player[k];
         if(legacy){player.x+=SPAWN-56;player.z+=SPAWN-56;player.y=terrain(Math.floor(player.x),Math.floor(player.z))+2;}
@@ -1444,6 +1460,7 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function pickUpStack(stack){
     if(gameMode!=='survival'||survivalHotbar.includes(stack.id))return;
+    for(let i=0;i<9;i++)if(survivalHotbar[i]!==null&&!stackStore.byId(survivalHotbar[i]))survivalHotbar[i]=null;
     const slot=survivalHotbar.indexOf(null);
     if(slot>=0){survivalHotbar[slot]=stack.id;markSave();}
   }
@@ -2842,7 +2859,7 @@ body.in-nether #game-wrap{background:#290f19}
     inventory.fill(0);
     for(const k of Object.keys(bag))bag[k]=0;
     tools.pickaxe=tools.sword=tools.hoe=tools.axe=tools.shovel='none';equipped='none';
-    for(const k of Object.keys(armor))armor[k]='';inventoryOrder.length=0;vehicles=[];vehicleSerial=0;mount=null;stabledMounts=[];backpackPage=0;selectedStackKey='';
+    for(const k of Object.keys(armor))armor[k]='';inventoryOrder.length=0;vehicles=[];vehicleSerial=0;mount=null;stabledMounts=[];backpackPage=0;selectedStackKey='';selectedStackId=null;stackStore.clear();
     health=20;hunger=20;hungerDrain=hungerPulse=healPulse=0;
     dayClock=0;hotbarPage=0;HOT9.splice(0,HOT9.length,...HOTSETS[0]);survivalHotbar.fill(null);selection=0;
   }
