@@ -2408,7 +2408,7 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function updateFlyButton(){$('fly-btn').textContent='✦ Flying: '+(player.fly?'On':'Off')}
   function start(){if(!started){started=true;requestAnimationFrame(render)}lastTime=performance.now();paused=false;$('welcome').classList.add('hidden');$('pause').classList.add('hidden');if(!isTouch&&canvas.requestPointerLock)canvas.requestPointerLock()?.catch?.(()=>{});toast('World ready — have fun!')}
-  function menu(){paused=true;isSprinting=false;isCrouching=false;updateMovementUI();cancelMining();mouseMiningHeld=false;keys.clear();movement.x=0;movement.y=0;touchHold.mine=false;touchHold.place=false;updateRenderSettingsUI();$('pause').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock();save()}
+  function menu(){paused=true;isSprinting=false;updateMovementUI();cancelMining();mouseMiningHeld=false;keys.clear();movement.x=0;movement.y=0;touchHold.mine=false;touchHold.place=false;updateRenderSettingsUI();$('pause').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock();save()}
   function jump(){if(paused)return;if(mount){mountLift=.28;return;}if(player.fly){player.y+=.7;return}if(player.ground){player.vy=8;player.ground=false}}
   const RIDE_KINDS={horse:{speed:10,saddle:true},donkey:{speed:7,saddle:true},mule:{speed:8,saddle:true},camel:{speed:8,saddle:true},llama:{speed:3,saddle:false,unsteerable:true},pig:{speed:5,saddle:true,control:'carrotStick'},strider:{speed:6,saddle:true,control:'fungusStick'},skeleton_horse:{speed:10,saddle:false},zombie_horse:{speed:9,saddle:true},happy_ghast:{speed:10,harness:true,flying:true}};
   const VEHICLE_KINDS=new Set(['boat','raft','minecart','spruceBoat','cherryBoat','chestMinecart','hopperMinecart','furnaceMinecart']);
@@ -2465,17 +2465,53 @@ body.in-nether #game-wrap{background:#290f19}
   }
   $('ride-btn').addEventListener('click',tryRide);
   function move(dt){
-    if(mount){moveMounted(dt);return;}
+    if(mount){
+      if(isSprinting||isCrouching){isSprinting=false;isCrouching=false;updateMovementUI();}
+      moveMounted(dt);return;
+    }
     let fw=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)-movement.y;
     let strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+movement.x;
     const len=Math.hypot(fw,strafe);if(len>1){fw/=len;strafe/=len}
-    const speed=(keys.has('ShiftLeft')?7.5:4.8)*(player.fly?1.35:1);
+    const canStand=!isCrouching||!blockAtFeet(player.x,player.y,player.z,1.72);
+    const state=window.MineWorldMovement.resolve({
+      forward:fw,strafe,
+      holdSprint:keys.has('ControlLeft')||keys.has('ControlRight'),
+      toggleSprint:movementMode.touchSprint,
+      holdCrouch:keys.has('ShiftLeft')||keys.has('ShiftRight'),
+      toggleCrouch:movementMode.touchCrouch,
+      wasCrouching:isCrouching,canStand,flying:player.fly,mounted:false,
+      hunger,survival:gameMode==='survival'
+    });
+    if(isSprinting!==state.sprinting||isCrouching!==state.crouching){
+      isSprinting=state.sprinting;isCrouching=state.crouching;updateMovementUI();
+    }
+    const speed=state.speed;
     const dx=(Math.sin(player.yaw)*fw+Math.cos(player.yaw)*strafe)*speed*dt;
     const dz=(-Math.cos(player.yaw)*fw+Math.sin(player.yaw)*strafe)*speed*dt;
+    const startX=player.x,startZ=player.z;
     const targetX=clamp(player.x+dx,.5,W-.5),targetZ=clamp(player.z+dz,.5,D-.5);
-    if(player.fly){player.x=targetX;player.z=targetZ;let dy=(keys.has('Space')?1:0)-(keys.has('KeyC')?1:0);player.y=clamp(player.y+dy*speed*dt,2,H-2);return}
-    if(!blockAtFeet(targetX,player.y,player.z))player.x=targetX;
-    if(!blockAtFeet(player.x,player.y,targetZ))player.z=targetZ;
+    if(player.fly){
+      player.x=targetX;player.z=targetZ;
+      const dy=(keys.has('Space')?1:0)-(keys.has('KeyC')?1:0);
+      player.y=clamp(player.y+dy*speed*dt,2,H-2);
+      return;
+    }
+    // Sneaking on land prevents accidental steps off an unsupported ledge.
+    // Check under both collision-box corners so the player can approach its edge.
+    const hasFooting=(x,z)=>{
+      if(!player.ground||!isCrouching)return true;
+      const y=Math.floor(player.y-.12);
+      const right=Math.floor(x+.24),left=Math.floor(x-.24);
+      const front=Math.floor(z+.24),back=Math.floor(z-.24);
+      return solid(get(left,y,back))||solid(get(right,y,back))||
+             solid(get(left,y,front))||solid(get(right,y,front));
+    };
+    if(hasFooting(targetX,player.z)&&!blockAtFeet(targetX,player.y,player.z))player.x=targetX;
+    if(hasFooting(player.x,targetZ)&&!blockAtFeet(player.x,player.y,targetZ))player.z=targetZ;
+    if(gameMode==='survival'&&isSprinting){
+      sprintHungerSpent+=window.MineWorldMovement.sprintHunger(
+        Math.hypot(player.x-startX,player.z-startZ),true,true);
+    }
     player.vy-=22*dt;const nextY=player.y+player.vy*dt;
     if(!blockAtFeet(player.x,nextY,player.z)){player.y=nextY;player.ground=false}
     else{
