@@ -605,6 +605,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./chunk-planner.js"></script>
 <script src="./stack-inventory.js"></script>
 <script src="./movement-modes.js"></script>
+<script src="./block-models.js"></script>
 <script>
 /* MineWorld original procedural 16x16 voxel pixel-art atlas. No external assets. */
 (() => {
@@ -1147,7 +1148,20 @@ body.in-nether #game-wrap{background:#290f19}
     scheduleChunks(true);streamChunks(5);spawnWildlife();updateHotbar();updateFlyButton();markSave();
     updateSeedLabel();
   }
-  function blockAtFeet(x,y,z,height=isCrouching?1.44:1.72){let xa=Math.floor(x-.27),xb=Math.floor(x+.27),za=Math.floor(z-.27),zb=Math.floor(z+.27),ya=Math.floor(y+.02),yb=Math.floor(y+height);if(xa<0||xb>=W||za<0||zb>=D||ya<0)return true;for(let i=xa;i<=xb;i++)for(let k=za;k<=zb;k++)for(let j=ya;j<=yb;j++)if(solid(get(i,j,k)))return true;return false}
+  function blockAtFeet(x,y,z,height=isCrouching?1.44:1.72){
+    const r=.27,feet=y+.02,head=y+height;
+    const xa=Math.floor(x-r),xb=Math.floor(x+r);
+    const za=Math.floor(z-r),zb=Math.floor(z+r);
+    const ya=Math.floor(feet),yb=Math.floor(head-.0001);
+    if(xa<0||xb>=W||za<0||zb>=D||ya<0)return true;
+    for(let i=xa;i<=xb;i++)for(let k=za;k<=zb;k++)for(let j=ya;j<=yb;j++){
+      const b=get(i,j,k);if(!solid(b))continue;
+      const box=window.MineWorldBlockModels.shape(b);
+      if(x+r<=i+box.left||x-r>=i+box.right||z+r<=k+box.front||z-r>=k+box.back)continue;
+      if(head>j+box.bottom&&feet<j+box.top)return true;
+    }
+    return false;
+  }
   function setBlock(x,y,z,b,remote=false){
     if(!inside(x,y,z)||y===0)return false;
     if(b!==0&&solid(b)&&x>=Math.floor(player.x-.3)&&x<=Math.floor(player.x+.3)&&z>=Math.floor(player.z-.3)&&z<=Math.floor(player.z+.3)&&y<player.y+1.9&&y+1>player.y)return false;
@@ -1173,7 +1187,10 @@ body.in-nether #game-wrap{background:#290f19}
     for(const i of [0,1,2,0,2,3]){
       const v=vs[i],uv=window.MineWorldAtlas.uv(b,face,i);
       const crop=window.MineWorldVillages.cropAt(b);
-      const px=crop?x+.14+v[0]*.72:x+v[0],py=crop?y+v[1]*(.22+crop.stage*.22):y+v[1],pz=crop?z+.14+v[2]*.72:z+v[2];
+      const shape=window.MineWorldBlockModels.shape(b);
+      const px=crop?x+.14+v[0]*.72:x+shape.left+v[0]*(shape.right-shape.left),
+            py=crop?y+v[1]*(.22+crop.stage*.22):y+shape.bottom+v[1]*(shape.top-shape.bottom),
+            pz=crop?z+.14+v[2]*.72:z+shape.front+v[2]*(shape.back-shape.front);
       a.push(px,py,pz,shade*tint[0],shade*tint[1],shade*tint[2],uv[0],uv[1]);
     }
   }
@@ -1189,7 +1206,7 @@ body.in-nether #game-wrap{background:#290f19}
         const near=nx>=ax&&nx<ax+CHUNK&&nz>=az&&nz<az+CHUNK&&ny>=0&&ny<H?
           data[((nx-ax)*CHUNK+(nz-az))*H+ny]:blockForMesh(nx,ny,nz);
         // Draw the face behind transparent glass so panes really reveal neighboring blocks.
-        if(near&&!(b!==7&&near===7)&&!(b===9&&near!==9)&&!(near===9&&b!==9)&&!(b>=139&&b<=154))continue;
+        if(near&&!(b!==7&&near===7)&&!(b===9&&near!==9)&&!(near===9&&b!==9)&&!(b>=139&&b<=154)&&!(window.MineWorldBlockModels.isPartial(near)&&!window.MineWorldBlockModels.isPartial(b)))continue;
         if(b===7&&near===7)continue;
         pushFace(faces,x,y,z,b,face,tintBiomes?tintBiomes[dx*CHUNK+dz]:'');
       }
