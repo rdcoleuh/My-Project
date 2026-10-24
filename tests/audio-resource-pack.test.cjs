@@ -24,7 +24,7 @@ test('original sound engine creates sounds only after a user interaction, persis
  const context={
   window:{AudioContext:class extends FakeContext{constructor(){super();instances.push(this)}}},
   document:fakeDoc,console,Math,Number,performance:{now:()=>1000},
-  localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)}
+  localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},Uint8Array
  };
  vm.runInNewContext(read('sound-engine.js'),context,{filename:'sound-engine.js'});
  const api=context.window.MineWorldSound;
@@ -36,8 +36,7 @@ test('original sound engine creates sounds only after a user interaction, persis
  assert.equal(api.classify('Oak Log'),'wood');
  assert.equal(api.classify('Grass'),'soft');
  assert.equal(api.classify('Diamond Ore'),'stone');
- assert.equal(api.loadSound('pickup',new Uint8Array([3,1,4,1])),true);
- assert.equal(await api.loadSound('pickup',new Uint8Array([3,1,4,1])),true);
+  assert.equal(await api.loadSound('pickup',new Uint8Array([3,1,4,1])),true);
  assert.equal(api.state().customSounds,1);
  api.setEnabled(false);assert.equal(api.play('place','stone'),false);
  api.setEnabled(true);api.setVolume(.25);assert.equal(api.state().volume,.25);
