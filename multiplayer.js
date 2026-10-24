@@ -4,6 +4,10 @@
   const $ = id => document.getElementById(id);
   const bridge = window.MineWorldBridge;
   if (!bridge) { console.error('MineWorld game bridge not available'); return; }
+  const chatRules=window.MineWorldChatRules;
+  if(!chatRules)throw Error('Missing multiplayer chat safety helper');
+  const chatLimiter=chatRules.limiter(750,10,15000);
+  let unread=0,chatOpen=false;
   const peers = new Map();
   const sockets = new Map();
   let peer = null, host = null, role = 'offline', roomId = '', ready = false;
@@ -21,14 +25,39 @@
   function validId(id) { return /^[A-Za-z0-9][A-Za-z0-9_-]{0,100}[A-Za-z0-9]$/.test(id) || /^[A-Za-z0-9]$/.test(id); }
   function label() { return nickname.replace(/[<>]/g,'').trim().slice(0,16)||'Builder'; }
   function setStatus(message) { $('room-status').textContent = message; }
+  function setChatOpen(next,focus=false){
+    chatOpen=!!next;
+    $('chatbox').classList.toggle('mw-chat-collapsed',!chatOpen);
+    $('chat-toggle').textContent=chatOpen?'Hide':'Open';
+    $('chat-toggle').setAttribute('aria-expanded',String(chatOpen));
+    $('chat-toggle').setAttribute('aria-label',chatOpen?'Hide chat messages':'Open chat messages');
+    if(chatOpen){
+      unread=0;$('chat-unread').classList.add('hidden');
+      $('chat-unread').textContent='0 new';
+      if(focus){
+        if(document.pointerLockElement)document.exitPointerLock();
+        bridge.clearChatMovement?.();
+        $('chat-entry').focus();
+      }
+    }else if(document.activeElement===$('chat-entry'))$('chat-entry').blur();
+  }
+  function openChat(){if(role==='offline'||!ready)return false;setChatOpen(true,true);return true;}
+  function isTyping(){return chatOpen&&document.activeElement===$('chat-entry');}
   function talk(name, message, system = false) {
+    const clean=chatRules.clean(String(message||''));
+    if(!clean)return;
     const entry = document.createElement('div');
     if(system) entry.style.color = '#c0ed87';
-    const who = document.createElement('b'); who.textContent = system ? '• ' : String(name).slice(0,16)+': ';
-    entry.appendChild(who); entry.appendChild(document.createTextNode(String(message).slice(0,160)));
+    const who = document.createElement('b'); who.textContent = system ? '• ' : chatRules.name(String(name||'Friend'))+': ';
+    entry.appendChild(who); entry.appendChild(document.createTextNode(clean));
     $('chat-log').appendChild(entry);
     while($('chat-log').children.length>40) $('chat-log').firstChild.remove();
     $('chat-log').scrollTop = $('chat-log').scrollHeight;
+    if(!chatOpen&&role!=='offline'){
+      unread=Math.min(99,unread+1);
+      $('chat-unread').textContent=unread+' new';
+      $('chat-unread').classList.remove('hidden');
+    }
   }
   function updatePvpUI(){
     const b=$('pvp-toggle');
@@ -41,7 +70,10 @@
     $('online-count').textContent = String(count);
     $('online-hud').classList.toggle('hidden', role==='offline');
     $('online-hud').textContent = role==='host' ? `🌐 ${publicWorld?PUBLIC[publicWorld].name:'Private room'} · ${count+1} playing` : role==='guest' ? `🌐 ${publicWorld?PUBLIC[publicWorld].name:'Private room'} · ${ready?'Online':'Connecting'} · ${count+1} players` : '';
-    $('chatbox').classList.toggle('hidden',role==='offline');
+    const inRoom=(role==='host'||role==='guest'&&ready);
+    $('chatbox').classList.toggle('hidden',!inRoom);
+    $('chat-trigger').classList.toggle('hidden',!inRoom);
+    if(!inRoom&&chatOpen)setChatOpen(false);
     $('roster').textContent = 'Players: '+[label(),...Array.from(peers.values()).map(p=>p.name)].join(', ');
     $('copy-room').disabled = role==='offline' || !roomId;
     $('leave-room').disabled = role==='offline';
@@ -60,7 +92,8 @@
   function createInvite() { const u = new URL(location.origin+location.pathname); if(publicWorld)u.searchParams.set('server',publicWorld);else u.searchParams.set('room',roomId); return u.toString(); }
   function cleanup(reason) {
     if(peer) {const old=peer; peer=null; try{old.destroy()}catch(_){}}
-    host=null;pvp=false;attackTimes.clear();hitTimes.clear();bridge.setMobs([]);
+    host=null;pvp=false;attackTimes.clear();hitTimes.clear();chatLimiter.clear();bridge.setMobs([]);
+    unread=0;$('chat-unread').classList.add('hidden');$('chat-log').replaceChildren();setChatOpen(false);
     for(const c of sockets.values())try{c.close()}catch(_){}
     sockets.clear();peers.clear();ready=false;roomId='';role='offline';publicWorld='';isConnectingPublic=false;guestWorld=false;
     history.replaceState(null,'',location.pathname);
@@ -116,7 +149,10 @@
       updateUI();
     }
     if(message.t==='leave'){peers.delete(message.id);updateUI();}
-    if(message.t==='chat'){talk(message.name,message.text);}
+    if(message.t==='chat'){
+      const content=chatRules.clean(message.text);
+      if(content)talk(message.name,content);
+    }
     if(message.t==='world' && message.world?.version===7 && message.world?.worldSize===10000 && bridge.acceptSnapshot(message.world)) {
       talk('','Host generated a new world!',true);
     }
@@ -148,8 +184,12 @@
     } else if(message.t==='attack-player') {
       processPlayerAttack(conn.peer,message);
     } else if(message.t==='chat') {
-      const m=String(message.text||'').slice(0,160).trim();
-      if(m){const n=peers.get(conn.peer)?.name||'Friend';talk(n,m);broadcast({t:'chat',name:n,text:m});}
+      // Names always come from the host's authenticated peer map, never from guest payloads.
+      const member=peers.get(conn.peer),m=chatRules.clean(message.text);
+      if(member&&m&&chatLimiter.accept(conn.peer,Date.now())){
+        const n=chatRules.name(member.name);
+        talk(n,m);broadcast({t:'chat',name:n,text:m});
+      }
     }
   }
   function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z)}
@@ -221,7 +261,7 @@
     sockets.set(conn.peer,conn);
     conn.on('data',m=>receiveGuestData(conn,m));
     conn.on('close',()=>{
-      if(sockets.get(conn.peer)===conn){sockets.delete(conn.peer);const n=peers.get(conn.peer)?.name||'Friend';peers.delete(conn.peer);broadcast({t:'leave',id:conn.peer});talk('',n+' left the room',true);updateUI();}
+      if(sockets.get(conn.peer)===conn){sockets.delete(conn.peer);const n=peers.get(conn.peer)?.name||'Friend';peers.delete(conn.peer);chatLimiter.clear(conn.peer);broadcast({t:'leave',id:conn.peer});talk('',n+' left the room',true);updateUI();}
     });
     conn.on('error',err=>console.warn('Guest connection error',err));
     updateUI();
@@ -341,16 +381,25 @@
     else send(host,{t:'state',state});
   }
   function sendChat(){
-    const input=$('chat-entry');const message=input.value.trim().slice(0,160);input.value='';
-    if(!message||role==='offline'||!ready)return;
+    const input=$('chat-entry'),message=chatRules.clean(input.value);
+    if(!message||role==='offline'||!ready)return false;
+    if(role==='guest'&&!host?.open){setStatus('Chat connection unavailable.');return false;}
+    if(!chatLimiter.accept('local',Date.now())){
+      input.setCustomValidity('Messages are being sent too quickly.');
+      input.reportValidity?.();input.setCustomValidity('');
+      return false;
+    }
+    input.value='';
     talk(label(),message);
     if(role==='host')broadcast({t:'chat',name:label(),text:message});
     else send(host,{t:'chat',text:message});
+    return true;
   }
   window.MineWorldMultiplayer={
     localEdit,tick,attackMob,attackPlayer,damagePlayer,flushMobs,canPvp:()=>pvp,isGuest:()=>guestWorld,isShared:()=>guestWorld||!!publicWorld||exitPending,getRemotes:()=>Array.from(peers.values()),getCombatants:()=>Array.from(peers.entries()).map(([id,state])=>({id,...state})),
     broadcastWorld:()=>{if(role==='host'){broadcast({t:'world',world:bridge.getSnapshot()});updateUI();}},
-    getMode:()=>role
+    getMode:()=>role,
+    openChat,isTyping,closeChat:()=>setChatOpen(false),sendChat
   };
   $('pvp-toggle').addEventListener('click',()=>{if(role!=='host')return;pvp=!pvp;broadcast({t:'pvp',enabled:pvp});updateUI();talk('',pvp?'PvP enabled':'PvP disabled',true)});
   for(const id of ['friends-toggle','welcome-friends','pause-friends'])$(id)?.addEventListener('click',openLobby);
@@ -365,8 +414,14 @@
     try{await navigator.clipboard.writeText(invite);setStatus('Invite link copied! Send it to a friend.');}
     catch(_){$('room-code').value=invite;$('room-code').select();setStatus('Invite link selected. Copy it and send it to a friend.');}
   });
-  $('chat-send').addEventListener('click',sendChat);
-  $('chat-entry').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){sendChat();e.preventDefault();}});
+  $('chat-toggle').addEventListener('click',()=>setChatOpen(!chatOpen));
+  $('chat-trigger').addEventListener('click',openChat);
+  $('chat-send').addEventListener('click',()=>{if(sendChat())$('chat-entry').focus();});
+  $('chat-entry').addEventListener('keydown',e=>{
+    e.stopPropagation();
+    if(e.key==='Enter'){sendChat();e.preventDefault();}
+    if(e.key==='Escape'){setChatOpen(false);e.preventDefault();}
+  });
   $('player-name').addEventListener('keydown',e=>e.stopPropagation());
   $('room-code').addEventListener('keydown',e=>e.stopPropagation());
   $('player-name').addEventListener('change',()=>{nickname=label();try{localStorage.setItem('mineworld-name',nickname)}catch(_){}updateUI()});
