@@ -371,8 +371,12 @@ body.in-nether #game-wrap{background:#290f19}
 #mw-debug{position:absolute;right:max(12px,env(safe-area-inset-right));top:calc(max(12px,env(safe-area-inset-top)) + 55px);z-index:8;pointer-events:none;white-space:pre-line;background:#111b1add;border:1px solid #a4bbaa99;border-radius:5px;color:#e8f4e4;padding:10px 12px;max-width:min(340px,calc(100vw - 25px));font:11px/1.55 monospace;text-shadow:1px 1px #0a120a;box-shadow:0 8px 22px #0006}
 #quick-pick{pointer-events:auto!important;white-space:nowrap}
 @media(max-width:620px){#mw-debug{top:calc(max(12px,env(safe-area-inset-top)) + 46px);font-size:10px;line-height:1.4;padding:7px 8px;max-width:min(260px,60vw)}#quick-pick{font-size:11px!important;padding:7px!important}}
+.mw-customization-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin:9px auto 14px}
+.mw-customization-actions button{flex:1 1 190px;min-height:43px}
+.swatch,.item-icon,#mw-skin-editor,#mw-skin-sheet{image-rendering:pixelated}
+#world{image-rendering:pixelated}
 </style>
-<title>MineWorld 5.5 — Classic Game Interactions & Voxel Feedback</title>
+<title>MineWorld 5.6 — Pixel-Perfect Blocks, Custom Skins & Multiple Worlds</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -412,12 +416,16 @@ body.in-nether #game-wrap{background:#290f19}
     <section class="modal home-modal" aria-label="MineWorld main menu">
       <div class="kicker">✦ BUILD · EXPLORE · SURVIVE ✦</div>
       <h1>MINE<span>WORLD</span></h1>
+      <div class="mw-customization-actions">
+        <button id="mw-worlds-home" type="button" class="ui-button">🌍 My Worlds · Multiple Saves</button>
+        <button id="mw-skin-home" type="button" class="ui-button">🎨 Customize Player Skin</button>
+      </div>
       <p class="home-subtitle">Explore seed-generated wilderness with natural biome boundaries, improved block textures, 2×2 pocket crafting and 3×3 workbench crafting — on phone, tablet or desktop.</p>
           <div class="seed-panel">
             <label for="seed-input">WORLD SEED · text or number</label>
             <div class="seed-row"><input id="seed-input" maxlength="64" spellcheck="false" autocomplete="off" inputmode="text" placeholder="Type a seed, or leave the current seed" aria-label="World generation seed"><button type="button" id="random-seed" class="ui-button">🎲 Random</button></div>
             <div class="seed-actions"><span id="seed-current">Current seed: 85721</span><button type="button" id="copy-seed" class="ui-button small">Copy</button><button type="button" id="apply-seed" class="ui-button small">New World</button></div>
-            <small>Same seed = same biomes, trees and structures. New World replaces your private save (a backup is kept).</small>
+            <small>Use My Worlds to create and switch between separate saves. The seed button creates another world without replacing this one.</small>
           </div>
       <div class="mode-cards" role="group" aria-label="Choose a game mode">
         <div class="mode-card creative"><div class="mode-illustration" aria-hidden="true"></div>
@@ -435,7 +443,7 @@ body.in-nether #game-wrap{background:#290f19}
       </div>
       <label class="difficulty-label" for="home-difficulty">Survival difficulty</label><select id="home-difficulty" class="difficulty-select"><option value="peaceful">Peaceful · animals only</option><option value="easy">Easy · fewer monsters</option><option value="normal" selected>Normal · hostile nights</option><option value="hard">Hard · tougher monsters</option></select>
       <button id="welcome-friends" class="ui-button" style="width:100%;margin-top:10px">🌐 Public multiplayer / Friends</button>
-      <p class="note"><strong>Survival and Creative are separate save files.</strong> Survival does not get Creative inventory, teleporting or flight. This is an independent voxel game, not Minecraft. Public worlds are peer-hosted and do not provide secure server-side anti-cheat.</p>
+      <p class="note"><strong>Each named world has its own save and inventory.</strong> Survival does not get Creative inventory, teleporting or flight. This is an independent voxel game, not Minecraft. Public worlds are peer-hosted and do not provide secure server-side anti-cheat.</p>
     </section>
   </div>
   <div id="pause" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Paused game menu">
@@ -489,9 +497,11 @@ body.in-nether #game-wrap{background:#290f19}
       </div>
       <div class="mw-pause-footer">
         <button id="home-btn" class="ui-button mw-pause-full" type="button">⌂ Save &amp; Return to Main Menu</button>
-        <button id="new-btn" class="ui-button danger mw-pause-full" type="button">↻ Create a New World</button>
+        <button id="mw-worlds-pause" class="ui-button mw-pause-full" type="button">🌍 Save Slots &amp; My Worlds</button>
+        <button id="mw-skin-pause" class="ui-button mw-pause-full" type="button">🎨 Edit Player Skin</button>
+        <button id="new-btn" class="ui-button mw-pause-full" type="button">＋ Create Another World</button>
       </div>
-      <p class="mw-pause-fine">Creative and Survival use separate saves. World generation and multiplayer remain unchanged.</p>
+      <p class="mw-pause-fine">Every named Creative or Survival world has an independent local save. Original worlds are protected from deletion.</p>
     </section>
   </div>
   <div class="mw-legacy-hooks" hidden aria-hidden="true">
@@ -629,6 +639,8 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./texture-motion.js"></script>
 <script src="./classic-interactions.js"></script>
 <script src="./perspective.js"></script>
+<script src="./world-library.js"></script>
+<script src="./skin-editor.js"></script>
 <script src="./chunk-planner.js"></script>
 <script src="./stack-inventory.js"></script>
 <script src="./movement-modes.js"></script>
@@ -836,7 +848,11 @@ body.in-nether #game-wrap{background:#290f19}
     const corners=[[0,0],[0,1],[1,1],[1,0]];
     const [u,v]=corners[corner];
     // inset half a source pixel, preventing bleeding from neighboring textures
-    return [(x*SIZE+.5+u*(SIZE-1))/(SIZE*COLUMNS),(y*SIZE+.5+v*(SIZE-1))/(SIZE*ROWS)];
+    // One texture texel covers 1/16th of a block, even for short/wide partial models.
+    // spanU and spanV are in world-block units; never stretch 16 pixels over a half-block.
+    const pxU=Math.max(1,Math.min(SIZE,Math.round((arguments[3]??1)*SIZE)));
+    const pxV=Math.max(1,Math.min(SIZE,Math.round((arguments[4]??1)*SIZE)));
+    return [(x*SIZE+.5+u*(pxU-1))/(SIZE*COLUMNS),(y*SIZE+.5+v*(pxV-1))/(SIZE*ROWS)];
   }
   window.MineWorldAtlas={create,uv,tileColor};
 })();
@@ -864,7 +880,9 @@ body.in-nether #game-wrap{background:#290f19}
     return;
   }
   const W=10000, D=10000, H=48, SEA=14, SPAWN=5000, CHUNK=16, STORAGE='mineworld-selfhost-v1';
-  const slotKey=mode=>STORAGE+'-slot-'+(mode==='survival'?'survival':'creative')+'-v1';
+  // Original Creative/Survival keys stay permanently available as "Original" worlds.
+  const worldLibrary=window.MineWorldWorldLibrary.create(localStorage,STORAGE);
+  const slotKey=mode=>worldLibrary.key(mode);
   const LAST_SLOT=STORAGE+'-active-mode-v1';
   function migrateLegacySave(){
     try{const legacy=localStorage.getItem(STORAGE);if(!legacy)return;const data=JSON.parse(legacy);const key=slotKey(data?.gameMode==='survival'?'survival':'creative');if(!localStorage.getItem(key))localStorage.setItem(key,legacy);if(!localStorage.getItem(LAST_SLOT))localStorage.setItem(LAST_SLOT,data?.gameMode==='survival'?'survival':'creative')}catch(e){console.warn('Legacy world migration unavailable:',e)}
@@ -1264,7 +1282,11 @@ body.in-nether #game-wrap{background:#290f19}
       else if(/Cherry|Flower|Meadow/.test(biomeName))tint=[1.06,1.05,.92];
     }
     for(const i of [0,1,2,0,2,3]){
-      const v=vs[i],uv=window.MineWorldAtlas.uv(b,face,i);
+      const v=vs[i],
+            width=shape.right-shape.left,height=shape.top-shape.bottom,depth=shape.back-shape.front,
+            spanU=crop?.72:f.n[0]?depth:f.n[1]?width:width,
+            spanV=crop?(.22+crop.stage*.22):f.n[1]?depth:height,
+            uv=window.MineWorldAtlas.uv(b,face,i,spanU,spanV);
       const px=crop?x+.14+v[0]*.72:x+shape.left+v[0]*(shape.right-shape.left),
             py=crop?y+v[1]*(.22+crop.stage*.22):y+shape.bottom+v[1]*(shape.top-shape.bottom),
             pz=crop?z+.14+v[2]*.72:z+shape.front+v[2]*(shape.back-shape.front);
@@ -1308,6 +1330,8 @@ body.in-nether #game-wrap{background:#290f19}
   if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
   const aPos=gl.getAttribLocation(program,'aPos'),aColor=gl.getAttribLocation(program,'aColor'),aUV=gl.getAttribLocation(program,'aUV'),uVP=gl.getUniformLocation(program,'uVP'),uEye=gl.getUniformLocation(program,'uEye'),uSky=gl.getUniformLocation(program,'uSky'),uAtlas=gl.getUniformLocation(program,'uAtlas'),uTextured=gl.getUniformLocation(program,'uTextured'),uFogEnd=gl.getUniformLocation(program,'uFogEnd');
   const atlasTexture=window.MineWorldAtlas.create(gl);
+  const skinTexture=window.MineWorldSkin.makeTexture(gl);
+  gl.bindTexture(gl.TEXTURE_2D,atlasTexture);
   vbo=gl.createBuffer();const aimBuffer=gl.createBuffer(),avatarBuffer=gl.createBuffer();
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
   function mul(a,b){let o=new Float32Array(16);for(let col=0;col<4;col++)for(let row=0;row<4;row++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+row]*b[col*4+k];o[col*4+row]=s}return o}
@@ -3198,30 +3222,31 @@ body.in-nether #game-wrap{background:#290f19}
     if(!currentCameraMode)return;
     const a=[],x=player.x,y=player.y,z=player.z;
     const cy=Math.cos(player.yaw),sy=Math.sin(player.yaw);
-    const box=(ox,oy,oz,w,h,d,c)=>{
-      for(const face of FACE)for(const i of [0,1,2,0,2,3]){
-        const v=face.v[i],shade=face.shade;
-        const px=ox+v[0]*w,pz=oz+v[2]*d;
-        // Turn the independently drawn MineWorld traveler with the heading.
-        a.push(x+px*cy-pz*sy,y+oy+v[1]*h,z+px*sy+pz*cy,
-          c[0]*shade,c[1]*shade,c[2]*shade);
+    const box=(name,ox,oy,oz,w,h,d)=>{
+      for(let side=0;side<FACE.length;side++){
+        const f=FACE[side];
+        for(const i of [0,1,2,0,2,3]){
+          const v=f.v[i],shade=f.shade,px=ox+v[0]*w,pz=oz+v[2]*d;
+          const uv=window.MineWorldSkin.uv(name,side,i);
+          a.push(x+px*cy-pz*sy,y+oy+v[1]*h,z+px*sy+pz*cy,shade,shade,shade,uv[0],uv[1]);
+        }
       }
     };
-    // A MineWorld-specific traveler: sea-green jacket, orange trim and slate boots.
     const step=(keys.has('KeyW')||keys.has('KeyS')||keys.has('KeyA')||keys.has('KeyD'))?
-      Math.sin(dayClock*(isSprinting?14:9))*.08:0;
-    const short=isCrouching?.30:0;
-    box(-.26,1.24-short,-.21,.52,.55,.42,[.27,.60,.54]);
-    box(-.26,1.79-short,-.23,.52,.44,.46,[.75,.61,.45]);
-    box(-.26,1.99-short,-.235,.52,.15,.47,[.34,.36,.32]);
-    box(-.25,.16+step,-.19,.23,1.06-short,.38,[.26,.34,.44]);
-    box(.02,.16-step,-.19,.23,1.06-short,.38,[.28,.35,.45]);
-    box(-.42,1.30-short+step,-.16,.15,.60,.33,[.76,.48,.24]);
-    box(.27,1.30-short-step,-.16,.15,.60,.33,[.76,.48,.24]);
-    if(!a.length)return;
+      Math.sin(dayClock*(isSprinting?14:9))*.06:0;
+    const duck=isCrouching?.29:0;
+    // Body dimensions match the 64×64 sheet: head 8³, jacket 8×12×4, limbs 4×12×4 pixels.
+    box('legL',-.249,.13+step,-.125,.25,.75-duck*.35,.25);
+    box('legR',.001,.13-step,-.125,.25,.75-duck*.35,.25);
+    box('torso',-.25,.88-duck,-.125,.50,.75,.25);
+    box('armL',-.50,.88-duck-step,-.125,.25,.75,.25);
+    box('armR',.25,.88-duck+step,-.125,.25,.75,.25);
+    box('head',-.25,1.63-duck,-.25,.50,.50,.50);
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,skinTexture);
     gl.bindBuffer(gl.ARRAY_BUFFER,avatarBuffer);
     gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.DYNAMIC_DRAW);
-    setAttribs(false);gl.drawArrays(gl.TRIANGLES,0,a.length/6);
+    setAttribs(true);gl.drawArrays(gl.TRIANGLES,0,a.length/8);
+    gl.bindTexture(gl.TEXTURE_2D,atlasTexture);
   }
   function drawDroppedItems(){
     if(!droppedItems.length)return;
@@ -3500,17 +3525,41 @@ body.in-nether #game-wrap{background:#290f19}
     experienceTotal=0;bedSpawn=null;worldWeather=survivalRules.newWeather(seed);
     dayClock=0;hotbarPage=0;HOT9.splice(0,HOT9.length,...HOTSETS[0]);survivalHotbar.fill(null);selection=0;
   }
-  function switchWorldSlot(next){
-    if(next===gameMode)return true;
-    if(window.MineWorldMultiplayer?.isShared()){toast('Leave multiplayer before changing worlds');return false;}
+  function openNamedWorld(next,id,play=false){
+    if(!['survival','creative'].includes(next))return false;
+    if(next===gameMode&&worldLibrary.current(next).id===id){if(play)start();return true;}
+    if(window.MineWorldMultiplayer?.isShared()){toast('Leave multiplayer before switching worlds');return false;}
     save();
-    gameMode=next;try{localStorage.setItem(LAST_SLOT,next)}catch(_){};resetWorldInventory();seed=85721;seedLabel='85721';generate();
+    try{worldLibrary.select(next,id)}catch(err){toast(err.message);return false;}
+    gameMode=next;try{localStorage.setItem(LAST_SLOT,next)}catch(_){}
+    resetWorldInventory();seed=85721;seedLabel='85721';generate();
     if(!load(next)){setGameMode(next);save();}
     else {setGameMode(next);dirtySave=false;}
     updateSeedLabel();updatePortalUI();updateVillagers();
     $('home-difficulty').value=difficulty;$('pause-difficulty').value=difficulty;
-    toast((next==='survival'?'♥ Survival':'✦ Creative')+' world opened — separate inventory and progress');
+    toast('🌍 Opened '+worldLibrary.current(next).name);
+    if(play)start();
     return true;
+  }
+  function switchWorldSlot(next){return openNamedWorld(next,worldLibrary.current(next).id)}
+  function createNamedWorld(next,name,rawSeed,play=false){
+    if(window.MineWorldMultiplayer?.isShared()){toast('Leave multiplayer before adding worlds');return false;}
+    try{
+      const record=worldLibrary.create(next,name);
+      if(!openNamedWorld(next,record.id,false))return false;
+      if(String(rawSeed||'').trim()){
+        seed=window.MineWorldBiomes.seedFrom(String(rawSeed).trim().slice(0,64));
+        seedLabel=String(rawSeed).trim().slice(0,64);
+        resetWorldInventory();generate();setGameMode(next);save();updateSeedLabel();
+      }
+      if(play)start();
+      return record;
+    }catch(err){toast('Cannot create world: '+err.message);return false;}
+  }
+  function deleteNamedWorld(next,id){
+    if(window.MineWorldMultiplayer?.isShared())return false;
+    if(worldLibrary.current(next).id===id&&gameMode===next&&!openNamedWorld(next,'original'))return false;
+    try{return worldLibrary.remove(next,id)}catch(err){toast(err.message);return false;}
   }
   function playMode(mode){
     const previousLabel=seedLabel,typed=$('seed-input').value.trim();
@@ -3528,8 +3577,8 @@ body.in-nether #game-wrap{background:#290f19}
   $('random-seed').addEventListener('click',()=>{$('seed-input').value=String(Math.floor(Math.random()*99999998)+1)});
   $('copy-seed').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(seedLabel);toast('Seed copied')}catch(_){toast('Seed: '+seedLabel)}});
   $('apply-seed').addEventListener('click',()=>{
-    if(!confirm('Create a new world from this seed? Your existing private world will be backed up.'))return;
-    if(createSeededWorld($('seed-input').value))toast('New seeded world created');
+    const chosen=$('seed-input').value.trim()||String(Math.floor(Math.random()*99999998)+1);
+    createNamedWorld(gameMode,'World '+(worldLibrary.list(gameMode).length+1),chosen,false);
   });
   $('home-btn').addEventListener('click',()=>{paused=true;$('pause').classList.add('hidden');$('welcome').classList.remove('hidden');save();});
   $('eat-btn').addEventListener('click',eatFood);
@@ -3540,11 +3589,14 @@ body.in-nether #game-wrap{background:#290f19}
   $('mode-btn').addEventListener('click',()=>toast('World modes have separate saves. Use Home Screen to switch worlds.'));
   $('craft-btn').addEventListener('click',openGear);$('bag-toggle').addEventListener('click',openGear);$('close-gear').addEventListener('click',closeGear);for(const [btn,tool] of [['gear-pickaxe','pickaxe'],['gear-sword','sword'],['gear-hoe','hoe'],['gear-axe','axe'],['gear-shovel','shovel'],['gear-none','none']])$(btn).addEventListener('click',()=>{equipped=tool;updateSurvivalHUD();renderGear();markSave()});$('home-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));$('pause-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));
   $('fly-btn').addEventListener('click',()=>{if(gameMode==='survival'){toast('Flying is only available in Creative');return;}player.fly=!player.fly;player.vy=0;updateFlyButton();markSave();toast(player.fly?'Flying enabled':'Flying disabled')});
-  $('new-btn').addEventListener('click',()=>{
-    if(window.MineWorldMultiplayer?.isShared()){toast('Leave multiplayer before creating a private world');return;}
-    if(!confirm('Create a new 10,000 x 10,000 world? Your current save will be backed up, then replaced.'))return;
-    createSeededWorld(String($('seed-input').value||Math.floor(Math.random()*99999998)+1));
-    $('pause').classList.add('hidden');start();toast('New world: '+seedLabel);
+  $('new-btn').addEventListener('click',()=>window.MineWorldWorldManager?.open('create'));
+  for(const id of ['mw-skin-home','mw-skin-pause'])$(id).addEventListener('click',()=>{
+    if(!paused)menu();
+    window.MineWorldSkin.open();
+  });
+  for(const id of ['mw-worlds-home','mw-worlds-pause'])$(id).addEventListener('click',()=>{
+    if(!paused)menu();
+    window.MineWorldWorldManager?.open();
   });
   document.addEventListener('keydown',e=>{
     if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab'].includes(e.code))e.preventDefault();
@@ -3614,11 +3666,18 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
   migrateLegacySave();const activeSlot=(()=>{try{return localStorage.getItem(LAST_SLOT)==='survival'?'survival':'creative'}catch(_){return 'creative'}})();gameMode=activeSlot;updateModeButton();updateSurvivalHUD();
   if(!load(activeSlot)){generate();setGameMode(activeSlot);}else $('status').textContent='● '+(activeSlot==='survival'?'Survival':'Creative')+' world restored';setDifficulty(difficulty);updatePortalUI();updateSeedLabel();updateVillagers();
   window.MineWorldBridge={
+    getWorlds:mode=>worldLibrary.list(mode),
+    getCurrentWorld:mode=>({...worldLibrary.current(mode||gameMode)}),
+    openWorld:(mode,id,play)=>openNamedWorld(mode,id,!!play),
+    createWorld:(mode,name,rawSeed,play)=>createNamedWorld(mode,name,rawSeed,!!play),
+    renameWorld:(mode,id,name)=>{try{return worldLibrary.rename(mode,id,name)}catch(e){toast(e.message);return false}},
+    deleteWorld:(mode,id)=>deleteNamedWorld(mode,id),
+    duplicateWorld:(mode,id)=>{try{return worldLibrary.duplicate(mode,id)}catch(e){toast(e.message);return false}},
+    getMode:()=>gameMode,
     getPlayer:()=>({x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly,mode:gameMode,dimension,riding:mount?.kind||''}),
     getCombatProfile:()=>({mode:gameMode,equipped,weapon:equipped==='sword'?tools.sword:equipped==='pickaxe'?tools.pickaxe:'none'}),
     getMobs:mobSnapshot, setMobs:syncMobs, applyMobHit, grantLoot,
     applyDamage:(n,cause)=>{if(Number.isInteger(n)&&n>0&&n<=20)damage(n,String(cause||'Combat').slice(0,40))},
-    getMode:()=>gameMode,
     getSnapshot:()=>({seed,version:7,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,dayClock,mobs:mobSnapshot(),hostDimension:dimension}),
     resetPublicWorld:(newSeed)=>{
       if(!Number.isInteger(newSeed)||newSeed<1||newSeed>99999999)return false;
