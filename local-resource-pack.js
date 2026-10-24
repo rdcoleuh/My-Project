@@ -117,6 +117,7 @@ function readArchive(buffer){
  if(eocd<0)throw Error('Not a ZIP or Java JAR archive.');
  const number=u16(eocd+10),offset=u32(eocd+16);
  if(number===65535||offset===0xffffffff)throw Error('ZIP64 not supported for this experiment.');
+ if(number>12000)throw Error('This pack has too many ZIP entries for the browser importer.');
  let p=offset;
  const found=new Map(),decoder=new TextDecoder();
  for(let i=0;i<number;i++){
@@ -145,8 +146,19 @@ function readArchive(buffer){
      if(e.method===0)return compressed.slice();
      if(typeof DecompressionStream!=='function')throw Error('This browser needs DecompressionStream support (Safari 16.4+).');
      const stream=new Blob([compressed]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
-     const bytes=new Uint8Array(await new Response(stream).arrayBuffer());
-     if(bytes.byteLength>6*1024*1024)throw Error('Texture exceeds 6 MB.');
+     // Stream with a hard cap: ZIP length headers are untrusted and may underreport expansion.
+     const reader=stream.getReader(),chunks=[];let count=0;
+     const max=Math.min(6*1024*1024,Math.max(1,e.expanded+1024));
+     try{
+       while(true){
+         const packet=await reader.read();if(packet.done)break;
+         count+=packet.value.byteLength;
+         if(count>max){await reader.cancel();throw Error('Compressed resource expands beyond the safe limit.');}
+         chunks.push(packet.value);
+       }
+     }finally{reader.releaseLock();}
+     const bytes=new Uint8Array(count);let at=0;
+     for(const chunk of chunks){bytes.set(chunk,at);at+=chunk.length;}
      return bytes;
    }
  };
