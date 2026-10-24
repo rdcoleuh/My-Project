@@ -351,6 +351,15 @@ body.in-nether #game-wrap{background:#290f19}
 #welcome .mw-render-panel{width:100%;margin:0;border-color:#69746b;background:#172018}
 #welcome .mw-render-panel .mw-render-heading,#welcome .mw-render-panel .mw-render-auto{color:#ebf0e6}
 
+
+/* Original MineWorld sprint/sneak controls — tap toggles on mobile, hold keys on desktop. */
+#movement-indicator{pointer-events:none;position:absolute;z-index:5;top:calc(max(env(safe-area-inset-top),12px) + 6px);left:max(env(safe-area-inset-left),14px);padding:7px 10px;background:#19251bbd;border:1px solid #daecc68a;font:700 11px monospace;letter-spacing:.02em;color:#f4ffe8;text-shadow:1px 2px #0a120a}
+#touch-movement-modes{position:absolute;bottom:calc(252px + env(safe-area-inset-bottom));left:14px;display:flex;gap:6px;pointer-events:auto;z-index:6}
+#touch-movement-modes button{touch-action:manipulation;min-width:64px;height:45px;padding:4px 6px;border:2px solid #aac6a8;border-radius:6px;background:#24352be0;box-shadow:inset 2px 2px #788d78,inset -2px -2px #101e17,0 2px 4px #0008;color:#fff;font-size:19px;display:flex;align-items:center;justify-content:center;gap:4px}
+#touch-movement-modes small{font:800 9px monospace}
+#touch-movement-modes button.active{background:#5f874c;border-color:#e5f6a3;box-shadow:inset 2px 2px #bfdfac,inset -2px -2px #345b38,0 0 8px #afed8070}
+@media(max-width:600px){#touch-movement-modes{left:12px;bottom:calc(210px + env(safe-area-inset-bottom))}#touch-movement-modes button{height:39px;min-width:56px;font-size:15px}#touch-movement-modes small{font-size:8px}}
+@media(orientation:landscape) and (max-height:420px){#touch-movement-modes{bottom:calc(12px + env(safe-area-inset-bottom));left:calc(130px + env(safe-area-inset-left))}#touch-movement-modes button{min-width:49px}}
 </style>
 <title>MineWorld 4.7 — Render Distance & Refined Pixel Blocks</title>
 </head>
@@ -369,12 +378,17 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="hud-bottom">
     <div id="survival-hud" class="hidden" aria-live="polite"><span id="health-text">♥ 20/20</span><span id="hunger-text">🍖 20/20</span><span id="weapon-readout" title="Equipped gear">✊ Fists</span><button id="eat-btn" type="button" aria-label="Eat available food">Eat 🍄 0</button></div>
     <div id="hotbar-row"><div id="hotbar" role="toolbar" aria-label="Nine inventory-backed hotbar slots"></div><button id="quick-inventory" type="button" aria-label="Open inventory" title="Open backpack (E)">🎒<small>INV</small></button></div>
-    <div id="hints">WASD move · Left click break (hold to repeat) · Right click use / place · E inventory · Space jump · 1–9 items</div>
+    <div id="hints">WASD move · Ctrl/G sprint · Shift/X crouch · E inventory · Space jump · 1–9 items · Left mine · Right place</div>
   </div>
+  <div id="movement-indicator" class="hidden" role="status" aria-live="polite"></div>
   <div id="coord-readout">X 0 · Y 0 · Z 0</div>
   <div id="mount-readout" class="hidden" aria-live="polite"></div>
   <button id="ride-btn" type="button" aria-label="Mount or dismount nearby rideable animal or vehicle">🐎 RIDE</button>
   <div id="mobile-controls" aria-label="Touch game controls">
+    <div id="touch-movement-modes" aria-label="Run and crouch controls">
+      <button type="button" id="touch-sprint-btn" aria-label="Toggle sprinting" aria-pressed="false">🏃 <small>SPRINT</small></button>
+      <button type="button" id="touch-crouch-btn" aria-label="Toggle crouching" aria-pressed="false">🧎 <small>SNEAK</small></button>
+    </div>
     <div id="joystick" aria-label="Movement joystick"><div id="joystick-knob"></div></div>
     <div id="touch-buttons"><button id="attack-btn" class="touch-btn attack" aria-label="Attack creature">⚔<small>HIT</small></button><button id="jump-btn" class="touch-btn" aria-label="Jump">↑<small>JUMP</small></button><button id="mine-btn" class="touch-btn mine" aria-label="Mine block">⛏<small>MINE</small></button><button id="place-btn" class="touch-btn place" aria-label="Place block">▣<small>PLACE</small></button></div>
   </div>
@@ -590,6 +604,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./pixel-materials.js"></script>
 <script src="./chunk-planner.js"></script>
 <script src="./stack-inventory.js"></script>
+<script src="./movement-modes.js"></script>
 <script>
 /* MineWorld original procedural 16x16 voxel pixel-art atlas. No external assets. */
 (() => {
@@ -927,6 +942,24 @@ body.in-nether #game-wrap{background:#290f19}
    ender_dragon:{name:'Ender Dragon',kind:'boss',hp:40,speed:2,damage:8,body:[.13,.10,.18],head:[.29,.22,.37],drop:'dragonBreath'}
   };
   const movement={x:0,y:0}, touchHold={mine:false,place:false}, timers={mine:0,place:0};
+  const movementMode={touchSprint:false,touchCrouch:false,keySprint:false,keyCrouch:false};
+  let isSprinting=false,isCrouching=false,sprintHungerSpent=0,movementUiSignature='';
+  function updateMovementUI(){
+    const sig=+(isSprinting)+':'+ +(isCrouching)+':'+ +(movementMode.touchSprint)+':'+ +(movementMode.touchCrouch);
+    if(sig===movementUiSignature)return;
+    movementUiSignature=sig;
+    const indicator=$('movement-indicator');
+    indicator.classList.toggle('hidden',!isSprinting&&!isCrouching);
+    indicator.textContent=isSprinting?'🏃 Sprinting · faster hunger drain':isCrouching?'🧎 Sneaking · reduced speed':'';
+    for(const [id,on] of [['touch-sprint-btn',movementMode.touchSprint],['touch-crouch-btn',movementMode.touchCrouch]]){
+      const button=$(id);button.classList.toggle('active',on);button.setAttribute('aria-pressed',String(on));
+    }
+  }
+  function toggleMovementMode(kind){
+    if(kind==='sprint'){movementMode.touchSprint=!movementMode.touchSprint;if(movementMode.touchSprint)movementMode.touchCrouch=false;}
+    if(kind==='crouch'){movementMode.touchCrouch=!movementMode.touchCrouch;if(movementMode.touchCrouch)movementMode.touchSprint=false;}
+    updateMovementUI();
+  }
   const isTouch=matchMedia('(pointer: coarse)').matches;
   let dynamicResolution=isTouch?1.12:1.6;
   const minResolution=isTouch?.70:.88,maxResolution=isTouch?1.16:1.68;
@@ -1114,7 +1147,7 @@ body.in-nether #game-wrap{background:#290f19}
     scheduleChunks(true);streamChunks(5);spawnWildlife();updateHotbar();updateFlyButton();markSave();
     updateSeedLabel();
   }
-  function blockAtFeet(x,y,z){let xa=Math.floor(x-.27),xb=Math.floor(x+.27),za=Math.floor(z-.27),zb=Math.floor(z+.27),ya=Math.floor(y+.02),yb=Math.floor(y+1.72);if(xa<0||xb>=W||za<0||zb>=D||ya<0)return true;for(let i=xa;i<=xb;i++)for(let k=za;k<=zb;k++)for(let j=ya;j<=yb;j++)if(solid(get(i,j,k)))return true;return false}
+  function blockAtFeet(x,y,z,height=isCrouching?1.44:1.72){let xa=Math.floor(x-.27),xb=Math.floor(x+.27),za=Math.floor(z-.27),zb=Math.floor(z+.27),ya=Math.floor(y+.02),yb=Math.floor(y+height);if(xa<0||xb>=W||za<0||zb>=D||ya<0)return true;for(let i=xa;i<=xb;i++)for(let k=za;k<=zb;k++)for(let j=ya;j<=yb;j++)if(solid(get(i,j,k)))return true;return false}
   function setBlock(x,y,z,b,remote=false){
     if(!inside(x,y,z)||y===0)return false;
     if(b!==0&&solid(b)&&x>=Math.floor(player.x-.3)&&x<=Math.floor(player.x+.3)&&z>=Math.floor(player.z-.3)&&z<=Math.floor(player.z+.3)&&y<player.y+1.9&&y+1>player.y)return false;
@@ -1186,7 +1219,7 @@ body.in-nether #game-wrap{background:#290f19}
   function mul(a,b){let o=new Float32Array(16);for(let col=0;col<4;col++)for(let row=0;row<4;row++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+row]*b[col*4+k];o[col*4+row]=s}return o}
   function vpMatrix(w,h){
     const yaw=player.yaw,pitch=player.pitch,cp=Math.cos(pitch),sp=Math.sin(pitch),cy=Math.cos(yaw),sy=Math.sin(yaw);
-    const forward=[sy*cp,sp,-cy*cp],right=[cy,0,sy],up=[-sy*sp,cp,cy*sp],eye=[player.x,player.y+1.61,player.z];
+    const forward=[sy*cp,sp,-cy*cp],right=[cy,0,sy],up=[-sy*sp,cp,cy*sp],eye=[player.x,player.y+(isCrouching?1.27:1.61),player.z];
     const view=new Float32Array([right[0],up[0],-forward[0],0,right[1],up[1],-forward[1],0,right[2],up[2],-forward[2],0,-dot(right,eye),-dot(up,eye),dot(forward,eye),1]);
     const f=1/Math.tan(72*Math.PI/360),aspect=w/h,near=.07,far=140;
     const proj=new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+near)/(near-far),-1,0,0,2*far*near/(near-far),0]);
@@ -2361,10 +2394,13 @@ body.in-nether #game-wrap{background:#290f19}
         lavaCooldown=1.15;damage(3,'Lava burns');
       }
     }
-    if(gameMode!=='survival')return;
-    if(difficulty==='peaceful'){health=clamp(health+dt*.75,0,20);hunger=20;updateSurvivalHUD();return;}
+    if(gameMode!=='survival'){sprintHungerSpent=0;return;}
+    if(difficulty==='peaceful'){sprintHungerSpent=0;health=clamp(health+dt*.75,0,20);hunger=20;updateSurvivalHUD();return;}
     const moving=keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||Math.hypot(movement.x,movement.y)>.08;
-    hungerDrain+=dt*(moving?.067:.028);
+    // MineWorld uses a direct food meter rather than Minecraft saturation/exhaustion.
+    // Sprinting consumes extra food based on distance traveled, not just the toggle.
+    hungerDrain+=dt*(moving?.067:.028)+sprintHungerSpent;
+    sprintHungerSpent=0;
     if(hungerDrain>=1){hunger=clamp(hunger-Math.floor(hungerDrain),0,20);hungerDrain%=1;updateSurvivalHUD();markSave();}
     hungerPulse+=dt;healPulse+=dt;
     if(hunger===0&&hungerPulse>=4){hungerPulse=0;damage(1,'Starving')}
@@ -2372,7 +2408,7 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function updateFlyButton(){$('fly-btn').textContent='✦ Flying: '+(player.fly?'On':'Off')}
   function start(){if(!started){started=true;requestAnimationFrame(render)}lastTime=performance.now();paused=false;$('welcome').classList.add('hidden');$('pause').classList.add('hidden');if(!isTouch&&canvas.requestPointerLock)canvas.requestPointerLock()?.catch?.(()=>{});toast('World ready — have fun!')}
-  function menu(){paused=true;cancelMining();mouseMiningHeld=false;keys.clear();movement.x=0;movement.y=0;touchHold.mine=false;touchHold.place=false;updateRenderSettingsUI();$('pause').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock();save()}
+  function menu(){paused=true;isSprinting=false;isCrouching=false;updateMovementUI();cancelMining();mouseMiningHeld=false;keys.clear();movement.x=0;movement.y=0;touchHold.mine=false;touchHold.place=false;updateRenderSettingsUI();$('pause').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock();save()}
   function jump(){if(paused)return;if(mount){mountLift=.28;return;}if(player.fly){player.y+=.7;return}if(player.ground){player.vy=8;player.ground=false}}
   const RIDE_KINDS={horse:{speed:10,saddle:true},donkey:{speed:7,saddle:true},mule:{speed:8,saddle:true},camel:{speed:8,saddle:true},llama:{speed:3,saddle:false,unsteerable:true},pig:{speed:5,saddle:true,control:'carrotStick'},strider:{speed:6,saddle:true,control:'fungusStick'},skeleton_horse:{speed:10,saddle:false},zombie_horse:{speed:9,saddle:true},happy_ghast:{speed:10,harness:true,flying:true}};
   const VEHICLE_KINDS=new Set(['boat','raft','minecart','spruceBoat','cherryBoat','chestMinecart','hopperMinecart','furnaceMinecart']);
@@ -3098,6 +3134,8 @@ body.in-nether #game-wrap{background:#290f19}
     keys.add(e.code);
     if(e.code==='Space'&&!e.repeat)jump();
     if(e.code==='KeyE'&&!e.repeat)toggleInventory();
+    if(e.code==='KeyG'&&!e.repeat)toggleMovementMode('sprint');
+    if(e.code==='KeyX'&&!e.repeat)toggleMovementMode('crouch');
     if(e.code==='KeyF'&&!e.repeat){if(gameMode==='survival'){toast('Flying is Creative only');}else{player.fly=!player.fly;player.vy=0;updateFlyButton();toast(player.fly?'Fly mode on':'Fly mode off')}}
     if(e.code==='KeyQ'&&!e.repeat)eatFood();if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);else openVillage();}if(e.code==='KeyR'&&!e.repeat)attackMob(aimMob);if(e.code==='KeyM'&&!e.repeat)tryRide();if(e.code==='ShiftLeft'&&mount&&!e.repeat)dismount();if(e.code==='KeyI'&&!e.repeat)openGear();
     if(e.code.startsWith('Digit')){const i=Number(e.code.slice(5))-1;if(i>=0&&i<9)selectHotbarSlot(i)}
@@ -3132,6 +3170,8 @@ body.in-nether #game-wrap{background:#290f19}
   stick.addEventListener('pointerup',resetStick);stick.addEventListener('pointercancel',resetStick);
   $('attack-btn').addEventListener('pointerdown',e=>{e.preventDefault();attackMob(aimMob)});
   $('jump-btn').addEventListener('pointerdown',e=>{e.preventDefault();jump()});
+  $('touch-sprint-btn').addEventListener('click',e=>{e.preventDefault();if(!paused)toggleMovementMode('sprint')});
+  $('touch-crouch-btn').addEventListener('click',e=>{e.preventDefault();if(!paused)toggleMovementMode('crouch')});
   for(const [button,verb] of [['mine-btn','mine'],['place-btn','place']]){
     const b=$(button);
     b.addEventListener('pointerdown',e=>{if(paused)return;touchHold[verb]=true;if(verb==='mine')performMine();else performPlace();b.setPointerCapture(e.pointerId);e.preventDefault()});
