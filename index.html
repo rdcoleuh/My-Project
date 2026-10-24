@@ -339,7 +339,7 @@ body.in-nether #game-wrap{background:#290f19}
 @media(max-height:650px){#pause{align-items:flex-start}#pause .mw-pause-menu{max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}}
 
 </style>
-<title>MineWorld 4.5 — Classic-Style Pixel Texture Refinement</title>
+<title>MineWorld 4.6 — Authentic-Looking Original Pixel Blocks</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -565,7 +565,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v4.5 · CLASSIC 16px BLOCKS · 64-STACK INVENTORY</div>
+  <div class="version">MINEWORLD v4.6 · CLASSIC 16px BLOCKS · 64-STACK INVENTORY</div>
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./stack-inventory.js"></script>
@@ -986,11 +986,13 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function pushFace(a,x,y,z,b,f,biomeName=''){
     const face=f.n[1]===1?0:(f.n[1]===-1?2:1);
-    const shade=f.shade*(.95+rand(x*37,z*41+y*23)*.10);
+    // Flat directional shading preserves recognisable source pixels instead of washing them with location noise.
+    const shade=f.shade;
     const vs=f.v;
     // Biome-aware grass & oak foliage colors. Textures are original and remain 16-pixel crisp.
     let tint=[1,1,1];
-    if((b===1||b===6)&&dimension==='overworld'){
+    // Tint grassy TOP faces and foliage only. Brown dirt underneath stays brown.
+    if((b===6||b===1&&face===0)&&dimension==='overworld'){
       if(/Savanna|Badlands|Desert/.test(biomeName))tint=[1.08,.95,.68];
       else if(/Swamp|Mangrove/.test(biomeName))tint=[.72,.86,.72];
       else if(/Taiga|Grove|Snowy/.test(biomeName))tint=[.80,.95,.85];
@@ -1016,7 +1018,8 @@ body.in-nether #game-wrap{background:#290f19}
         // Outside a chunk, read adjacent terrain without forcing an entire world mesh.
         const near=nx>=ax&&nx<ax+CHUNK&&nz>=az&&nz<az+CHUNK&&ny>=0&&ny<H?
           data[((nx-ax)*CHUNK+(nz-az))*H+ny]:get(nx,ny,nz);
-        if(near&&!(b!==7&&near===7)&&!(b===9&&near!==9)&&!(b>=139&&b<=154))continue;
+        // Draw the face behind transparent glass so panes really reveal neighboring blocks.
+        if(near&&!(b!==7&&near===7)&&!(b===9&&near!==9)&&!(near===9&&b!==9)&&!(b>=139&&b<=154))continue;
         if(b===7&&near===7)continue;
         pushFace(faces,x,y,z,b,face,tintBiomes?tintBiomes[dx*CHUNK+dz]:'');
       }
@@ -1030,7 +1033,9 @@ body.in-nether #game-wrap{background:#290f19}
   const vs=`attribute vec3 aPos;attribute vec3 aColor;attribute vec2 aUV;uniform mat4 uVP;varying vec3 vColor;varying vec3 vPos;varying vec2 vUV;void main(){vColor=aColor;vPos=aPos;vUV=aUV;gl_Position=uVP*vec4(aPos,1.0);}`;
   const fs=`precision mediump float;varying vec3 vColor;varying vec3 vPos;varying vec2 vUV;uniform vec3 uEye;uniform vec3 uSky;uniform sampler2D uAtlas;uniform float uTextured;void main(){
     float d=distance(vPos,uEye);float fog=smoothstep(25.0,83.0,d);
-    vec3 blockColor=texture2D(uAtlas,vUV).rgb*vColor;
+    vec4 tex=texture2D(uAtlas,vUV);
+    if(uTextured>0.5 && tex.a<0.12)discard;
+    vec3 blockColor=tex.rgb*vColor;
     vec3 c=mix(mix(vColor,blockColor,uTextured),uSky,fog);
     gl_FragColor=vec4(c,1.0);
   }`;
