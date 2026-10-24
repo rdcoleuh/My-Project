@@ -14,6 +14,8 @@
     119:make(.5,0,.5,15.5,14,15.5), // treasure chest: 15x14x15
     120:make(.5,0,.5,15.5,14,15.5), // opened chest
     129:make(1,0,1,15,16,15), // dragon egg: inset
+    63:make(6,0,6,10,16,10), // Pointed dripstone simplified thin spire
+    70:make(0,0,0,16,14,16), // Soul sand: 14/16 high, per Wiki
     59:make(5,0,5,11,10,11), // Lantern: narrow decorative metal body
     62:make(1,0,1,15,2,15), // Glow lichen: a thin surface-like layer (simplified orientation)
     77:make(6,0,6,10,12,10), // Crimson roots: low spindly vegetation
