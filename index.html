@@ -297,7 +297,7 @@ body.in-nether #game-wrap{background:#290f19}
 #hotbar .hot-item-icon{font-size:23px;height:25px;display:grid;place-items:center}
 #hotbar .hot-item span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
-<title>MineWorld 3.8 — Pocket Crafting, Workbench & Biomes</title>
+<title>MineWorld 3.9 — Collected Item Hotbar</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -378,8 +378,8 @@ body.in-nether #game-wrap{background:#290f19}
         <div class="inventory-bar"><strong>🎒 Backpack · 36 Slots Per Page</strong><input id="inventory-search" class="inventory-search" placeholder="Find items…" aria-label="Search inventory"></div>
         <div id="inventory-grid" class="inventory-grid" role="group" aria-label="Inventory item stacks"></div>
         <div class="inventory-pages"><button class="ui-button" id="inventory-prev" type="button">←</button><span id="inventory-page">Page 1</span><button class="ui-button" id="inventory-next" type="button">→</button></div>
-        <div class="inventory-actions"><span id="inventory-detail">Select an item stack</span><button id="item-equip" class="ui-button" type="button">Equip / Hotbar</button><button id="item-use" class="ui-button" type="button">Eat / Use</button><button id="item-drop" class="ui-button" type="button">Drop 1</button><button id="item-drop-stack" class="ui-button" type="button">Drop Stack</button></div>
-        <p id="inventory-help">Tap a stack to select it. Blocks can be assigned to the hotbar; armor can be equipped. Stacks are organized into pages. Drag an item onto another to reorder it.</p>
+        <div class="inventory-actions"><span id="inventory-detail">Select an item stack</span><button id="item-equip" class="ui-button" type="button">Equip / Assign Hotbar</button><button id="item-use" class="ui-button" type="button">Eat / Use</button><button id="item-drop" class="ui-button" type="button">Drop 1</button><button id="item-drop-stack" class="ui-button" type="button">Drop Stack</button></div>
+        <p id="inventory-help">Survival hotbar slots start empty. Items you collect fill them automatically. Select a stack, then tap Equip / Hotbar to put it in your highlighted slot. Armor can be equipped. Drag item stacks to reorder them.</p>
       </section>
       <div id="resources-list" class="resources-list" aria-live="polite"></div>
       <div class="gear-options"><button id="gear-pickaxe" class="ui-button">⛏ Pickaxe</button><button id="gear-sword" class="ui-button">⚔ Sword</button><button id="gear-hoe" class="ui-button">🌾 Hoe</button><button id="gear-axe" class="ui-button">🪓 Axe</button><button id="gear-shovel" class="ui-button">⛏ Shovel</button><button id="gear-none" class="ui-button">✊ Hands</button></div>
@@ -764,6 +764,10 @@ body.in-nether #game-wrap{background:#290f19}
   for(const key of ['paper','map','potato','compass','apple','goldenApple','wheat','spruceSapling','arrow','crossbow','sentryTrim','fishingRod','suspiciousSand','potterySherd','brick','bread','saddle','cherrySapling','resin','books','paleSapling','rope','dye','wayfinderTrim','duneTrim','rails','nameTag','pumpkinSeeds','goldNugget','obsidian','flintSteel','fireCharge','goldenGear','sugar','glassBottle','wildTrim','bamboo','mushroom','ribTrim','netherWart','pigstep','snoutTrim','gildedBlackstone','enchantedGear','spireTrim','beetrootSeeds','healingPotion','eyeTrim'])bag[key]=0;
   for(const key of ['wheat','wheatSeeds','carrot','potato','beetroot','beetrootSeeds','bread','goldenCarrot','pumpkinPie','rottenFlesh','chicken','mutton','steak','sweetBerries','fish','tropicalFish','flint','leather','rabbitHide','rabbitFoot','wool','feather','clay','stone','granite','terracotta','inkSac','bookQuill','turtleScute','compass','lavaBucket','boat','tripwireHook','rabbitStew','glowstone','fish','wool','cookedFish','enchantedRod','tippedArrow','ironHelmet','ironChestplate','diamondBoots','diamondChestplate','shield','leatherCap','leatherTunic','leatherPants','leatherBoots','enchantedBook','wool','shears','bed','painting','stoneBricks','polishedStone','quartzBlock','glazedTerracotta','stonePickaxe','ironAxe','ironPickaxe','diamondAxe','diamondPickaxe','ironSword','diamondSword','experienceBottle','banner','globeBanner'])if(!Object.hasOwn(bag,key))bag[key]=0;
   for(const r of catalog.recipes)for(const key of Object.keys({...r.cost,...r.give}))if(!key.startsWith('block:')&&!Object.hasOwn(bag,key))bag[key]=0;
+  // Tool recipes are real collected items and persist in the Survival backpack/hotbar.
+  for(const tier of ['wooden','stone','iron','gold','diamond','netherite'])for(const kind of ['Pickaxe','Axe','Shovel','Hoe','Sword']){
+    const key=tier+kind;if(!Object.hasOwn(bag,key))bag[key]=0;
+  }
   const inventoryOrder=[],armor={head:'',chest:'',legs:'',feet:''};
   let backpackPage=0,selectedStackKey='',backpackFilter='',mount=null,vehicles=[],vehicleSerial=0,mountLift=0,stabledMounts=[];
   const toolLevels={none:0,wood:1,stone:2,iron:3,diamond:4,netherite:5};
@@ -1349,6 +1353,11 @@ body.in-nether #game-wrap{background:#290f19}
     if(!Object.entries(cost).every(([key,n])=>amount(key)>=n)){toast('Need more resources');return}
     for(const [key,n]of Object.entries(cost))addResource(key,-n);
     if(recipe.give)for(const [key,n]of Object.entries(recipe.give))addResource(key,n);
+    if((recipe.tool||recipe.giveEquipment)&&(!recipe.give||!Object.keys(recipe.give).length)){
+      const [kind,tier]=recipe.tool||[recipe.giveEquipment.kind,recipe.giveEquipment.tier];
+      const gearKey=(tier==='wood'?'wooden':tier)+kind[0].toUpperCase()+kind.slice(1);
+      addResource(gearKey,1);
+    }
     if(recipe.tool){tools[recipe.tool[0]]=recipe.tool[1];equipped=recipe.tool[0]}
     if(recipe.giveEquipment){tools[recipe.giveEquipment.kind]=recipe.giveEquipment.tier;equipped=recipe.giveEquipment.kind;}
     updateHotbar();updateSurvivalHUD();renderGear();markSave();toast('Crafted '+recipe.name.replace(/^[^ ]+ /,''));
@@ -2217,7 +2226,7 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function grantLoot(drop,count){
     if(gameMode!=='survival'||!(drop in bag)||!Number.isInteger(count)||count<1||count>8)return false;
-    bag[drop]=clamp(bag[drop]+count,0,999);updateSurvivalHUD();markSave();toast('Collected '+count+' '+drop);return true;
+    addResource(drop,count);updateSurvivalHUD();updateHotbar();markSave();toast('Collected '+count+' '+drop);return true;
   }
   function syncMobs(data){
     if(!Array.isArray(data)||data.length>30)return false;
@@ -2753,7 +2762,7 @@ body.in-nether #game-wrap{background:#290f19}
     '<button class="mw-pixel-btn" id="mw-multi" type="button">Multiplayer</button>'+
     '<button class="mw-pixel-btn" id="mw-creative" type="button">Creative World</button>'+
     '<div class="mw-2col"><button class="mw-pixel-btn" id="mw-options" type="button">Options…</button><button class="mw-pixel-btn" id="mw-return" type="button">World Atlas</button></div>'+
-    '</div><div class="mw-footer"><small>MineWorld 3.8 · Independent browser game</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
+    '</div><div class="mw-footer"><small>MineWorld 3.9 · Independent browser game</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
   welcome.appendChild(main);
   const worlds=document.createElement('div');
   worlds.id='mw-world-screen';worlds.className='mw-screen mw-screen--sub';
