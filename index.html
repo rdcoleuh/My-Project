@@ -568,6 +568,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div class="version">MINEWORLD v4.6 · CLASSIC 16px BLOCKS · 64-STACK INVENTORY</div>
 </div>
 <script src="./pixel-materials.js"></script>
+<script src="./chunk-planner.js"></script>
 <script src="./stack-inventory.js"></script>
 <script>
 /* MineWorld original procedural 16x16 voxel pixel-art atlas. No external assets. */
@@ -800,10 +801,24 @@ body.in-nether #game-wrap{background:#290f19}
   function migrateLegacySave(){
     try{const legacy=localStorage.getItem(STORAGE);if(!legacy)return;const data=JSON.parse(legacy);const key=slotKey(data?.gameMode==='survival'?'survival':'creative');if(!localStorage.getItem(key))localStorage.setItem(key,legacy);if(!localStorage.getItem(LAST_SLOT))localStorage.setItem(LAST_SLOT,data?.gameMode==='survival'?'survival':'creative')}catch(e){console.warn('Legacy world migration unavailable:',e)}
   }
-  const chunkCache=new Map(), visibleChunks=[];
+  const chunkCache=new Map(), visibleChunks=[],desiredChunkKeys=new Set();
+  const chunkPlanner=window.MineWorldChunkPlanner;
+  if(!chunkPlanner)throw Error('Chunk render planner unavailable');
+  const RENDER_PREFS='mineworld-render-distance-v1';
+  function loadRenderPrefs(){
+    let value={chunks:matchMedia('(pointer: coarse)').matches?18:32,auto:true};
+    try{const saved=JSON.parse(localStorage.getItem(RENDER_PREFS)||'null');
+      if(saved&&typeof saved==='object'){
+        value.chunks=chunkPlanner.limit(saved.chunks);
+        value.auto=saved.auto!==false;
+      }
+    }catch(_){}
+    return value;
+  }
+  const initialRenderPrefs=loadRenderPrefs();
+  let targetChunks=initialRenderPrefs.chunks,activeChunks=targetChunks,autoAdjustChunks=initialRenderPrefs.auto;
   let lastChunkX=-1,lastChunkZ=-1,streamQueue=[],streamClock=0;
-  const renderRadius=matchMedia('(pointer: coarse)').matches?1:2;
-  const MAX_CHUNKS=matchMedia('(pointer: coarse)').matches?42:70;
+  let currentFPS=0,frameSamples=0,frameTimeSum=0;
   const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace','Snow','Ice','Packed Ice','Sandstone','Terracotta','Red Sand','Red Terracotta','Podzol','Coarse Dirt','Spruce Log','Spruce Leaves','Birch Log','Birch Leaves','Acacia Log','Acacia Leaves','Jungle Log','Jungle Leaves','Mangrove Log','Mangrove Leaves','Cherry Log','Cherry Leaves','Pale Oak Log','Pale Oak Leaves','Cactus','Bamboo','Moss','Mud','Red Mushroom Cap','Brown Mushroom Cap','Netherrack','Obsidian','Dark Planks','Stone Bricks','Chiseled Sandstone','Prismarine','Copper','Clay','Deepslate','Lantern','Hay Bale','Cobblestone','Glow Lichen','Dripstone','Sculk','Nether Rock','Lava','Basalt','Blackstone','Polished Blackstone','Soul Sand','Soul Soil','Nether Bricks','Nether Wart','Chiseled Nether Bricks','Crimson Nylium','Warped Nylium','Crimson Roots','Crimson Stem','Nether Wart Block','Warped Stem','Warped Wart Block','Warped Roots','Quartz Ore','Nether Gold Ore','Ancient Debris','Bone Block','Portal','Magma Block','Soul Fire','Shroomlight','Gilded Blackstone','Gravel','Twisting Vines','Weeping Vines','Copper Ore','Gold Ore','Redstone Ore','Lapis Ore','Diamond Ore','Emerald Ore','Deepslate Coal Ore','Deepslate Iron Ore','Deepslate Copper Ore','Deepslate Gold Ore','Deepslate Redstone Ore','Deepslate Lapis Ore','Deepslate Diamond Ore','Deepslate Emerald Ore','Redstone Lamp','Lapis Block','Emerald Block','Diamond Block','Copper Block','Gold Block','Iron Block','Coal Block','Redstone Block','Raw Mineral Crate','Treasure Chest','Opened Chest','End Stone','Chorus Plant','Chorus Flower','End Crystal','End Portal Frame','End Portal','End Gateway','End Rod','Dragon Egg','End Stone Bricks','Purpur Block','Purpur Pillar','Shulker Shell Block','Dragon Head','Netherite Block','Smithing Table','Farmland','Hydrated Farmland','Wheat Sprouts','Wheat Growing','Wheat Tall','Ripe Wheat','Carrot Sprouts','Carrot Growing','Carrot Tall','Ripe Carrots','Potato Sprouts','Potato Growing','Potato Tall','Ripe Potatoes','Beetroot Sprouts','Beetroot Growing','Beetroot Tall','Ripe Beetroot','Composter','Blast Furnace','Smoker','Cartography Table','Brewing Stand','Barrel','Fletching Table','Cauldron','Lectern','Stonecutter','Loom','Toolsmith Smithing Table','Grindstone','Crafting Table'];
   const HOT=[1,2,3,5,12,13,14,15,11];
   const HOTSETS=[
@@ -893,11 +908,20 @@ body.in-nether #game-wrap{background:#290f19}
   };
   const movement={x:0,y:0}, touchHold={mine:false,place:false}, timers={mine:0,place:0};
   const isTouch=matchMedia('(pointer: coarse)').matches;
+  let dynamicResolution=isTouch?1.12:1.6;
+  const minResolution=isTouch?.70:.88,maxResolution=isTouch?1.16:1.68;
   let sky=[.57,.78,.91];
   const idx=(x,y,z)=>(x*D+z)*H+y;
   const inside=(x,y,z)=>Number.isInteger(x)&&Number.isInteger(y)&&Number.isInteger(z)&&x>=0&&x<W&&z>=0&&z<D&&y>=0&&y<H;
   const chunkKey=(cx,cz)=>cx+','+cz;
   const chunkIndex=(x,y,z)=>((x%CHUNK)*CHUNK+(z%CHUNK))*H+y;
+  function markAdjacentMeshesDirty(cx,cz){
+    for(const dx of [-1,0,1])for(const dz of [-1,0,1]){
+      if(dx===0&&dz===0)continue;
+      const other=chunkCache.get(chunkKey(cx+dx,cz+dz));
+      if(other)other.dirty=true;
+    }
+  }
   function loadChunk(cx,cz){
     if(cx<0||cz<0||cx>=Math.ceil(W/CHUNK)||cz>=Math.ceil(D/CHUNK))return null;
     const key=chunkKey(cx,cz);let chunk=chunkCache.get(key);
@@ -908,12 +932,15 @@ body.in-nether #game-wrap{background:#290f19}
     else{
       data=window.MineWorldBiomes.generateChunk({cx,cz,H,SEA,edits:savedEdits});
       window.MineWorldEnd.stampStronghold({data,cx,cz,H,eyeCount:eyesPlaced});
-      // Player-built edits take precedence over the stronghold structure, too.
+      // Player-built edits override seeded buildings.
       for(const [i,b] of savedEdits){const x=Math.floor(i/(W*H)),z=Math.floor(i/H)%W,y=i%H;
         if(Math.floor(x/CHUNK)===cx&&Math.floor(z/CHUNK)===cz)data[chunkIndex(x,y,z)]=b;}
     }
     chunk={cx,cz,data,vbo:null,count:0,dirty:true,last:performance.now()};
-    chunkCache.set(key,chunk);return chunk;
+    chunkCache.set(key,chunk);
+    // Newly loaded adjacent chunks invalidate border faces, handled over subsequent frames.
+    markAdjacentMeshesDirty(cx,cz);
+    return chunk;
   }
   const get=(x,y,z)=>{
     if(!inside(x,y,z))return 0;
@@ -923,8 +950,17 @@ body.in-nether #game-wrap{background:#290f19}
   const set=(x,y,z,b)=>{
     if(!inside(x,y,z))return;
     const chunk=loadChunk(Math.floor(x/CHUNK),Math.floor(z/CHUNK));
-    chunk.data[chunkIndex(x,y,z)]=b;chunk.dirty=true;
+    if(chunk){chunk.data[chunkIndex(x,y,z)]=b;chunk.dirty=true;}
   };
+  // No terrain generation or network access during chunk meshing.
+  function blockForMesh(x,y,z){
+    if(!inside(x,y,z))return 0;
+    const key=chunkKey(Math.floor(x/CHUNK),Math.floor(z/CHUNK));
+    if(!desiredChunkKeys.has(key))return 0;
+    const chunk=chunkCache.get(key);
+    if(!chunk||!visibleChunks.includes(chunk))return 0;
+    return chunk.data[chunkIndex(x,y,z)];
+  }
   function dirtyAround(x,z){
     const cx=Math.floor(x/CHUNK),cz=Math.floor(z/CHUNK);
     for(const dx of (x%CHUNK===0?[-1,0]:x%CHUNK===CHUNK-1?[0,1]:[0]))
@@ -934,32 +970,45 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function unloadAllChunks(){
     for(const c of chunkCache.values())if(c.vbo)gl.deleteBuffer(c.vbo);
-    chunkCache.clear();visibleChunks.length=0;lastChunkX=-1;lastChunkZ=-1;streamQueue=[];
+    chunkCache.clear();visibleChunks.length=0;desiredChunkKeys.clear();
+    lastChunkX=-1;lastChunkZ=-1;streamQueue=[];
   }
   function scheduleChunks(force=false){
     const cx=Math.floor(player.x/CHUNK),cz=Math.floor(player.z/CHUNK);
     if(!force&&cx===lastChunkX&&cz===lastChunkZ)return;
     lastChunkX=cx;lastChunkZ=cz;
-    const list=[];
-    for(let dx=-renderRadius;dx<=renderRadius;dx++)for(let dz=-renderRadius;dz<=renderRadius;dz++){
-      const nx=cx+dx,nz=cz+dz;
-      if(nx<0||nz<0||nx>=Math.ceil(W/CHUNK)||nz>=Math.ceil(D/CHUNK))continue;
-      list.push({cx:nx,cz:nz,dist:dx*dx+dz*dz});
-    }
-    list.sort((a,b)=>a.dist-b.dist);
+    const list=chunkPlanner.choose(cx,cz,activeChunks,Math.ceil(W/CHUNK),Math.ceil(D/CHUNK));
+    desiredChunkKeys.clear();
+    for(const entry of list)desiredChunkKeys.add(chunkKey(entry.cx,entry.cz));
     streamQueue=list.filter(c=>!chunkCache.has(chunkKey(c.cx,c.cz)));
     visibleChunks.length=0;
-    for(const desc of list){const c=chunkCache.get(chunkKey(desc.cx,desc.cz));if(c)visibleChunks.push(c);}
+    for(const entry of list){
+      const existing=chunkCache.get(chunkKey(entry.cx,entry.cz));
+      if(existing)visibleChunks.push(existing);
+    }
+    for(const existing of visibleChunks)existing.dirty=true;
   }
-  function streamChunks(max=2){
+  function pruneChunkCache(){
+    const cap=Math.min(66,Math.max(22,targetChunks+12));
+    if(chunkCache.size<=cap)return;
+    const keep=new Set(visibleChunks);
+    const removable=[...chunkCache.values()].filter(c=>!keep.has(c)&&
+      !(Math.abs(c.cx-lastChunkX)<=1&&Math.abs(c.cz-lastChunkZ)<=1));
+    removable.sort((a,b)=>a.last-b.last);
+    for(const c of removable){
+      if(chunkCache.size<=cap)break;
+      if(c.vbo)gl.deleteBuffer(c.vbo);
+      chunkCache.delete(chunkKey(c.cx,c.cz));
+    }
+  }
+  function streamChunks(max=1){
+    let loaded=0;
     for(let i=0;i<max&&streamQueue.length;i++){
-      const c=streamQueue.shift();const chunk=loadChunk(c.cx,c.cz);if(chunk&&!visibleChunks.includes(chunk))visibleChunks.push(chunk);
+      const desc=streamQueue.shift(),chunk=loadChunk(desc.cx,desc.cz);
+      if(chunk&&!visibleChunks.includes(chunk)){visibleChunks.push(chunk);loaded++;}
     }
-    if(chunkCache.size>MAX_CHUNKS){
-      const active=new Set(visibleChunks);const removable=[...chunkCache.values()].filter(c=>!active.has(c)&&!(Math.abs(c.cx-lastChunkX)<=1&&Math.abs(c.cz-lastChunkZ)<=1));
-      removable.sort((a,b)=>a.last-b.last);
-      for(const c of removable){if(chunkCache.size<=MAX_CHUNKS)break;if(c.vbo)gl.deleteBuffer(c.vbo);chunkCache.delete(chunkKey(c.cx,c.cz));}
-    }
+    pruneChunkCache();
+    return loaded;
   }
   const solid=b=>b!==0&&b!==7&&b!==66&&b!==87&&b!==89&&b!==126&&!(b>=139&&b<=154);
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -1017,7 +1066,7 @@ body.in-nether #game-wrap{background:#290f19}
         const nx=x+face.n[0],ny=y+face.n[1],nz=z+face.n[2];
         // Outside a chunk, read adjacent terrain without forcing an entire world mesh.
         const near=nx>=ax&&nx<ax+CHUNK&&nz>=az&&nz<az+CHUNK&&ny>=0&&ny<H?
-          data[((nx-ax)*CHUNK+(nz-az))*H+ny]:get(nx,ny,nz);
+          data[((nx-ax)*CHUNK+(nz-az))*H+ny]:blockForMesh(nx,ny,nz);
         // Draw the face behind transparent glass so panes really reveal neighboring blocks.
         if(near&&!(b!==7&&near===7)&&!(b===9&&near!==9)&&!(near===9&&b!==9)&&!(b>=139&&b<=154))continue;
         if(b===7&&near===7)continue;
