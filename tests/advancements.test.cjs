@@ -81,7 +81,7 @@ test('not-yet-implemented advancements stay visible without fake auto-unlock',()
  assert.equal(a.isAvailable('This Boat Has Legs'),false);
 });
 test('old or malformed world progress is safely ignored and limited',()=>{
- const a=rules();a.restore({completed:['story/minecraft','invalid','nether/root',null],foods:[null,15,'bread']});
+ const a=rules();a.restore({completed:['story/minecraft','invalid','nether/nether',null],foods:[null,15,'bread']});
  assert.equal(a.has('Minecraft'),true);
  assert.equal(a.has('Nether'),true);
  assert.equal(a.count,2);
