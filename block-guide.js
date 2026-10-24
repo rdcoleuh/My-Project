@@ -70,6 +70,8 @@ const dims=id=>{
 };
 const draw=(canvas,id,face)=>{
  const ctx=canvas.getContext('2d');if(!ctx)return;
+ // Show locally imported pixel art whenever the private texture experiment is active.
+ if(window.MineWorldLocalTextures?.drawFace(ctx,id,face))return;
  const img=ctx.createImageData(16,16),paint=window.MineWorldPixelMaterials?.paint;
  if(!paint)return;
  for(let y=0;y<16;y++)for(let x=0;x<16;x++){
