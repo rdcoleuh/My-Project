@@ -446,7 +446,7 @@ body.in-nether #game-wrap{background:#290f19}
             </label>
           </div>
           <div class="mw-render-panel" aria-label="Rendering and performance settings">
-            <label for="render-chunks-slider" class="mw-render-heading">Render distance <output id="render-chunks-value" for="render-chunks-slider">25 chunks</output></label>
+            <label for="render-chunks-slider" class="mw-render-heading">Visible chunks <output id="render-chunks-value" for="render-chunks-slider">25 chunks</output></label>
             <input type="range" id="render-chunks-slider" min="10" max="50" step="1" value="25" aria-label="Maximum nearby map chunks to render">
             <div class="mw-render-scale"><span>10 · Faster</span><span>50 · Farther</span></div>
             <label class="mw-render-auto"><input type="checkbox" id="render-chunks-auto" checked> Automatically lower load if FPS drops</label>
@@ -1040,7 +1040,7 @@ body.in-nether #game-wrap{background:#290f19}
     const status=(visibleChunks.length+' loaded / '+activeChunks+' active'+
       (autoAdjustChunks&&activeChunks<targetChunks?' · Auto limited from '+targetChunks:'')+
       (currentFPS>0?' · ~'+Math.round(currentFPS)+' FPS':''))+
-      ' · 16×16 blocks/chunk';
+      ' · 16×16 blocks/chunk · '+(streamQueue.length?'Streaming '+streamQueue.length:'Ready');
     for(const id of ['render-chunks-slider','mw-render-chunks-slider']){
       const input=document.getElementById(id);
       if(input)input.value=String(targetChunks);
@@ -2832,7 +2832,12 @@ body.in-nether #game-wrap{background:#290f19}
     if(paused)return;
     tuneFrameBudget(frameMs);
     dayClock+=dt;
-    scheduleChunks();streamChunks(isTouch?1:(frameMs<20?2:1));
+    scheduleChunks();
+    // Slow devices stream fewer chunks per frame to keep input responsive.
+    streamClock++;
+    const underPressure=currentFPS>0&&currentFPS<(isTouch?34:40);
+    if(!underPressure||streamClock%(isTouch?3:2)===0)
+      streamChunks(isTouch?1:(frameMs<17&&currentFPS>48?2:1));
     move(dt);
     scheduleChunks();
     updateSurvival(dt);
@@ -2860,7 +2865,10 @@ body.in-nether #game-wrap{background:#290f19}
     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uAtlas,0);
     // Rebuild at most one mobile mesh (two on desktop) per animation frame.
     // Existing meshes remain visible until their replacement finishes.
-    const meshStart=performance.now(),meshCap=isTouch?1:2,meshTimeBudget=isTouch?3.5:6;
+    const meshStart=performance.now();
+    const slowDevice=currentFPS>0&&currentFPS<(isTouch?30:38);
+    const meshCap=isTouch?1:(slowDevice?1:2);
+    const meshTimeBudget=slowDevice?(isTouch?2.2:3.8):(isTouch?3.5:6);
     let meshesUpdated=0;
     for(const chunk of visibleChunks){
       const dx=(chunk.cx+.5)*CHUNK-player.x,dz=(chunk.cz+.5)*CHUNK-player.z;
@@ -3229,7 +3237,7 @@ body.in-nether #game-wrap{background:#290f19}
     '<div class="mw-render-scale"><span>10 · Faster</span><span>50 · Farther</span></div>'+
     '<label class="mw-render-auto"><input id="mw-render-chunks-auto" type="checkbox" checked> Automatically optimize rendering for this device</label>'+
     '<small class="mw-render-status" id="mw-render-chunks-status">16 × 16 blocks per chunk. Loading performance settings…</small></div>'+
-    '<p>Performance adapts to your device and the world. Setting 50 is a maximum, not a promise of 60 FPS.</p>'+
+    '<p>The slider controls the total nearby 16×16 chunks (not a 50-chunk radius). Automatic optimization reduces load if FPS falls; 50 chunks cannot guarantee lag-free play on every device.</p>'+
     '<p>Creative and Survival are separate saves. Minecraft-inspired art is generated independently; official Minecraft files are not included.</p></div>'+
     '<button type="button" class="mw-pixel-secondary mw-back" id="mw-back-options">← Back to Main Menu</button></div>';
   welcome.appendChild(options);
