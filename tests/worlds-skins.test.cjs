@@ -109,7 +109,7 @@ test('skin face texels are distinct, nearest-neighbor GPU texture upload is used
   TEXTURE_MAG_FILTER:9,NEAREST:10,createTexture:()=>({}),
   bindTexture(){},pixelStorei(){},texParameteri(...v){calls.push(v)},texImage2D(){calls.push(['upload'])}};
  skin.makeTexture(gl);
- assert.ok(calls.some(v=>v[0]===gl.TEXTURE_MIN_FILTER&&v[2]===gl.NEAREST));
+ assert.ok(calls.some(v=>v[1]===gl.TEXTURE_MIN_FILTER&&v[2]===gl.NEAREST));
  assert.ok(calls.some(v=>v[0]==='upload'));
 });
 test('worlds and skin UI files are loaded, full-size block texel density is preserved, and save keys persist',()=>{
