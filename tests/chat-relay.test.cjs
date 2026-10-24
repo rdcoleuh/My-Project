@@ -1,4 +1,4 @@
-/* MineWorld 5.8: simulated two-browser PeerJS room chat integration.
+/* MineWorld 5.9: simulated two-browser PeerJS room chat integration.
  * No external network, DOM, assets, or dependencies. */
 const {test}=require('node:test'),assert=require('node:assert/strict'),
  fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
