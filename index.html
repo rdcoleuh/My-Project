@@ -1552,13 +1552,13 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function markSave(){dirtySave=true}
   function save(){
-    if(window.MineWorldMultiplayer?.isShared())return;
+    if(window.MineWorldMultiplayer?.isShared())return false;
     try{
       reconcileItemStacks();
       const edits=[...savedEdits.entries()];
       const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,experienceTotal,bedSpawn,weather:worldWeather,inventory:[...inventory],itemStacks:stackStore.snapshot(),survivalHotbar:[...survivalHotbar],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,saturation:hungerSaturation,exhaustion:hungerDrain,bag,tools,equipped,difficulty,dayClock,cameraMode,droppedItems:droppedItems.slice(0,80),armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:13});
-      localStorage.setItem(slotKey(gameMode),payload);localStorage.setItem(LAST_SLOT,gameMode);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';
-    }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';}
+      localStorage.setItem(slotKey(gameMode),payload);localStorage.setItem(LAST_SLOT,gameMode);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';return true;
+    }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';return false;}
   }
   function load(slot=gameMode){
     try{
@@ -3529,12 +3529,16 @@ body.in-nether #game-wrap{background:#290f19}
     if(!['survival','creative'].includes(next))return false;
     if(next===gameMode&&worldLibrary.current(next).id===id){if(play)start();return true;}
     if(window.MineWorldMultiplayer?.isShared()){toast('Leave multiplayer before switching worlds');return false;}
-    save();
+    if(!save()){toast('Save failed — world switch canceled to protect your progress');return false;}
     try{worldLibrary.select(next,id)}catch(err){toast(err.message);return false;}
     gameMode=next;try{localStorage.setItem(LAST_SLOT,next)}catch(_){}
     resetWorldInventory();seed=85721;seedLabel='85721';generate();
     if(!load(next)){setGameMode(next);save();}
-    else {setGameMode(next);dirtySave=false;}
+    else {
+      // Keep each world's selected difficulty instead of inheriting the last open world.
+      $('home-difficulty').value=difficulty;$('pause-difficulty').value=difficulty;
+      setGameMode(next);dirtySave=false;
+    }
     updateSeedLabel();updatePortalUI();updateVillagers();
     $('home-difficulty').value=difficulty;$('pause-difficulty').value=difficulty;
     toast('🌍 Opened '+worldLibrary.current(next).name);
@@ -3547,11 +3551,12 @@ body.in-nether #game-wrap{background:#290f19}
     try{
       const record=worldLibrary.create(next,name);
       if(!openNamedWorld(next,record.id,false))return false;
-      if(String(rawSeed||'').trim()){
-        seed=window.MineWorldBiomes.seedFrom(String(rawSeed).trim().slice(0,64));
-        seedLabel=String(rawSeed).trim().slice(0,64);
-        resetWorldInventory();generate();setGameMode(next);save();updateSeedLabel();
-      }
+      const chosenSeed=String(rawSeed||'').trim().slice(0,64)||String(1+Math.floor(Math.random()*99999998));
+      seed=window.MineWorldBiomes.seedFrom(chosenSeed);
+      seedLabel=chosenSeed;
+      resetWorldInventory();generate();setGameMode(next);
+      if(!save())toast('New world is open but browser storage is full — free space before leaving');
+      updateSeedLabel();
       if(play)start();
       return record;
     }catch(err){toast('Cannot create world: '+err.message);return false;}
