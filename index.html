@@ -994,7 +994,7 @@ body.in-nether #game-wrap{background:#290f19}
   const toolLevels={none:0,wood:1,stone:2,iron:3,diamond:4,netherite:5};
   const tools={pickaxe:'none',sword:'none',hoe:'none',axe:'none',shovel:'none'};
   let equipped='pickaxe',difficulty='normal',mobSerial=0,mobs=[],mobSpawnClock=0,mobAttackClock=0,aimMob=null,aimPlayer=null,attackCooldown=0,playerHitCooldown=0;
-  let lastMobSync=0;
+  let lastMobSync=0,preservedFarmAnimals=[];
   const animals=window.MineWorldAnimalBehavior;
   const animalModels=window.MineWorldAnimalModels;
   const SPECIES={
@@ -1620,10 +1620,7 @@ body.in-nether #game-wrap{background:#290f19}
       reconcileItemStacks();
       const edits=[...savedEdits.entries()];
       const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,experienceTotal,bedSpawn,weather:worldWeather,inventory:[...inventory],itemStacks:stackStore.snapshot(),survivalHotbar:[...survivalHotbar],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,saturation:hungerSaturation,exhaustion:hungerDrain,bag,tools,equipped,difficulty,dayClock,cameraMode,advancements:advancementEngine.snapshot(),
-        farmAnimals:mobs.filter(m=>['cow','sheep','pig','chicken'].includes(m.kind)&&m.dimension==='overworld').slice(0,24).map(m=>({
-          kind:m.kind,x:m.x,y:m.y,z:m.z,hp:m.hp,heading:m.heading,baby:!!m.baby,
-          growTimer:m.growTimer||0,sheared:!!m.sheared,breedCooldown:m.breedCooldown||0
-        })),
+        farmAnimals:dimension==='overworld'?snapshotFarmAnimals():preservedFarmAnimals,
         droppedItems:droppedItems.slice(0,80),armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:13});
       localStorage.setItem(slotKey(gameMode),payload);localStorage.setItem(LAST_SLOT,gameMode);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';return true;
     }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';return false;}
@@ -1712,18 +1709,8 @@ body.in-nether #game-wrap{background:#290f19}
         unloadAllChunks();scheduleChunks(true);streamChunks(5);mobs=[];
         if(dimension==='nether')spawnNetherWildlife();else spawnEndWildlife();
       }
-      if(dimension==='overworld'&&Array.isArray(s.farmAnimals)){
-        const verified=s.farmAnimals.filter(m=>m&&['cow','pig','sheep','chicken'].includes(m.kind)&&
-          Number.isFinite(m.x)&&m.x>2&&m.x<W-2&&Number.isFinite(m.z)&&m.z>2&&m.z<D-2&&
-          Number.isFinite(m.y)&&m.y>=1&&m.y<H-3&&Number.isFinite(m.hp)&&m.hp>0&&m.hp<=SPECIES[m.kind].hp).slice(0,24);
-        mobs=mobs.filter(m=>!['cow','sheep','pig','chicken'].includes(m.kind));
-        for(const v of verified)mobs.push({
-          id:++mobSerial,kind:v.kind,x:v.x,y:v.y,z:v.z,hp:v.hp,dimension:'overworld',
-          heading:Number.isFinite(v.heading)?v.heading:0,baby:!!v.baby,growTimer:Math.max(0,Math.min(1200,v.growTimer||0)),
-          sheared:!!v.sheared,breedCooldown:Math.max(0,Math.min(300,v.breedCooldown||0)),
-          step:2,attack:2,anger:0,windup:0
-        });
-      }
+      preservedFarmAnimals=Array.isArray(s.farmAnimals)?s.farmAnimals.slice(0,24):[];
+      if(dimension==='overworld'&&Array.isArray(s.farmAnimals))restoreFarmAnimals(preservedFarmAnimals);
       restoreStabledMounts();updatePortalUI();updateWeatherHUD();scheduleChunks(true);streamChunks(5);updateFlyButton();updateSeedLabel();dirtySave=false;
       advancementLoading=true;
       try{
@@ -1739,7 +1726,7 @@ body.in-nether #game-wrap{background:#290f19}
     stabledMounts.push(...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled})));
     const prev=dimension;
     const pos={x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch};
-    if(prev==='overworld'){overworldPosition=pos;overworldEdits=savedEdits;}
+    if(prev==='overworld'){overworldPosition=pos;overworldEdits=savedEdits;preservedFarmAnimals=snapshotFarmAnimals();}
     else if(prev==='nether'){netherPosition=pos;netherEdits=savedEdits;}
     else{endPosition=pos;endEdits=savedEdits;}
     const shift=(v,toNether)=>clamp(SPAWN+(v-SPAWN)*(toNether?1/8:8),7,W-8);
@@ -1759,7 +1746,7 @@ body.in-nether #game-wrap{background:#290f19}
     player.vy=0;player.ground=false;player.fly=false;
     player.yaw=saved?.yaw??pos.yaw;player.pitch=saved?.pitch??pos.pitch;
     mobs=[];mobSerial=0;mobSpawnClock=0;nearbyVillagers=[];
-    if(next==='overworld')spawnWildlife();else if(!window.MineWorldMultiplayer?.isGuest()){
+    if(next==='overworld'){spawnWildlife();restoreFarmAnimals(preservedFarmAnimals);}else if(!window.MineWorldMultiplayer?.isGuest()){
       if(next==='nether')spawnNetherWildlife();else spawnEndWildlife();
     }
     updatePortalUI();updateFlyButton();updateHotbar();markSave();window.MineWorldMultiplayer?.flushMobs();
@@ -2992,6 +2979,24 @@ body.in-nether #game-wrap{background:#290f19}
     }
     stabledMounts=remain;
   }
+  function snapshotFarmAnimals(){
+    return mobs.filter(m=>['cow','pig','sheep','chicken'].includes(m.kind)&&m.dimension==='overworld').slice(0,24).map(m=>({
+      kind:m.kind,x:m.x,y:m.y,z:m.z,hp:m.hp,heading:m.heading,baby:!!m.baby,
+      growTimer:m.growTimer||0,sheared:!!m.sheared,breedCooldown:m.breedCooldown||0
+    }));
+  }
+  function restoreFarmAnimals(records){
+    const verified=(Array.isArray(records)?records:[]).filter(m=>m&&['cow','pig','sheep','chicken'].includes(m.kind)&&
+      Number.isFinite(m.x)&&m.x>2&&m.x<W-2&&Number.isFinite(m.z)&&m.z>2&&m.z<D-2&&
+      Number.isFinite(m.y)&&m.y>=1&&m.y<H-3&&Number.isFinite(m.hp)&&m.hp>0&&m.hp<=SPECIES[m.kind].hp).slice(0,24);
+    mobs=mobs.filter(m=>!['cow','sheep','pig','chicken'].includes(m.kind));
+    for(const v of verified)mobs.push({
+      id:++mobSerial,kind:v.kind,x:v.x,y:v.y,z:v.z,hp:v.hp,dimension:'overworld',
+      heading:Number.isFinite(v.heading)?v.heading:0,baby:!!v.baby,growTimer:Math.max(0,Math.min(1200,v.growTimer||0)),
+      sheared:!!v.sheared,breedCooldown:Math.max(0,Math.min(300,v.breedCooldown||0)),
+      step:2,attack:2,anger:0,windup:0
+    });
+  }
   function spawnWildlife(){
     for(let i=0;i<18;i++){
       const x=SPAWN-24+rand(i*29,seed+i*3)*48,z=SPAWN-24+rand(i*17,seed+i*11)*48;
@@ -3676,7 +3681,7 @@ body.in-nether #game-wrap{background:#290f19}
     inventory.fill(0);
     for(const k of Object.keys(bag))bag[k]=0;
     tools.pickaxe=tools.sword=tools.hoe=tools.axe=tools.shovel='none';equipped='none';
-    for(const k of Object.keys(armor))armor[k]='';inventoryOrder.length=0;vehicles=[];vehicleSerial=0;mount=null;stabledMounts=[];backpackPage=0;selectedStackKey='';selectedStackId=null;stackStore.clear();
+    for(const k of Object.keys(armor))armor[k]='';inventoryOrder.length=0;vehicles=[];vehicleSerial=0;mount=null;stabledMounts=[];preservedFarmAnimals=[];backpackPage=0;selectedStackKey='';selectedStackId=null;stackStore.clear();
     health=20;hunger=20;hungerSaturation=5;hungerDrain=hungerPulse=healPulse=0;
     experienceTotal=0;bedSpawn=null;worldWeather=survivalRules.newWeather(seed);advancementEngine.restore(null);
     dayClock=0;hotbarPage=0;HOT9.splice(0,HOT9.length,...HOTSETS[0]);survivalHotbar.fill(null);selection=0;
