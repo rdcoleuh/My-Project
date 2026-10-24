@@ -130,6 +130,21 @@
     if([50,65,68,69,70,71].includes(b))return netherrack(x,y,b);
     if(b===88)return magma(x,y);
     if([168,20,156,157,136,166,119,120].includes(b))return workingStation(b,face,x,y);
+    if(b===169){
+      // Red Bed: pillow, red wool blanket, planked underside — independent 16px artwork.
+      if(face===0){
+        if(y<5)return ink([[184,181,173,255],[219,217,205,255],[237,236,226,255],[250,250,241,255]],x,y,169);
+        if(y===5||y===15)return color(114,48,45);
+        const fold=(y===11&&x>2&&x<14),seam=(x===1||x===14);
+        return fold?color(201,77,68):seam?color(130,36,42):
+          ink([[103,33,36,255],[153,42,48,255],[182,47,53,255],[207,66,65,255]],x,y,169);
+      }
+      if(face===2)return ink([[79,49,30,255],[119,76,44,255],[143,96,55,255],[165,111,70,255]],x,y,169);
+      const bedding=y<10,leg=(x<3||x>12)&&y>12;
+      if(leg)return color(91,60,36);
+      if(bedding)return ink([[105,31,35,255],[156,42,49,255],[180,48,54,255],[206,64,65,255]],x,y,169);
+      return ink([[73,48,32,255],[112,71,40,255],[143,95,55,255],[171,117,75,255]],x,y,169);
+    }
     if(b===121){
       const pits=h(x>>1,y>>1,121)>.81&&(x%3===0||y%3===1);
       const colorSet=[[156,156,123,255],[194,194,159,255],[209,212,179,255],[231,225,193,255]];
