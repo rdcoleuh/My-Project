@@ -376,7 +376,7 @@ body.in-nether #game-wrap{background:#290f19}
 .swatch,.item-icon,#mw-skin-editor,#mw-skin-sheet{image-rendering:pixelated}
 #world{image-rendering:pixelated}
 </style>
-<title>MineWorld 5.6 — Pixel-Perfect Blocks, Custom Skins & Multiple Worlds</title>
+<title>MineWorld 5.7 — Local Resource Packs, Sounds & Reliability Fixes</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -628,7 +628,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v5.6 · PIXEL-PERFECT · SKINS · MULTIPLE WORLDS</div>
+  <div class="version">MINEWORLD v5.7 · RESOURCE PACKS · SOUNDS · RELIABILITY</div>
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./texture-refinement.js"></script>
@@ -637,6 +637,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./texture-workshop.js"></script>
 <script src="./classic-materials.js"></script>
 <script src="./texture-motion.js"></script>
+<script src="./sound-engine.js"></script>
 <script src="./classic-interactions.js"></script>
 <script src="./perspective.js"></script>
 <script src="./world-library.js"></script>
@@ -881,11 +882,12 @@ body.in-nether #game-wrap{background:#290f19}
   }
   const W=10000, D=10000, H=48, SEA=14, SPAWN=5000, CHUNK=16, STORAGE='mineworld-selfhost-v1';
   // Original Creative/Survival keys stay permanently available as "Original" worlds.
+  const sound=window.MineWorldSound;
   const worldLibrary=window.MineWorldWorldLibrary.create(localStorage,STORAGE);
   const slotKey=mode=>worldLibrary.key(mode);
   const LAST_SLOT=STORAGE+'-active-mode-v1';
   function migrateLegacySave(){
-    try{const legacy=localStorage.getItem(STORAGE);if(!legacy)return;const data=JSON.parse(legacy);const key=slotKey(data?.gameMode==='survival'?'survival':'creative');if(!localStorage.getItem(key))localStorage.setItem(key,legacy);if(!localStorage.getItem(LAST_SLOT))localStorage.setItem(LAST_SLOT,data?.gameMode==='survival'?'survival':'creative')}catch(e){console.warn('Legacy world migration unavailable:',e)}
+    try{const legacy=localStorage.getItem(STORAGE);if(!legacy)return;const data=JSON.parse(legacy);const mode=data?.gameMode==='survival'?'survival':'creative';const key=worldLibrary.key(mode,'original');if(!localStorage.getItem(key))localStorage.setItem(key,legacy);if(!localStorage.getItem(LAST_SLOT))localStorage.setItem(LAST_SLOT,data?.gameMode==='survival'?'survival':'creative')}catch(e){console.warn('Legacy world migration unavailable:',e)}
   }
   const chunkCache=new Map(), visibleChunks=[],visibleChunkKeys=new Set(),desiredChunkKeys=new Set();
   const chunkPlanner=window.MineWorldChunkPlanner;
@@ -1330,6 +1332,7 @@ body.in-nether #game-wrap{background:#290f19}
   if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
   const aPos=gl.getAttribLocation(program,'aPos'),aColor=gl.getAttribLocation(program,'aColor'),aUV=gl.getAttribLocation(program,'aUV'),uVP=gl.getUniformLocation(program,'uVP'),uEye=gl.getUniformLocation(program,'uEye'),uSky=gl.getUniformLocation(program,'uSky'),uAtlas=gl.getUniformLocation(program,'uAtlas'),uTextured=gl.getUniformLocation(program,'uTextured'),uFogEnd=gl.getUniformLocation(program,'uFogEnd');
   const atlasTexture=window.MineWorldAtlas.create(gl);
+  window.MineWorldResourcePackContext={gl,texture:atlasTexture,baseURL:window.MineWorldAtlas.dataURL};
   const skinTexture=window.MineWorldSkin.makeTexture(gl);
   gl.bindTexture(gl.TEXTURE_2D,atlasTexture);
   vbo=gl.createBuffer();const aimBuffer=gl.createBuffer(),avatarBuffer=gl.createBuffer();
@@ -1457,6 +1460,7 @@ body.in-nether #game-wrap{background:#290f19}
       else addResource('block:'+found,1);
       updateHotbar();updateSurvivalHUD();markSave();
     }
+    sound?.play('break',NAMES[target.b]);
     toast('Mined '+NAMES[target.b]);
     return true;
   }
@@ -1547,7 +1551,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(dimension==='nether'&&b===7){toast('💨 Water evaporates in the Nether');return;}
     if(setBlock(p.x,p.y,p.z,b)){
       if(gameMode==='survival'){addResource(held,-1,survivalHotbar[selection]);updateHotbar();}
-      toast('Placed '+NAMES[b]);timers.place=.2;
+      sound?.play('place',NAMES[b]);toast('Placed '+NAMES[b]);timers.place=.2;
     }
   }
   function markSave(){dirtySave=true}
@@ -1802,7 +1806,7 @@ body.in-nether #game-wrap{background:#290f19}
     else if(inventory[17]){inventory[17]--;amount=4;food='mushroom'}
     else{toast('Grow crops, trade for bread, or hunt animals for food');return}
     const fed=window.MineWorldHunger.eat(hunger,hungerSaturation,amount);hunger=fed.hunger;hungerSaturation=fed.saturation;
-    updateHotbar();updateSurvivalHUD();markSave();toast('Ate '+food+' · +'+amount+' hunger');
+    sound?.play('eat');updateHotbar();updateSurvivalHUD();markSave();toast('Ate '+food+' · +'+amount+' hunger');
   }
   const RECIPES=[
     {name:'🪵 4 planks',cost:{'block:5':1},give:{'block:11':4},tip:'1 wood log → 4 planks'},
@@ -1952,7 +1956,7 @@ body.in-nether #game-wrap{background:#290f19}
       if(gameMode==='survival'&&classic.shouldCollect(next,{x:player.x,y:player.y,z:player.z,dimension})){
         const taken=addResource(next.key,next.count);
         if(taken>0){
-          next.count-=taken;toast('Picked up '+taken+' '+itemLabel(next.key));
+          sound?.play('pickup');next.count-=taken;toast('Picked up '+taken+' '+itemLabel(next.key));
           updateHotbar();
           if(!next.count)droppedItems.splice(i,1);
           markSave();
@@ -2013,7 +2017,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(hunger>=20&&health>=20){toast('You are not hungry');return true;}
     if(addResource(key,-1,survivalHotbar[selection])!==-1)return false;const fed=window.MineWorldHunger.eat(hunger,hungerSaturation,FOOD[key]);hunger=fed.hunger;hungerSaturation=fed.saturation;
     if(key==='goldenApple')health=clamp(health+4,0,20);
-    updateSurvivalHUD();updateHotbar();markSave();toast('Ate '+itemLabel(key));return true;
+    sound?.play('eat');updateSurvivalHUD();updateHotbar();markSave();toast('Ate '+itemLabel(key));return true;
   }
   function craft(recipe){
     if(gameMode!=='survival'){toast('Choose Survival to craft tools');return false;}
@@ -2286,7 +2290,7 @@ body.in-nether #game-wrap{background:#290f19}
       else if(key==='obsidian')addResource('block:51',n);
       else addResource(key,n);
     }
-    updateHotbar();updateSurvivalHUD();markSave();
+    sound?.play('open');updateHotbar();updateSurvivalHUD();markSave();
     $('chest-title').textContent=(window.MineWorldLoot.label(kind))+' Chest';
     $('chest-contents').replaceChildren();
     for(const item of contents){const row=document.createElement('div');row.textContent='✦ '+item.count+' × '+window.MineWorldLoot.label(item.item);$('chest-contents').appendChild(row)}
@@ -2331,7 +2335,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(mob?.kind!=='ender_dragon')return applyMobHit(id,strength);
     const crystals=endCrystalCount();if(crystals){toast('Destroy the '+crystals+' End crystals before defeating the dragon!');return {hit:false};}
     const result=applyMobHit(id,strength);
-    if(result.dead){dragonDefeated=true;bag.experience+=40;bag.dragonEgg++;
+    if(result.dead){sound?.play('level');dragonDefeated=true;bag.experience+=40;bag.dragonEgg++;
       unloadAllChunks();scheduleChunks(true);streamChunks(4);markSave();
       toast('✦ DRAGON DEFEATED! Portal activated and dragon egg claimed!');
     }
@@ -2707,7 +2711,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(gameMode!=='survival'||amount<=0)return;
     const armorPoints=Object.values(armor).reduce((sum,k)=>sum+(!k?0:/netherite/i.test(k)?4:/diamond/i.test(k)?3:/iron/i.test(k)?2:/gold/i.test(k)?1.4:/leather/i.test(k)?.7:1),0);
     amount=Math.max(1,Math.ceil(amount*(1-Math.min(.72,armorPoints*.038))));
-    health=clamp(health-amount,0,20);
+    health=clamp(health-amount,0,20);sound?.play('hurt');
     if(health<=0){experienceTotal=0;respawn();}else{updateSurvivalHUD();toast(cause+' −'+amount+' health')}
     markSave();
   }
@@ -2733,9 +2737,9 @@ body.in-nether #game-wrap{background:#290f19}
     if(hunger>=16&&health<20&&healPulse>=9){healPulse=0;health=clamp(health+1,0,20);updateSurvivalHUD();}
   }
   function updateFlyButton(){$('fly-btn').textContent='✦ Flying: '+(player.fly?'On':'Off')}
-  function start(){if(!started){started=true;requestAnimationFrame(render)}lastTime=performance.now();paused=false;$('welcome').classList.add('hidden');$('pause').classList.add('hidden');if(!isTouch&&canvas.requestPointerLock)canvas.requestPointerLock()?.catch?.(()=>{});toast('World ready — have fun!')}
+  function start(){if(!started){started=true;requestAnimationFrame(render)}lastTime=performance.now();paused=false;sound?.play('click');$('welcome').classList.add('hidden');$('pause').classList.add('hidden');if(!isTouch&&canvas.requestPointerLock)canvas.requestPointerLock()?.catch?.(()=>{});toast('World ready — have fun!')}
   function menu(){paused=true;isSprinting=false;updateMovementUI();cancelMining();mouseMiningHeld=false;keys.clear();movement.x=0;movement.y=0;touchHold.mine=false;touchHold.place=false;updateRenderSettingsUI();$('pause').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock();save()}
-  function jump(){if(paused)return;if(mount){mountLift=.28;return;}if(player.fly){player.y+=.7;return}if(player.ground){player.vy=8;player.ground=false;if(gameMode==='survival')hungerDrain+=isSprinting?.2:.05;}}
+  function jump(){if(paused)return;if(mount){mountLift=.28;sound?.play('jump');return;}if(player.fly){player.y+=.7;return}if(player.ground){player.vy=8;player.ground=false;sound?.play('jump');if(gameMode==='survival')hungerDrain+=isSprinting?.2:.05;}}
   const RIDE_KINDS={horse:{speed:10,saddle:true},donkey:{speed:7,saddle:true},mule:{speed:8,saddle:true},camel:{speed:8,saddle:true},llama:{speed:3,saddle:false,unsteerable:true},pig:{speed:5,saddle:true,control:'carrotStick'},strider:{speed:6,saddle:true,control:'fungusStick'},skeleton_horse:{speed:10,saddle:false},zombie_horse:{speed:9,saddle:true},happy_ghast:{speed:10,harness:true,flying:true}};
   const VEHICLE_KINDS=new Set(['boat','raft','minecart','spruceBoat','cherryBoat','chestMinecart','hopperMinecart','furnaceMinecart']);
   function dismount(silent=false){if(!mount)return;const kind=mount.kind;mount=null;mountLift=0;$('mount-readout').classList.add('hidden');$('ride-btn').textContent='🐎 RIDE';if(!silent)toast('Dismounted '+kind);markSave();}
@@ -2834,6 +2838,8 @@ body.in-nether #game-wrap{background:#290f19}
     };
     if(hasFooting(targetX,player.z)&&!blockAtFeet(targetX,player.y,player.z))player.x=targetX;
     if(hasFooting(player.x,targetZ)&&!blockAtFeet(player.x,player.y,targetZ))player.z=targetZ;
+    if(player.ground&&(Math.abs(player.x-startX)+Math.abs(player.z-startZ))>.006)
+      sound?.step(NAMES[get(Math.floor(player.x),Math.floor(player.y-.15),Math.floor(player.z))]||'dirt');
     if(gameMode==='survival'&&isSprinting){
       sprintHungerSpent+=window.MineWorldMovement.sprintHunger(
         Math.hypot(player.x-startX,player.z-startZ),true,true);
@@ -3108,7 +3114,7 @@ body.in-nether #game-wrap{background:#290f19}
     const result=applyMobHit(m.id,combatStrength());
     if(!result.hit)return;
     if(gameMode==='survival')hungerDrain+=.1;
-    attackCooldown=gameMode==='creative'?.12:.48;
+    sound?.play('attack');attackCooldown=gameMode==='creative'?.12:.48;
     toast(result.dead?'Defeated '+SPECIES[result.kind].name:'Hit '+SPECIES[result.kind].name+' · '+Math.ceil(result.hp)+' health');
     window.MineWorldMultiplayer?.flushMobs();
   }
@@ -3339,7 +3345,8 @@ body.in-nether #game-wrap{background:#290f19}
     gl.uniform1f(uFogEnd,Math.min(110,Math.max(35,Math.sqrt(activeChunks/Math.PI)*CHUNK+18)));
     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uAtlas,0);
     // Original fluid and luminous pixel animations; tiny GPU atlas uploads.
-    window.MineWorldTextureMotion?.update(gl,atlasTexture,t,currentFPS,isTouch);
+    if(!window.MineWorldLocalTextures?.active)
+        window.MineWorldTextureMotion?.update(gl,atlasTexture,t,currentFPS,isTouch);
     // Rebuild at most one mobile mesh (two on desktop) per animation frame.
     // Existing meshes remain visible until their replacement finishes.
     const meshStart=performance.now();
@@ -3671,6 +3678,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
   migrateLegacySave();const activeSlot=(()=>{try{return localStorage.getItem(LAST_SLOT)==='survival'?'survival':'creative'}catch(_){return 'creative'}})();gameMode=activeSlot;updateModeButton();updateSurvivalHUD();
   if(!load(activeSlot)){generate();setGameMode(activeSlot);}else $('status').textContent='● '+(activeSlot==='survival'?'Survival':'Creative')+' world restored';setDifficulty(difficulty);updatePortalUI();updateSeedLabel();updateVillagers();
   window.MineWorldBridge={
+    refreshTextureUI:()=>updateHotbar(),
     getWorlds:mode=>worldLibrary.list(mode),
     getCurrentWorld:mode=>({...worldLibrary.current(mode||gameMode)}),
     openWorld:(mode,id,play)=>openNamedWorld(mode,id,!!play),
@@ -3873,5 +3881,6 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
 </script>
 <script src="./block-guide.js"></script>
 <script src="./world-manager-ui.js"></script>
+<script src="./local-resource-pack.js"></script>
 </body>
 </html>
