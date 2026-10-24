@@ -352,7 +352,7 @@ body.in-nether #game-wrap{background:#290f19}
 #welcome .mw-render-panel .mw-render-heading,#welcome .mw-render-panel .mw-render-auto{color:#ebf0e6}
 
 </style>
-<title>MineWorld 4.6 — Authentic-Looking Original Pixel Blocks</title>
+<title>MineWorld 4.7 — Render Distance & Refined Pixel Blocks</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -585,7 +585,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v4.6 · CLASSIC 16px BLOCKS · 64-STACK INVENTORY</div>
+  <div class="version">MINEWORLD v4.7 · 10–50 CHUNK SETTINGS · REFINED 16px BLOCKS</div>
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./chunk-planner.js"></script>
@@ -1015,7 +1015,7 @@ body.in-nether #game-wrap{background:#290f19}
     }
   }
   function pruneChunkCache(){
-    const cap=Math.min(66,Math.max(22,targetChunks+12));
+    const cap=Math.min(66,Math.max(22,activeChunks+12));
     if(chunkCache.size<=cap)return;
     const keep=new Set(visibleChunks);
     const removable=[...chunkCache.values()].filter(c=>!keep.has(c)&&
@@ -3209,7 +3209,7 @@ body.in-nether #game-wrap{background:#290f19}
     '<button class="mw-pixel-btn" id="mw-multi" type="button">Multiplayer</button>'+
     '<button class="mw-pixel-btn" id="mw-creative" type="button">Creative World</button>'+
     '<div class="mw-2col"><button class="mw-pixel-btn" id="mw-options" type="button">Options…</button><button class="mw-pixel-btn" id="mw-return" type="button">World Atlas</button></div>'+
-    '</div><div class="mw-footer"><small>MineWorld 4.3 · Independent browser game</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
+    '</div><div class="mw-footer"><small>MineWorld 4.7 · Independent browser game</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
   welcome.appendChild(main);
   const worlds=document.createElement('div');
   worlds.id='mw-world-screen';worlds.className='mw-screen mw-screen--sub';
