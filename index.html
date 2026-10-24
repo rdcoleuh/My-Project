@@ -1030,6 +1030,68 @@ body.in-nether #game-wrap{background:#290f19}
     pruneChunkCache();
     return loaded;
   }
+  function updateRenderSettingsUI(){
+    const status=(visibleChunks.length+' loaded / '+activeChunks+' active'+
+      (autoAdjustChunks&&activeChunks<targetChunks?' · Auto limited from '+targetChunks:'')+
+      (currentFPS>0?' · ~'+Math.round(currentFPS)+' FPS':''))+
+      ' · 16×16 blocks/chunk';
+    for(const id of ['render-chunks-slider','mw-render-chunks-slider']){
+      const input=document.getElementById(id);
+      if(input)input.value=String(targetChunks);
+    }
+    for(const id of ['render-chunks-value','mw-render-chunks-value']){
+      const output=document.getElementById(id);
+      if(output)output.textContent=targetChunks+' chunks';
+    }
+    for(const id of ['render-chunks-auto','mw-render-chunks-auto']){
+      const input=document.getElementById(id);
+      if(input)input.checked=autoAdjustChunks;
+    }
+    for(const id of ['render-chunks-status','mw-render-chunks-status']){
+      const output=document.getElementById(id);
+      if(output)output.textContent=status;
+    }
+  }
+  function saveRenderSettings(){
+    try{localStorage.setItem(RENDER_PREFS,JSON.stringify({chunks:targetChunks,auto:autoAdjustChunks}));}catch(_){}
+  }
+  function setRenderChunkTarget(requested){
+    const next=chunkPlanner.limit(requested);
+    if(next!==targetChunks){
+      targetChunks=next;activeChunks=next;
+      scheduleChunks(true);pruneChunkCache();saveRenderSettings();
+    }
+    updateRenderSettingsUI();
+  }
+  function setRenderAuto(enabled){
+    autoAdjustChunks=!!enabled;activeChunks=targetChunks;
+    frameSamples=0;frameTimeSum=0;
+    scheduleChunks(true);saveRenderSettings();updateRenderSettingsUI();
+  }
+  function tuneFrameBudget(frameMs){
+    if(!(frameMs>0&&frameMs<180))return;
+    frameSamples++;frameTimeSum+=frameMs;
+    if(frameSamples<50)return;
+    const fps=frameSamples*1000/frameTimeSum;
+    currentFPS=fps;frameSamples=0;frameTimeSum=0;
+    if(autoAdjustChunks){
+      const updated=chunkPlanner.adapt(activeChunks,targetChunks,fps,isTouch,true);
+      if(updated!==activeChunks){activeChunks=updated;scheduleChunks(true);}
+      if(fps<(isTouch?27:37))dynamicResolution=Math.max(minResolution,dynamicResolution-.09);
+      else if(fps>(isTouch?52:56))dynamicResolution=Math.min(maxResolution,dynamicResolution+.045);
+    }else{
+      dynamicResolution=Math.min(maxResolution,isTouch?1.12:1.6);
+    }
+    updateRenderSettingsUI();
+  }
+  window.MineWorldRenderSettings={
+    get:()=>({target:targetChunks,active:activeChunks,loaded:visibleChunks.length,
+      fps:currentFPS,automatic:autoAdjustChunks}),
+    setTarget:setRenderChunkTarget,setAuto:setRenderAuto,syncUI:updateRenderSettingsUI
+  };
+  $('render-chunks-slider').addEventListener('input',e=>setRenderChunkTarget(e.target.value));
+  $('render-chunks-auto').addEventListener('change',e=>setRenderAuto(e.target.checked));
+  updateRenderSettingsUI();
   const solid=b=>b!==0&&b!==7&&b!==66&&b!==87&&b!==89&&b!==126&&!(b>=139&&b<=154);
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const rand=(x,z,s=seed)=>{let n=Math.imul(x+307,374761393)^Math.imul(z+811,668265263)^Math.imul(s,1274126177);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295};
@@ -2303,8 +2365,8 @@ body.in-nether #game-wrap{background:#290f19}
     if(hunger>=16&&health<20&&healPulse>=9){healPulse=0;health=clamp(health+1,0,20);updateSurvivalHUD();}
   }
   function updateFlyButton(){$('fly-btn').textContent='✦ Flying: '+(player.fly?'On':'Off')}
-  function start(){if(!started){started=true;lastTime=performance.now();requestAnimationFrame(render)}paused=false;$('welcome').classList.add('hidden');$('pause').classList.add('hidden');if(!isTouch&&canvas.requestPointerLock)canvas.requestPointerLock()?.catch?.(()=>{});toast('World ready — have fun!')}
-  function menu(){paused=true;cancelMining();mouseMiningHeld=false;keys.clear();movement.x=0;movement.y=0;touchHold.mine=false;touchHold.place=false;$('pause').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock();save()}
+  function start(){if(!started){started=true;requestAnimationFrame(render)}lastTime=performance.now();paused=false;$('welcome').classList.add('hidden');$('pause').classList.add('hidden');if(!isTouch&&canvas.requestPointerLock)canvas.requestPointerLock()?.catch?.(()=>{});toast('World ready — have fun!')}
+  function menu(){paused=true;cancelMining();mouseMiningHeld=false;keys.clear();movement.x=0;movement.y=0;touchHold.mine=false;touchHold.place=false;updateRenderSettingsUI();$('pause').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock();save()}
   function jump(){if(paused)return;if(mount){mountLift=.28;return;}if(player.fly){player.y+=.7;return}if(player.ground){player.vy=8;player.ground=false}}
   const RIDE_KINDS={horse:{speed:10,saddle:true},donkey:{speed:7,saddle:true},mule:{speed:8,saddle:true},camel:{speed:8,saddle:true},llama:{speed:3,saddle:false,unsteerable:true},pig:{speed:5,saddle:true,control:'carrotStick'},strider:{speed:6,saddle:true,control:'fungusStick'},skeleton_horse:{speed:10,saddle:false},zombie_horse:{speed:9,saddle:true},happy_ghast:{speed:10,harness:true,flying:true}};
   const VEHICLE_KINDS=new Set(['boat','raft','minecart','spruceBoat','cherryBoat','chestMinecart','hopperMinecart','furnaceMinecart']);
@@ -2760,10 +2822,11 @@ body.in-nether #game-wrap{background:#290f19}
     else{gl.disableVertexAttribArray(aUV);gl.vertexAttrib2f(aUV,0,0)}
     gl.uniform1f(uTextured,textured?1:0);
   }
-  function render(t){requestAnimationFrame(render);let dt=clamp((t-lastTime)/1000,0,.05);lastTime=t;
+  function render(t){requestAnimationFrame(render);const frameMs=t-lastTime;let dt=clamp(frameMs/1000,0,.05);lastTime=t;
     if(paused)return;
+    tuneFrameBudget(frameMs);
     dayClock+=dt;
-    scheduleChunks();streamChunks(isTouch?1:2);
+    scheduleChunks();streamChunks(isTouch?1:(frameMs<20?2:1));
     move(dt);
     scheduleChunks();
     updateSurvival(dt);
@@ -2775,7 +2838,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(touchHold.place&&timers.place<=0){performPlace();timers.place=.25}
     timers.mine-=dt;timers.place-=dt;
     let w=canvas.clientWidth,h=canvas.clientHeight;
-    const dpr=Math.min(window.devicePixelRatio||1,isTouch?1.15:1.65);
+    const dpr=Math.min(window.devicePixelRatio||1,dynamicResolution);
     let dw=Math.min(Math.floor(w*dpr),2100),dh=Math.min(Math.floor(h*dpr),1300);
     if(canvas.width!==dw||canvas.height!==dh){canvas.width=dw;canvas.height=dh;gl.viewport(0,0,dw,dh)}
     const {vp,eye,forward}=vpMatrix(dw,dh);aim=pointAtBlock(eye,forward,7);aimMob=targetMob(eye,forward,aim);aimVillager=targetVillager(eye,forward,aim);aimPlayer=targetRemotePlayer(eye,forward,aim);
@@ -2788,7 +2851,18 @@ body.in-nether #game-wrap{background:#290f19}
     gl.clearColor(...sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program);gl.uniformMatrix4fv(uVP,false,vp);gl.uniform3fv(uEye,eye);gl.uniform3fv(uSky,sky);
     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uAtlas,0);
-    for(const chunk of visibleChunks){if(chunk.dirty)buildChunkMesh(chunk);gl.bindBuffer(gl.ARRAY_BUFFER,chunk.vbo);setAttribs(true);gl.drawArrays(gl.TRIANGLES,0,chunk.count);}
+    // Rebuild at most one mobile mesh (two on desktop) per animation frame.
+    // Existing meshes remain visible until their replacement finishes.
+    const meshStart=performance.now(),meshCap=isTouch?1:2,meshTimeBudget=isTouch?3.5:6;
+    let meshesUpdated=0;
+    for(const chunk of visibleChunks){
+      if(chunk.dirty&&meshesUpdated<meshCap&&
+         (meshesUpdated===0||performance.now()-meshStart<meshTimeBudget)){
+        buildChunkMesh(chunk);meshesUpdated++;
+      }
+      if(!chunk.vbo||!chunk.count)continue;
+      gl.bindBuffer(gl.ARRAY_BUFFER,chunk.vbo);setAttribs(true);gl.drawArrays(gl.TRIANGLES,0,chunk.count);
+    }
     drawRemotePlayers();
     drawMobs();
     drawVillagers();
