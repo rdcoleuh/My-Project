@@ -1,4 +1,4 @@
-/* MineWorld 5.7 — original sound and optional local pack regression tests. */
+/* MineWorld 5.8 — original sound and optional local pack regression tests. */
 const {test}=require('node:test'),assert=require('node:assert/strict'),
  fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8');
