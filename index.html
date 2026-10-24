@@ -360,16 +360,26 @@ body.in-nether #game-wrap{background:#290f19}
 #touch-movement-modes button.active{background:#5f874c;border-color:#e5f6a3;box-shadow:inset 2px 2px #bfdfac,inset -2px -2px #345b38,0 0 8px #afed8070}
 @media(max-width:600px){#touch-movement-modes{left:12px;bottom:calc(210px + env(safe-area-inset-bottom))}#touch-movement-modes button{height:39px;min-width:56px;font-size:15px}#touch-movement-modes small{font-size:8px}}
 @media(orientation:landscape) and (max-height:420px){#touch-movement-modes{bottom:calc(12px + env(safe-area-inset-bottom));left:calc(130px + env(safe-area-inset-left))}#touch-movement-modes button{min-width:49px}}
+/* MineWorld survival additions: real XP HUD and lightweight, resolution-capped rain layer. */
+#weather-layer{position:absolute;inset:0;z-index:2;width:100%;height:100%;pointer-events:none;opacity:.82}
+#weather-status{position:absolute;z-index:5;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));padding:5px 9px;border:1px solid #aab8c7aa;border-radius:3px;background:#121e28a8;color:#f2fbff;font:bold 12px monospace;text-shadow:0 1px #000;pointer-events:none}
+#xp-display{display:flex;align-items:center;justify-content:center;gap:7px;padding:0 8px;color:#c7fa79;font:800 11px monospace;text-shadow:1px 2px #031a07;pointer-events:none}
+#xp-track{width:min(46vw,185px);height:8px;background:#243425;border:1px solid #9ab67f;box-shadow:inset 1px 1px #0a160e;overflow:hidden}
+#xp-fill{height:100%;width:0%;display:block;background:linear-gradient(90deg,#4d9829,#b4e961);transition:width .2s}
+#xp-label{font-size:9px;color:#c8dbb4}
+@media(pointer:coarse){#xp-track{width:min(30vw,135px)}#xp-label{font-size:8px}}
 </style>
 <title>MineWorld 5.0 — Classic Blocks, Sprint Hunger & Chunk Settings</title>
 </head>
 <body>
 <div id="game-wrap">
   <canvas id="world" aria-label="Playable 3D block world"></canvas>
+  <canvas id="weather-layer" aria-hidden="true"></canvas>
   <div id="sky-decor" aria-hidden="true"><div class="sun"></div><div class="cloud cloud1"></div><div class="cloud cloud2"></div></div>
   <div id="top-ui">
     <button id="menu-toggle" class="ui-button small mw-pause-trigger" type="button" aria-label="Pause game and open game menu" aria-haspopup="dialog" aria-controls="pause">⏸ Pause</button>
   </div>
+  <div id="weather-status" class="hidden" aria-live="polite">☔ Rain</div>
   <div id="crosshair" aria-hidden="true"></div>
   <div id="online-hud" class="hidden">👥 Offline</div>
   <div id="dimension-indicator" class="hidden">🔥 THE NETHER</div>
@@ -377,6 +387,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="mine-progress" class="hidden" role="progressbar" aria-label="Breaking block" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="mine-progress-fill"></div></div>
   <div id="hud-bottom">
     <div id="survival-hud" class="hidden" aria-live="polite"><span id="health-text">♥ 20/20</span><span id="hunger-text">🍖 20/20</span><span id="weapon-readout" title="Equipped gear">✊ Fists</span><button id="eat-btn" type="button" aria-label="Eat available food">Eat 🍄 0</button></div>
+    <div id="xp-display" class="hidden" title="Experience points"><span id="xp-level">0</span><span id="xp-track"><span id="xp-fill"></span></span><span id="xp-label">0 / 7 XP</span></div>
     <div id="hotbar-row"><div id="hotbar" role="toolbar" aria-label="Nine inventory-backed hotbar slots"></div><button id="quick-inventory" type="button" aria-label="Open inventory" title="Open backpack (E)">🎒<small>INV</small></button></div>
     <div id="hints">WASD move · Ctrl/G sprint · Shift/X crouch · E inventory · Space jump · 1–9 items · Left mine · Right place</div>
   </div>
@@ -609,6 +620,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./movement-modes.js"></script>
 <script src="./survival-hunger.js"></script>
 <script src="./block-models.js"></script>
+<script src="./survival-world-rules.js"></script>
 <script>
 /* MineWorld original procedural 16x16 voxel pixel-art atlas. No external assets. */
 (() => {
@@ -785,7 +797,7 @@ body.in-nether #game-wrap{background:#290f19}
     const canvas=document.createElement('canvas');canvas.width=SIZE*COLUMNS;canvas.height=SIZE*ROWS;
     const ctx=canvas.getContext('2d',{willReadFrequently:true});if(!ctx)throw Error('2D canvas textures unavailable');
     const img=ctx.createImageData(canvas.width,canvas.height);
-    for(let b=1;b<=168;b++)for(let f=0;f<3;f++){
+    for(let b=1;b<=169;b++)for(let f=0;f<3;f++){
       const tile=b*3+f,col=tile%COLUMNS,row=Math.floor(tile/COLUMNS);
       for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
         const i=((row*SIZE+y)*canvas.width+col*SIZE+x)*4;
@@ -858,7 +870,7 @@ body.in-nether #game-wrap{background:#290f19}
   let targetChunks=initialRenderPrefs.chunks,activeChunks=targetChunks,autoAdjustChunks=initialRenderPrefs.auto;
   let lastChunkX=-1,lastChunkZ=-1,streamQueue=[],streamClock=0;
   let currentFPS=0,frameSamples=0,frameTimeSum=0;
-  const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace','Snow','Ice','Packed Ice','Sandstone','Terracotta','Red Sand','Red Terracotta','Podzol','Coarse Dirt','Spruce Log','Spruce Leaves','Birch Log','Birch Leaves','Acacia Log','Acacia Leaves','Jungle Log','Jungle Leaves','Mangrove Log','Mangrove Leaves','Cherry Log','Cherry Leaves','Pale Oak Log','Pale Oak Leaves','Cactus','Bamboo','Moss','Mud','Red Mushroom Cap','Brown Mushroom Cap','Netherrack','Obsidian','Dark Planks','Stone Bricks','Chiseled Sandstone','Prismarine','Copper','Clay','Deepslate','Lantern','Hay Bale','Cobblestone','Glow Lichen','Dripstone','Sculk','Nether Rock','Lava','Basalt','Blackstone','Polished Blackstone','Soul Sand','Soul Soil','Nether Bricks','Nether Wart','Chiseled Nether Bricks','Crimson Nylium','Warped Nylium','Crimson Roots','Crimson Stem','Nether Wart Block','Warped Stem','Warped Wart Block','Warped Roots','Quartz Ore','Nether Gold Ore','Ancient Debris','Bone Block','Portal','Magma Block','Soul Fire','Shroomlight','Gilded Blackstone','Gravel','Twisting Vines','Weeping Vines','Copper Ore','Gold Ore','Redstone Ore','Lapis Ore','Diamond Ore','Emerald Ore','Deepslate Coal Ore','Deepslate Iron Ore','Deepslate Copper Ore','Deepslate Gold Ore','Deepslate Redstone Ore','Deepslate Lapis Ore','Deepslate Diamond Ore','Deepslate Emerald Ore','Redstone Lamp','Lapis Block','Emerald Block','Diamond Block','Copper Block','Gold Block','Iron Block','Coal Block','Redstone Block','Raw Mineral Crate','Treasure Chest','Opened Chest','End Stone','Chorus Plant','Chorus Flower','End Crystal','End Portal Frame','End Portal','End Gateway','End Rod','Dragon Egg','End Stone Bricks','Purpur Block','Purpur Pillar','Shulker Shell Block','Dragon Head','Netherite Block','Smithing Table','Farmland','Hydrated Farmland','Wheat Sprouts','Wheat Growing','Wheat Tall','Ripe Wheat','Carrot Sprouts','Carrot Growing','Carrot Tall','Ripe Carrots','Potato Sprouts','Potato Growing','Potato Tall','Ripe Potatoes','Beetroot Sprouts','Beetroot Growing','Beetroot Tall','Ripe Beetroot','Composter','Blast Furnace','Smoker','Cartography Table','Brewing Stand','Barrel','Fletching Table','Cauldron','Lectern','Stonecutter','Loom','Toolsmith Smithing Table','Grindstone','Crafting Table'];
+  const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace','Snow','Ice','Packed Ice','Sandstone','Terracotta','Red Sand','Red Terracotta','Podzol','Coarse Dirt','Spruce Log','Spruce Leaves','Birch Log','Birch Leaves','Acacia Log','Acacia Leaves','Jungle Log','Jungle Leaves','Mangrove Log','Mangrove Leaves','Cherry Log','Cherry Leaves','Pale Oak Log','Pale Oak Leaves','Cactus','Bamboo','Moss','Mud','Red Mushroom Cap','Brown Mushroom Cap','Netherrack','Obsidian','Dark Planks','Stone Bricks','Chiseled Sandstone','Prismarine','Copper','Clay','Deepslate','Lantern','Hay Bale','Cobblestone','Glow Lichen','Dripstone','Sculk','Nether Rock','Lava','Basalt','Blackstone','Polished Blackstone','Soul Sand','Soul Soil','Nether Bricks','Nether Wart','Chiseled Nether Bricks','Crimson Nylium','Warped Nylium','Crimson Roots','Crimson Stem','Nether Wart Block','Warped Stem','Warped Wart Block','Warped Roots','Quartz Ore','Nether Gold Ore','Ancient Debris','Bone Block','Portal','Magma Block','Soul Fire','Shroomlight','Gilded Blackstone','Gravel','Twisting Vines','Weeping Vines','Copper Ore','Gold Ore','Redstone Ore','Lapis Ore','Diamond Ore','Emerald Ore','Deepslate Coal Ore','Deepslate Iron Ore','Deepslate Copper Ore','Deepslate Gold Ore','Deepslate Redstone Ore','Deepslate Lapis Ore','Deepslate Diamond Ore','Deepslate Emerald Ore','Redstone Lamp','Lapis Block','Emerald Block','Diamond Block','Copper Block','Gold Block','Iron Block','Coal Block','Redstone Block','Raw Mineral Crate','Treasure Chest','Opened Chest','End Stone','Chorus Plant','Chorus Flower','End Crystal','End Portal Frame','End Portal','End Gateway','End Rod','Dragon Egg','End Stone Bricks','Purpur Block','Purpur Pillar','Shulker Shell Block','Dragon Head','Netherite Block','Smithing Table','Farmland','Hydrated Farmland','Wheat Sprouts','Wheat Growing','Wheat Tall','Ripe Wheat','Carrot Sprouts','Carrot Growing','Carrot Tall','Ripe Carrots','Potato Sprouts','Potato Growing','Potato Tall','Ripe Potatoes','Beetroot Sprouts','Beetroot Growing','Beetroot Tall','Ripe Beetroot','Composter','Blast Furnace','Smoker','Cartography Table','Brewing Stand','Barrel','Fletching Table','Cauldron','Lectern','Stonecutter','Loom','Toolsmith Smithing Table','Grindstone','Crafting Table','Red Bed'];
   const HOT=[1,2,3,5,12,13,14,15,11];
   const HOTSETS=[
     [1,2,3,5,6,4,8,9,10],
@@ -873,13 +885,13 @@ body.in-nether #game-wrap{background:#290f19}
     [86,87,88,89,90,91,92,93,94],
     [95,96,97,98,99,100,101,102,103],
     [104,105,106,107,108,109,110,111,112],
-    [113,114,115,116,117,118,168,19,58]
+    [113,114,115,116,117,118,168,169,58]
   ];
   const HOT9=[...HOTSETS[0]];
   const survivalHotbar=Array(9).fill(null);
   let hotbarPage=0,hotbarSignature='';
   const COLORS={1:[.36,.69,.28],2:[.52,.34,.22],3:[.52,.56,.57],4:[.85,.76,.50],5:[.48,.32,.18],6:[.28,.55,.23],7:[.26,.56,.82],8:[.72,.34,.25],9:[.62,.85,.90],10:[.93,.79,.33],11:[.65,.47,.27],12:[.74,.19,.16],13:[.90,.43,.10],14:[.89,.66,.18],15:[.59,.42,.31],16:[.68,.18,.28],17:[.73,.55,.35]};
-  const SWATCH={168:'#b48a4e',1:'#65aa48',2:'#825332',3:'#8e9297',4:'#d9c180',5:'#8b633b',6:'#388b3a',7:'#368dd3',8:'#ba4b3e',9:'#a4d6e0',10:'#edca57',11:'#bd8d52',12:'#b94537',13:'#e98419',14:'#f2c34c',15:'#987e62',16:'#ab304c',17:'#bd9070',18:'#777b7c',19:'#a98c70',20:'#7d7872'};
+  const SWATCH={169:'#ae344a',168:'#b48a4e',1:'#65aa48',2:'#825332',3:'#8e9297',4:'#d9c180',5:'#8b633b',6:'#388b3a',7:'#368dd3',8:'#ba4b3e',9:'#a4d6e0',10:'#edca57',11:'#bd8d52',12:'#b94537',13:'#e98419',14:'#f2c34c',15:'#987e62',16:'#ab304c',17:'#bd9070',18:'#777b7c',19:'#a98c70',20:'#7d7872'};
   const FACE=[
     {n:[1,0,0],v:[[1,0,0],[1,1,0],[1,1,1],[1,0,1]],shade:.72},
     {n:[-1,0,0],v:[[0,0,1],[0,1,1],[0,1,0],[0,0,0]],shade:.72},
@@ -2246,6 +2258,7 @@ body.in-nether #game-wrap{background:#290f19}
     const k=Object.keys(cost),mat=k.find(x=>x!=='sticks')||k[0],wood='block:11';
     const rowsToCells=rows=>({rows,width:Math.max(...rows.map(x=>x.length)),height:rows.length,shaped:true});
     if(/crafting table/i.test(name))return rowsToCells([[wood,wood],[wood,wood]]);
+    if(/\bred bed\b/i.test(name))return rowsToCells([['wool','wool','wool'],[wood,wood,wood]]);
     if(/\bsticks\b|^🪄 4 sticks/i.test(name))return rowsToCells([[wood],[wood]]);
     if(/\bplanks\b/i.test(name)&&k.length===1&&cost[k[0]]===1)return rowsToCells([[k[0]]]);
     if(/\btorch\b/i.test(name)&&k.includes('sticks')&&k.length===2){const other=k.find(x=>x!=='sticks');return rowsToCells([[other],['sticks']]);}
