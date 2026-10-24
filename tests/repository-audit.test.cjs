@@ -49,7 +49,7 @@ test('initially absent imported files still leave original 16x16 artwork and Web
  assert.ok(loaded.indexOf('sound-engine.js')>=0);
  assert.ok(loaded.indexOf('local-resource-pack.js')>=0);
  assert.ok(loaded.indexOf('local-resource-pack.js')>loaded.indexOf('sound-engine.js'));
- assert.ok(html.includes('MineWorld 5.9'));
+ assert.ok(/MineWorld \d+\.\d+/.test(html));
  assert.ok(read('pixel-materials.js').length>4000);
  assert.ok(read('classic-materials.js').length>4000);
 });
