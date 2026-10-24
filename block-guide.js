@@ -57,6 +57,12 @@ const classify=id=>{
  return 'building';
 };
 const dims=id=>{
+ // Growth-stage crop sprites use a smaller render box than the base collision model.
+ const crop=window.MineWorldVillages?.cropAt(id);
+ if(crop){
+  const height=Math.round((.22+crop.stage*.22)*16*100)/100;
+  return '11.52 × '+height+' × 11.52';
+ }
  const box=window.MineWorldBlockModels?.shape(id)||{left:0,right:1,bottom:0,top:1,front:0,back:1};
  return [box.right-box.left,box.top-box.bottom,box.back-box.front].map(n=>{
   const x=Math.round(n*16*100)/100;return Number.isInteger(x)?String(x):x.toFixed(2);
