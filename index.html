@@ -1545,27 +1545,30 @@ body.in-nether #game-wrap{background:#290f19}
     }
     return null;
   }
-  function performPlace(){
-    if(paused)return;
-    if(aim?.b===169){cancelMining();useBed(aim);return;}
-    if(gameMode==='survival'&&aim?.b===168){cancelMining();openGear();return;}
-    if(gameMode==='survival'&&aim?.b===119){cancelMining();openTreasureChest(aim.x,aim.y,aim.z);return;}
-    if(aim?.b===126){cancelMining();switchDimension(dimension==='end'?'overworld':'end');return;}
-    if(aim?.b===87){cancelMining();switchDimension(dimension==='nether'?'overworld':'nether');return;}
+  function performPlace(stack=false){
+    if(paused||window.MineWorldMultiplayer?.isTyping?.())return false;
+    if(!stack&&aim?.b===169){cancelMining();useBed(aim);return;}
+    if(!stack&&gameMode==='survival'&&aim?.b===168){cancelMining();openGear();return;}
+    if(!stack&&gameMode==='survival'&&aim?.b===119){cancelMining();openTreasureChest(aim.x,aim.y,aim.z);return;}
+    if(!stack&&aim?.b===126){cancelMining();switchDimension(dimension==='end'?'overworld':'end');return;}
+    if(!stack&&aim?.b===87){cancelMining();switchDimension(dimension==='nether'?'overworld':'nether');return;}
     const held=hotbarKey();
     if(gameMode==='survival'){
       if(!held||!validHotbarKey(held)||amount(held)<=0){toast('Empty hotbar slot — collect an item first');updateHotbar();return;}
-      if(useHeldFood(held))return;
+      if(!stack&&useHeldFood(held))return;
       if(!held.startsWith('block:')){toast('This is in your hotbar; use Backpack for other actions');return;}
     }
-    if(!aim||!aim.previous)return;
-    const p=aim.previous,id=Number(held.slice(6)),b=id===119?120:id;
-    if(!inside(p.x,p.y,p.z)||get(p.x,p.y,p.z)!==0)return;
+    const destination=window.MineWorldBuilding.placement(aim,{stack,get,inside});
+    if(!destination.ok){if(stack)toast(destination.reason);return false;}
+    const p=destination.point,id=Number(held.slice(6)),b=id===119?120:id;
     if(dimension==='nether'&&b===7){toast('💨 Water evaporates in the Nether');return;}
     if(setBlock(p.x,p.y,p.z,b)){
       if(gameMode==='survival'){addResource(held,-1,survivalHotbar[selection]);updateHotbar();}
-      sound?.play('place',NAMES[b]);toast('Placed '+NAMES[b]);timers.place=.2;
+      sound?.play('place',NAMES[b]);toast((stack?'Stacked ':'Placed ')+NAMES[b]);timers.place=.2;
+      return true;
     }
+    if(stack)toast('Move clear of this block to stack on top');
+    return false;
   }
   function markSave(){dirtySave=true}
   function save(){
@@ -2808,6 +2811,7 @@ body.in-nether #game-wrap{background:#290f19}
   }
   $('ride-btn').addEventListener('click',tryRide);
   function move(dt){
+    if(window.MineWorldMultiplayer?.isTyping?.())return;
     if(mount){
       if(isSprinting||isCrouching){isSprinting=false;isCrouching=false;updateMovementUI();}
       moveMounted(dt);return;
@@ -3624,8 +3628,9 @@ body.in-nether #game-wrap{background:#290f19}
     window.MineWorldWorldManager?.open();
   });
   document.addEventListener('keydown',e=>{
-    if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab'].includes(e.code))e.preventDefault();
-    if(e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement||e.target instanceof HTMLTextAreaElement)return;
+    if(e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement||e.target instanceof HTMLTextAreaElement||e.target?.isContentEditable)return;
+    if(window.MineWorldMultiplayer?.isTyping?.())return;
+    if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
     if(e.code==='Escape'){if(!paused)menu();else if(started)start();return}
     if(paused)return;
     keys.add(e.code);
@@ -3638,6 +3643,10 @@ body.in-nether #game-wrap{background:#290f19}
     if(e.code==='F5'&&!e.repeat){e.preventDefault();cyclePerspective();}
     if(e.code==='KeyP'&&!e.repeat)pickLookedAtBlock();
     if(e.code==='KeyH'&&!e.repeat)eatFood();
+    if(e.code==='KeyB'&&!e.repeat){e.preventDefault();performPlace(true);}
+    if((e.code==='KeyT'||e.code==='Enter')&&!e.repeat&&window.MineWorldMultiplayer?.getMode?.()!=='offline'){
+      e.preventDefault();keys.delete(e.code);window.MineWorldMultiplayer?.openChat?.();return;
+    }
     if(e.code==='KeyQ'&&!e.repeat){e.preventDefault();dropHeldItem(e.ctrlKey);}
 if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);else openVillage();}if(e.code==='KeyR'&&!e.repeat)attackMob(aimMob);if(e.code==='KeyM'&&!e.repeat)tryRide();if(e.code==='ShiftLeft'&&mount&&!e.repeat)dismount();if(e.code==='KeyI'&&!e.repeat)openGear();
     if(e.code.startsWith('Digit')){const i=Number(e.code.slice(5))-1;if(i>=0&&i<9)selectHotbarSlot(i)}
@@ -3661,6 +3670,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
   window.addEventListener('mouseup',e=>{if(e.button===0)mouseMiningHeld=false;});
   window.addEventListener('blur',()=>{mouseMiningHeld=false;touchHold.mine=false;keys.clear();movement.x=0;movement.y=0;cancelMining();});
   $('quick-pick').addEventListener('click',pickLookedAtBlock);
+  $('stack-above').addEventListener('click',()=>performPlace(true));
   $('camera-btn').addEventListener('click',cyclePerspective);
   $('perspective-toggle').addEventListener('click',cyclePerspective);
   updatePerspectiveButtons();
