@@ -1864,7 +1864,8 @@ body.in-nether #game-wrap{background:#290f19}
     else if(inventory[17]){inventory[17]--;amount=4;food='mushroom'}
     else{toast('Grow crops, trade for bread, or hunt animals for food');return}
     const fed=window.MineWorldHunger.eat(hunger,hungerSaturation,amount);hunger=fed.hunger;hungerSaturation=fed.saturation;
-    sound?.play('eat');emitAdvancement('eat',food,{total:Object.keys(FOOD).length});updateHotbar();updateSurvivalHUD();markSave();toast('Ate '+food+' · +'+amount+' hunger');
+    const foodKey={ 'cooked food':'cooked','raw food':'raw','golden carrot':'goldenCarrot','golden apple':'goldenApple','cooked chicken':'cookedChicken','baked potato':'bakedPotato' }[food]||food;
+    sound?.play('eat');emitAdvancement('eat',foodKey,{total:Object.keys(FOOD).length});updateHotbar();updateSurvivalHUD();markSave();toast('Ate '+food+' · +'+amount+' hunger');
   }
   const RECIPES=[
     {name:'🪵 4 planks',cost:{'block:5':1},give:{'block:11':4},tip:'1 wood log → 4 planks'},
@@ -2499,7 +2500,7 @@ body.in-nether #game-wrap{background:#290f19}
   function armorSlot(key){return /helmet|cap/i.test(key)?'head':/chestplate|tunic/i.test(key)?'chest':/leggings|pants/i.test(key)?'legs':/boots/i.test(key)?'feet':''}
   function equipSelection(){const item=inventorySelection();if(!item)return;
     const {key}=item,slot=armorSlot(key);
-    if(slot){if(armor[slot])addResource(armor[slot],1);if(addResource(key,-1,item.id)!==-1)return;armor[slot]=key;toast('Equipped '+itemLabel(key));}
+    if(slot){if(armor[slot])addResource(armor[slot],1);if(addResource(key,-1,item.id)!==-1)return;armor[slot]=key;for(const tier of ['iron','diamond','netherite'])if(key.toLowerCase().includes(tier))emitAdvancement('armor',tier);toast('Equipped '+itemLabel(key));}
     else{
       for(let i=0;i<9;i++)if(i!==selection&&survivalHotbar[i]===item.id)survivalHotbar[i]=null;
       survivalHotbar[selection]=item.id;
