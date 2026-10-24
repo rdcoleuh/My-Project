@@ -397,7 +397,7 @@ body.in-nether #game-wrap{background:#290f19}
           <span class="craft-arrow" aria-hidden="true">➜</span>
           <button type="button" id="craft-output" disabled>Choose ingredients</button>
         </div>
-        <div class="craft-actions"><label for="craft-ingredient" style="font-size:12px">Holding</label><select id="craft-ingredient" aria-label="Selected ingredient for crafting squares"></select><button id="craft-clear" type="button">Clear Grid</button><button id="craft-place-table" type="button">Place Crafting Table</button></div>
+        <div class="craft-actions"><label for="craft-ingredient" style="font-size:12px">Holding</label><select id="craft-ingredient" aria-label="Selected ingredient for crafting squares"></select><button id="craft-remove" type="button" aria-pressed="false">− Remove: Off</button><button id="craft-clear" type="button">Clear Grid</button><button id="craft-place-table" type="button">Place Crafting Table</button></div>
         <div id="craft-state" role="status">Open your backpack to begin crafting.</div>
       </section>
       <div class="craft-toolbar"><select id="recipe-category" aria-label="Recipe category"></select><input id="recipe-search" placeholder="Search recipes…" aria-label="Search crafting recipes"><label style="font-size:11px;display:flex;align-items:center;gap:4px;color:#ccedbb"><input id="recipe-craftable" type="checkbox"> Craftable</label></div>
@@ -1022,6 +1022,7 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function breakBlockNow(target){
     if(!target||get(target.x,target.y,target.z)!==target.b)return false;
+    if(target.b===168)craftBenchMemo.until=0;
     if(target.y===0){toast('The world foundation cannot be removed');return false;}
     const crop=window.MineWorldVillages.cropAt(target.b);
     if(crop){harvestCrop(target.x,target.y,target.z,crop);return true;}
@@ -1410,13 +1411,13 @@ body.in-nether #game-wrap{background:#290f19}
     updateSurvivalHUD();updateHotbar();markSave();toast('Ate '+itemLabel(key));return true;
   }
   function craft(recipe){
-    if(gameMode!=='survival'){toast('Choose Survival to craft tools');return}
+    if(gameMode!=='survival'){toast('Choose Survival to craft tools');return false;}
     const cost={...recipe.cost};
     if(recipe.name==='⚒ Smelt iron'&&bag.iron>0&&inventory[19]===0){cost['block:19']=0;cost.iron=1;}
-    if(recipe.tool&&toolLevels[tools[recipe.tool[0]]] >= toolLevels[recipe.tool[1]]){toast('Already own this tier or better');return;}
-    if(recipe.upgradeFrom&&tools[recipe.tool[0]]!==recipe.upgradeFrom){toast('First craft a diamond '+recipe.tool[0]);return;}
-    if(recipe.requiresSmithing&&!inventory[136]){toast('Craft and carry a Smithing Table to upgrade');return;}
-    if(recipe.station&&!hasCraftingStation(recipe.station)){toast('Need '+stationName(recipe.station)+' nearby or in inventory');return;}
+    if(recipe.tool&&toolLevels[tools[recipe.tool[0]]] >= toolLevels[recipe.tool[1]]){toast('Already own this tier or better');return false;}
+    if(recipe.upgradeFrom&&tools[recipe.tool[0]]!==recipe.upgradeFrom){toast('First craft a diamond '+recipe.tool[0]);return false;}
+    if(recipe.requiresSmithing&&!inventory[136]){toast('Craft and carry a Smithing Table to upgrade');return false;}
+    if(recipe.station&&!hasCraftingStation(recipe.station)){toast('Need '+stationName(recipe.station)+' nearby or in inventory');return false;}
     if(!Object.entries(cost).every(([key,n])=>amount(key)>=n)){toast('Need more resources');return}
     for(const [key,n]of Object.entries(cost))addResource(key,-n);
     if(recipe.give)for(const [key,n]of Object.entries(recipe.give))addResource(key,n);
@@ -1428,6 +1429,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(recipe.tool){tools[recipe.tool[0]]=recipe.tool[1];equipped=recipe.tool[0]}
     if(recipe.giveEquipment){tools[recipe.giveEquipment.kind]=recipe.giveEquipment.tier;equipped=recipe.giveEquipment.kind;}
     updateHotbar();updateSurvivalHUD();renderGear();markSave();toast('Crafted '+recipe.name.replace(/^[^ ]+ /,''));
+    return true;
   }
   // Village residents are deterministic for a seed and village coordinates.
   function villagerSites(radius=1900,x=player.x,z=player.z){
@@ -1851,13 +1853,20 @@ body.in-nether #game-wrap{background:#290f19}
   // Pocket crafting is always 2×2. A *placed* crafting table near the player opens 3×3.
   // Craft slots are virtual reservations; ingredients are charged only when output is taken.
   let craftSize=2,craftCells=Array(9).fill(null),preferredCraft=null;
+  // Memoize the expensive voxel scan while recipes and ingredient slots redraw.
+  let craftBenchMemo={key:'',until:0,value:false},craftRemoveMode=false;
   function nearbyCraftTable(){
     const cx=Math.floor(player.x),cy=Math.floor(player.y),cz=Math.floor(player.z);
-    for(let dx=-4;dx<=4;dx++)for(let dz=-4;dz<=4;dz++)for(let dy=-3;dy<=2;dy++){
-      if(dx*dx+dz*dz>19)continue;
-      if(get(cx+dx,cy+dy,cz+dz)===168)return true;
+    const key=dimension+':'+cx+':'+cy+':'+cz;
+    const now=performance.now();
+    if(craftBenchMemo.key===key&&now<craftBenchMemo.until)return craftBenchMemo.value;
+    let found=false;
+    scan:for(let dx=-6;dx<=6;dx++)for(let dz=-6;dz<=6;dz++)for(let dy=-4;dy<=3;dy++){
+      if(dx*dx+dz*dz>36)continue;
+      if(get(cx+dx,cy+dy,cz+dz)===168){found=true;break scan;}
     }
-    return false;
+    craftBenchMemo={key,until:now+350,value:found};
+    return found;
   }
   function selectedCraftIngredient(){return $('craft-ingredient').value||selectedStackKey||'';}
   function itemShape(recipe){
@@ -1938,21 +1947,31 @@ body.in-nether #game-wrap{background:#290f19}
     const table=craftSize===3,root=$('craft-grid');root.className='craft-grid'+(table?' workbench':'');
     root.setAttribute('aria-label',table?'3 by 3 crafting table input':'2 by 2 inventory crafting input');
     $('craft-heading').textContent=table?'🧰 Crafting Table · 3 × 3':'🎒 Inventory Crafting · 2 × 2';
-    $('craft-description').textContent=table?'Full workbench crafting. Tap items to place them, or pick a recipe below to arrange its materials.':'Your backpack has 4 crafting squares. Place a crafting table nearby for the 3 × 3 grid.';
+    $('craft-description').textContent=table?'Craft with nine squares. Choose an ingredient and tap a slot to add one; toggle Remove to subtract. Recipe buttons can fill the layout.':'Craft with four squares. Tap to add one item; toggle Remove to subtract. Place a crafting table near you for all nine squares.';
     const selector=$('craft-ingredient'),before=selector.value||selectedStackKey;selector.replaceChildren();
     selector.add(new Option('Choose an ingredient',''));
     for(const stack of backpackStacks()){const label=itemLabel(stack.key)+' ('+amount(stack.key)+')';if(![...selector.options].some(o=>o.value===stack.key))selector.add(new Option(label,stack.key));}
     if([...selector.options].some(o=>o.value===before))selector.value=before;
+    else if(selector.options.length>1)selector.selectedIndex=1;
+    $('craft-remove').textContent=craftRemoveMode?'− Remove: On':'− Remove: Off';
+    $('craft-remove').setAttribute('aria-pressed',String(craftRemoveMode));
     root.replaceChildren();for(let i=0;i<craftSize*craftSize;i++){
       const slot=craftCells[i],btn=document.createElement('button');btn.className='craft-cell'+(slot?' occupied':'');btn.type='button';
       btn.setAttribute('aria-label','Craft slot '+(i+1)+(slot?' '+itemLabel(slot.key)+' × '+slot.qty:' empty'));
       if(slot){const icon=document.createElement('span');icon.className='craft-icon';icon.textContent=stackIcon(slot.key);const caption=document.createElement('span');caption.textContent=itemLabel(slot.key).slice(0,12);btn.append(icon,caption);if(slot.qty>1){const qty=document.createElement('span');qty.className='craft-qty';qty.textContent=slot.qty;btn.append(qty)}}else btn.textContent='＋';
       btn.addEventListener('click',e=>{
-        const ingredient=selector.value||selectedStackKey;const current=craftCells[i];
-        if(!ingredient){craftCells[i]=null;preferredCraft=null;renderCraftingGrid();return;}
-        const reserved=craftCells.slice(0,craftSize*craftSize).reduce((sum,c,j)=>sum+(i!==j&&c?.key===ingredient?c.qty:0),0);
-        if(current?.key===ingredient){const next=e.shiftKey?current.qty+1:0;craftCells[i]=next&&next+reserved<=amount(ingredient)?{key:ingredient,qty:next}:null;}
-        else craftCells[i]=amount(ingredient)>reserved?{key:ingredient,qty:1}:null;
+        const current=craftCells[i];
+        if(craftRemoveMode||e.shiftKey){
+          if(current)craftCells[i]=current.qty>1?{key:current.key,qty:current.qty-1}:null;
+        }else{
+          const ingredient=selector.value||selectedStackKey;
+          if(!ingredient){toast('Choose an ingredient first');return;}
+          const reserved=craftCells.slice(0,craftSize*craftSize).reduce((sum,c,j)=>
+            sum+(i!==j&&c?.key===ingredient?c.qty:0),0);
+          const nextQty=current?.key===ingredient?current.qty+1:1;
+          if(nextQty+reserved>amount(ingredient)){toast('Not enough '+itemLabel(ingredient));return;}
+          craftCells[i]={key:ingredient,qty:nextQty};
+        }
         preferredCraft=null;renderCraftingGrid();
       });root.appendChild(btn);
     }
@@ -1978,14 +1997,43 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function placeCraftingTable(){
     if(gameMode!=='survival')return;
-    if(!inventory[168]&&bag.craftingTable>0){bag.craftingTable--;inventory[168]++;}
-    if(!inventory[168]){toast('Make a Crafting Table using four planks in your 2 × 2 grid');return;}
-    const x=clamp(Math.floor(player.x+Math.sin(player.yaw)*3),2,W-3),z=clamp(Math.floor(player.z-Math.cos(player.yaw)*3),2,D-3),y=Math.max(2,Math.min(H-3,topAt(x,z)+1));
-    if(get(x,y,z)!==0){toast('Move toward a clear patch of ground to place your table');return;}
-    if(setBlock(x,y,z,168)){inventory[168]--;markSave();enterCraftStation();renderGear();toast('🧰 Crafting Table placed nearby · 3 × 3 unlocked');}
+    if(!inventory[168]&&bag.craftingTable>0){
+      addResource('craftingTable',-1);addResource('block:168',1);
+    }
+    if(inventory[168]<=0){toast('Craft a table first: four planks in the 2 × 2 grid');return;}
+    // Find a nearby ground tile instead of placing three diagonally distant blocks away.
+    let placed=false;
+    for(const distance of [2.0,2.5,1.6,3.0]){
+      if(placed)break;
+      for(const yawOffset of [0,-.55,.55,-1.10,1.10,Math.PI]){
+        const theta=player.yaw+yawOffset;
+        const x=clamp(Math.floor(player.x+Math.sin(theta)*distance),2,W-3);
+        const z=clamp(Math.floor(player.z-Math.cos(theta)*distance),2,D-3);
+        const y=clamp(topAt(x,z)+1,2,H-3);
+        if(Math.abs(y-player.y)>2.8||get(x,y,z)!==0||get(x,y+1,z)!==0)continue;
+        if(setBlock(x,y,z,168)){
+          addResource('block:168',-1);
+          craftBenchMemo.until=0;
+          enterCraftStation();renderGear();markSave();
+          toast('🧰 Crafting Table placed! 3 × 3 grid is ready.');
+          placed=true;break;
+        }
+      }
+    }
+    if(!placed)toast('No clear ground nearby. Move to an open area to place the table.');
   }
+  $('craft-remove').addEventListener('click',()=>{
+    craftRemoveMode=!craftRemoveMode;
+    renderCraftingGrid();
+  });
   $('craft-clear').addEventListener('click',()=>{craftCells=Array(9).fill(null);preferredCraft=null;renderCraftingGrid()});
-  $('craft-output').addEventListener('click',()=>{const match=matchingRecipe();if(!match||!recipeCanCraft(match))return;craft(match);renderCraftingGrid()});
+  $('craft-output').addEventListener('click',()=>{
+    const match=matchingRecipe();if(!match||!recipeCanCraft(match))return;
+    if(craft(match)){
+      craftCells=Array(9).fill(null);preferredCraft=null;craftRemoveMode=false;
+      renderGear();
+    }
+  });
   $('craft-place-table').addEventListener('click',placeCraftingTable);
   for(const label of ['All','Craftable','Classic',...catalog.categories.filter(x=>x!=='All')]){
     const option=document.createElement('option');option.value=label;option.textContent=label;$('recipe-category').appendChild(option);
@@ -2016,7 +2064,7 @@ body.in-nether #game-wrap{background:#290f19}
   $('item-equip').addEventListener('click',equipSelection);$('item-use').addEventListener('click',consumeSelection);
   $('item-drop').addEventListener('click',()=>dropSelection());$('item-drop-stack').addEventListener('click',()=>dropSelection(true));
   for(const id of ['recipe-search','recipe-category','recipe-craftable'])$(id).addEventListener(id==='recipe-search'?'input':'change',renderRecipes);
-  function openGear(){if(gameMode!=='survival'){toast('The Survival backpack and recipes are only available in Survival. Use ▣ Blocks to build in Creative.');return;}enterCraftStation();renderGear();$('gear-panel').classList.remove('hidden');paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock()}
+  function openGear(){if(gameMode!=='survival'){toast('The Survival backpack and recipes are only available in Survival. Use ▣ Blocks to build in Creative.');return;}craftRemoveMode=false;enterCraftStation();renderGear();$('gear-panel').classList.remove('hidden');paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock()}
   function closeGear(){$('gear-panel').classList.add('hidden');if(started)start();else $('welcome').classList.remove('hidden')}
   function setDifficulty(level){
     if(!['peaceful','easy','normal','hard'].includes(level))return;
