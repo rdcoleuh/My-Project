@@ -1236,3 +1236,34 @@ atlas.paint=(id,face,x,y)=>paint(id,face,x,y)||prior(id,face,x,y);
 atlas.version='4.5-classic-voxel-surface-pass';
 atlas.originalArt=true;
 })();
+
+
+/* MineWorld 4.6 — correct podzol palette and actual glass cutout pixels.
+   These details are original art, not Mojang's published texture files. */
+(()=>{
+ const atlas=window.MineWorldPixelMaterials,prior=atlas.paint;
+ const hash=(x,y,s)=>{let h=Math.imul(x+127,374761393)^Math.imul(y+181,668265263)^Math.imul(s+117,1274126177);h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967295};
+ atlas.paint=(id,f,x,y)=>{
+  x&=15;y&=15;
+  if(id===28){
+    const n=hash(x>>1,y>>1,28);
+    const c=[[73,56,37],[98,74,47],[124,96,58],[145,113,71],[170,136,84]][n>.88?4:n>.61?3:n>.39?2:n>.16?1:0];
+    if(f===0)return [...c,255];
+    if(f===1&&y<2+(hash(x,0,77)>.62?1:0))return [107,86,52,255];
+    return prior(29,f,x,y);
+  }
+  if(id===9){
+    const frame=x===0||x===15||y===0||y===15;
+    const beveled=(x===1&&y<6)||(y===1&&x>8);
+    const shine=(x===3&&y>=3&&y<=8)||(y===3&&x>=3&&x<=7)||
+      (x===12&&y>=10&&y<=12)||(y===12&&x>=11&&x<=13);
+    if(frame)return [152,196,204,255];
+    if(beveled)return [193,227,233,255];
+    if(shine)return [229,248,249,255];
+    return [0,0,0,0];
+  }
+  return prior(id,f,x,y);
+ };
+ atlas.version='4.6-classic-material-finishing';
+ atlas.hasTransparentGlass=true;
+})();
