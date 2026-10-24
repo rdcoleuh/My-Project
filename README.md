@@ -1,3 +1,34 @@
+# MineWorld 6.0 — Animal Models, Natural Textures & Gameplay Fixes
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+This release continues the independent Minecraft-style sandbox project with improvements based on the [Minecraft Wiki's animal reference](https://minecraft.wiki/w/Animal) and [16×16 source texture conventions](https://minecraft.wiki/w/Textures). All visual textures, cuboid animal models and source code are drawn and authored independently; no Eaglercraft/Mojang image or sound files are embedded.
+
+### Improved animals
+
+- More recognizable individual **cow, pig, sheep, chicken, horse, donkey, mule, camel, llama, skeleton horse and zombie horse** models. Each has separate proportions, facial features, ears, legs, bodies, and a simple animated gait rather than the same generic cuboid.
+- Common passive wildlife now spawns according to nearby biomes instead of choosing uniformly from all rideable species. Rare skeleton and zombie horses no longer appear as ordinary farm livestock.
+- Ordinary animals flee temporarily after being struck, follow players holding supported breeding food, and wander when they have no target.
+- **Feed two nearby adults** using their valid food item and right-click (or Place with an animal targeted) to create a baby, where the breeding items exist in MineWorld. Baby animals grow over roughly 20 in-game minutes and breeding has a cooldown. Cows and sheep like wheat, pigs like carrots/potatoes/beetroot, chickens like seeds, camels use cactus blocks, and llamas use hay bales.
+- **Shear sheep** using shears in your hotbar and right-clicking a sheep; sheared models lose their wool and regrow it after grazing on grass.
+- Farm animals and their baby/sheared status are saved with their original world in the browser. In shared multiplayer, the host can interact with animals; animal changes are included in the updated mob snapshots.
+
+**Limits:** This is not a full Minecraft entity simulator. The currently implemented MineWorld species are improved, but all possible vanilla animal mobs, special behaviors, and animations are not present. There is no direct copying of Minecraft skins or geometry.
+
+### Sharper original block textures
+
+- Added a 16×16 pixel detail layer for grass tops/sides, dirt, rock, sand, red brick, planks, furnace, cobblestone, gravel, farmland, crafting table and bed.
+- Texture resolution remains consistent: one source texel per 1/16th block, with nearest-neighbor sampling and distinct block faces. All **169 existing MineWorld block IDs** are retained.
+- The previous handcrafted ore patterns, trees, biome features, skin editor and optional local resource-pack ZIP importer continue working.
+
+### Reliability and tests
+
+- Preserves your existing world saves, individual Creative/Survival save slots, player skins, 126-title advancement journal, item-stack counts, chat and other prior gameplay.
+- Resolved outdated version assertions in the regression suite and added dedicated checks for unique 16×16 textures, animal size bounds, biome spawning, breeding, feeding and persistence. Animal snapshots now also carry heading, baby and sheared state across multiplayer.
+- As before, browser-world saves are stored locally on your device. Export backups when possible and avoid clearing site data.
+
+---
+
 # MineWorld 5.8 — Live Player Chat & Block Stacking
 
 **Play:** https://rdcoleuh.github.io/My-Project/
