@@ -3701,6 +3701,11 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
   migrateLegacySave();const activeSlot=(()=>{try{return localStorage.getItem(LAST_SLOT)==='survival'?'survival':'creative'}catch(_){return 'creative'}})();gameMode=activeSlot;updateModeButton();updateSurvivalHUD();
   if(!load(activeSlot)){generate();setGameMode(activeSlot);}else $('status').textContent='● '+(activeSlot==='survival'?'Survival':'Creative')+' world restored';setDifficulty(difficulty);updatePortalUI();updateSeedLabel();updateVillagers();
   window.MineWorldBridge={
+    clearChatMovement:()=>{
+      keys.clear();movement.x=0;movement.y=0;mouseMiningHeld=false;touchHold.mine=false;touchHold.place=false;
+      if(isSprinting){isSprinting=false;updateMovementUI();}
+      cancelMining();
+    },
     refreshTextureUI:()=>updateHotbar(),
     getWorlds:mode=>worldLibrary.list(mode),
     getCurrentWorld:mode=>({...worldLibrary.current(mode||gameMode)}),
