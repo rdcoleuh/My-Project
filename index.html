@@ -291,6 +291,11 @@ body.in-nether #game-wrap{background:#290f19}
 @media(max-height:590px){#welcome .mw-branding{margin-top:5vh}#welcome .mw-main-actions{margin-top:5vh;gap:4px}#welcome .mw-pixel-btn{height:37px}#welcome .mw-footer{display:none}}
 @media(prefers-reduced-motion:reduce){#welcome .mw-panorama,#welcome .mw-splash{animation:none}}
 
+/* Nine inventory-backed Survival hotbar slots; Creative palette remains untouched. */
+#hotbar .hot-item.empty{border-color:#3d5241;background:#1d3025bc;opacity:.76}
+#hotbar .hot-item.empty.active{border-color:#dfff90;opacity:1}
+#hotbar .hot-item-icon{font-size:23px;height:25px;display:grid;place-items:center}
+#hotbar .hot-item span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 <title>MineWorld 3.8 — Pocket Crafting, Workbench & Biomes</title>
 </head>
@@ -735,7 +740,8 @@ body.in-nether #game-wrap{background:#290f19}
     [113,114,115,116,117,118,168,19,58]
   ];
   const HOT9=[...HOTSETS[0]];
-  let hotbarPage=0;
+  const survivalHotbar=Array(9).fill(null);
+  let hotbarPage=0,hotbarSignature='';
   const COLORS={1:[.36,.69,.28],2:[.52,.34,.22],3:[.52,.56,.57],4:[.85,.76,.50],5:[.48,.32,.18],6:[.28,.55,.23],7:[.26,.56,.82],8:[.72,.34,.25],9:[.62,.85,.90],10:[.93,.79,.33],11:[.65,.47,.27],12:[.74,.19,.16],13:[.90,.43,.10],14:[.89,.66,.18],15:[.59,.42,.31],16:[.68,.18,.28],17:[.73,.55,.35]};
   const SWATCH={168:'#b48a4e',1:'#65aa48',2:'#825332',3:'#8e9297',4:'#d9c180',5:'#8b633b',6:'#388b3a',7:'#368dd3',8:'#ba4b3e',9:'#a4d6e0',10:'#edca57',11:'#bd8d52',12:'#b94537',13:'#e98419',14:'#f2c34c',15:'#987e62',16:'#ab304c',17:'#bd9070',18:'#777b7c',19:'#a98c70',20:'#7d7872'};
   const FACE=[
@@ -1018,13 +1024,29 @@ body.in-nether #game-wrap{background:#290f19}
       attackCooldown=gameMode==='creative'?.07:(tools.pickaxe==='netherite'?.075:tools.pickaxe==='diamond'?.10:tools.pickaxe==='iron'?.14:tools.pickaxe==='stone'?.23:tools.pickaxe==='wood'?.32:.47);
     }
   }
-  function performPlace(){if(paused||!aim||!aim.previous)return;let p=aim.previous,b=HOT9[selection];if(b===119)b=120;if(!inside(p.x,p.y,p.z)||get(p.x,p.y,p.z)!==0)return;if(dimension==='nether'&&b===7){toast('💨 Water instantly evaporates in the Nether');return;}if(gameMode==='survival'&&inventory[b]===0){toast('Mine resources to collect '+NAMES[b]);return;}if(setBlock(p.x,p.y,p.z,b)){if(gameMode==='survival'){inventory[b]--;updateHotbar();}toast('Placed '+NAMES[b]);timers.place=.2}}
+  function performPlace(){
+    if(paused)return;
+    const held=hotbarKey();
+    if(gameMode==='survival'){
+      if(!held||!validHotbarKey(held)||amount(held)<=0){toast('Empty hotbar slot — collect an item first');updateHotbar();return;}
+      if(useHeldFood(held))return;
+      if(!held.startsWith('block:')){toast('This is in your hotbar; use Backpack for other actions');return;}
+    }
+    if(!aim||!aim.previous)return;
+    const p=aim.previous,id=Number(held.slice(6)),b=id===119?120:id;
+    if(!inside(p.x,p.y,p.z)||get(p.x,p.y,p.z)!==0)return;
+    if(dimension==='nether'&&b===7){toast('💨 Water evaporates in the Nether');return;}
+    if(setBlock(p.x,p.y,p.z,b)){
+      if(gameMode==='survival'){addResource(held,-1);updateHotbar();}
+      toast('Placed '+NAMES[b]);timers.place=.2;
+    }
+  }
   function markSave(){dirtySave=true}
   function save(){
     if(window.MineWorldMultiplayer?.isShared())return;
     try{
       const edits=[...savedEdits.entries()];
-      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,inventory:[...inventory],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:9});
+      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,inventory:[...inventory],survivalHotbar:[...survivalHotbar],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,bag,tools,equipped,difficulty,dayClock,armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:10});
       localStorage.setItem(slotKey(gameMode),payload);localStorage.setItem(LAST_SLOT,gameMode);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';
     }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';}
   }
@@ -1066,6 +1088,8 @@ body.in-nether #game-wrap{background:#290f19}
       if(Number.isFinite(s.health))health=clamp(s.health,1,20);if(Number.isFinite(s.hunger))hunger=clamp(s.hunger,0,20);
       if(Array.isArray(s.inventory))for(let i=0;i<inventory.length;i++)inventory[i]=clamp(Math.floor(Number(s.inventory[i])||0),0,999);
       if(Number(s.bag?.craftingTable)>0){inventory[168]=clamp(inventory[168]+Number(s.bag.craftingTable),0,999);bag.craftingTable=0;}
+      survivalHotbar.fill(null);
+      if(Array.isArray(s.survivalHotbar))for(let i=0;i<9;i++)if(validHotbarKey(s.survivalHotbar[i]))survivalHotbar[i]=s.survivalHotbar[i];
       updateModeButton();updateHotbar();updateSurvivalHUD();
       if(s.player){for(let k of ['x','y','z','yaw','pitch'])if(Number.isFinite(s.player[k]))player[k]=s.player[k];
         if(legacy){player.x+=SPAWN-56;player.z+=SPAWN-56;player.y=terrain(Math.floor(player.x),Math.floor(player.z))+2;}
@@ -1129,9 +1153,46 @@ body.in-nether #game-wrap{background:#290f19}
     $('end-cross').textContent=inEnd?'🌿 Return to Overworld':'✦ Enter the End';
     $('end-portal-status').textContent=eyesPlaced+'/12 eyes placed · '+(eyesPlaced===12?'Portal activated':'Needs Eyes of Ender');
   }
-  function toggleInventory(){hotbarPage=(hotbarPage+1)%HOTSETS.length;HOT9.splice(0,HOT9.length,...HOTSETS[hotbarPage]);selection=0;updateHotbar();toast(hotbarPage?'Nature & extras':'Classic blocks');}
-  function updateHotbar(){const root=$('hotbar');root.innerHTML='';HOT9.forEach((id,i)=>{const button=document.createElement('button');button.type='button';button.className='hot-item'+(i===selection?' active':'');button.setAttribute('aria-label',NAMES[id]);const tile=id*3,tx=((tile%16)/15*100).toFixed(2),ty=(Math.floor(tile/16)/31*100).toFixed(2),image=window.MineWorldAtlas.dataURL;
-    button.innerHTML='<small>'+(gameMode==='survival'?inventory[id]:i+1)+'</small><div class="swatch" style="background-color:'+SWATCH[id]+';background-image:url('+image+');background-size:1600% 3200%;background-position:'+tx+'% '+ty+'%"></div><span>'+NAMES[id]+'</span>';button.addEventListener('pointerdown',e=>e.stopPropagation());button.addEventListener('click',()=>{selection=i;updateHotbar();toast(NAMES[HOT9[selection]])});root.appendChild(button)})}
+  function toggleInventory(){
+    if(gameMode==='survival'){openGear();return;}
+    hotbarPage=(hotbarPage+1)%HOTSETS.length;
+    HOT9.splice(0,HOT9.length,...HOTSETS[hotbarPage]);
+    selection=0;updateHotbar();toast(hotbarPage?'Nature & extras':'Classic blocks');
+  }
+  function updateHotbar(){
+    const root=$('hotbar');root.replaceChildren();
+    const survival=gameMode==='survival';
+    if(survival)syncSurvivalHotbar();
+    for(let i=0;i<9;i++){
+      const key=survival?survivalHotbar[i]:'block:'+HOT9[i];
+      const id=key?.startsWith('block:')?Number(key.slice(6)):null;
+      const count=survival&&key?amount(key):0;
+      const label=key?itemLabel(key):'Empty slot';
+      const button=document.createElement('button');button.type='button';
+      button.className='hot-item'+(i===selection?' active':'')+(!key?' empty':'');
+      button.setAttribute('aria-label','Slot '+(i+1)+': '+label+(survival?' ('+count+')':''));
+      button.title='Slot '+(i+1)+' · '+(key?label:'Empty — pick up items');
+      const qty=document.createElement('small');qty.textContent=survival?(count?Math.min(count,64):''):(i+1);
+      button.appendChild(qty);
+      if(id!==null&&Number.isInteger(id)){
+        const swatch=document.createElement('div');swatch.className='swatch';
+        const tile=id*3,tx=((tile%16)/15*100).toFixed(2),ty=(Math.floor(tile/16)/31*100).toFixed(2);
+        swatch.style.backgroundColor=SWATCH[id]||'#777';
+        swatch.style.backgroundImage='url('+window.MineWorldAtlas.dataURL+')';
+        swatch.style.backgroundSize='1600% 3200%';swatch.style.backgroundPosition=tx+'% '+ty+'%';
+        button.appendChild(swatch);
+      }else{
+        const icon=document.createElement('div');icon.className='hot-item-icon';
+        icon.textContent=key?stackIcon(key):'';
+        button.appendChild(icon);
+      }
+      const name=document.createElement('span');name.textContent=key?label:'—';button.appendChild(name);
+      button.addEventListener('pointerdown',e=>e.stopPropagation());
+      button.addEventListener('click',()=>{selectHotbarSlot(i);if(key)toast(label)});
+      root.appendChild(button);
+    }
+    hotbarSignature=survival?survivalHotbar.map(key=>key?key+':'+amount(key):'_').join('|'):'creative:'+hotbarPage;
+  }
   function toast(s){let x=$('toast');x.textContent=s;x.classList.add('show');notifications++;const n=notifications;setTimeout(()=>{if(n===notifications)x.classList.remove('show')},1250)}
   function updateSurvivalHUD(){
     $('survival-hud').classList.toggle('hidden',gameMode!=='survival');
@@ -1150,7 +1211,7 @@ body.in-nether #game-wrap{background:#290f19}
     }
     updateModeButton();updateFlyButton();updateHotbar();updateSurvivalHUD();markSave();
   }
-  function updateModeButton(){$('mode-btn').textContent='World: '+(gameMode==='creative'?'Creative':'Survival');$('mode-btn').disabled=true;$('craft-btn').textContent=gameMode==='survival'?'⚒ Crafting & Gear':'▣ Creative Blocks';$('bag-toggle').textContent=gameMode==='survival'?'🎒 Gear':'▣ Blocks';}
+  function updateModeButton(){$('mode-btn').textContent='World: '+(gameMode==='creative'?'Creative':'Survival');$('mode-btn').disabled=true;$('craft-btn').textContent=gameMode==='survival'?'⚒ Crafting & Gear':'▣ Creative Blocks';$('bag-toggle').textContent=gameMode==='survival'?'🎒 Gear':'▣ Blocks';$('inventory-toggle').textContent=gameMode==='survival'?'🎒 Inventory':'▣ Blocks';}
   function eatFood(){
     if(gameMode!=='survival')return;
     if(hunger>=20){toast('You are already full');return;}
@@ -1219,7 +1280,64 @@ body.in-nether #game-wrap{background:#290f19}
     {name:'✨ Shroomlight',cost:{'block:79':2,'block:81':2},give:{'block:90':1},tip:'Crimson and warped wart'}
   ];
   function amount(key){return key.startsWith('block:')?inventory[Number(key.slice(6))]:(bag[key]||0)}
-  function addResource(key,n){if(key.startsWith('block:')){const i=Number(key.slice(6));inventory[i]=clamp(inventory[i]+n,0,999)}else bag[key]=clamp((bag[key]||0)+n,0,999)}
+  function addResource(key,n){
+    const before=amount(key);
+    if(key.startsWith('block:')){const i=Number(key.slice(6));if(!Number.isInteger(i)||i<1||i>=inventory.length)return;inventory[i]=clamp(inventory[i]+n,0,999)}
+    else{if(!Object.hasOwn(bag,key))return;bag[key]=clamp((bag[key]||0)+n,0,999)}
+    if(gameMode==='survival'&&n>0&&before===0&&amount(key)>0){
+      if(!inventoryOrder.includes(key))inventoryOrder.push(key);
+      syncSurvivalHotbar();
+    }
+  }
+  function validHotbarKey(key){
+    if(typeof key!=='string'||key.length>110)return false;
+    if(key.startsWith('block:')){const id=Number(key.slice(6));return Number.isInteger(id)&&id>=1&&id<inventory.length;}
+    return Object.hasOwn(bag,key);
+  }
+  function syncSurvivalHotbar(){
+    if(gameMode!=='survival')return false;
+    let changed=false;const seen=new Set();
+    for(let i=0;i<9;i++){
+      const key=survivalHotbar[i];
+      if(!validHotbarKey(key)||amount(key)<=0||seen.has(key)){
+        if(key!==null)changed=true;
+        survivalHotbar[i]=null;
+      }else seen.add(key);
+    }
+    const owned=[...new Set([...inventoryOrder,
+      ...Array.from({length:inventory.length-1},(_,i)=>'block:'+(i+1)).filter(key=>amount(key)>0),
+      ...Object.keys(bag).filter(key=>bag[key]>0)])];
+    for(const key of owned){
+      if(!validHotbarKey(key)||amount(key)<=0||seen.has(key))continue;
+      const slot=survivalHotbar.indexOf(null);if(slot<0)break;
+      survivalHotbar[slot]=key;seen.add(key);changed=true;
+    }
+    if(changed)markSave();
+    return changed;
+  }
+  function hotbarKey(){return gameMode==='survival'?survivalHotbar[selection]:('block:'+HOT9[selection]);}
+  function selectHotbarSlot(i){
+    if(!Number.isInteger(i)||i<0||i>=9)return;
+    selection=i;
+    if(gameMode==='survival'){
+      const key=survivalHotbar[i]||'';
+      const match=key.match(/(pickaxe|sword|shovel|hoe|axe)/i);
+      if(match){
+        const kind=match[1].toLowerCase();
+        const tier=/netherite/i.test(key)?'netherite':/diamond/i.test(key)?'diamond':/iron|gold/i.test(key)?'iron':/stone/i.test(key)?'stone':'wood';
+        equipped=kind;tools[kind]=tier;
+      }else equipped='none';
+      updateSurvivalHUD();
+    }
+    updateHotbar();
+  }
+  function useHeldFood(key){
+    if(!(key in FOOD))return false;
+    if(hunger>=20&&health>=20){toast('You are not hungry');return true;}
+    addResource(key,-1);hunger=clamp(hunger+FOOD[key],0,20);
+    if(key==='goldenApple')health=clamp(health+4,0,20);
+    updateSurvivalHUD();updateHotbar();markSave();toast('Ate '+itemLabel(key));return true;
+  }
   function craft(recipe){
     if(gameMode!=='survival'){toast('Choose Survival to craft tools');return}
     const cost={...recipe.cost};
@@ -1628,9 +1746,17 @@ body.in-nether #game-wrap{background:#290f19}
   function equipSelection(){const item=inventorySelection();if(!item)return;
     const {key}=item,slot=armorSlot(key);
     if(slot){if(armor[slot])addResource(armor[slot],1);addResource(key,-1);armor[slot]=key;toast('Equipped '+itemLabel(key));}
-    else if(key.startsWith('block:')){const block=Number(key.slice(6));HOT9[selection]=block;updateHotbar();toast('Added '+itemLabel(key)+' to selected hotbar slot');}
-    else if(/sword|pickaxe|shovel|hoe|axe/i.test(key)){const kind=/sword/.test(key)?'sword':/pickaxe/.test(key)?'pickaxe':/shovel/.test(key)?'shovel':/hoe/.test(key)?'hoe':'axe';equipped=kind;const tier=/netherite/i.test(key)?'netherite':/diamond/i.test(key)?'diamond':/iron/i.test(key)?'iron':/gold/i.test(key)?'iron':/stone/i.test(key)?'stone':'wood';tools[kind]=tier;toast('Equipped '+itemLabel(key));}
-    else{toast('This item is stored. Use or craft with it from your backpack.');}
+    else{
+      for(let i=0;i<9;i++)if(i!==selection&&survivalHotbar[i]===key)survivalHotbar[i]=null;
+      survivalHotbar[selection]=key;
+      if(/sword|pickaxe|shovel|hoe|axe/i.test(key)){
+        const kind=/sword/i.test(key)?'sword':/pickaxe/i.test(key)?'pickaxe':/shovel/i.test(key)?'shovel':/hoe/i.test(key)?'hoe':'axe';
+        equipped=kind;
+        const tier=/netherite/i.test(key)?'netherite':/diamond/i.test(key)?'diamond':/iron|gold/i.test(key)?'iron':/stone/i.test(key)?'stone':'wood';
+        tools[kind]=tier;
+      }
+      toast('Added '+itemLabel(key)+' to hotbar slot '+(selection+1));
+    }
     updateSurvivalHUD();updateHotbar();markSave();renderGear();
   }
   function consumeSelection(){const item=inventorySelection();if(!item)return;let key=item.key;if(!(key in FOOD)){toast('This item is not food');return}
@@ -2305,7 +2431,7 @@ body.in-nether #game-wrap{background:#290f19}
     drawVillagers();
     drawHighlight(aimMob?null:aim);
     $('target-name').textContent=aimVillager?'💚 '+aimVillager.job.name+' · Tap Mine / V to Trade':aimMob?'⚔ '+SPECIES[aimMob.kind].name+' · ♥ '+Math.ceil(aimMob.hp):aimPlayer?'⚔ '+aimPlayer.name+' · PvP enabled':aim?'⛏ '+NAMES[aim.b]+'  ·  '+aim.x+', '+aim.y+', '+aim.z:'Aim at a block or creature';
-    if((frameCount++%18)===0){$('coord-readout').textContent=(dimension==='end'?'✦ '+window.MineWorldEnd.biomeAt(player.x,player.z).name:dimension==='nether'?'🔥 '+window.MineWorldNether.biomeAt(player.x,player.z).name:'🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name)+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
+    if((frameCount++%18)===0){if(gameMode==='survival'){const changed=syncSurvivalHotbar(),signature=survivalHotbar.map(key=>key?key+':'+amount(key):'_').join('|');if(changed||signature!==hotbarSignature)updateHotbar();}$('coord-readout').textContent=(dimension==='end'?'✦ '+window.MineWorldEnd.biomeAt(player.x,player.z).name:dimension==='nether'?'🔥 '+window.MineWorldNether.biomeAt(player.x,player.z).name:'🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name)+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
     saveTimer+=dt;if(saveTimer>8){saveTimer=0;if(dirtySave)save()}
   }
   // Biome travel stays deterministic and works in the same peer-to-peer world.
@@ -2456,7 +2582,7 @@ body.in-nether #game-wrap{background:#290f19}
     tools.pickaxe=tools.sword=tools.hoe=tools.axe=tools.shovel='none';equipped='none';
     for(const k of Object.keys(armor))armor[k]='';inventoryOrder.length=0;vehicles=[];vehicleSerial=0;mount=null;stabledMounts=[];backpackPage=0;selectedStackKey='';
     health=20;hunger=20;hungerDrain=hungerPulse=healPulse=0;
-    dayClock=0;hotbarPage=0;HOT9.splice(0,HOT9.length,...HOTSETS[0]);selection=0;
+    dayClock=0;hotbarPage=0;HOT9.splice(0,HOT9.length,...HOTSETS[0]);survivalHotbar.fill(null);selection=0;
   }
   function switchWorldSlot(next){
     if(next===gameMode)return true;
@@ -2513,7 +2639,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(e.code==='KeyE'&&!e.repeat)toggleInventory();
     if(e.code==='KeyF'&&!e.repeat){if(gameMode==='survival'){toast('Flying is Creative only');}else{player.fly=!player.fly;player.vy=0;updateFlyButton();toast(player.fly?'Fly mode on':'Fly mode off')}}
     if(e.code==='KeyQ'&&!e.repeat)eatFood();if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);else openVillage();}if(e.code==='KeyR'&&!e.repeat)attackMob(aimMob);if(e.code==='KeyM'&&!e.repeat)tryRide();if(e.code==='ShiftLeft'&&mount&&!e.repeat)dismount();if(e.code==='KeyI'&&!e.repeat)openGear();
-    if(e.code.startsWith('Digit')){const i=Number(e.code.slice(5))-1;if(i>=0&&i<HOT9.length){selection=i;updateHotbar()}}
+    if(e.code.startsWith('Digit')){const i=Number(e.code.slice(5))-1;if(i>=0&&i<9)selectHotbarSlot(i)}
   });
   document.addEventListener('keyup',e=>keys.delete(e.code));
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&started&&!paused)menu()});
@@ -2529,7 +2655,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(!isTouch&&document.pointerLockElement!==canvas){(canvas.requestPointerLock()?.catch?.(()=>{}));return}
     if(e.button===0)performMine();else if(e.button===2)performPlace();
   });
-  canvas.addEventListener('wheel',e=>{if(paused)return;e.preventDefault();selection=(selection+(e.deltaY>0?1:-1)+HOT9.length)%HOT9.length;updateHotbar()},{passive:false});
+  canvas.addEventListener('wheel',e=>{if(paused)return;e.preventDefault();selectHotbarSlot((selection+(e.deltaY>0?1:-1)+9)%9)},{passive:false});
   let lookPointer=null,lastLook=null;
   canvas.addEventListener('pointerdown',e=>{if(paused||e.pointerType==='mouse')return;lookPointer=e.pointerId;lastLook=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);e.preventDefault()});
   canvas.addEventListener('pointermove',e=>{if(paused||e.pointerId!==lookPointer||!lastLook)return;let dx=e.clientX-lastLook[0],dy=e.clientY-lastLook[1];player.yaw+=dx*.005;player.pitch=clamp(player.pitch-dy*.005,-1.5,1.5);lastLook=[e.clientX,e.clientY]});
