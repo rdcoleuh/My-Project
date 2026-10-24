@@ -1729,7 +1729,7 @@ body.in-nether #game-wrap{background:#290f19}
       }
     }else if(dimension==='end'){
       const site=window.MineWorldEnd.landmarkAt(player.x,player.z);
-      if(site&&Math.hypot(player.x-site.x,player.z-site.z)<24&&/city/i.test(site.type||site.kind||''))
+      if(site&&Math.hypot(player.x-site.x,player.z-site.z)<24&&/city|ship/i.test(site.type||site.kind||''))
         emitAdvancement('landmark','endCity');
     }else{
       biome=window.MineWorldBiomes.biomeAt(player.x,player.z);
@@ -1865,7 +1865,7 @@ body.in-nether #game-wrap{background:#290f19}
     else{toast('Grow crops, trade for bread, or hunt animals for food');return}
     const fed=window.MineWorldHunger.eat(hunger,hungerSaturation,amount);hunger=fed.hunger;hungerSaturation=fed.saturation;
     const foodKey={ 'cooked food':'cooked','raw food':'raw','golden carrot':'goldenCarrot','golden apple':'goldenApple','cooked chicken':'cookedChicken','baked potato':'bakedPotato' }[food]||food;
-    sound?.play('eat');emitAdvancement('eat',foodKey,{total:Object.keys(FOOD).length});updateHotbar();updateSurvivalHUD();markSave();toast('Ate '+food+' · +'+amount+' hunger');
+    sound?.play('eat');emitAdvancement('eat',foodKey,{total:Object.keys(FOOD).length,allowed:Object.keys(FOOD)});updateHotbar();updateSurvivalHUD();markSave();toast('Ate '+food+' · +'+amount+' hunger');
   }
   const RECIPES=[
     {name:'🪵 4 planks',cost:{'block:5':1},give:{'block:11':4},tip:'1 wood log → 4 planks'},
@@ -2077,7 +2077,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(hunger>=20&&health>=20){toast('You are not hungry');return true;}
     if(addResource(key,-1,survivalHotbar[selection])!==-1)return false;const fed=window.MineWorldHunger.eat(hunger,hungerSaturation,FOOD[key]);hunger=fed.hunger;hungerSaturation=fed.saturation;
     if(key==='goldenApple')health=clamp(health+4,0,20);
-    sound?.play('eat');emitAdvancement('eat',key,{total:Object.keys(FOOD).length});updateSurvivalHUD();updateHotbar();markSave();toast('Ate '+itemLabel(key));return true;
+    sound?.play('eat');emitAdvancement('eat',key,{total:Object.keys(FOOD).length,allowed:Object.keys(FOOD)});updateSurvivalHUD();updateHotbar();markSave();toast('Ate '+itemLabel(key));return true;
   }
   function craft(recipe){
     if(gameMode!=='survival'){toast('Choose Survival to craft tools');return false;}
