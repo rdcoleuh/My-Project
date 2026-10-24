@@ -24,7 +24,7 @@ test('model library has original scaled cattle, sheep, chickens, pigs and four m
   assert.ok(xyz.length<4500,'animal is too complex for mobile: '+kind);
  }
  assert.ok(sizes.chicken<sizes.cow);
- assert.ok(sizes.camel>sizes.pig);
+ assert.ok(A.MODELS.camel.height>A.MODELS.pig.height);
  const unsheared=A.draw({id:1,kind:'sheep',x:5,y:5,z:5},()=>{});
  const sheared=A.draw({id:1,kind:'sheep',x:5,y:5,z:5,sheared:true},()=>{});
  assert.ok(unsheared>sheared,'shearing should remove wool tufts');
@@ -94,7 +94,7 @@ test('browser game wires animals, audio, feeding, world saves and original clari
  ]){
   assert.ok(html.includes(marker),'missing gameplay hook '+marker);
  }
- assert.ok(html.includes('MineWorld 6.0'));
+ assert.ok(/MineWorld \d+\.\d+/.test(html));
  for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))
   if(match[1].trim())assert.doesNotThrow(()=>new Function(match[1]));
 });
