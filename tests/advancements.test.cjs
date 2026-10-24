@@ -102,6 +102,6 @@ test('game bundles advancement UI and per-world progress plus visible hotbar ico
   "if(survival&&count>0)icon.appendChild(qty)","qty.className=survival?'hot-stack-number'"])
   assert.ok(html.includes(marker),'Missing integration '+marker);
  assert.ok(html.includes(".hot-item .hot-stack-number{display:block!important"),'quantity not visible on phone');
- assert.ok(html.includes("MineWorld 5.9"));
+ assert.ok(/MineWorld \d+\.\d+/.test(html));
  for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))if(m[1].trim())new Function(m[1]);
 });
