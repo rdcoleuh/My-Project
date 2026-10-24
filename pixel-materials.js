@@ -359,3 +359,198 @@
   }
   window.MineWorldPixelMaterials={paint,version:'4.1',size:16};
 })();
+
+
+/* MineWorld 4.3 detail layer: independently drawn classic block motifs.
+   Pixel masks authored for MineWorld; Minecraft source textures are NOT bundled. */
+(()=>{
+'use strict';
+const atlas=window.MineWorldPixelMaterials;
+const prior=atlas.paint;
+function hash(x,y,s=1){
+  let z=Math.imul(x+1137,374761393)^Math.imul(y+2929,668265263)^Math.imul(s+911,1274126177);
+  z=Math.imul(z^(z>>>13),1274126177);
+  return ((z^(z>>>16))>>>0)/4294967295;
+}
+function rgba(c){return [c[0],c[1],c[2],255]}
+function shade(c,n){return rgba(c.map(v=>Math.max(0,Math.min(255,v+n))|0))}
+function pattern(lines,name){
+  const rows=lines.map(s=>s.replace(/ /g,''));
+  if(rows.length!==16||rows.some(s=>s.length!==16||!/^[0-6]+$/.test(s)))throw Error('Invalid texture drawing '+name);
+  return rows.join('');
+}
+const DIRT=pattern([
+'2222 2112 3332 1223','2332 1112 3233 2312','3221 1233 3221 1112','1221 1332 2212 3321',
+'2112 2211 2332 3322','2221 3231 1322 1212','3332 3222 1233 1221','2212 1112 2213 3322',
+'1223 1113 2212 2133','1233 2122 3232 2122','2211 2233 3321 1221','3223 2312 2112 2223',
+'3322 2122 2111 3231','2211 1222 2333 3212','1121 2322 3323 2211','2212 2231 1222 3312'
+],'dirt');
+const STONE=pattern([
+'2222 2221 2222 3222','2232 2111 1223 3322','2332 1212 2222 2223','2322 1222 3332 2222',
+'2222 3332 3222 2112','1212 3222 2221 1122','2112 2223 2232 1222','2222 2332 3322 2222',
+'2212 2221 2332 2222','2111 1222 2222 3322','2222 2223 3221 2222','2332 2233 2212 2232',
+'2222 3222 2211 1122','2212 2221 1122 2222','2112 2222 2222 2332','2222 3232 2212 2222'
+],'stone');
+const COBBLE=pattern([
+'0012 2200 1122 0001','0123 3210 1223 3012','1233 3210 2333 3212','1233 3220 2333 3210',
+'0122 2100 1232 2100','0001 1000 0121 0011','1222 1012 2211 1232','2333 2102 3320 2333',
+'2333 2102 3320 2333','1222 1012 2211 1232','0011 0001 1000 0110','0122 2102 2210 1232',
+'1233 3202 3320 2333','1233 3202 3320 2333','0122 2101 2210 1232','0001 1000 1110 0010'
+],'cobble');
+const ROCKPAL=[[74,76,76],[100,103,103],[128,130,129],[152,154,152],[177,178,172]];
+const DEEPPAL=[[30,33,40],[49,53,60],[70,75,83],[93,99,107],[118,121,128]];
+const DIRTYPAL=[[65,47,33],[90,64,43],[114,80,53],[141,99,64],[166,124,81]];
+function sample(mask,palette,x,y){return rgba(palette[Number(mask[y*16+x])])}
+function stone(x,y,deep=false){return sample(STONE,deep?DEEPPAL:ROCKPAL,x,y)}
+function dirt(x,y,coarse=false){
+  if(coarse&&hash(x>>1,y>>1,92)>.73)return rgba([113,110,102]);
+  return sample(DIRT,DIRTYPAL,x,y);
+}
+function grass(x,y,arid=false){
+  const pal=arid?[[77,101,39],[101,122,46],[125,145,53],[149,163,62],[176,183,71]]:
+    [[32,87,31],[47,113,37],[67,138,47],[90,162,57],[116,182,69]];
+  const n=hash(x>>1,y>>1,163)*.75+hash(x,y,191)*.25;
+  return rgba(pal[n>.79?4:n>.58?3:n>.37?2:n>.18?1:0]);
+}
+function grassSide(x,y){
+  const r=hash(x,0,177),max=r>.83?6:r>.64?5:r>.36?4:3;
+  return y<max||(y===max&&hash(x,7,61)>.7)?grass(x,y):dirt(x,y);
+}
+function cobble(x,y,dark=false){
+  return sample(COBBLE,dark?[[19,23,28],[39,43,49],[62,66,73],[91,95,101]]:
+    [[59,63,65],[92,98,99],[130,138,136],[166,171,166]],x,y);
+}
+function bark(x,y,type){
+  if(type==='birch'||type==='pale'){
+    const stripe=(y%5===2&&hash(x>>1,y>>1,72)>.48)||(y%7===5&&hash(x>>2,y,79)>.62);
+    if(stripe)return rgba(type==='birch'?[55,53,51]:[83,88,82]);
+    const p=type==='birch'?[[147,143,134],[181,177,164],[215,209,194],[234,229,213]]:
+      [[108,110,105],[149,152,145],[181,185,177],[214,216,204]];
+    return rgba(p[(hash(x>>1,y>>1,85)*4)|0]);
+  }
+  const p=type==='spruce'?[[49,32,23],[70,45,29],[103,71,44],[140,97,55]]:
+    type==='jungle'?[[64,42,27],[93,60,34],[123,81,45],[157,109,69]]:
+    type==='acacia'?[[75,71,65],[103,98,85],[133,127,108],[167,161,136]]:
+    type==='cherry'?[[97,56,68],[139,78,96],[181,107,125],[213,145,154]]:
+    type==='crimson'?[[50,22,33],[82,31,44],[119,42,55],[163,65,78]]:
+    type==='warped'?[[20,43,49],[30,72,80],[38,102,108],[59,143,141]]:
+    [[57,42,29],[84,58,37],[117,82,48],[154,111,67]];
+  const stripe=[0,1,2,1,0,1,2,3,2,1,0,1,3,2,1,0][x];
+  return rgba(p[Math.max(0,Math.min(3,stripe+(hash(x>>1,y>>2,113)>.79?1:0)))]);
+}
+function logEnd(x,y,type){
+  const p=type==='birch'?[[125,112,87],[157,141,109],[194,179,137],[220,208,162],[236,222,177]]:
+    type==='spruce'?[[54,37,26],[83,57,34],[115,79,45],[147,108,66],[180,142,92]]:
+    type==='cherry'?[[116,78,82],[150,103,108],[186,130,132],[219,170,169],[244,209,200]]:
+    type==='crimson'?[[67,22,35],[94,35,50],[135,45,65],[173,67,85],[209,104,111]]:
+    type==='warped'?[[16,58,69],[31,85,93],[42,122,126],[69,158,159],[105,194,188]]:
+    [[74,50,32],[105,72,44],[145,104,65],[183,143,89],[211,175,117]];
+  const d=Math.max(Math.abs(x-7.5),Math.abs(y-7.5));
+  const ring=(Math.floor(d*1.2)+(hash(x>>1,y>>1,42)>.75?1:0))%4;
+  return rgba(p[d>6?0:d<1.7?1:ring+1]);
+}
+function planks(x,y,dark=false){
+  const p=dark?[[51,39,29],[75,54,37],[102,74,48],[136,97,64],[161,119,81]]:
+    [[84,57,36],[124,87,52],[157,113,70],[190,145,94],[216,175,120]];
+  const row=y>>2,line=y%4===0,join=(x+row*5)%16===0;
+  if(line)return rgba(p[0]);if(join&&y%4>0)return rgba(p[1]);
+  return rgba(p[hash(x>>2,y>>1,119)>.81?4:hash(x,y>>1,106)>.45?3:2]);
+}
+function leaves(x,y,type){
+  const p={
+    oak:[[23,64,26],[36,89,33],[55,115,43],[76,140,50],[95,169,63]],
+    spruce:[[16,47,37],[26,69,49],[40,95,62],[57,119,74],[79,145,87]],
+    birch:[[37,79,33],[58,112,42],[84,145,55],[109,173,69],[133,195,85]],
+    jungle:[[15,65,25],[30,93,31],[47,124,40],[64,152,48],[91,179,62]],
+    acacia:[[49,70,27],[76,98,34],[107,128,44],[136,154,54],[161,179,66]],
+    mangrove:[[25,62,43],[39,90,56],[57,116,69],[77,142,86],[106,167,103]],
+    cherry:[[134,65,90],[178,98,125],[214,132,156],[242,167,187],[253,207,214]],
+    pale:[[74,101,91],[105,135,120],[139,166,152],[176,195,181],[212,222,209]]
+  }[type];
+  const n=hash(x>>2,y>>2,type.length*72)*.7+hash(x>>1,y>>1,141)*.3;
+  return rgba(p[n>.83?4:n>.6?3:n>.39?2:n>.16?1:0]);
+}
+const oreDefs={
+  18:['coal',[24,28,32]],19:['iron',[190,137,95]],95:['copper',[199,120,72]],
+  96:['gold',[248,206,70]],97:['redstone',[218,46,49]],98:['lapis',[43,75,194]],
+  99:['diamond',[62,211,218]],100:['emerald',[39,191,99]],
+  101:['coal',[24,28,32]],102:['iron',[190,137,95]],103:['copper',[199,120,72]],
+  104:['gold',[248,206,70]],105:['redstone',[218,46,49]],106:['lapis',[43,75,194]],
+  107:['diamond',[62,211,218]],108:['emerald',[39,191,99]],
+  83:['quartz',[230,213,189]],84:['gold',[239,189,65]]
+};
+const oreCenters={
+ coal:[[3,3,2,2],[11,4,2,1],[5,12,2,2],[13,11,1,2]],
+ iron:[[4,3,2,1],[11,4,2,2],[5,11,2,1],[12,12,1,2]],
+ copper:[[4,4,2,2],[11,3,1,2],[5,12,2,2],[12,12,1,1]],
+ gold:[[4,4,2,2],[12,4,1,2],[6,11,2,2],[13,12,1,1]],
+ redstone:[[4,4,2,1],[11,3,1,2],[5,10,2,2],[12,12,2,1]],
+ lapis:[[4,5,2,2],[11,4,2,1],[6,12,2,2],[13,11,1,1]],
+ diamond:[[4,3,2,2],[11,5,2,1],[5,11,2,2],[13,12,1,1]],
+ emerald:[[4,4,1,2],[11,3,1,1],[6,11,1,2],[13,12,1,1]],
+ quartz:[[4,4,2,2],[10,5,2,1],[6,12,2,1],[12,12,1,1]]
+};
+function ore(x,y,type,c,deep){
+  for(const [i,arr] of oreCenters[type].entries()){
+    const [cx,cy,rx,ry]=arr;
+    const dx=Math.abs(x-cx)/rx,dy=Math.abs(y-cy)/ry;
+    if(dx+dy<=1.15+hash(i,cy,69)*.45){
+      return shade(c,dx>.75||dy>.8?-48:(x+2*y+i)%5===0?36:0);
+    }
+  }
+  return stone(x,y,deep);
+}
+function masonry(x,y,c){
+  const off=(Math.floor(y/4)%2)*4;
+  const grout=y%4===0||(x+off)%8===0;
+  return shade(c,grout?-36:hash(x>>2,y>>2,27)>.6?12:-7);
+}
+function metal(x,y,c){
+  const edge=x===0||x===15||y===0||y===15;
+  const shine=x===2||y===2||x===13||y===13;
+  return shade(c,edge?-38:shine?14:hash(x>>2,y>>2,18)>.7?20:0);
+}
+function draw(id,face,x,y){
+  x=x&15;y=y&15;const top=face===0,bottom=face===2;
+  if(id===1)return top?grass(x,y):bottom?dirt(x,y):grassSide(x,y);
+  if(id===2)return dirt(x,y);
+  if(id===3)return stone(x,y);
+  if(id===61)return cobble(x,y);
+  if(id===58)return stone(x,y,true);
+  if(id===28)return top?grass(x,y,true):dirt(x,y);
+  if(id===29)return dirt(x,y,true);
+  if(id===50||id===65)return sample(DIRT,[[58,25,28],[85,29,33],[114,40,43],[145,54,56],[165,67,60]],x,y);
+  if(id===68)return cobble(x,y,true);
+  if(id===69)return masonry(x,y,[62,59,67]);
+  if(id===121)return sample(STONE,[[145,145,102],[170,174,125],[204,205,159],[226,220,175],[239,236,194]],x,y);
+  const trunks={5:'oak',15:'oak',30:'spruce',32:'birch',34:'acacia',36:'jungle',38:'jungle',40:'cherry',42:'pale',78:'crimson',80:'warped'};
+  if(Object.hasOwn(trunks,id))return top||bottom?logEnd(x,y,trunks[id]):bark(x,y,trunks[id]);
+  if(id===11||id===52)return planks(x,y,id===52);
+  const foliage={6:'oak',12:'oak',13:'oak',14:'oak',31:'spruce',33:'birch',35:'acacia',37:'jungle',39:'mangrove',41:'cherry',43:'pale'};
+  if(Object.hasOwn(foliage,id))return leaves(x,y,foliage[id]);
+  if(Object.hasOwn(oreDefs,id)){const [kind,c]=oreDefs[id];return ore(x,y,kind,c,id>=101&&id<=108)}
+  const bricks={53:[135,137,134],130:[203,197,154],131:[174,124,167],72:[94,38,43],74:[109,46,50]};
+  if(Object.hasOwn(bricks,id))return masonry(x,y,bricks[id]);
+  if(id===7)return rgba((y+(x>>2))%7===0?[80,147,197]:hash(x>>2,y>>1,78)>.55?[49,109,175]:[36,90,159]);
+  if(id===66)return rgba((x+2*y)%11<4?[255,188,51]:hash(x>>1,y>>2,91)>.5?[250,124,26]:[216,72,17]);
+  if(id===85)return shade([112,86,66],(x+Math.floor(y/2)*2)%7<3?16:-19);
+  if(id>=110&&id<=117||id===135){
+    const colors={110:[46,78,191],111:[44,170,99],112:[72,199,205],113:[179,109,65],114:[218,177,51],115:[192,196,192],116:[42,43,47],117:[176,44,49],135:[57,52,61]};
+    return metal(x,y,colors[id]);
+  }
+  if(id===168){
+    if(top){
+      if(x<2||x>13||y<2||y>13)return rgba([91,62,40]);
+      if(x===7||x===8||y===7||y===8)return rgba([99,67,45]);
+      return shade([173,125,77],x<8?-10:y<8?7:0);
+    }
+    if(x<2||x>13||y<2||y>13)return rgba([93,61,40]);
+    if(x>3&&x<13&&y>4&&y<12)return rgba((x+y)%6<2?[77,82,82]:[124,130,123]);
+    return planks(x,y);
+  }
+  return prior(id,face,x,y);
+}
+atlas.paint=draw;
+atlas.version='4.3-original-classic-pixels';
+atlas.originalArt=true;
+})();
