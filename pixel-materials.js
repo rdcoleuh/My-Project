@@ -548,6 +548,141 @@ function draw(id,face,x,y){
     if(x>3&&x<13&&y>4&&y<12)return rgba((x+y)%6<2?[77,82,82]:[124,130,123]);
     return planks(x,y);
   }
+
+  // Familiar, block-specific detailing for terrain, Nether, End and utility blocks.
+  if(id===4||id===26||id===92){
+    const palettes={
+      4:[[173,161,127],[198,186,148],[222,210,164],[238,226,184],[249,240,201]],
+      26:[[135,68,44],[165,82,51],[197,108,68],[224,132,84],[245,163,111]],
+      92:[[76,74,68],[97,92,83],[120,116,107],[144,138,128],[164,153,144]]
+    };
+    const dots=hash(x>>1,y>>1,id+91);
+    return rgba(palettes[id][dots>.9?4:dots>.68?3:dots>.32?2:dots>.1?1:0]);
+  }
+  if(id===21||id===22||id===23){
+    if(id===21)return shade([239,242,241],hash(x>>2,y>>2,21)>.7?9:-5);
+    const pale=id===22;
+    const p=pale?[146,207,228]:[104,150,186];
+    return shade(p,x===0||x===15||y===0||y===15?23:hash(x>>2,y>>2,id)>.75?17:-7);
+  }
+  if(id===24||id===54){
+    const border=y===0||y===15||y===7;
+    const detail=id===54&&x>=4&&x<=11&&y>=4&&y<=11&&(x===4||x===11||y===4||y===11);
+    return shade([220,205,160],detail?-54:border?-22:hash(x>>2,y>>2,24)>.65?13:0);
+  }
+  if(id===25||id===27||id===47||id===57){
+    const c={25:[162,117,97],27:[155,79,54],47:[77,66,58],57:[146,149,139]}[id];
+    return shade(c,hash(x>>2,y>>2,id)>.67?16:hash(x>>1,y>>1,id+6)>.6?-11:0);
+  }
+  if(id===44||id===45){
+    if(top){
+      const edge=x<3||x>12||y<3||y>12;
+      return rgba(edge?[44,110,46]:[109,158,69]);
+    }
+    const rib=x%4===1,joint=id===45&&y%6===0;
+    const thorn=id===44&&y%7===3&&x%4===3;
+    return rgba(thorn?[185,195,102]:joint?[85,134,52]:rib?[40,105,45]:[92,157,67]);
+  }
+  if(id===46)return rgba(hash(x>>2,y>>2,46)>.57?[62,110,48]:[86,143,61]);
+  if(id===63)return rgba(hash(x>>2,y>>2,63)>.51?[151,122,94]:[104,81,65]);
+  if(id===64){
+    const glint=(x+y)%11===0&&hash(x,y,64)>.48;
+    return rgba(glint?[41,140,167]:hash(x>>2,y>>2,64)>.5?[29,58,74]:[19,36,47]);
+  }
+  if(id===67){
+    if(top)return cobble(x,y,true);
+    const stripe=x%4===0,spot=hash(x>>2,y>>2,67)>.62;
+    return shade([83,81,84],stripe?-25:spot?17:0);
+  }
+  if(id===70||id===71){
+    const eye=id===70&&((x>3&&x<6&&y>6&&y<10)||(x>10&&x<13&&y>6&&y<10));
+    const low=id===70&&x>6&&x<10&&y>10&&y<13;
+    return rgba(eye||low?[60,51,46]:hash(x>>2,y>>2,id)>.5?[112,96,82]:[84,75,67]);
+  }
+  if(id===75||id===76){
+    if(top){
+      const p=id===75?[[75,25,36],[116,39,55],[142,49,65],[169,64,79]]:
+        [[18,75,77],[32,116,116],[49,153,145],[80,175,165]];
+      return rgba(p[Math.floor(hash(x>>1,y>>1,id)*4)]);
+    }
+    return id===75?shade([116,41,48],hash(x>>1,y>>1,75)>.55?14:-15):
+      shade([41,96,101],hash(x>>1,y>>1,76)>.55?14:-13);
+  }
+  if(id===79||id===81){
+    const p=id===79?[[74,22,38],[120,31,48],[153,48,65],[181,63,78]]:
+      [[15,56,68],[29,87,95],[43,124,133],[63,148,149]];
+    return rgba(p[Math.floor(hash(x>>1,y>>1,id)*4)]);
+  }
+  if(id===86){
+    if(top){
+      const d=Math.max(Math.abs(x-7.5),Math.abs(y-7.5));
+      return shade([210,199,174],Math.floor(d)%2===0?-24:12);
+    }
+    return shade([210,198,173],x%4===0?-29:hash(x>>2,y>>2,86)>.65?12:0);
+  }
+  if(id===87||id===126||id===127){
+    const purple=id===87;
+    const star=hash(x,y,id)>.966;
+    return rgba(star?[220,204,239]:purple?
+      hash(x>>1,y>>2,id)>.55?[134,73,185]:[66,37,109]:
+      hash(x>>1,y>>1,id)>.6?[48,67,119]:[14,23,47]);
+  }
+  if(id===88){
+    const molten=(x+Math.floor(y/3)*2)%6<2||y%7===0;
+    return rgba(molten?[241,124,30]:hash(x>>1,y>>1,88)>.5?[86,48,34]:[55,34,31]);
+  }
+  if(id===89||id===93||id===94){
+    const p=id===89?[43,189,208]:id===93?[51,174,159]:[195,52,81];
+    const stem=x%4===1||(x+y)%9===0;
+    return rgba(stem?p:shade(p,-92));
+  }
+  if(id===90||id===10||id===109){
+    const gold=id===90?[235,162,94]:id===10?[229,196,123]:[220,165,70];
+    return shade(gold,hash(x>>2,y>>2,id)>.6?31:-23);
+  }
+  if(id===91){
+    const gold=hash(x>>1,y>>1,91)>.85||(x+y)%13===0;
+    return rgba(gold?[218,164,58]:[58,50,52]);
+  }
+  if(id===9){
+    const border=x===0||x===15||y===0||y===15;
+    const streak=(x===4&&y>=3&&y<=11)||(y===4&&x>=4&&x<=11);
+    return rgba(border?[159,198,214]:streak?[229,247,251]:[190,218,225]);
+  }
+  if(id===51)return shade([39,27,51],hash(x>>2,y>>2,51)>.7?25:hash(x>>1,y>>1,52)>.5?6:-6);
+  if(id===119||id===120){
+    const rim=x<2||y<2||x>13||y>13||y===8;
+    const lock=x>=7&&x<=9&&y>=6&&y<=10;
+    return shade(rim?[86,57,34]:lock?[219,174,64]:[162,111,61],id===120?-30:0);
+  }
+  if(id===122||id===123||id===124||id===128||id===129){
+    const p={122:[130,83,146],123:[195,139,184],124:[189,146,207],128:[231,213,169],129:[51,42,61]}[id];
+    const core=(x>=5&&x<=10&&y>=5&&y<=10);
+    return shade(p,core?24:hash(x>>2,y>>2,id)>.6?13:-19);
+  }
+  if(id===125){
+    const border=x<3||x>12||y<3||y>12;
+    const eye=top&&x>=5&&x<=10&&y>=5&&y<=10;
+    return rgba(eye?[49,133,116]:border?[51,64,54]:[101,135,117]);
+  }
+  if(id===137||id===138){
+    const wet=id===138,groove=x%4<2;
+    return shade(wet?[79,55,37]:[105,72,44],groove?-26:10);
+  }
+  if(id===155||id>=156&&id<=167){
+    const wood=[155,158,160,161,163,165].includes(id);
+    const frame=x<2||x>13||y<2||y>13;
+    const panel=x>3&&x<12&&y>4&&y<12;
+    const mark=(x+y+id)%6<2;
+    return rgba(frame?wood?[91,62,40]:[72,75,74]:
+      panel?mark?wood?[95,88,71]:[68,81,91]:wood?[156,110,68]:[121,128,127]:
+      wood?[132,95,55]:[112,111,107]);
+  }
+  if(id===8){
+    const row=y>>2,off=row%2?4:0;
+    const mortar=y%4===0||(x+off)%8===0;
+    return shade([173,78,63],mortar?-45:hash(x>>2,y>>2,8)>.65?19:0);
+  }
   return prior(id,face,x,y);
 }
 atlas.paint=draw;
