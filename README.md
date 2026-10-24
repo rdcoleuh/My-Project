@@ -1,4 +1,4 @@
-# MineWorld 4.4 — More Recognizable Classic Block Textures
+# MineWorld 4.6 — Refined Classic-Style Pixel Textures
 
 **Play:** https://rdcoleuh.github.io/My-Project/
 
@@ -119,3 +119,14 @@ The existing pixel-art engine is preserved and now includes an additional origin
 - **Preserved gameplay:** Inventory button beside the hotbar, 64-block stacks, Survival saves, Creative building, 3×3 crafting, mining break timers, mobs, multiplayer, dimensions, and all 168 block IDs remain unchanged.
 
 This is original pixel art modeled on familiar block-based motifs and does not include or copy the official Minecraft texture files. It aims for better recognizability, not an exact copyrighted texture replica. MineWorld still has limitations in transparent water/glass rendering and fluid animation versus Minecraft.
+
+
+## 4.6 visual finishing pass
+
+This update further improves individually drawn 16×16 original block textures. It corrects podzol to a brown surface, makes the dirt side of grass blocks retain its natural brown color instead of inheriting grass biome tint, and removes random per-position shading so carefully chosen pixel palettes stay crisp. Wood, ore, brick, chest, crafting-table, and Nether/End textures from earlier releases remain in place.
+
+Glass now has transparent interior pixels instead of a solid pale-blue texture. WebGL uses alpha testing to reveal the terrain behind the pane and emits neighboring opaque block faces so visible geometry does not disappear behind glass.
+
+The world, seeds, existing block identifiers, inventory and 64-item stack logic are unchanged. The shader and generated atlas passed syntax/simulation checks; physical-device rendering remains to be verified.
+
+These are independently authored texture approximations, not official Minecraft texture assets. Water and fluid animations are still simpler than Minecraft, and partially transparent materials do not have full order-independent transparency.
