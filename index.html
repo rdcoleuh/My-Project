@@ -978,19 +978,39 @@ body.in-nether #game-wrap{background:#290f19}
       if(other)other.dirty=true;
     }
   }
+  // Index world edits by chunk once, rather than re-scanning every edit for every
+  // generated chunk. A weak index follows the active dimension's existing Map.
+  const savedChunkEditIndex=new WeakMap();
+  function editsInChunk(all,cx,cz){
+    let index=savedChunkEditIndex.get(all);
+    if(!index||index.size!==all.size){
+      const perChunk=new Map();
+      for(const [id,block] of all){
+        const x=Math.floor(id/(D*H)),z=Math.floor(id/H)%D;
+        const key=chunkKey(Math.floor(x/CHUNK),Math.floor(z/CHUNK));
+        let cells=perChunk.get(key);
+        if(!cells){cells=new Map();perChunk.set(key,cells);}
+        cells.set(id,block);
+      }
+      index={size:all.size,chunks:perChunk};
+      savedChunkEditIndex.set(all,index);
+    }
+    return index.chunks.get(chunkKey(cx,cz))||null;
+  }
   function loadChunk(cx,cz){
     if(cx<0||cz<0||cx>=Math.ceil(W/CHUNK)||cz>=Math.ceil(D/CHUNK))return null;
     const key=chunkKey(cx,cz);let chunk=chunkCache.get(key);
     if(chunk){chunk.last=performance.now();return chunk;}
+    const localEdits=editsInChunk(savedEdits,cx,cz);
     let data;
-    if(dimension==='nether')data=window.MineWorldNether.generateChunk({cx,cz,H,edits:savedEdits});
-    else if(dimension==='end')data=window.MineWorldEnd.generateChunk({cx,cz,H,edits:savedEdits,dragonDefeated});
+    if(dimension==='nether')data=window.MineWorldNether.generateChunk({cx,cz,H,edits:localEdits});
+    else if(dimension==='end')data=window.MineWorldEnd.generateChunk({cx,cz,H,edits:localEdits,dragonDefeated});
     else{
-      data=window.MineWorldBiomes.generateChunk({cx,cz,H,SEA,edits:savedEdits});
+      data=window.MineWorldBiomes.generateChunk({cx,cz,H,SEA,edits:localEdits});
       window.MineWorldEnd.stampStronghold({data,cx,cz,H,eyeCount:eyesPlaced});
       // Player-built edits override seeded buildings.
-      for(const [i,b] of savedEdits){const x=Math.floor(i/(W*H)),z=Math.floor(i/H)%W,y=i%H;
-        if(Math.floor(x/CHUNK)===cx&&Math.floor(z/CHUNK)===cz)data[chunkIndex(x,y,z)]=b;}
+      if(localEdits)for(const [i,b] of localEdits){const x=Math.floor(i/(D*H)),z=Math.floor(i/H)%D,y=i%H;
+        data[chunkIndex(x,y,z)]=b;}
     }
     chunk={cx,cz,data,vbo:null,count:0,dirty:true,last:performance.now()};
     chunkCache.set(key,chunk);
@@ -1168,7 +1188,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(!inside(x,y,z)||y===0)return false;
     if(b!==0&&solid(b)&&x>=Math.floor(player.x-.3)&&x<=Math.floor(player.x+.3)&&z>=Math.floor(player.z-.3)&&z<=Math.floor(player.z+.3)&&y<player.y+1.9&&y+1>player.y)return false;
     const before=get(x,y,z);if(before===b)return false;
-    set(x,y,z,b);savedEdits.set(idx(x,y,z),b);dirtyAround(x,z);markSave();if(!remote)window.MineWorldMultiplayer?.localEdit(idx(x,y,z)+(dimension==='end'?2*W*D*H:dimension==='nether'?W*D*H:0),b);return true;
+    set(x,y,z,b);savedEdits.set(idx(x,y,z),b);savedChunkEditIndex.delete(savedEdits);dirtyAround(x,z);markSave();if(!remote)window.MineWorldMultiplayer?.localEdit(idx(x,y,z)+(dimension==='end'?2*W*D*H:dimension==='nether'?W*D*H:0),b);return true;
   }
   function pushFace(a,x,y,z,b,f,biomeName=''){
     const face=f.n[1]===1?0:(f.n[1]===-1?2:1);
@@ -2597,10 +2617,11 @@ body.in-nether #game-wrap{background:#290f19}
   function mobHasLineOfSight(m,p){
     if(!m||!p||(p.dimension||'overworld')!==dimension)return false;
     const mx=m.x,my=m.y+(m.kind==='enderman'?2.15:1.22),mz=m.z;
-    const tx=p.x,ty=p.y+1.30,tz=p.z;
+    const tx=p.x,ty=p.y+(p.id===null&&isCrouching?1.05:1.30),tz=p.z;
     const dx=tx-mx,dy=ty-my,dz=tz-mz;
     const distance=Math.hypot(dx,dy,dz);
-    if(distance>25||distance<.001)return false;
+    const detection=p.id===null&&isCrouching?15:25;
+    if(distance>detection||distance<.001)return false;
     const steps=Math.ceil(distance/.65);
     for(let i=2;i<steps-1;i++){
       const t=i/steps;
@@ -2623,7 +2644,7 @@ body.in-nether #game-wrap{background:#290f19}
     }
     if(m.sightTarget===null)return null;
     const target=players.find(p=>(p.id===null?'__host__':String(p.id))===m.sightTarget);
-    return target&&Math.hypot(target.x-m.x,target.y-m.y,target.z-m.z)<=25?target:null;
+    return target&&Math.hypot(target.x-m.x,target.y-m.y,target.z-m.z)<=(target.id===null&&isCrouching?15:25)?target:null;
   }
   function updateMobs(dt){
     // In multiplayer, only the room host runs the shared creature simulation.
