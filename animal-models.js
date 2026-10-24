@@ -75,10 +75,10 @@ function draw(m,write,time=0){
  }else if(m.kind==='cow'||m.kind==='sheep'){
   const sheep=m.kind==='sheep';
   legs(.77,.94,.64,leg);
-  box(-.44,.60,-.51,.88,.64,1.02,sheep?body:pattern(body,.87));
+  box(-.44,.60,-.51,.88,.64,1.02,sheep&&m.sheared?[.56,.51,.46]:sheep?body:pattern(body,.87));
   if(sheep){
    // Chunked overlapping tufts, not a flat generic sheep box.
-   for(const sx of [-1,0,1])for(const sz of [-1,0,1]){
+   if(!m.sheared)for(const sx of [-1,0,1])for(const sz of [-1,0,1]){
     box(sx*.27-.15,1.15,sz*.29-.16,.29,.12,.29,pattern(body,1.02+(sx+sz)*.01));
    }
    box(-.31,.83,-.72,.62,.40,.36,face);
