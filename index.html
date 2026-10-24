@@ -296,6 +296,10 @@ body.in-nether #game-wrap{background:#290f19}
 #hotbar .hot-item.empty.active{border-color:#dfff90;opacity:1}
 #hotbar .hot-item-icon{font-size:23px;height:25px;display:grid;place-items:center}
 #hotbar .hot-item span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* MineWorld 4.0: actual block-break progress, visible on touch and desktop. */
+#mine-progress{position:absolute;z-index:5;left:50%;top:calc(50% + 48px);transform:translateX(-50%);width:150px;height:10px;background:#192318df;border:2px solid #e6efd0a3;box-shadow:0 2px 8px #0008;pointer-events:none}
+#mine-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#8fd45d,#eaff8b);transition:width .055s linear}
+@media(pointer:coarse){#mine-progress{top:calc(50% + 37px);width:125px}}
 </style>
 <title>MineWorld 3.9 — Collected Item Hotbar</title>
 </head>
@@ -312,6 +316,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="online-hud" class="hidden">👥 Offline</div>
   <div id="dimension-indicator" class="hidden">🔥 THE NETHER</div>
   <div id="target-name">Aim at a block to mine</div>
+  <div id="mine-progress" class="hidden" role="progressbar" aria-label="Breaking block" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="mine-progress-fill"></div></div>
   <div id="hud-bottom">
     <div id="survival-hud" class="hidden" aria-live="polite"><span id="health-text">♥ 20/20</span><span id="hunger-text">🍖 20/20</span><span id="weapon-readout" title="Equipped gear">✊ Fists</span><button id="eat-btn" type="button" aria-label="Eat available food">Eat 🍄 0</button></div>
     <div id="hotbar" role="toolbar" aria-label="Choose a building block"></div>
@@ -981,55 +986,117 @@ body.in-nether #game-wrap{background:#290f19}
     }
     return null;
   }
+  // Survival mining requires elapsed time for every breakable block. Creative stays instant.
+  // Time multiplier decreases by tool material, including swords, hoes and shovels.
+  const MINE_MULTIPLIER={none:2.8,wood:1.65,stone:1.14,iron:.83,gold:.72,diamond:.57,netherite:.40,creative:0};
+  let mineJob=null,mouseMiningHeld=false;
+  function miningTier(){
+    if(gameMode==='creative')return 'creative';
+    const held=hotbarKey()||'';
+    const equippedItem=held.match(/(wooden|wood|stone|iron|gold|diamond|netherite)(?:\s+)?(pickaxe|axe|shovel|hoe|sword)/i);
+    if(equippedItem)return equippedItem[1].toLowerCase()==='wooden'?'wood':equippedItem[1].toLowerCase();
+    const tier=tools[equipped]||'none';
+    return Object.hasOwn(MINE_MULTIPLIER,tier)?tier:'none';
+  }
+  function blockHardness(id){
+    const name=(NAMES[id]||'').toLowerCase();
+    if(/obsidian|ancient debris|netherite block|bedrock/.test(name))return 3.4;
+    if(/ore|deepslate|blackstone|basalt|stone|brick|metal|iron|gold|diamond|emerald|copper|purpur/.test(name))return 1.3;
+    if(/wood|log|plank|stem|hyphae|chest|table|barrel|fence|door/.test(name))return 1.0;
+    if(/leaves|flower|sprout|grass|shrub|crop|mushroom|plant|vine|chorus/.test(name))return .30;
+    if(/dirt|mud|sand|gravel|soul|snow|clay|farmland/.test(name))return .68;
+    return .84;
+  }
+  function miningSeconds(id,tier=miningTier()){
+    if(tier==='creative')return 0;
+    return Math.max(.16,blockHardness(id)*(MINE_MULTIPLIER[tier]??MINE_MULTIPLIER.none));
+  }
+  function cancelMining(){
+    mineJob=null;
+    $('mine-progress').classList.add('hidden');
+    $('mine-progress-fill').style.width='0%';
+    $('mine-progress').setAttribute('aria-valuenow','0');
+  }
+  function mineTargetSame(a,b){
+    return !!a&&!!b&&a.x===b.x&&a.y===b.y&&a.z===b.z&&a.b===b.b;
+  }
+  function breakBlockNow(target){
+    if(!target||get(target.x,target.y,target.z)!==target.b)return false;
+    if(target.y===0){toast('The world foundation cannot be removed');return false;}
+    const crop=window.MineWorldVillages.cropAt(target.b);
+    if(crop){harvestCrop(target.x,target.y,target.z,crop);return true;}
+    if(target.b===124&&dimension==='end'){
+      if(setBlock(target.x,target.y,target.z,0)){toast('✦ End crystal destroyed · '+endCrystalCount()+' remain');return true;}
+      return false;
+    }
+    if(!setBlock(target.x,target.y,target.z,0))return false;
+    if(gameMode==='survival'&&target.b!==7){
+      const found=target.b===1?2:target.b;
+      const ore=window.MineWorldOres.ids.get(target.b);
+      if(ore){
+        const kind=ore.name;
+        if(kind==='Coal')addResource('coal',1);
+        else if(kind==='Iron')addResource('rawIron',1);
+        else if(kind==='Copper')addResource('rawCopper',2+Math.floor(Math.random()*4));
+        else if(kind==='Gold')addResource('rawGold',1);
+        else if(kind==='Redstone')addResource('redstone',3+Math.floor(Math.random()*3));
+        else if(kind==='Lapis Lazuli')addResource('lapis',4+Math.floor(Math.random()*5));
+        else if(kind==='Diamond')addResource('diamond',1);
+        else if(kind==='Emerald')addResource('emerald',1);
+        else addResource('block:'+found,1);
+      }else if(found===91){
+        if(Math.random()<.25)addResource('flint',1);else addResource('block:91',1);
+      }else if(found===83)addResource('quartz',1);
+      else if(found===84)addResource('gold',1);
+      else addResource('block:'+found,1);
+      updateHotbar();updateSurvivalHUD();markSave();
+    }
+    toast('Mined '+NAMES[target.b]);
+    return true;
+  }
   function performMine(){
     if(paused)return;
-    if(aimMob){attackMob(aimMob);return;}
-    if(aimVillager){openVillagerTrade(aimVillager);return;}
+    if(aimMob){cancelMining();attackMob(aimMob);return;}
+    if(aimVillager){cancelMining();openVillagerTrade(aimVillager);return;}
     if(!aim)return;
-    if(aim.b===168&&gameMode==='survival'){openGear();toast('🪵 Crafting Table · 3 × 3 grid');return;}
-    const crop=window.MineWorldVillages.cropAt(aim.b);
-    if(crop){harvestCrop(aim.x,aim.y,aim.z,crop);return;}
+    // Use the Place/interact button (right click) to open tables, chests and portals.
     if(dimension==='overworld'&&equipped==='hoe'&&[1,2].includes(aim.b)){
-      if(setBlock(aim.x,aim.y,aim.z,137))toast('🌾 Tilled fertile soil');return;
+      cancelMining();
+      if(setBlock(aim.x,aim.y,aim.z,137))toast('🌾 Tilled fertile soil');
+      return;
     }
-    if(aim.b===119){openTreasureChest(aim.x,aim.y,aim.z);return;}
-    if(aim.b===120){toast('This treasure chest is empty');return;}
-    if(aim.b===126){switchDimension(dimension==='end'?'overworld':'end');return;}
-    if(aim.b===87){switchDimension(dimension==='nether'?'overworld':'nether');return;}
-    if(aim.b===124&&dimension==='end'){setBlock(aim.x,aim.y,aim.z,0);toast('✦ End crystal destroyed! '+endCrystalCount()+' remain');return;}
-    if(attackCooldown>0)return;
-    if(gameMode==='survival'){
-      if(aim.b===85&&toolLevels[tools.pickaxe]<toolLevels.diamond){toast('Ancient Debris requires a Diamond or Netherite pickaxe');return;}
-      const ore=window.MineWorldOres.ids.get(aim.b);
-      if(ore){
-        const required={Wood:1,Stone:2,Iron:3}[ore.tier];
-        if(toolLevels[tools.pickaxe]<required){toast('Need a '+ore.tier.toLowerCase()+' pickaxe or better to mine '+ore.name);return;}
-      }
+    if(gameMode==='creative'){
+      cancelMining();breakBlockNow(aim);return;
     }
-    if(setBlock(aim.x,aim.y,aim.z,0)){
-      if(gameMode==='survival'&&aim.b!==7){
-        const found=aim.b===1?2:aim.b;
-        const ore=window.MineWorldOres.ids.get(aim.b);
-        if(ore){
-          const kind=ore.name;
-          if(kind==='Coal')bag.coal++;
-          else if(kind==='Iron')bag.rawIron++;
-          else if(kind==='Copper')bag.rawCopper+=2+Math.floor(Math.random()*4);
-          else if(kind==='Gold')bag.rawGold++;
-          else if(kind==='Redstone')bag.redstone+=3+Math.floor(Math.random()*3);
-          else if(kind==='Lapis Lazuli')bag.lapis+=4+Math.floor(Math.random()*5);
-          else if(kind==='Diamond')bag.diamond++;
-          else if(kind==='Emerald')bag.emerald++;
-        }
-        else if(found===91){if(Math.random()<.25){bag.flint++;toast('Found flint!')}else inventory[91]++;}else if(found===83)bag.quartz++;else if(found===84)bag.gold++;else if(found===124)toast('Crystal destroyed');else inventory[found]=Math.min(inventory[found]+1,999);
-        updateHotbar();updateSurvivalHUD();markSave();
-      }
-      toast('Mined '+NAMES[aim.b]);
-      attackCooldown=gameMode==='creative'?.07:(tools.pickaxe==='netherite'?.075:tools.pickaxe==='diamond'?.10:tools.pickaxe==='iron'?.14:tools.pickaxe==='stone'?.23:tools.pickaxe==='wood'?.32:.47);
+    if(aim.y===0){toast('The world foundation cannot be removed');return;}
+    const tier=miningTier();
+    if(mineJob&&mineTargetSame(mineJob,aim)&&mineJob.dimension===dimension&&mineJob.tier===tier)return;
+    mineJob={x:aim.x,y:aim.y,z:aim.z,b:aim.b,dimension,tier,elapsed:0,total:miningSeconds(aim.b,tier)};
+    $('mine-progress').classList.remove('hidden');
+    $('mine-progress-fill').style.width='0%';
+  }
+  function advanceMining(dt){
+    if(!mineJob)return;
+    if(paused||dimension!==mineJob.dimension||miningTier()!==mineJob.tier||
+       !mineTargetSame(mineJob,aim)||get(mineJob.x,mineJob.y,mineJob.z)!==mineJob.b){
+      cancelMining();return;
+    }
+    mineJob.elapsed=Math.min(mineJob.total,mineJob.elapsed+dt);
+    const progress=Math.round(100*mineJob.elapsed/mineJob.total);
+    $('mine-progress-fill').style.width=progress+'%';
+    $('mine-progress').setAttribute('aria-valuenow',String(progress));
+    if(mineJob.elapsed>=mineJob.total){
+      const completed=mineJob;
+      cancelMining();
+      breakBlockNow(completed);
     }
   }
   function performPlace(){
     if(paused)return;
+    if(gameMode==='survival'&&aim?.b===168){cancelMining();openGear();return;}
+    if(gameMode==='survival'&&aim?.b===119){cancelMining();openTreasureChest(aim.x,aim.y,aim.z);return;}
+    if(aim?.b===126){cancelMining();switchDimension(dimension==='end'?'overworld':'end');return;}
+    if(aim?.b===87){cancelMining();switchDimension(dimension==='nether'?'overworld':'nether');return;}
     const held=hotbarKey();
     if(gameMode==='survival'){
       if(!held||!validHotbarKey(held)||amount(held)<=0){toast('Empty hotbar slot — collect an item first');updateHotbar();return;}
@@ -1991,7 +2058,7 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function updateFlyButton(){$('fly-btn').textContent='✦ Flying: '+(player.fly?'On':'Off')}
   function start(){if(!started){started=true;lastTime=performance.now();requestAnimationFrame(render)}paused=false;$('welcome').classList.add('hidden');$('pause').classList.add('hidden');if(!isTouch&&canvas.requestPointerLock)canvas.requestPointerLock()?.catch?.(()=>{});toast('World ready — have fun!')}
-  function menu(){paused=true;keys.clear();movement.x=0;movement.y=0;touchHold.mine=false;touchHold.place=false;$('pause').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock();save()}
+  function menu(){paused=true;cancelMining();mouseMiningHeld=false;keys.clear();movement.x=0;movement.y=0;touchHold.mine=false;touchHold.place=false;$('pause').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock();save()}
   function jump(){if(paused)return;if(mount){mountLift=.28;return;}if(player.fly){player.y+=.7;return}if(player.ground){player.vy=8;player.ground=false}}
   const RIDE_KINDS={horse:{speed:10,saddle:true},donkey:{speed:7,saddle:true},mule:{speed:8,saddle:true},camel:{speed:8,saddle:true},llama:{speed:3,saddle:false,unsteerable:true},pig:{speed:5,saddle:true,control:'carrotStick'},strider:{speed:6,saddle:true,control:'fungusStick'},skeleton_horse:{speed:10,saddle:false},zombie_horse:{speed:9,saddle:true},happy_ghast:{speed:10,harness:true,flying:true}};
   const VEHICLE_KINDS=new Set(['boat','raft','minecart','spruceBoat','cherryBoat','chestMinecart','hopperMinecart','furnaceMinecart']);
@@ -2419,7 +2486,6 @@ body.in-nether #game-wrap{background:#290f19}
     tickFarms(dt);
     attackCooldown=Math.max(0,attackCooldown-dt);playerHitCooldown=Math.max(0,playerHitCooldown-dt);
     window.MineWorldMultiplayer?.tick(t);
-    if(touchHold.mine&&timers.mine<=0){performMine();timers.mine=.20}
     if(touchHold.place&&timers.place<=0){performPlace();timers.place=.25}
     timers.mine-=dt;timers.place-=dt;
     let w=canvas.clientWidth,h=canvas.clientHeight;
@@ -2427,6 +2493,8 @@ body.in-nether #game-wrap{background:#290f19}
     let dw=Math.min(Math.floor(w*dpr),2100),dh=Math.min(Math.floor(h*dpr),1300);
     if(canvas.width!==dw||canvas.height!==dh){canvas.width=dw;canvas.height=dh;gl.viewport(0,0,dw,dh)}
     const {vp,eye,forward}=vpMatrix(dw,dh);aim=pointAtBlock(eye,forward,7);aimMob=targetMob(eye,forward,aim);aimVillager=targetVillager(eye,forward,aim);aimPlayer=targetRemotePlayer(eye,forward,aim);
+    advanceMining(dt);
+    if((touchHold.mine||mouseMiningHeld)&&!mineJob&&timers.mine<=0){performMine();timers.mine=.15;}
     const sun=Math.sin(dayClock*.015-0.9);
     const skyTint=clamp((sun+0.4)/1.1,.13,1);
     sky=dimension==='end'?[.025,.021,.052]:dimension==='nether'?window.MineWorldNether.biomeAt(player.x,player.z).index===2?[.08,.22,.21]:window.MineWorldNether.biomeAt(player.x,player.z).index===3?[.17,.15,.22]:window.MineWorldNether.biomeAt(player.x,player.z).index===4?[.18,.17,.19]:[.24,.075,.09]:[.07+skyTint*.46,.09+skyTint*.67,.19+skyTint*.72];
@@ -2662,8 +2730,11 @@ body.in-nether #game-wrap{background:#290f19}
   canvas.addEventListener('mousedown',e=>{
     if(paused)return;
     if(!isTouch&&document.pointerLockElement!==canvas){(canvas.requestPointerLock()?.catch?.(()=>{}));return}
-    if(e.button===0)performMine();else if(e.button===2)performPlace();
+    if(e.button===0){mouseMiningHeld=true;performMine();}
+    else if(e.button===2)performPlace();
   });
+  window.addEventListener('mouseup',e=>{if(e.button===0)mouseMiningHeld=false;});
+  window.addEventListener('blur',()=>{mouseMiningHeld=false;touchHold.mine=false;cancelMining();});
   canvas.addEventListener('wheel',e=>{if(paused)return;e.preventDefault();selectHotbarSlot((selection+(e.deltaY>0?1:-1)+9)%9)},{passive:false});
   let lookPointer=null,lastLook=null;
   canvas.addEventListener('pointerdown',e=>{if(paused||e.pointerType==='mouse')return;lookPointer=e.pointerId;lastLook=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);e.preventDefault()});
