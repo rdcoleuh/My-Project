@@ -196,6 +196,8 @@ This feature pass is **not a Minecraft port**. MineWorld remains an independentl
 - Total XP is kept separately from the old collectible `experience` resource and saved with the current Survival world.
 
 ### Original block textures
+
+**Additional classic-style layer:** `texture-polish.js` now actually loads after the other three atlas layers. It supplies original hand-arranged 16×16 grass, dirt, stone, gravel, sand, planks, leaf, water and lava surface patterns. Every defined block continues to have a distinct 16-pixel atlas entry, but all patterns are independent rather than copied from Mojang art. The new polish was sampled across all 169 block IDs and three faces with no invalid colors.
 - Retains 16×16 nearest-neighbor texture atlas, with a new **red bed** and more distinct snow, ice, terracotta, hay bale, bone, redstone lamp and raw-mineral crate pixel patterns. These hand-authored motifs complement the grass, dirt, stone, wood and ore refinement layers.
 - **No Minecraft texture files have been copied** from the Wiki or the game. Texture likeness remains an original interpretation of the materials, not pixel-for-pixel official art.
 
