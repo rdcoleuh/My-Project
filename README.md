@@ -1,4 +1,4 @@
-# MineWorld 4.6 — Refined Classic-Style Pixel Textures
+# MineWorld 4.7 — Adjustable Render Distance & Classic Pixel Materials
 
 **Play:** https://rdcoleuh.github.io/My-Project/
 
@@ -130,3 +130,23 @@ Glass now has transparent interior pixels instead of a solid pale-blue texture. 
 The world, seeds, existing block identifiers, inventory and 64-item stack logic are unchanged. The shader and generated atlas passed syntax/simulation checks; physical-device rendering remains to be verified.
 
 These are independently authored texture approximations, not official Minecraft texture assets. Water and fluid animations are still simpler than Minecraft, and partially transparent materials do not have full order-independent transparency.
+
+
+## MineWorld 4.7: 10–50 render chunks and adaptive performance
+
+The **Options** screen and the in-game **Pause → Friends & World Settings** section both have a working **Render distance** slider with a 10–50 chunk range. A chunk is a 16×16-block region; the setting is the **total number of nearby chunks to display**, not a 50-chunk radius. The saved setting applies to both Creative and Survival in the same browser. Defaults are 18 on touchscreen devices and 32 on desktop.
+
+**Automatic optimization** is enabled by default, with a checkbox to disable it. It measures recent frame rate and may temporarily reduce the active visible-chunk count (down to 10) when FPS is low. It restores chunks gradually when performance recovers. The setting displays requested range, current active chunks, loaded chunks and recent FPS. User preference and auto toggle persist separately from saved worlds.
+
+Rendering refinements:
+- A deterministic nearest-first, world-edge-safe chunk planner produces exactly the requested count for large regions.
+- One new chunk loads per frame on touch devices; desktop loads up to two per frame when conditions permit.
+- At most one chunk mesh rebuild per touch frame and two desktop meshes, with a millisecond-time ceiling for extra rebuilds.
+- Meshing no longer calls world-generation logic for adjacent chunks: only cached visible neighbors are checked, and neighboring edge faces are refreshed when chunks stream in.
+- Far-away chunks behind and well outside the camera's view are culled before drawing.
+- Adaptive render resolution on slow devices and distance-matched fog reduce visible abrupt terrain edges; unused chunk GPU buffers and data are evicted with a bounded cache.
+- A high render setting is a **maximum quality preference, not a guarantee of lag-free performance** on all phones or hardware. Automatic optimization can limit the active count to keep gameplay responsive.
+
+Pixel textures were further refined with original 16×16 textures: bark and log end-grain for more wood species, oak/spruce boards, foliage clusters, sandstone bands, glowing magma cracks and End-stone pits. These are independent Minecraft-inspired pixel patterns, not Mojang assets.
+
+**Verification:** Script syntax, planner determinism, 10–50 visible counts and boundary behavior, no extra chunks from mesh-neighbor reads, cache cap under movement, and all 129,024 atlas pixel color values were tested. Physical iPhone graphics and long-running 50-chunk frame rates have not been measured on a physical device.
