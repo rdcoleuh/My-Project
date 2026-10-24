@@ -851,7 +851,8 @@ body.in-nether #game-wrap{background:#290f19}
     const key=tier+kind;if(!Object.hasOwn(bag,key))bag[key]=0;
   }
   const inventoryOrder=[],armor={head:'',chest:'',legs:'',feet:''};
-  let backpackPage=0,selectedStackKey='',backpackFilter='',mount=null,vehicles=[],vehicleSerial=0,mountLift=0,stabledMounts=[];
+  const stackStore=window.MineWorldStackInventory.create(stackLimit);
+  let backpackPage=0,selectedStackKey='',selectedStackId=null,backpackFilter='',mount=null,vehicles=[],vehicleSerial=0,mountLift=0,stabledMounts=[];
   const toolLevels={none:0,wood:1,stone:2,iron:3,diamond:4,netherite:5};
   const tools={pickaxe:'none',sword:'none',hoe:'none',axe:'none',shovel:'none'};
   let equipped='pickaxe',difficulty='normal',mobSerial=0,mobs=[],mobSpawnClock=0,mobAttackClock=0,aimMob=null,aimPlayer=null,attackCooldown=0,playerHitCooldown=0;
@@ -1186,7 +1187,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(!inside(p.x,p.y,p.z)||get(p.x,p.y,p.z)!==0)return;
     if(dimension==='nether'&&b===7){toast('💨 Water evaporates in the Nether');return;}
     if(setBlock(p.x,p.y,p.z,b)){
-      if(gameMode==='survival'){addResource(held,-1);updateHotbar();}
+      if(gameMode==='survival'){addResource(held,-1,survivalHotbar[selection]);updateHotbar();}
       toast('Placed '+NAMES[b]);timers.place=.2;
     }
   }
@@ -1313,9 +1314,10 @@ body.in-nether #game-wrap{background:#290f19}
     const survival=gameMode==='survival';
     if(survival)syncSurvivalHotbar();
     for(let i=0;i<9;i++){
-      const key=survival?survivalHotbar[i]:'block:'+HOT9[i];
+      const stack=survival?stackAtHotbar(i):null;
+      const key=survival?stack?.key:'block:'+HOT9[i];
       const id=key?.startsWith('block:')?Number(key.slice(6)):null;
-      const count=survival&&key?amount(key):0;
+      const count=survival&&stack?stack.qty:0;
       const label=key?itemLabel(key):'Empty slot';
       const button=document.createElement('button');button.type='button';
       button.className='hot-item'+(i===selection?' active':'')+(!key?' empty':'');
@@ -1340,7 +1342,7 @@ body.in-nether #game-wrap{background:#290f19}
       button.addEventListener('click',()=>{selectHotbarSlot(i);if(key)toast(label)});
       root.appendChild(button);
     }
-    hotbarSignature=survival?survivalHotbar.map(key=>key?key+':'+amount(key):'_').join('|'):'creative:'+hotbarPage;
+    hotbarSignature=survival?stackSignature():'creative:'+hotbarPage;
   }
   function toast(s){let x=$('toast');x.textContent=s;x.classList.add('show');notifications++;const n=notifications;setTimeout(()=>{if(n===notifications)x.classList.remove('show')},1250)}
   function updateSurvivalHUD(){
@@ -1429,47 +1431,64 @@ body.in-nether #game-wrap{background:#290f19}
     {name:'✨ Shroomlight',cost:{'block:79':2,'block:81':2},give:{'block:90':1},tip:'Crimson and warped wart'}
   ];
   function amount(key){return key.startsWith('block:')?inventory[Number(key.slice(6))]:(bag[key]||0)}
-  function addResource(key,n){
-    const before=amount(key);
-    if(key.startsWith('block:')){const i=Number(key.slice(6));if(!Number.isInteger(i)||i<1||i>=inventory.length)return;inventory[i]=clamp(inventory[i]+n,0,999)}
-    else{if(!Object.hasOwn(bag,key))return;bag[key]=clamp((bag[key]||0)+n,0,999)}
-    if(gameMode==='survival'&&n>0&&before===0&&amount(key)>0){
-      if(!inventoryOrder.includes(key))inventoryOrder.push(key);
-      syncSurvivalHotbar();
-    }
-  }
   function validHotbarKey(key){
     if(typeof key!=='string'||key.length>110)return false;
     if(key.startsWith('block:')){const id=Number(key.slice(6));return Number.isInteger(id)&&id>=1&&id<inventory.length;}
     return Object.hasOwn(bag,key);
   }
+  function inventoryTotals(){
+    const result=Object.create(null);
+    for(let i=1;i<inventory.length;i++)if(inventory[i]>0)result['block:'+i]=inventory[i];
+    for(const [key,value] of Object.entries(bag))if(value>0)result[key]=value;
+    return result;
+  }
+  function pickUpStack(stack){
+    if(gameMode!=='survival'||survivalHotbar.includes(stack.id))return;
+    const slot=survivalHotbar.indexOf(null);
+    if(slot>=0){survivalHotbar[slot]=stack.id;markSave();}
+  }
+  function reconcileItemStacks(){
+    stackStore.reconcile(inventoryTotals(),pickUpStack,new Set(survivalHotbar.filter(Number.isInteger)));
+  }
+  function stackAtHotbar(slot){return gameMode==='survival'?stackStore.byId(survivalHotbar[slot]):null;}
+  function stackSignature(){
+    return survivalHotbar.map(ref=>{const stack=stackStore.byId(ref);return stack?stack.id+':'+stack.qty:'_'}).join('|');
+  }
+  function addResource(key,n,preferredStackId=null){
+    if(!validHotbarKey(key)||!Number.isFinite(n)||!n)return 0;
+    n=Math.trunc(n);if(!n)return 0;
+    reconcileItemStacks();
+    const before=amount(key),after=clamp(before+n,0,65535),delta=after-before;
+    if(!delta)return 0;
+    if(delta>0)stackStore.add(key,delta,pickUpStack);
+    else{
+      const used=stackStore.take(key,-delta,Number.isInteger(preferredStackId)?preferredStackId:null,new Set(survivalHotbar.filter(Number.isInteger)));
+      if(used!==-delta)return 0;
+    }
+    if(key.startsWith('block:'))inventory[Number(key.slice(6))]=after;
+    else bag[key]=after;
+    if(delta>0&&!inventoryOrder.includes(key))inventoryOrder.push(key);
+    markSave();return delta;
+  }
   function syncSurvivalHotbar(){
     if(gameMode!=='survival')return false;
-    let changed=false;const seen=new Set();
+    reconcileItemStacks();
+    let changed=false;
     for(let i=0;i<9;i++){
-      const key=survivalHotbar[i];
-      if(!validHotbarKey(key)||amount(key)<=0||seen.has(key)){
-        if(key!==null)changed=true;
-        survivalHotbar[i]=null;
-      }else seen.add(key);
-    }
-    const owned=[...new Set([...inventoryOrder,
-      ...Array.from({length:inventory.length-1},(_,i)=>'block:'+(i+1)).filter(key=>amount(key)>0),
-      ...Object.keys(bag).filter(key=>bag[key]>0)])];
-    for(const key of owned){
-      if(!validHotbarKey(key)||amount(key)<=0||seen.has(key))continue;
-      const slot=survivalHotbar.indexOf(null);if(slot<0)break;
-      survivalHotbar[slot]=key;seen.add(key);changed=true;
+      const ref=survivalHotbar[i];
+      if(ref!==null&&!stackStore.byId(ref)){survivalHotbar[i]=null;changed=true;}
     }
     if(changed)markSave();
     return changed;
   }
-  function hotbarKey(){return gameMode==='survival'?survivalHotbar[selection]:('block:'+HOT9[selection]);}
+  function hotbarKey(){
+    return gameMode==='survival'?(stackAtHotbar(selection)?.key||null):('block:'+HOT9[selection]);
+  }
   function selectHotbarSlot(i){
     if(!Number.isInteger(i)||i<0||i>=9)return;
     selection=i;
     if(gameMode==='survival'){
-      const key=survivalHotbar[i]||'';
+      const key=stackAtHotbar(i)?.key||'';
       const match=key.match(/(pickaxe|sword|shovel|hoe|axe)/i);
       if(match){
         const kind=match[1].toLowerCase();
@@ -1483,7 +1502,7 @@ body.in-nether #game-wrap{background:#290f19}
   function useHeldFood(key){
     if(!(key in FOOD))return false;
     if(hunger>=20&&health>=20){toast('You are not hungry');return true;}
-    addResource(key,-1);hunger=clamp(hunger+FOOD[key],0,20);
+    if(addResource(key,-1,survivalHotbar[selection])!==-1)return false;hunger=clamp(hunger+FOOD[key],0,20);
     if(key==='goldenApple')health=clamp(health+4,0,20);
     updateSurvivalHUD();updateHotbar();markSave();toast('Ate '+itemLabel(key));return true;
   }
@@ -2673,7 +2692,7 @@ body.in-nether #game-wrap{background:#290f19}
     drawVillagers();
     drawHighlight(aimMob?null:aim);
     $('target-name').textContent=aimVillager?'💚 '+aimVillager.job.name+' · Tap Mine / V to Trade':aimMob?'⚔ '+SPECIES[aimMob.kind].name+' · ♥ '+Math.ceil(aimMob.hp):aimPlayer?'⚔ '+aimPlayer.name+' · PvP enabled':aim?'⛏ '+NAMES[aim.b]+'  ·  '+aim.x+', '+aim.y+', '+aim.z:'Aim at a block or creature';
-    if((frameCount++%18)===0){if(gameMode==='survival'){const changed=syncSurvivalHotbar(),signature=survivalHotbar.map(key=>key?key+':'+amount(key):'_').join('|');if(changed||signature!==hotbarSignature)updateHotbar();}$('coord-readout').textContent=(dimension==='end'?'✦ '+window.MineWorldEnd.biomeAt(player.x,player.z).name:dimension==='nether'?'🔥 '+window.MineWorldNether.biomeAt(player.x,player.z).name:'🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name)+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
+    if((frameCount++%18)===0){if(gameMode==='survival'){const changed=syncSurvivalHotbar(),signature=stackSignature();if(changed||signature!==hotbarSignature)updateHotbar();}$('coord-readout').textContent=(dimension==='end'?'✦ '+window.MineWorldEnd.biomeAt(player.x,player.z).name:dimension==='nether'?'🔥 '+window.MineWorldNether.biomeAt(player.x,player.z).name:'🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name)+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
     saveTimer+=dt;if(saveTimer>8){saveTimer=0;if(dirtySave)save()}
   }
   // Biome travel stays deterministic and works in the same peer-to-peer world.
