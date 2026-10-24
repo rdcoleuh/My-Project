@@ -1560,8 +1560,35 @@ body.in-nether #game-wrap{background:#290f19}
     }
     return null;
   }
+  function interactFarmAnimal(m){
+    if(!m||!animals.FOOD[m.kind]||gameMode!=='survival')return false;
+    if(window.MineWorldMultiplayer?.isGuest()){toast('Animal feeding is host-controlled in multiplayer');return true;}
+    const held=hotbarKey();
+    if(m.kind==='sheep'&&held==='shears'){
+      if(m.sheared){toast('The sheep must graze before its wool grows back');return true;}
+      m.sheared=true;addResource('wool',2+Math.floor(Math.random()*2));
+      updateHotbar();sound?.play('pickup');markSave();toast('✂ Sheared sheep · wool collected');return true;
+    }
+    if(!animals.edible(m.kind,held))return false;
+    if(m.baby){toast('This animal is still growing');return true;}
+    if(m.breedCooldown>0){toast('This animal needs time before breeding again');return true;}
+    if(!held||addResource(held,-1,survivalHotbar[selection])!==-1)return false;
+    updateHotbar();m.loveTime=30;
+    const partner=mobs.find(other=>animals.canBreed({...m,foodKey:held},other)&&
+      other.loveTime>0&&Math.hypot(m.x-other.x,m.z-other.z)<6);
+    if(partner&&mobs.length<26){
+      const baby=spawnOne(m.kind,(m.x+partner.x)/2+.4,(m.z+partner.z)/2);
+      if(baby){
+        baby.baby=true;baby.growTimer=1200;baby.hp=Math.max(2,Math.round(SPECIES[m.kind].hp*.5));
+        m.breedCooldown=300;partner.breedCooldown=300;m.loveTime=0;partner.loveTime=0;
+        emitAdvancement('breed',m.kind);toast('♥ A baby '+SPECIES[m.kind].name+' was born');
+      }
+    }else toast('♥ Feed another nearby '+SPECIES[m.kind].name+' to breed');
+    sound?.play('pickup');markSave();return true;
+  }
   function performPlace(stack=false){
     if(paused||window.MineWorldMultiplayer?.isTyping?.())return false;
+    if(!stack&&aimMob&&interactFarmAnimal(aimMob))return true;
     if(!stack&&aim?.b===169){cancelMining();useBed(aim);return;}
     if(!stack&&gameMode==='survival'&&aim?.b===168){cancelMining();openGear();return;}
     if(!stack&&gameMode==='survival'&&aim?.b===119){cancelMining();openTreasureChest(aim.x,aim.y,aim.z);return;}
@@ -1591,7 +1618,12 @@ body.in-nether #game-wrap{background:#290f19}
     try{
       reconcileItemStacks();
       const edits=[...savedEdits.entries()];
-      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,experienceTotal,bedSpawn,weather:worldWeather,inventory:[...inventory],itemStacks:stackStore.snapshot(),survivalHotbar:[...survivalHotbar],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,saturation:hungerSaturation,exhaustion:hungerDrain,bag,tools,equipped,difficulty,dayClock,cameraMode,advancements:advancementEngine.snapshot(),droppedItems:droppedItems.slice(0,80),armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:13});
+      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,experienceTotal,bedSpawn,weather:worldWeather,inventory:[...inventory],itemStacks:stackStore.snapshot(),survivalHotbar:[...survivalHotbar],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,saturation:hungerSaturation,exhaustion:hungerDrain,bag,tools,equipped,difficulty,dayClock,cameraMode,advancements:advancementEngine.snapshot(),
+        farmAnimals:mobs.filter(m=>['cow','sheep','pig','chicken'].includes(m.kind)&&m.dimension==='overworld').slice(0,24).map(m=>({
+          kind:m.kind,x:m.x,y:m.y,z:m.z,hp:m.hp,heading:m.heading,baby:!!m.baby,
+          growTimer:m.growTimer||0,sheared:!!m.sheared,breedCooldown:m.breedCooldown||0
+        })),
+        droppedItems:droppedItems.slice(0,80),armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:13});
       localStorage.setItem(slotKey(gameMode),payload);localStorage.setItem(LAST_SLOT,gameMode);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';return true;
     }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';return false;}
   }
@@ -1678,6 +1710,18 @@ body.in-nether #game-wrap{background:#290f19}
         dimension=s.dimension;savedEdits=dimension==='end'?endEdits:netherEdits;
         unloadAllChunks();scheduleChunks(true);streamChunks(5);mobs=[];
         if(dimension==='nether')spawnNetherWildlife();else spawnEndWildlife();
+      }
+      if(dimension==='overworld'&&Array.isArray(s.farmAnimals)){
+        const verified=s.farmAnimals.filter(m=>m&&['cow','pig','sheep','chicken'].includes(m.kind)&&
+          Number.isFinite(m.x)&&m.x>2&&m.x<W-2&&Number.isFinite(m.z)&&m.z>2&&m.z<D-2&&
+          Number.isFinite(m.y)&&m.y>=1&&m.y<H-3&&Number.isFinite(m.hp)&&m.hp>0&&m.hp<=SPECIES[m.kind].hp).slice(0,24);
+        mobs=mobs.filter(m=>!['cow','sheep','pig','chicken'].includes(m.kind));
+        for(const v of verified)mobs.push({
+          id:++mobSerial,kind:v.kind,x:v.x,y:v.y,z:v.z,hp:v.hp,dimension:'overworld',
+          heading:Number.isFinite(v.heading)?v.heading:0,baby:!!v.baby,growTimer:Math.max(0,Math.min(1200,v.growTimer||0)),
+          sheared:!!v.sheared,breedCooldown:Math.max(0,Math.min(300,v.breedCooldown||0)),
+          step:2,attack:2,anger:0,windup:0
+        });
       }
       restoreStabledMounts();updatePortalUI();updateWeatherHUD();scheduleChunks(true);streamChunks(5);updateFlyButton();updateSeedLabel();dirtySave=false;
       advancementLoading=true;
