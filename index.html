@@ -1626,6 +1626,7 @@ body.in-nether #game-wrap{background:#290f19}
     $('end-toggle').textContent=inEnd?'🌿 Leave End':'✦ The End';
     $('end-cross').textContent=inEnd?'🌿 Return to Overworld':'✦ Enter the End';
     $('end-portal-status').textContent=eyesPlaced+'/12 eyes placed · '+(eyesPlaced===12?'Portal activated':'Needs Eyes of Ender');
+    updateWeatherHUD();
   }
   function toggleInventory(){
     if(gameMode==='survival'){openGear();return;}
@@ -2885,6 +2886,7 @@ body.in-nether #game-wrap{background:#290f19}
       mobs.splice(mobs.indexOf(m),1);
       if(attackerId===null&&gameMode==='survival'){
         grantLoot(drop,count);
+        if(m.kind==='sheep')grantLoot('wool',1);
         gainExperience(m.kind==='ender_dragon'?1000:SPECIES[m.kind].kind==='boss'?30:SPECIES[m.kind].kind==='hostile'?5:2);
       }
       return {hit:true,dead:true,kind:m.kind,drop,count};
