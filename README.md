@@ -1,4 +1,4 @@
-# MineWorld 4.7 — Adjustable Render Distance & Classic Pixel Materials
+# MineWorld 5.0 — Wiki-guided Block Materials, Movement & Performance
 
 **Play:** https://rdcoleuh.github.io/My-Project/
 
@@ -158,3 +158,16 @@ Pixel textures were further refined with original 16×16 textures: bark and log 
 - Official Minecraft texture images are not included or copied. The wiki describes many more block types than MineWorld currently implements; this update does not claim to add every Minecraft block.
 - Sprint and sneak controls already exist: desktop Ctrl or G to sprint, Shift or X to crouch; on mobile, use the SPRINT and SNEAK toggles. Sprinting costs extra hunger while moving and cannot start at 6 hunger or less. Sneaking slows movement and helps prevent stepping off ledges.
 - The 10–50 chunk slider and automatic frame-rate adjustment remain in the game menu. Actual performance varies with the device.
+
+## 5.0 — Wiki-guided movement, materials and performance
+
+- **Classic 16px textures:** A new original artwork layer, `texture-details.js`, refines chests, furnace faces, crafting workbench, stone and Nether bricks, netherrack, magma, obsidian, End stone, glowstone, sandstone, prismarine and other materials. It complements the original independently drawn 16×16 patterns already used for all **168 MineWorld block IDs**. It does not copy Mojang-owned texture PNGs or add the entire Minecraft block registry.
+- **Different block dimensions:** `block-models.js` now includes Soul Sand at 14/16 height, Farmland at 15/16, narrow lanterns/rods, chests, portal frames, decorative plants, brewing stands, lecterns, and others. Raycasts and placement collision now honor those simplified model boxes. Complex multipart models remain approximations.
+- **Sprint and sneak:** Ctrl or G to sprint; Shift or X to crouch on desktop, plus touch SPRINT and SNEAK controls. Sprinting widens the field of view. Crouching reduces player height to 1.5 blocks and reduces local mob sight from 25 blocks to around 15, if no wall blocks line of sight.
+- **Wiki-informed food system:** Sprinting accumulates 0.1 exhaustion per block traveled; sprint jumps cost 0.2, normal jumps 0.05, attacks 0.1 and mining 0.005. When exhaustion reaches 4, it spends hidden saturation first, then visible hunger; food restores both. Survival nutrition is saved with version 12 and earlier world save data is backed up on migration. Sprinting requires more than 6 hunger.
+- **Performance:** The existing Pause → World Settings slider chooses a **total of 10–50 visible 16×16 chunks**; auto mode reduces the active count when FPS falls. Terrain edits are now indexed by chunk instead of scanning all saved edits for each newly streamed chunk. No device, particularly at 50 chunks, is guaranteed to run without lag.
+- **Game compatibility:** Preserved Creative/Survival saves, 64-item stack behavior, pickup-first Survival hotbar, inventory shortcut, crafting and multiplayer structures.
+
+Minecraft Wiki references: [Blocks](https://minecraft.wiki/w/Block), [Sneaking](https://minecraft.wiki/w/Sneaking), [Sprinting](https://minecraft.wiki/w/Sprinting), [Hunger](https://minecraft.wiki/w/Hunger). This is an independent interpretation of relevant documented mechanics, not the full Wiki or Minecraft engine.
+
+Validation: JavaScript syntax, 129,024 texture pixels, block dimensions, raycasts, edited chunk indexing, the 10–50 chunk planner, and saturation/exhaustion module were checked. Physical iPhone render performance and long multiplayer sessions were not tested.
