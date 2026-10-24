@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - gh-pages
+      - experiment/local-minecraft-textures
   pull_request:
     branches:
       - gh-pages
+      - experiment/local-minecraft-textures
 
 permissions:
   contents: read
