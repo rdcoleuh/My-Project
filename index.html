@@ -387,7 +387,7 @@ body.in-nether #game-wrap{background:#290f19}
 .swatch,.item-icon,#mw-skin-editor,#mw-skin-sheet{image-rendering:pixelated}
 #world{image-rendering:pixelated}
 </style>
-<title>MineWorld 5.8 — Room Chat & Vertical Block Stacking</title>
+<title>MineWorld 5.9 — Advancements & Clear Stack Counts</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -640,7 +640,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v5.8 · ROOM CHAT · VERTICAL BLOCK STACKING</div>
+  <div class="version">MINEWORLD v5.9 · 126 ADVANCEMENTS · STACK COUNTS</div>
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./texture-refinement.js"></script>
@@ -652,6 +652,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./sound-engine.js"></script>
 <script src="./classic-interactions.js"></script>
 <script src="./block-placement.js"></script>
+<script src="./advancements.js"></script>
 <script src="./perspective.js"></script>
 <script src="./world-library.js"></script>
 <script src="./skin-editor.js"></script>
@@ -896,6 +897,12 @@ body.in-nether #game-wrap{background:#290f19}
   const W=10000, D=10000, H=48, SEA=14, SPAWN=5000, CHUNK=16, STORAGE='mineworld-selfhost-v1';
   // Original Creative/Survival keys stay permanently available as "Original" worlds.
   const sound=window.MineWorldSound;
+  let advancementLoading=false;
+  const advancementEngine=window.MineWorldAdvancements.create(def=>{
+    markSave();
+    if(!advancementLoading){sound?.play('level');window.MineWorldAdvancementsUI?.notify(def);}
+  });
+  const emitAdvancement=(event,key,details={})=>advancementEngine.emit(event,key,details);
   const worldLibrary=window.MineWorldWorldLibrary.create(localStorage,STORAGE);
   const slotKey=mode=>worldLibrary.key(mode);
   const LAST_SLOT=STORAGE+'-active-mode-v1';
@@ -1244,7 +1251,7 @@ body.in-nether #game-wrap{background:#290f19}
   function terrain(x,z){return dimension==='nether'?window.MineWorldNether.surfaceAt(x,z):dimension==='end'?Math.max(1,window.MineWorldEnd.surfaceAt(x,z)):window.MineWorldBiomes.terrainAt(x,z,SEA,H)}
   function generate(){
     experienceTotal=0;bedSpawn=null;worldWeather=survivalRules.newWeather(seed);
-    droppedItems.length=0;cameraMode=0;
+    droppedItems.length=0;cameraMode=0;advancementEngine.restore(null);
     window.MineWorldBiomes.setSeed(seed);window.MineWorldNether.setSeed(seed);window.MineWorldEnd.setSeed(seed);dimension='overworld';document.body.classList.remove('in-nether','in-end');overworldEdits=new Map();netherEdits=new Map();endEdits=new Map();savedEdits=overworldEdits;overworldPosition=netherPosition=endPosition=null;dragonDefeated=false;eyesPlaced=0;netherPortalBuilt=false;netherPortalPosition=null;for(const k of Object.keys(villagerProgress))delete villagerProgress[k];unloadAllChunks();
     const top=terrain(SPAWN,SPAWN);
     player.x=SPAWN+.5;player.z=SPAWN+.5;player.y=top+2.5;
@@ -1576,7 +1583,7 @@ body.in-nether #game-wrap{background:#290f19}
     try{
       reconcileItemStacks();
       const edits=[...savedEdits.entries()];
-      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,experienceTotal,bedSpawn,weather:worldWeather,inventory:[...inventory],itemStacks:stackStore.snapshot(),survivalHotbar:[...survivalHotbar],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,saturation:hungerSaturation,exhaustion:hungerDrain,bag,tools,equipped,difficulty,dayClock,cameraMode,droppedItems:droppedItems.slice(0,80),armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:13});
+      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,experienceTotal,bedSpawn,weather:worldWeather,inventory:[...inventory],itemStacks:stackStore.snapshot(),survivalHotbar:[...survivalHotbar],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,saturation:hungerSaturation,exhaustion:hungerDrain,bag,tools,equipped,difficulty,dayClock,cameraMode,advancements:advancementEngine.snapshot(),droppedItems:droppedItems.slice(0,80),armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:13});
       localStorage.setItem(slotKey(gameMode),payload);localStorage.setItem(LAST_SLOT,gameMode);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';return true;
     }catch(e){$('status').textContent='● Storage full — copy seed and reduce edits';return false;}
   }
@@ -1588,7 +1595,7 @@ body.in-nether #game-wrap{background:#290f19}
       if((s.version||0)<6&&!localStorage.getItem('mineworld-backup-before-nether'))localStorage.setItem('mineworld-backup-before-nether',data);
       if((s.version||0)<12){try{const backup="mineworld-backup-before-hunger-v12-"+slot;if(!localStorage.getItem(backup))localStorage.setItem(backup,data);}catch(_){/* Device storage might be limited. */}}
       if((s.version||0)<9){try{const backup='mineworld-backup-before-biome-v37-'+slot;if(!localStorage.getItem(backup))localStorage.setItem(backup,data);}catch(_){/* Backups need available device storage. */}}
-      seed=s.seed;seedLabel=String(s.seedLabel||s.seed);generate();overworldEdits.clear();
+      seed=s.seed;seedLabel=String(s.seedLabel||s.seed);generate();advancementEngine.restore(s.advancements);overworldEdits.clear();
       const legacy=(s.version||0)<5,oldW=(s.version||0)<4?64:96,oldH=(s.version||0)<4?27:36;
       for(let [i,b] of s.edits){
         if(legacy){const oldX=Math.floor(i/(oldW*oldH)),oldZ=Math.floor(i/oldH)%oldW,oldY=i%oldH;
@@ -1665,6 +1672,10 @@ body.in-nether #game-wrap{background:#290f19}
         if(dimension==='nether')spawnNetherWildlife();else spawnEndWildlife();
       }
       restoreStabledMounts();updatePortalUI();updateWeatherHUD();scheduleChunks(true);streamChunks(5);updateFlyButton();updateSeedLabel();dirtySave=false;
+      advancementLoading=true;
+      try{
+        if(gameMode==='survival')advancementEngine.reconcile({dimension,dragonDefeated,items:inventoryTotals(),tools,armor});
+      }finally{advancementLoading=false;}
       return true;
     }catch(e){console.warn('World save not loaded:',e);return false;}
   }
@@ -1913,6 +1924,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(key.startsWith('block:'))inventory[Number(key.slice(6))]=after;
     else bag[key]=after;
     if(delta>0&&!inventoryOrder.includes(key))inventoryOrder.push(key);
+    if(delta>0)emitAdvancement('have',key);
     markSave();return delta;
   }
   function syncSurvivalHotbar(){
@@ -3546,7 +3558,7 @@ body.in-nether #game-wrap{background:#290f19}
     tools.pickaxe=tools.sword=tools.hoe=tools.axe=tools.shovel='none';equipped='none';
     for(const k of Object.keys(armor))armor[k]='';inventoryOrder.length=0;vehicles=[];vehicleSerial=0;mount=null;stabledMounts=[];backpackPage=0;selectedStackKey='';selectedStackId=null;stackStore.clear();
     health=20;hunger=20;hungerSaturation=5;hungerDrain=hungerPulse=healPulse=0;
-    experienceTotal=0;bedSpawn=null;worldWeather=survivalRules.newWeather(seed);
+    experienceTotal=0;bedSpawn=null;worldWeather=survivalRules.newWeather(seed);advancementEngine.restore(null);
     dayClock=0;hotbarPage=0;HOT9.splice(0,HOT9.length,...HOTSETS[0]);survivalHotbar.fill(null);selection=0;
   }
   function openNamedWorld(next,id,play=false){
@@ -3910,6 +3922,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
 </script>
 <script src="./block-guide.js"></script>
 <script src="./world-manager-ui.js"></script>
+<script src="./advancements-ui.js"></script>
 <script src="./local-resource-pack.js"></script>
 </body>
 </html>
