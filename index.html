@@ -1712,6 +1712,29 @@ body.in-nether #game-wrap{background:#290f19}
     updatePortalUI();updateFlyButton();updateHotbar();markSave();window.MineWorldMultiplayer?.flushMobs();
     emitAdvancement('dimension',next);toast(next==='end'?'✦ You entered the End!':next==='nether'?'🔥 You entered the Nether!':'🌿 Returned to the Overworld');
   }
+  function tickAdvancements(){
+    if(paused)return;
+    let biome;
+    if(dimension==='nether'){
+      biome=window.MineWorldNether.biomeAt(player.x,player.z);
+      if(biome?.name)emitAdvancement('biome',biome.name,{dimension});
+      const site=window.MineWorldNether.landmarkAt(player.x,player.z);
+      if(site&&Math.hypot(player.x-site.x,player.z-site.z)<24){
+        if(site.kind==='Bastion Remnant')emitAdvancement('landmark','bastion');
+        if(site.kind==='Nether Fortress')emitAdvancement('landmark','fortress');
+      }
+    }else if(dimension==='end'){
+      const site=window.MineWorldEnd.landmarkAt(player.x,player.z);
+      if(site&&Math.hypot(player.x-site.x,player.z-site.z)<24&&/city/i.test(site.type||site.kind||''))
+        emitAdvancement('landmark','endCity');
+    }else{
+      biome=window.MineWorldBiomes.biomeAt(player.x,player.z);
+      if(biome?.name)emitAdvancement('biome',biome.name,{dimension,total:window.MineWorldBiomes.BIOMES.length});
+      const stronghold=window.MineWorldEnd.STRONGHOLD;
+      if(stronghold&&Math.hypot(player.x-stronghold.x,player.z-stronghold.z)<20)
+        emitAdvancement('landmark','stronghold');
+    }
+  }
   function updatePortalUI(){
     const portalControl=$('craft-nether-portal');
     if(portalControl){portalControl.classList.toggle('hidden',gameMode!=='survival'||dimension==='nether'||netherPortalBuilt);portalControl.disabled=gameMode!=='survival'||netherPortalBuilt;}
@@ -3408,7 +3431,7 @@ body.in-nether #game-wrap{background:#290f19}
     drawDroppedItems();
     drawHighlight(aimMob?null:aim);
     $('target-name').textContent=aimVillager?'💚 '+aimVillager.job.name+' · Tap Mine / V to Trade':aimMob?'⚔ '+SPECIES[aimMob.kind].name+' · ♥ '+Math.ceil(aimMob.hp):aimPlayer?'⚔ '+aimPlayer.name+' · PvP enabled':aim?'⛏ '+NAMES[aim.b]+'  ·  '+aim.x+', '+aim.y+', '+aim.z:'Aim at a block or creature';
-    if((frameCount++%18)===0){updateDebugView();if(gameMode==='survival'){const changed=syncSurvivalHotbar(),signature=stackSignature();if(changed||signature!==hotbarSignature)updateHotbar();}$('coord-readout').textContent=(dimension==='end'?'✦ '+window.MineWorldEnd.biomeAt(player.x,player.z).name:dimension==='nether'?'🔥 '+window.MineWorldNether.biomeAt(player.x,player.z).name:'🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name)+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
+    if((frameCount++%18)===0){updateDebugView();if(frameCount%90===1)tickAdvancements();if(gameMode==='survival'){const changed=syncSurvivalHotbar(),signature=stackSignature();if(changed||signature!==hotbarSignature)updateHotbar();}$('coord-readout').textContent=(dimension==='end'?'✦ '+window.MineWorldEnd.biomeAt(player.x,player.z).name:dimension==='nether'?'🔥 '+window.MineWorldNether.biomeAt(player.x,player.z).name:'🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name)+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
     saveTimer+=dt;if(saveTimer>8){saveTimer=0;if(dirtySave)save()}
   }
   // Biome travel stays deterministic and works in the same peer-to-peer world.
@@ -3653,6 +3676,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(e.code==='KeyG'&&!e.repeat)toggleMovementMode('sprint');
     if(e.code==='KeyX'&&!e.repeat)toggleMovementMode('crouch');
     if(e.code==='KeyF'&&!e.repeat){if(gameMode==='survival'){toast('Flying is Creative only');}else{player.fly=!player.fly;player.vy=0;updateFlyButton();toast(player.fly?'Fly mode on':'Fly mode off')}}
+    if(e.code==='KeyL'&&!e.repeat){e.preventDefault();window.MineWorldAdvancementsUI?.open();return;}
     if(e.code==='F3'&&!e.repeat){e.preventDefault();toggleDebug();}
     if(e.code==='F5'&&!e.repeat){e.preventDefault();cyclePerspective();}
     if(e.code==='KeyP'&&!e.repeat)pickLookedAtBlock();
@@ -3715,6 +3739,12 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
   migrateLegacySave();const activeSlot=(()=>{try{return localStorage.getItem(LAST_SLOT)==='survival'?'survival':'creative'}catch(_){return 'creative'}})();gameMode=activeSlot;updateModeButton();updateSurvivalHUD();
   if(!load(activeSlot)){generate();setGameMode(activeSlot);}else $('status').textContent='● '+(activeSlot==='survival'?'Survival':'Creative')+' world restored';setDifficulty(difficulty);updatePortalUI();updateSeedLabel();updateVillagers();
   window.MineWorldBridge={
+    getAdvancementState:()=>advancementEngine,
+    pauseForAdvancements:()=>{
+      paused=true;keys.clear();movement.x=movement.y=0;cancelMining();
+      if(document.pointerLockElement)document.exitPointerLock();
+    },
+    resumeAfterAdvancements:()=>{if(started)start();},
     clearChatMovement:()=>{
       keys.clear();movement.x=0;movement.y=0;mouseMiningHeld=false;touchHold.mine=false;touchHold.place=false;
       if(isSprinting){isSprinting=false;updateMovementUI();}
