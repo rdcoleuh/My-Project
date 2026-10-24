@@ -464,6 +464,7 @@ body.in-nether #game-wrap{background:#290f19}
           <button id="pause-friends" class="ui-button mw-pause-full" type="button">🌐 Multiplayer / Friends</button>
           <div class="mw-menu-grid mw-world-actions">
             <button id="fly-btn" class="ui-button" type="button">✦ Fly</button>
+            <button id="weather-cycle" class="ui-button" type="button">☀ Weather: Clear</button>
             <button id="save-btn" class="ui-button" type="button">↓ Save World</button>
             <button id="mode-btn" class="ui-button" type="button" disabled>World: Survival</button>
             <label class="mw-difficulty" for="pause-difficulty">Difficulty
@@ -621,6 +622,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./survival-hunger.js"></script>
 <script src="./block-models.js"></script>
 <script src="./survival-world-rules.js"></script>
+<script src="./survival-weather-visual.js"></script>
 <script>
 /* MineWorld original procedural 16x16 voxel pixel-art atlas. No external assets. */
 (() => {
@@ -1185,7 +1187,7 @@ body.in-nether #game-wrap{background:#290f19}
     player.vy=0;player.pitch=-.14;player.yaw=.6;player.fly=false;selection=0;
     mobs=[];mobSerial=0;mobSpawnClock=0;
     scheduleChunks(true);streamChunks(5);spawnWildlife();updateHotbar();updateFlyButton();markSave();
-    updateSeedLabel();
+    updateSeedLabel();updateWeatherHUD();
   }
   function blockAtFeet(x,y,z,height=isCrouching?1.5:1.8){
     const r=.27,feet=y+.02,head=y+height;
@@ -1574,7 +1576,7 @@ body.in-nether #game-wrap{background:#290f19}
         unloadAllChunks();scheduleChunks(true);streamChunks(5);mobs=[];
         if(dimension==='nether')spawnNetherWildlife();else spawnEndWildlife();
       }
-      restoreStabledMounts();updatePortalUI();scheduleChunks(true);streamChunks(5);updateFlyButton();updateSeedLabel();dirtySave=false;
+      restoreStabledMounts();updatePortalUI();updateWeatherHUD();scheduleChunks(true);streamChunks(5);updateFlyButton();updateSeedLabel();dirtySave=false;
       return true;
     }catch(e){console.warn('World save not loaded:',e);return false;}
   }
@@ -1676,6 +1678,17 @@ body.in-nether #game-wrap{background:#290f19}
     const after=survivalRules.progress(experienceTotal).level;
     if(after>before)toast('✦ Level Up! '+after);
     updateExperienceHUD();markSave();
+  }
+  function updateWeatherHUD(){
+    const biome=dimension==='overworld'?window.MineWorldBiomes.biomeAt(player.x,player.z).name:'';
+    window.MineWorldWeatherVisual.update(worldWeather,dimension,biome,gameMode);
+  }
+  function cycleWeather(){
+    if(gameMode!=='creative'){toast('Weather changes naturally in Survival');return;}
+    const types=['clear','rain','thunder'];
+    const next=types[(types.indexOf(worldWeather?.type||'clear')+1)%types.length];
+    worldWeather={type:next,seconds:240,step:(worldWeather?.step||0)+1};
+    updateWeatherHUD();markSave();toast('Weather: '+next);
   }
   function updateExperienceHUD(){
     const ui=$('xp-display');if(!ui)return;
@@ -3067,6 +3080,14 @@ body.in-nether #game-wrap{background:#290f19}
     if(paused)return;
     tuneFrameBudget(frameMs);
     dayClock+=dt;
+    if(!worldWeather)worldWeather=survivalRules.newWeather(seed);
+    const previousWeather=worldWeather.type;
+    worldWeather=survivalRules.advanceWeather(worldWeather,dt,seed);
+    if(previousWeather!==worldWeather.type){updateWeatherHUD();markSave();}
+    if(dimension==='overworld'&&worldWeather.type!=='clear'){
+      const biome=window.MineWorldBiomes.biomeAt(player.x,player.z).name;
+      window.MineWorldWeatherVisual.draw(weatherCanvas,dayClock,worldWeather,dimension,biome,isTouch,currentFPS);
+    }else window.MineWorldWeatherVisual.draw(weatherCanvas,dayClock,worldWeather,dimension,'',isTouch,currentFPS);
     scheduleChunks();
     // Slow devices stream fewer chunks per frame to keep input responsive.
     streamClock++;
@@ -3092,7 +3113,8 @@ body.in-nether #game-wrap{background:#290f19}
     advanceMining(dt);
     if((touchHold.mine||mouseMiningHeld)&&!mineJob&&timers.mine<=0){performMine();timers.mine=.15;}
     const sun=survivalRules.sunlight(dayClock);
-    const skyTint=clamp((sun+0.4)/1.1,.13,1);
+    let skyTint=clamp((sun+0.4)/1.1,.13,1);
+    if(dimension==='overworld'&&worldWeather?.type!=='clear')skyTint*=worldWeather.type==='thunder'?.50:.75;
     sky=dimension==='end'?[.025,.021,.052]:dimension==='nether'?window.MineWorldNether.biomeAt(player.x,player.z).index===2?[.08,.22,.21]:window.MineWorldNether.biomeAt(player.x,player.z).index===3?[.17,.15,.22]:window.MineWorldNether.biomeAt(player.x,player.z).index===4?[.18,.17,.19]:[.24,.075,.09]:[.07+skyTint*.46,.09+skyTint*.67,.19+skyTint*.72];
     $('sky-decor').style.opacity=dimension==='nether'||dimension==='end'?'0':String(clamp(skyTint*.75,0,1));
     gl.clearColor(...sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
@@ -3318,6 +3340,7 @@ body.in-nether #game-wrap{background:#290f19}
   $('resume-btn').addEventListener('click',start);
   $('menu-toggle').addEventListener('click',menu);
   $('save-btn').addEventListener('click',()=>{save();toast('Saved to this browser')});
+  $('weather-cycle').addEventListener('click',cycleWeather);
   $('mode-btn').addEventListener('click',()=>toast('World modes have separate saves. Use Home Screen to switch worlds.'));
   $('craft-btn').addEventListener('click',openGear);$('bag-toggle').addEventListener('click',openGear);$('close-gear').addEventListener('click',closeGear);for(const [btn,tool] of [['gear-pickaxe','pickaxe'],['gear-sword','sword'],['gear-hoe','hoe'],['gear-axe','axe'],['gear-shovel','shovel'],['gear-none','none']])$(btn).addEventListener('click',()=>{equipped=tool;updateSurvivalHUD();renderGear();markSave()});$('home-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));$('pause-difficulty').addEventListener('change',e=>setDifficulty(e.target.value));
   $('fly-btn').addEventListener('click',()=>{if(gameMode==='survival'){toast('Flying is only available in Creative');return;}player.fly=!player.fly;player.vy=0;updateFlyButton();markSave();toast(player.fly?'Flying enabled':'Flying disabled')});
