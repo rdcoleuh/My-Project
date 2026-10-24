@@ -1,3 +1,28 @@
+# MineWorld 5.8 — Live Player Chat & Block Stacking
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+### Chat with other players
+
+- Connect through **Multiplayer / Friends** on the main menu or in Pause. Host a private room and share its invite link, join a friend's room, or join an available public session.
+- While playing in a connected room, press **T** or **Enter**, or tap the **💬 Chat** button on desktop/mobile. Type and press **Enter** or **Send** to send the message to everybody connected to that same room.
+- Chat can be collapsed using **Hide** or Escape; a small unread count appears when new messages arrive. Press **T** or tap **Open** to view the conversation. The text field no longer triggers movement controls while you type.
+- Player names come from the name entered before hosting/joining. The host relays chat messages to all players in that room and applies length and anti-spam limits. Chat never inserts remote messages as HTML. **Room chat is temporary, not saved or moderated**, and disappears when the session ends. No offline/local chat room is created.
+- Public sessions remain browser-hosted and can disconnect or end when the host leaves; they aren't dedicated servers.
+
+### Build upward and stack 64-item inventory piles
+
+- Aim your crosshair at a placed block, select the new block in your hotbar, then press **B** or tap **▤ Stack ↑**. The game attempts to place the new block directly **one grid cell above** the targeted one, regardless of which side of that block you are looking at.
+- Normal right-click or **Place** still works for placing adjacent to the targeted face. The vertical action will explain if the cell above is occupied, outside the world, or overlapping your character. Move out of the target space if necessary; blocks cannot be built inside the player's collision box.
+- In Survival, placed blocks still consume **one item** from the selected stack. The existing inventory continues to combine matching blocks into piles of **64**, then creates another stack for overflow. Creative builds don't consume inventory.
+- All existing world save IDs, separate Creative and Survival worlds, 64×64 skin editor, texture and sound import, and the multiplayer world-edit protocol remain.
+
+### Verification
+
+Regression tests cover upward/face placement, ceiling/occupied-cell checks, 64/64/overflow item stacks, message sanitization and rate limits, and a mocked host-and-guest PeerJS connection that exchanges messages both ways. Browser/device-specific behavior and real-world WebRTC connections still need live user testing.
+
+---
+
 # MineWorld 5.7 — Original Audio, Local Resource Packs & Reliability
 
 **Play the game:** https://rdcoleuh.github.io/My-Project/
