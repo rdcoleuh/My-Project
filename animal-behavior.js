@@ -22,6 +22,7 @@ function habitat(kind,biomeName=''){
 }
 function pickNatural(biome,seed){
  const preferred=NATURAL.filter(k=>habitat(k,biome));
+ if(!preferred.length&&/ocean|river|frozen|ice|snowy|deep|mushroom/.test(String(biome).toLowerCase()))return null;
  const pool=preferred.length?preferred:['cow','sheep','pig','chicken'];
  const weights={cow:3,sheep:3,pig:3,chicken:3,horse:1,donkey:1,llama:1,camel:1};
  const weighted=pool.flatMap(k=>Array(weights[k]).fill(k));
