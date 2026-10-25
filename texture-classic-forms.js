@@ -202,10 +202,11 @@ function ore(id,face,x,y){
  if(id===18||id===101)return rgba([38,40,42],rim?-15:highlight?11:0);
  return color;
 }
-function netherrack(x,y){
- const n=hash(x>>2,y>>2,510),rim=hash(x>>1,y>>1,551);
- if(rim>.84&&(x+2*y)%6===0)return rgba(P.nether[0],-7);
- return cluster(P.nether,x,y,50+(n>.7?9:0));
+function netherrack(x,y,variant=50){
+ const n=hash(x>>2,y>>2,510+variant),rim=hash(x>>1,y>>1,551+variant);
+ if(rim>.84&&(x+2*y)%6===0)return rgba(P.nether[0],variant===65?-15:-7);
+ const c=cluster(P.nether,x,y,variant+(n>.7?9:0));
+ return variant===65?rgba(c,-13):c;
 }
 function obsidian(x,y){
  const p=[[17,16,27],[26,22,36],[41,29,53],[63,39,71]];
@@ -237,7 +238,7 @@ function paint(id,face,x,y){
  if(LOGS[id])return log(id,face,x,y);
  if(LEAF_BASE[id])return leaf(id,x,y,alpha);
  if(ORES[id])return ore(id,face,x,y);
- if(id===50||id===65)return netherrack(x,y);
+ if(id===50||id===65)return netherrack(x,y,id);
  if(id===58)return rock(x,y,true);
  if(id===51)return obsidian(x,y);
  if(id===121)return endstone(x,y);
