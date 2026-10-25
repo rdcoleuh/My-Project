@@ -663,6 +663,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./texture-precision.js"></script>
 <script src="./texture-motion.js"></script>
 <script src="./sound-engine.js"></script>
+<script src="./combat-rules.js"></script>
 <script src="./classic-interactions.js"></script>
 <script src="./block-placement.js"></script>
 <script src="./advancements.js"></script>
@@ -1004,7 +1005,7 @@ body.in-nether #game-wrap{background:#290f19}
   let backpackPage=0,selectedStackKey='',selectedStackId=null,backpackFilter='',mount=null,vehicles=[],vehicleSerial=0,mountLift=0,stabledMounts=[];
   const toolLevels={none:0,wood:1,stone:2,iron:3,diamond:4,netherite:5};
   const tools={pickaxe:'none',sword:'none',hoe:'none',axe:'none',shovel:'none'};
-  let equipped='pickaxe',difficulty='normal',mobSerial=0,mobs=[],mobSpawnClock=0,mobAttackClock=0,aimMob=null,aimPlayer=null,attackCooldown=0,playerHitCooldown=0;
+  let equipped='pickaxe',difficulty='normal',mobSerial=0,mobs=[],mobSpawnClock=0,mobAttackClock=0,aimMob=null,aimPlayer=null,attackCooldown=0,playerHitCooldown=0,lastAttackAt=-Infinity;
   let lastMobSync=0,preservedFarmAnimals=[];
   const animals=window.MineWorldAnimalBehavior;
   const animalModels=window.MineWorldAnimalModels;
@@ -3138,6 +3139,18 @@ body.in-nether #game-wrap{background:#290f19}
         }
       }
       if(m.tamed){m.step=4;continue;}
+      if(m.knockX||m.knockZ){
+        const kx=clamp(m.x+(m.knockX||0)*dt,1.6,W-1.6);
+        const kz=clamp(m.z+(m.knockZ||0)*dt,1.6,D-1.6);
+        const floor=topAt(kx,kz)+1;
+        if(Math.abs(floor-m.y)<1.5&&get(Math.floor(kx),floor,Math.floor(kz))===0){
+          m.x=kx;m.z=kz;m.y=floor;
+        }
+        const friction=Math.max(0,1-dt*8);
+        m.knockX=(m.knockX||0)*friction;m.knockZ=(m.knockZ||0)*friction;
+        if(Math.abs(m.knockX)<.015)m.knockX=0;
+        if(Math.abs(m.knockZ)<.015)m.knockZ=0;
+      }
       m.step-=dt;m.attack-=dt;m.anger=Math.max(0,m.anger-dt);
       if(m.kind==='ender_dragon'){
         const c=window.MineWorldEnd.CENTER;
@@ -3195,7 +3208,7 @@ body.in-nether #game-wrap{background:#290f19}
   function applyMobHit(id,strength,attackerId=null){
     const m=mobs.find(x=>x.id===id);
     if(!m)return {hit:false};
-    const amount=clamp(Number(strength)||1,1,20);
+    const amount=clamp(Number(strength)||1,.2,20);
     if(m.kind==='ender_dragon'&&endCrystalCount()>0)return {hit:false};
     m.hp-=amount;
     if(animals.FOOD[m.kind]&&m.hp>0){
@@ -3270,9 +3283,10 @@ body.in-nether #game-wrap{background:#290f19}
   function attackMob(m){
     if(paused||attackCooldown>0)return;
     if(mount){toast('Dismount to attack');return;}
+    const now=performance.now();
     if(!m&&aimPlayer){
       if(window.MineWorldMultiplayer?.attackPlayer(aimPlayer.id,combatStrength())){
-        attackCooldown=.5;toast('⚔ Attacking '+(aimPlayer.name||'player'));
+        lastAttackAt=now;attackCooldown=.5;toast('⚔ Attacking '+(aimPlayer.name||'player'));
       }return;
     }
     if(!m||!mobs.includes(m))return;
@@ -3280,14 +3294,32 @@ body.in-nether #game-wrap{background:#290f19}
     if(d>4.7)return;
     if(window.MineWorldMultiplayer?.isGuest()){
       if(window.MineWorldMultiplayer.attackMob(m.id,combatStrength())){
-        attackCooldown=.48;toast('⚔ Hit '+SPECIES[m.kind].name);
+        lastAttackAt=now;attackCooldown=.48;toast('⚔ Hit '+SPECIES[m.kind].name);
       }return;
     }
-    const result=applyMobHit(m.id,combatStrength());
+    const hit=window.MineWorldCombat.strike({
+      weapon:equipped,tier:tools[equipped]||'none',elapsedMs:now-lastAttackAt,
+      grounded:!!player.ground,falling:player.vy<-.08,
+      sprinting:isSprinting,creative:gameMode==='creative'
+    });
+    const result=applyMobHit(m.id,hit.damage);
     if(!result.hit)return;
+    lastAttackAt=now;
+    if(!result.dead){
+      const push=window.MineWorldCombat.knockback(player.yaw,hit.knockback);
+      m.knockX=push.x;m.knockZ=push.z;
+    }
+    if(hit.sweep&&result.kind!=='ender_dragon'){
+      for(const nearby of [...mobs]){
+        if(nearby.id===m.id||nearby.kind==='ender_dragon')continue;
+        if(Math.hypot(nearby.x-m.x,nearby.z-m.z)>1.4||Math.abs(nearby.y-m.y)>1.4)continue;
+        applyMobHit(nearby.id,Math.max(.2,Math.min(1,hit.damage*.15)));
+      }
+    }
     if(gameMode==='survival')hungerDrain+=.1;
-    sound?.play('attack');attackCooldown=gameMode==='creative'?.12:.48;
-    toast(result.dead?'Defeated '+SPECIES[result.kind].name:'Hit '+SPECIES[result.kind].name+' · '+Math.ceil(result.hp)+' health');
+    sound?.play('attack');attackCooldown=.12;
+    toast((result.dead?'Defeated '+SPECIES[result.kind].name:'Hit '+SPECIES[result.kind].name+' · '+Math.ceil(result.hp)+' health')+
+      (hit.critical?' ✦ Critical!':hit.sweep?' · Sweep':''));
     window.MineWorldMultiplayer?.flushMobs();
   }
   function drawMobs(){
