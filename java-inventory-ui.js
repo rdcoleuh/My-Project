@@ -181,7 +181,7 @@ function install(api){
  const search=node(modal,'input');search.type='search';search.placeholder='Search all 169 blocks';
  search.setAttribute('aria-label','Search creative blocks');
  const status=node(modal,'p','mw-java-help','Click a block to assign it to your selected hotbar slot; keys 1–9 change selection.');
- const packButton=node(modal,'button','mw-java-close','Import your own Java Edition texture pack (ZIP/JAR)');packButton.type='button';packButton.addEventListener('click',pickPack);
+ const packButton=node(modal,'button','mw-java-close','Import Java ZIP/JAR or Bedrock .mcpack from Files');packButton.type='button';packButton.addEventListener('click',pickPack);
  const categories=node(modal,'div','mw-java-tabs');
  const types=[
   ['all','All'],['building','Building'],['nature','Nature'],
@@ -241,7 +241,7 @@ function install(api){
    b.addEventListener('click',()=>{api.selectCreative(i);renderCreative();});
   }
  }
- const packFile=node(modal,'input');packFile.type='file';packFile.accept='.zip,.jar,application/zip,application/java-archive';packFile.style.display='none';packFile.setAttribute('aria-label','Choose a local Java Edition resource pack');
+ const packFile=node(modal,'input');packFile.type='file';packFile.accept='.zip,.jar,.mcpack,application/zip,application/java-archive';packFile.style.display='none';packFile.setAttribute('aria-label','Choose a local Java Edition resource pack');
  function pickPack(){if(!window.MineWorldLocalTextures){status.textContent='Start a world to enable local resource pack textures.';return;}packFile.click();}
  packFile.addEventListener('change',async()=>{
    const file=packFile.files?.[0];if(!file)return;
