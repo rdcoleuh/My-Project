@@ -57,7 +57,18 @@ async function go(browser,name,mobile){
   await play.click({timeout:20000});
   await page.waitForFunction(()=>document.querySelector('#welcome')?.classList.contains('hidden'),null,{timeout:25000});
   await page.waitForTimeout(600);
-  await page.locator('#menu-toggle').click({timeout:15000});
+  if(!mobile){
+    // Chrome redirects all pointer events to the canvas while pointer-locked.
+    // ESC should open Pause; if Chrome consumes it to unlock, use the button.
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+    const alreadyPaused=await page.locator('#pause').evaluate(el=>!el.classList.contains('hidden'));
+    if(!alreadyPaused){
+      await page.evaluate(()=>document.exitPointerLock?.());
+      await page.waitForFunction(()=>!document.pointerLockElement,null,{timeout:5000});
+      await page.locator('#menu-toggle').click({timeout:15000});
+    }
+  }else await page.locator('#menu-toggle').click({timeout:15000});
   assert.equal(await page.locator('#pause').evaluate(el=>!el.classList.contains('hidden')),true,name+': Pause menu failed');
   await page.locator('#home-btn').click();
   await page.locator('#mw-menu-root.active').waitFor({state:'visible',timeout:15000});
