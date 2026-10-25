@@ -156,8 +156,15 @@ async function go(browser,name,mobile){
   assert.equal(await page.locator('#world').evaluate(c=>getComputedStyle(c).imageRendering),'pixelated',
     name+': retro scaling did not apply');
   await page.locator('#mw-options-screen [data-mw-polish="cleanScaling"] input').check();
-  assert.equal(await page.locator('#world').evaluate(c=>getComputedStyle(c).imageRendering),'auto',
-    name+': clean scaling did not restore');
+  assert.equal(await page.locator('#world').evaluate(c=>getComputedStyle(c).imageRendering),'pixelated',
+    name+': high-resolution mode has blurry CSS scaling');
+  assert.ok(await page.evaluate(()=>{
+    const gl=window.MineWorldResourcePackContext?.gl,atlas=window.MineWorldResourcePackContext?.texture;
+    if(!gl||!atlas||window.MineWorldTextureSmoothing?.enabled)return false;
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlas);
+    return gl.getTexParameter(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER)===gl.NEAREST&&
+      gl.getTexParameter(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER)===gl.NEAREST;
+  }),name+': atlas texture filter is not sharp');
   await page.locator('#mw-motion').click();
   await page.locator('#mw-back-options').click();
   assert.equal(await page.locator('#mw-menu-root').evaluate(el=>el.classList.contains('active')),true,name+': Options back failed');
@@ -194,8 +201,8 @@ async function go(browser,name,mobile){
   assert.ok(await page.locator('#world').evaluate(canvas=>
      canvas.width>=Math.floor(canvas.clientWidth)&&
      canvas.height>=Math.floor(canvas.clientHeight)&&
-     getComputedStyle(canvas).imageRendering==='auto'),
-    name+': canvas resolution or clean screen scaling is incorrect');
+     getComputedStyle(canvas).imageRendering==='pixelated'),
+    name+': framebuffer density or nearest-neighbor CSS scaling is incorrect');
   // Verify actual displacement, not merely that the Play screen opens.
   const before=await page.evaluate(()=>window.MineWorldBridge.getPlayer());
   if(!mobile){
