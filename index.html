@@ -1437,7 +1437,7 @@ body.in-nether #game-wrap{background:#290f19}
   // Survival mining requires elapsed time for every breakable block. Creative stays instant.
   // Time multiplier decreases by tool material, including swords, hoes and shovels.
   const MINE_MULTIPLIER={none:2.8,wood:1.65,stone:1.14,iron:.83,gold:.72,diamond:.57,netherite:.40,creative:0};
-  let mineJob=null,mouseMiningHeld=false;
+  let mineJob=null,mouseMiningHeld=false,lastMineTapAt=-Infinity;
   function miningTier(){
     if(gameMode==='creative')return 'creative';
     const held=hotbarKey()||'';
@@ -1518,12 +1518,13 @@ body.in-nether #game-wrap{background:#290f19}
       return;
     }
     if(gameMode==='creative'){
-      cancelMining();breakBlockNow(aim);return;
+      cancelMining();lastMineTapAt=performance.now();breakBlockNow(aim);return;
     }
     if(aim.y===0){toast('The world foundation cannot be removed');return;}
     const tier=miningTier();
     if(mineJob&&mineTargetSame(mineJob,aim)&&mineJob.dimension===dimension&&mineJob.tier===tier)return;
     mineJob={x:aim.x,y:aim.y,z:aim.z,b:aim.b,dimension,tier,elapsed:0,total:miningSeconds(aim.b,tier)};
+    lastMineTapAt=performance.now();
     $('mine-progress').classList.remove('hidden');
     $('mine-progress-fill').style.width='0%';
   }
@@ -3440,7 +3441,11 @@ body.in-nether #game-wrap{background:#290f19}
     if(!currentCameraMode)return;
     const a=[],x=player.x,y=player.y,z=player.z;
     const cy=Math.cos(player.yaw),sy=Math.sin(player.yaw);
-    const swing=window.MineWorldCombat.swing(performance.now()-lastAttackAt);
+    const now=performance.now();
+    const attackSwing=window.MineWorldCombat.swing(now-lastAttackAt);
+    const toolSwing=window.MineWorldAvatarAnimation.miningSwing(
+      mineJob?mineJob.elapsed*1000:now-lastMineTapAt,!!mineJob);
+    const swing=Math.max(attackSwing,toolSwing);
     // Both keyboard and mobile joystick movement animate the same biped joints.
     const moving=keys.has('KeyW')||keys.has('KeyS')||keys.has('KeyA')||keys.has('KeyD')||
       keys.has('ArrowUp')||keys.has('ArrowDown')||Math.hypot(movement.x,movement.y)>.08;
