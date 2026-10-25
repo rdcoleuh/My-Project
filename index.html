@@ -1338,7 +1338,7 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function blockAtFeet(x,y,z,height=isCrouching?1.5:1.8){
     // Java player: 0.6-wide box, 1.8 standing / 1.5 sneaking.
-    return !collisionFree(x,y,z,'player',height<=1.5?'crouching':'');
+    return !collisionFree(x,y+.025,z,'player',height<=1.5?'crouching':'');
   }
   function setBlock(x,y,z,b,remote=false){
     if(!inside(x,y,z)||y===0)return false;
