@@ -664,6 +664,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./texture-motion.js"></script>
 <script src="./sound-engine.js"></script>
 <script src="./combat-rules.js"></script>
+<script src="./avatar-animation.js"></script>
 <script src="./classic-interactions.js"></script>
 <script src="./block-placement.js"></script>
 <script src="./advancements.js"></script>
@@ -3440,12 +3441,20 @@ body.in-nether #game-wrap{background:#290f19}
     const a=[],x=player.x,y=player.y,z=player.z;
     const cy=Math.cos(player.yaw),sy=Math.sin(player.yaw);
     const swing=window.MineWorldCombat.swing(performance.now()-lastAttackAt);
+    // Both keyboard and mobile joystick movement animate the same biped joints.
+    const moving=keys.has('KeyW')||keys.has('KeyS')||keys.has('KeyA')||keys.has('KeyD')||
+      keys.has('ArrowUp')||keys.has('ArrowDown')||Math.hypot(movement.x,movement.y)>.08;
+    const avatarPose=window.MineWorldAvatarAnimation.pose({
+      time:dayClock,moving,sprinting:isSprinting,crouching:isCrouching,grounded:player.ground
+    });
     const box=(name,ox,oy,oz,w,h,d)=>{
       for(let side=0;side<FACE.length;side++){
         const f=FACE[side];
         for(const i of [0,1,2,0,2,3]){
           const v=f.v[i],shade=f.shade,px=ox+v[0]*w;
           let py=oy+v[1]*h,pz=oz+v[2]*d;
+          const joint=window.MineWorldAvatarAnimation.rotateLimb(name,py,pz,oy,oz,w,h,d,avatarPose);
+          py=joint.y+avatarPose.bob;pz=joint.z;
           if(name==='armR'&&swing>0){
             // Rotate around the shoulder rather than sliding the entire arm.
             const shoulderY=oy+h,shoulderZ=oz+d*.5,angle=swing*1.25;
@@ -3458,15 +3467,14 @@ body.in-nether #game-wrap{background:#290f19}
         }
       }
     };
-    const step=(keys.has('KeyW')||keys.has('KeyS')||keys.has('KeyA')||keys.has('KeyD'))?
-      Math.sin(dayClock*(isSprinting?14:9))*.06:0;
     const duck=isCrouching?.29:0;
     // Body dimensions match the 64×64 sheet: head 8³, jacket 8×12×4, limbs 4×12×4 pixels.
-    box('legL',-.249,.13+step,-.125,.25,.75-duck*.35,.25);
-    box('legR',.001,.13-step,-.125,.25,.75-duck*.35,.25);
+    // Arms and legs now rotate around their joints rather than bobbing vertically.
+    box('legL',-.249,.13,-.125,.25,.75-duck*.35,.25);
+    box('legR',.001,.13,-.125,.25,.75-duck*.35,.25);
     box('torso',-.25,.88-duck,-.125,.50,.75,.25);
-    box('armL',-.50,.88-duck-step,-.125,.25,.75,.25);
-    box('armR',.25,.88-duck+step,-.125,.25,.75,.25);
+    box('armL',-.50,.88-duck,-.125,.25,.75,.25);
+    box('armR',.25,.88-duck,-.125,.25,.75,.25);
     box('head',-.25,1.63-duck,-.25,.50,.50,.50);
     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,skinTexture);
     gl.bindBuffer(gl.ARRAY_BUFFER,avatarBuffer);
