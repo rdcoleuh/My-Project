@@ -452,6 +452,9 @@ async function loadFiles(fileList){
  for(const file of files){
    if(!file||typeof file.arrayBuffer!=='function')continue;
    const name=String(file.webkitRelativePath||file.name||'').replace(/\\/g,'/').toLowerCase();
+   // Folder imports must honor the same Minecraft namespace restriction as ZIPs.
+   // Never let assets/some_mod/textures/block/stone.png override vanilla stone.
+   if(/(?:^|\/)assets\/(?!minecraft\/)/.test(name))continue;
    const leaf=name.split('/').pop()||'';
    const png=leaf.match(/^([a-z0-9_]+)\.png$/),ogg=leaf.match(/^([a-z0-9_]+)\.ogg$/),meta=leaf.match(/^([a-z0-9_]+)\.png\.mcmeta$/);
    let key=png?.[1]||null;
