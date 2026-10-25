@@ -1,5 +1,11 @@
 # MineWorld — Player-supplied Java resource packs and animation
 
+## 6.36 — read Java blockstate defaults from player-selected archives (October 25, 2026)
+
+When a selected Java Edition JAR/ZIP or extracted resource-pack folder contains `assets/minecraft/blockstates/*.json`, MineWorld now checks its `variants` before selecting a simple cube model. For example, a log's `axis=y` variant can point to a differently named vertical model; a lamp's `lit=false` variant can point to the unlit model. The importer reads only the player-provided JSON and PNGs and does not bundle original Minecraft artwork.
+
+The resolver chooses the unrotated variant with typical default properties, preferring an empty variant key. It then follows the referenced `minecraft:block/...` model, its parent chain and texture variables. Unsupported rotated models, missing referenced models, malformed JSON and other namespaces fall back to the earlier direct model or MineWorld's procedural art. This is a best-effort default variant mapping, **not** a full Java blockstate engine: user-selected states, multipart models, per-face rotations and arbitrary model geometry remain unsupported. Existing saves, world IDs and mobile controls are unchanged.
+
 ## 6.32 — use local Java block-model texture references (October 25, 2026)
 
 A selected Java client JAR or resource ZIP can now supply `assets/minecraft/models/block/*.json` alongside its PNGs. For simple full-cube models, MineWorld follows local `parent` inheritance and `#texture` variables to choose the pack's referenced top, side, and bottom images, including nested paths such as `textures/block/custom/stone_alt.png`. This allows a pack's model to remap a familiar block to custom player-owned art rather than requiring the filename of the vanilla PNG. Extracted folders containing matching model JSON and PNG files are supported too. Original texture bitmaps are still not bundled or transmitted.
