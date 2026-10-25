@@ -1,3 +1,13 @@
+# MineWorld 6.34 — Sharp Rendering Across Desktop and Mobile
+
+The original-style imported texture rendering now defaults to classic NEAREST filtering, with a new v3 preference namespace so an older saved smooth-texture choice cannot silently reenable blur after upgrading. Classic keeps the game canvas pixelated, and the block atlas uses nearest-neighbor minification and magnification. Smooth remains a deliberately selectable, optional filter for players who want it.
+
+The world renderer now uses non-antialiased WebGL, prevents automatic dynamic resolution from shrinking below 1x CSS resolution, and starts mobile rendering at a sharper resolution before adaptive chunk management. The distant environmental fog begins at 80% of the render-range limit rather than 42%, keeping pixels recognizable further away. Existing upper render buffer caps remain to protect device performance. Mobile performance and device-specific WebGL limitations remain variable.
+
+New automated and browser checks cover legacy smooth settings, import/reload atlas NEAREST state, MSAA off, pixelated canvas and keyboard/joystick gameplay. World saves, mob/item model mappings and original imported PNG data are unchanged. Real matching artwork still requires a player-supplied local Java/Bedrock texture pack; no copyrighted source bitmaps are included. Original game assets, models, biome effects and renderer behavior are **not** claimed to be pixel-perfect for all content.
+
+---
+
 # MineWorld 6.33 — Sharper 16px Blocks and Face-Correct Mob Skins
 
 - **Player-owned entity skins:** Added per-cuboid head, body, and leg/arm face-sheet UV rectangles for six shared legacy-format species: cow, pig, sheep, creeper, zombie, and skeleton. The new atlas uses isolated nearest-neighbor 16px face tiles rather than stretching the same small head sample over every body part. Face-corner orientation is adapted separately for animals and hostile cuboids, preserving source top/front/back orientation. Creepers now visibly have four separately mapped legs. Existing procedural models and unsupported imported skin layouts retain fallback art.
