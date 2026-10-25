@@ -35,17 +35,17 @@ test('ray hits only actual mob box volume, including animals shorter than eye le
  assert.equal(h.rayDistance([0,1,0],[NaN,0,1],cow,4),null);
 });
 test('width-aware occupancy checks both sides and head against partial-block shapes',()=>{
- const cubes=new Map([['5,0,5',3],['6,1,5',3]]);
+ const cubes=new Map([['5,1,5',3],['6,1,5',3]]);
  const block=(x,y,z)=>cubes.get(x+','+y+','+z)||0;
  const shape=id=>id===12?{left:0,right:1,bottom:0,top:.5,front:0,back:1}:
   {left:0,right:1,bottom:0,top:1,front:0,back:1};
  const fits=(e)=>h.canOccupy(e,block,shape,id=>id!==0,{width:10,height:6,depth:10});
- assert.equal(fits({kind:'cow',x:4.54,y:1,z:5.5}),false,'wide cow clips wall beside its center');
- assert.equal(fits({kind:'chicken',x:4.54,y:1,z:5.5}),true,'chicken narrower than cow');
+ assert.equal(fits({kind:'cow',x:4.6,y:1,z:5.5}),false,'wide cow clips wall beside its center');
+ assert.equal(fits({kind:'chicken',x:4.6,y:1,z:5.5}),true,'chicken narrower than cow');
  assert.equal(fits({kind:'camel',x:6.5,y:0,z:5.5}),false,'tall camel hits ceiling');
  assert.equal(fits({kind:'player',x:9.9,y:1,z:5}),false,'world edges reject unsafe movement');
  assert.equal(fits({kind:'player',x:2.5,y:1,z:5}),true);
- assert.equal(h.canOccupy({kind:'cow',x:4.54,y:1,z:5.5},
+ assert.equal(h.canOccupy({kind:'cow',x:4.6,y:1,z:5.5},
    (x,y,z)=>x===5&&y===1&&z===5?12:0,shape,id=>id!==0),true,'half slab below feet');
 });
 test('world integration uses shared boxes for movement, placement and three-block combat',()=>{
