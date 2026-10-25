@@ -73,7 +73,7 @@ test('tree species, rock-host ores and unique workstations retain their identiti
  for(const id of [20,119,120,136,155,156,157,158,159,160,161,162,163,164,165,166,167,168]){
   // Unique workstation faces are intentionally not repainted.
   if(previous.has(id))for(let face=0;face<3;face++)
-   for(let i=0;i<256;i++)assert.deepEqual(paint(id,face,i%16,i>>4),previous.get(id)[face][i]);
+   for(let i=0;i<256;i++)assert.deepEqual(Array.from(paint(id,face,i%16,i>>4)),previous.get(id)[face][i]);
  }
  assert.equal(tile(9,1)===tile(22,1),false,'Glass and ice stay visibly different');
 });
