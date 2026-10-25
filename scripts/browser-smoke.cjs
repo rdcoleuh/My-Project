@@ -110,6 +110,16 @@ async function go(browser,name,mobile){
     window.MineWorldMobPixels?.hasMapped('cow','leg','back')&&
     window.MineWorldMobPixels?.hasImported('item:diamond')),
     name+': Bedrock mob and item PNGs did not reach GPU atlas');
+  assert.ok(await page.evaluate(()=>{
+    const pack=window.MineWorldResourcePackContext;
+    const gl=pack?.gl;
+    if(!gl||!pack.texture||window.MineWorldTextureSmoothing?.enabled!==false)return false;
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D,pack.texture);
+    return gl.getTexParameter(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER)===gl.NEAREST&&
+      gl.getTexParameter(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER)===gl.NEAREST&&
+      gl.getContextAttributes()?.antialias===false;
+  }),name+': imported atlas is blurred or antialiasing has been reenabled');
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.faces>=3),
     name+': synthetic stone was not imported');
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.bedrockAnimatedFaces>=3),
@@ -149,6 +159,11 @@ async function go(browser,name,mobile){
   await play.click({timeout:20000});
   await page.waitForFunction(()=>document.querySelector('#welcome')?.classList.contains('hidden'),null,{timeout:25000});
   await page.waitForTimeout(600);
+  assert.ok(await page.locator('#world').evaluate(canvas=>
+     canvas.width>=Math.floor(canvas.clientWidth)&&
+     canvas.height>=Math.floor(canvas.clientHeight)&&
+     getComputedStyle(canvas).imageRendering==='pixelated'),
+    name+': world canvas is being rendered below CSS resolution or blurred');
   // Verify actual displacement, not merely that the Play screen opens.
   const before=await page.evaluate(()=>window.MineWorldBridge.getPlayer());
   if(!mobile){
