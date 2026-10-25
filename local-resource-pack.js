@@ -101,6 +101,16 @@ bind(169,'red_wool','red_wool','oak_planks');
 
 function normalize(s){return String(s||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');}
 const names=window.MineWorldBlockGuide?.names||[];
+const aliases={
+ grass_block_top:['grass_top'],grass_block_side:['grass_side'],
+ oak_log:['log_oak','log'],oak_log_top:['log_oak_top','log_top'],oak_planks:['planks_oak','planks'],oak_leaves:['leaves_oak','leaves'],
+ spruce_log:['log_spruce'],spruce_log_top:['log_spruce_top'],spruce_leaves:['leaves_spruce'],spruce_planks:['planks_spruce'],
+ birch_log:['log_birch'],birch_log_top:['log_birch_top'],birch_leaves:['leaves_birch'],birch_planks:['planks_birch'],
+ jungle_log:['log_jungle'],jungle_log_top:['log_jungle_top'],jungle_leaves:['leaves_jungle'],jungle_planks:['planks_jungle'],
+ acacia_log:['log_acacia'],acacia_log_top:['log_acacia_top'],acacia_leaves:['leaves_acacia'],acacia_planks:['planks_acacia'],
+ dark_oak_log:['log_big_oak'],dark_oak_log_top:['log_big_oak_top'],dark_oak_planks:['planks_big_oak'],dark_oak_leaves:['leaves_big_oak'],
+ stone_bricks:['stonebrick'],bricks:['brick'],nether_bricks:['nether_brick'],sandstone:['sandstone_normal']
+};
 function textureName(id,face){
  const def=mappings.get(id);
  return def?def[face]:(normalize(names[id])||null);
@@ -213,14 +223,7 @@ async function loadFile(file){
  for(let id=1;id<=169;id++){
    for(let face=0;face<3;face++){
      const name=textureName(id,face);
-     const aliases={
-       grass_block_top:['grass_top'],grass_block_side:['grass_side'],oak_log:['log_oak','log'],oak_log_top:['log_oak_top','log_top'],
-       oak_planks:['planks_oak','planks'],oak_leaves:['leaves_oak','leaves'],spruce_log:['log_spruce'],
-       spruce_log_top:['log_spruce_top'],birch_log:['log_birch'],birch_log_top:['log_birch_top'],
-       stone_bricks:['stonebrick'],bricks:['brick'],diamond_ore:['diamond_ore'],
-       water_still:['water_still'],lava_still:['lava_still'],cobblestone:['cobblestone'],
-       redstone_lamp_on:['redstone_lamp_on'],iron_block:['iron_block'],iron_ore:['iron_ore']
-     };
+
      const candidate=[name,...(aliases[name]||[])].find(key=>zip.entries.has(key));
      if(!candidate)continue;
      if(!cache.has(candidate)){
@@ -325,5 +328,6 @@ function addControls(root,title){
  pane.append(heading,help,file,reset,status);root.appendChild(pane);
 }
 addControls(document.querySelector('#pause .mw-render-panel')?.parentNode,'🎨 Local resource pack ZIP: textures + sounds');
+addControls(document.querySelector('#mw-options-screen .mw-settings'),'🎨 Custom Java resource pack (your own texture pixels)');
 addControls(document.querySelector('#welcome .seed-panel')?.parentNode,'🎨 Import local textures and sounds');
 })();
