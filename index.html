@@ -3498,7 +3498,7 @@ body.in-nether #game-wrap{background:#290f19}
           face.n[1]===1?'top':face.n[1]===-1?'bottom':
           face.n[2]===1?'back':'front';
         const mapped=window.MineWorldMobPixels.hasMapped(mobKind,part,dir);
-        const uv=mapped?window.MineWorldMobPixels.uv(mobKind,i,part,dir):
+        const uv=mapped?window.MineWorldMobPixels.uv(mobKind,window.MineWorldEntityTextureMaps.vertexCorner(dir,i),part,dir):
           window.MineWorldMobPixels.uv(mobKind,i);
         const tint=mapped||window.MineWorldMobPixels.hasImported(mobKind)?[1,1,1]:c;
         a.push(x+v[0]*w,y+v[1]*h,z+v[2]*d,tint[0]*shade,tint[1]*shade,tint[2]*shade,uv[0],uv[1]);
@@ -3564,7 +3564,7 @@ body.in-nether #game-wrap{background:#290f19}
         animalModels.draw(m,(px,py,pz,r,g,b,part,face,corner)=>{
           const fallbackUV=window.MineWorldMobPixels.uv(m.kind,order[index++%6]);
           const mapped=window.MineWorldMobPixels.hasMapped(m.kind,part,face);
-          const uv=mapped?window.MineWorldMobPixels.uv(m.kind,corner,part,face):fallbackUV;
+          const uv=mapped?window.MineWorldMobPixels.uv(m.kind,window.MineWorldEntityTextureMaps.vertexCorner(face,corner,'animal'),part,face):fallbackUV;
           if(mapped||window.MineWorldMobPixels.hasImported(m.kind)){r=1;g=1;b=1;}
           a.push(px,py,pz,r,g,b,uv[0],uv[1]);
         },dayClock);
