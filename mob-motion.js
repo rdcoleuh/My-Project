@@ -14,7 +14,7 @@
   const armRest=zombie?-.66:0;
   const limp=kind==='spider'||kind==='cave_spider'? .22:.55;
   return Object.freeze({
-   legL:stride*limp,legR:-stride*limp,
+   legL:stride*limp,legR:moving?-stride*limp:0,
    armL:armRest-stride*.60,armR:armRest+stride*.60,
    spiderStride:moving?Math.sin(t*9.2+id*.41)*.22:0
   });
