@@ -251,7 +251,7 @@ function readArchive(buffer){
    // directly rather than forcing players to repackage copyrighted files.
    const bedrock=path.match(/(?:^|\/)resource_pack\/((?:textures|sounds|entity)\/.+)$/);
    const relative=namespace?namespace[1]:bedrock?bedrock[1]:
-     (/^(?:textures|sounds|entity|models\/block)\//.test(path)?path:null);
+     (/^(?:textures|sounds|entity|models\/block|blockstates)\//.test(path)?path:null);
    // Bedrock also stores valid block PNGs in folders such as deepslate/.
    // Keep the PNG's basename as the lookup key, with top-level art taking
    // precedence over nested variants when both exist.
@@ -259,6 +259,7 @@ function readArchive(buffer){
    const blockPath=relative?.match(/^textures\/(?:block|blocks)\/([a-z0-9_/-]+)\.png$/);
    const blockMetaPath=relative?.match(/^textures\/(?:block|blocks)\/([a-z0-9_/-]+)\.png\.mcmeta$/);
    const modelPath=relative?.match(/^models\/block\/([a-z0-9_/-]+)\.json$/);
+   const blockstatePath=relative?.match(/^blockstates\/([a-z0-9_/-]+)\.json$/);
    const item=relative?.match(/^textures\/(?:item|items)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png$/);
    const entity=relative?.match(/^textures\/entity\/([a-z0-9_-]+(?:\/[a-z0-9_-]+)*)\.png$/);
    const entityDefinition=relative?.match(/^entity\/([a-z0-9_-]+)\.entity\.json$/);
@@ -287,6 +288,8 @@ function readArchive(buffer){
    }
    if(modelPath&&size<131072&&expanded<131072&&(method===0||method===8))
      keep('model:'+modelPath[1],{method,size,expanded,local},priority);
+   if(blockstatePath&&size<131072&&expanded<131072&&(method===0||method===8))
+     keep('state:'+blockstatePath[1],{method,size,expanded,local},priority);
    if(bedrockFlipbook&&size<256*1024&&expanded<256*1024&&(method===0||method===8))
      keep('bedrock:flipbook',{method,size,expanded,local},priority);
    if(mapColor&&size<4*1024*1024&&expanded<4*1024*1024&&(method===0||method===8))
@@ -777,6 +780,8 @@ async function loadFiles(fileList){
    if(meta)key='meta:'+meta[1];
    const modelFile=name.match(/(?:^|\/)models\/block\/([a-z0-9_/-]+)\.json$/);
    if(modelFile)key='model:'+modelFile[1];
+   const blockstateFile=name.match(/(?:^|\/)blockstates\/([a-z0-9_/-]+)\.json$/);
+   if(blockstateFile)key='state:'+blockstateFile[1];
    if(leaf==='flipbook_textures.json'&&(name===leaf||/(?:^|\/)textures\/flipbook_textures\.json$/.test(name)))key='bedrock:flipbook';
    if(!key)continue;
    if(Number.isFinite(file.size)&&file.size>6*1024*1024)continue;
