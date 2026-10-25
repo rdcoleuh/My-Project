@@ -14,7 +14,7 @@ permissions:
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 15
     steps:
       - name: Check out game
         uses: actions/checkout@v4
@@ -24,3 +24,7 @@ jobs:
           node-version: '22'
       - name: Run MineWorld tests
         run: node --test tests/*.test.cjs
+      - name: Install temporary browser smoke runner
+        run: npm install --no-save --no-package-lock --ignore-scripts playwright@1.56.1
+      - name: Verify menu and gameplay in desktop and mobile Chrome
+        run: node scripts/browser-smoke.cjs
