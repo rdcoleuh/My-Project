@@ -9,7 +9,7 @@ function load(){
  vm.createContext(w);
  for(const p of ['pixel-materials.js','texture-refinement.js','texture-details.js',
   'texture-polish.js','texture-workshop.js','classic-materials.js',
-  'texture-clarity.js','readable-materials.js']){
+  'texture-clarity.js','readable-materials.js','utility-materials.js']){
   vm.runInContext(read(p),w,{filename:p,timeout:30000});
  }
  return w.window;
@@ -88,6 +88,19 @@ test('cobblestone, bricks, planks, stone bricks and Nether structures are each r
  const grassTop=signature(1,0),grassSide=signature(1,1);
  assert.notEqual(grassTop,grassSide,'Grass side lacks dirt');
 });
+test('crafting, furnace, storage and workstation textures have hand-authored functional motifs',()=>{
+ const devices=[20,109,119,120,136,155,156,157,158,159,160,161,162,163,164,165,166,167,168];
+ const seen=new Set();
+ for(const id of devices){
+  const front=signature(id,1),top=signature(id,0);
+  assert.notEqual(front,top,'Device '+id+' needs face-specific artwork');
+  assert.equal(seen.has(front),false,'Utility device '+id+' shares its front texture');
+  seen.add(front);
+ }
+ assert.notDeepEqual(colorAt(119,1,8,7),colorAt(119,1,3,7),'Chest requires metallic central latch');
+ assert.notDeepEqual(colorAt(168,0,6,6),colorAt(168,0,5,5),'Crafting table requires visible grid');
+ assert.ok(w.MineWorldUtilityMaterials.ids.length>=20);
+});
 test('palette is stable across visits and original Minecraft texture files are not bundled',()=>{
  for(const id of [3,5,6,18,19,30,31,58,72,78,80,99,101,107,121,131]){
   const sample=signature(id,1);
@@ -98,7 +111,9 @@ test('palette is stable across visits and original Minecraft texture files are n
  assert.ok(!source.includes('fetch('),'new art must not fetch original PNGs');
  const html=read('index.html'),sw=read('sw.js');
  assert.ok(html.includes('src="./readable-materials.js"'));
+ assert.ok(html.includes('src="./utility-materials.js"'));
  assert.ok(sw.includes("'./readable-materials.js'"));
+ assert.ok(sw.includes("'./utility-materials.js'"));
  assert.ok(html.includes('MineWorld 6.1'));
  const a=html.indexOf('src="./texture-clarity.js"'),b=html.indexOf('src="./readable-materials.js"');
  assert.ok(a>=0&&a<b,'new source should override previous paint stack');
