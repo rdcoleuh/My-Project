@@ -10,7 +10,7 @@
 .mw-java-slot{min-width:0;width:100%;aspect-ratio:1;position:relative;display:flex;align-items:center;justify-content:center;padding:0;background:#898989;border:3px solid;border-color:#3e3e3e #f3f3f3 #f3f3f3 #3e3e3e;cursor:pointer;touch-action:manipulation}
 .mw-java-slot:hover,.mw-java-slot:focus-visible{outline:2px solid #fff19b;z-index:1}
 .mw-java-slot.mw-focused{outline:3px solid #f0d84c}
-.mw-java-item{width:82%;height:82%;image-rendering:pixelated;background-size:1600% 3200%;background-repeat:no-repeat}
+.mw-java-item{width:82%;height:82%;image-rendering:pixelated;background-size:1600% 6400%;background-repeat:no-repeat}
 .mw-java-emoji{font-size:22px;line-height:1}
 .mw-java-count{position:absolute;right:1px;bottom:0;color:#fff;text-shadow:1px 1px #171717,-1px -1px #171717;font:bold 13px monospace}
 .mw-java-placeholder{opacity:.65;color:#efefef;font-size:22px}
