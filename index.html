@@ -3578,9 +3578,13 @@ body.in-nether #game-wrap{background:#290f19}
     gl.uniform1f(uFogEnd,Math.min(110,Math.max(35,Math.sqrt(activeChunks/Math.PI)*CHUNK+18)));
     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uAtlas,0);
     // Original fluid and luminous pixel animations; tiny GPU atlas uploads.
-    if(window.MineWorldLocalTextures?.active)
-        window.MineWorldLocalTextures.updateAnimation(t,currentFPS,isTouch);
-    else window.MineWorldTextureMotion?.update(gl,atlasTexture,t,currentFPS,isTouch);
+    const localPack=window.MineWorldLocalTextures;
+    // Keep MineWorld's original fluids and portals moving even when a local
+    // Java resource pack replaces only a few unrelated block faces.
+    // Imported faces are never overwritten by procedural animation.
+    window.MineWorldTextureMotion?.update(gl,atlasTexture,t,currentFPS,isTouch,
+      localPack?.active?localPack.hasImportedFace:null);
+    if(localPack?.active)localPack.updateAnimation(t,currentFPS,isTouch);
     // Rebuild at most one mobile mesh (two on desktop) per animation frame.
     // Existing meshes remain visible until their replacement finishes.
     const meshStart=performance.now();
