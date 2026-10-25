@@ -1,0 +1,57 @@
+/* Verify that MineWorld uses spare atlas slots for real Java workstation sides. */
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
+const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+const art=html.match(/\/\* MineWorld original procedural 16x16 voxel pixel-art atlas\. No external assets\. \*\/\s*\(\(\) => \{[\s\S]*?\}\)\(\);/);
+test('all five directional sprites have reserved atlas slots outside the 507 normal block faces',()=>{
+  assert.ok(art,'standalone atlas module is present');
+  const window={};
+  vm.runInNewContext(art[0],{window,Math,Uint8ClampedArray});
+  const atlas=window.MineWorldAtlas;
+  const extras=Object.entries(atlas.alternateFaces);
+  assert.equal(extras.length,5);
+  assert.deepEqual(extras.map(([,v])=>v.tile).sort((a,b)=>a-b),[0,1,2,510,511]);
+  const names=Object.fromEntries(extras.map(([id,v])=>[id,v.name]));
+  assert.equal(names[20],'furnace_side');
+  assert.equal(names[156],'blast_furnace_side');
+  assert.equal(names[157],'smoker_side');
+  assert.equal(names[158],'cartography_table_side2');
+  assert.equal(names[168],'crafting_table_side');
+  assert.notDeepEqual(atlas.uv(20,1,0),atlas.uv(20,3,0));
+  assert.notDeepEqual(atlas.uv(168,1,0),atlas.uv(168,3,0));
+  assert.deepEqual(atlas.uv(3,1,0),atlas.uv(3,3,0),'ordinary block sides remain unchanged');
+});
+test('furnaces use their front only on +Z, while worktables have distinct X-axis sides',()=>{
+  const match=html.match(/function pushFace\(a,x,y,z,b,f,biomeName=''\)\{[\s\S]*?\n  \}\n  function buildChunkMesh/);
+  assert.ok(match,'mesh face builder is present');
+  const faces=[];
+  const window={
+    MineWorldAtlas:{alternateFaces:{20:{tile:0},156:{tile:1},157:{tile:2},168:{tile:510},158:{tile:511}},
+      uv:(block,face)=>{faces.push({block,face});return [0,0];}},
+    MineWorldVillages:{cropAt:()=>null},
+    MineWorldBlockModels:{shape:()=>({left:0,right:1,bottom:0,top:1,front:0,back:1})}
+  };
+  const fn=vm.runInNewContext(match[0].replace(/\n  function buildChunkMesh$/,'')+'\npushFace',
+    {window,dimension:'overworld'});
+  const vertices=[[0,0,0],[0,1,0],[1,1,0],[1,0,0]];
+  function selected(block,n){faces.length=0;fn([],0,0,0,block,{n,v:vertices,shade:1});return [...new Set(faces.map(f=>f.face))];}
+  assert.deepEqual(selected(20,[0,0,1]),[1]);
+  assert.deepEqual(selected(20,[0,0,-1]),[3]);
+  assert.deepEqual(selected(20,[1,0,0]),[3]);
+  assert.deepEqual(selected(168,[1,0,0]),[3]);
+  assert.deepEqual(selected(168,[0,0,1]),[1]);
+  assert.deepEqual(selected(158,[-1,0,0]),[3]);
+  assert.deepEqual(selected(3,[1,0,0]),[1]);
+  assert.deepEqual(selected(20,[0,1,0]),[0]);
+});
+test('importer retains 507 ordinary faces and paints dedicated slots only from player PNGs',()=>{
+  const pack=fs.readFileSync(path.join(__dirname,'..','local-resource-pack.js'),'utf8');
+  assert.match(pack,/Object\.entries\(window\.MineWorldAtlas\?\.alternateFaces\|\|\{\}\)/);
+  assert.match(pack,/const image=await sprite\(extra\.name\)/);
+  assert.match(pack,/if\(faces\|\|directionalFaces\|\|state\.active\)await writeAtlas\(canvas\)/);
+  assert.match(pack,/totalFaces:169\*3/);
+  assert.match(pack,/state\.active=faces\+directionalFaces>0/);
+});
