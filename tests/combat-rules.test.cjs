@@ -17,6 +17,7 @@ test('Java-like melee damage increases with tool tier and charged swing',()=>{
  const full=c.strike({weapon:'sword',tier:'iron',elapsedMs:900});
  assert.ok(weak.damage<full.damage);
  assert.equal(full.damage,6);
+ assert.equal(c.strike({weapon:'sword',tier:'iron'}).damage,6,'First hit must start fully charged');
  assert.ok(weak.charge<.5);
 });
 test('critical hits require charged airborne fall without sprint',()=>{
