@@ -3312,7 +3312,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(hit.sweep&&result.kind!=='ender_dragon'){
       for(const nearby of [...mobs]){
         if(nearby.id===m.id||nearby.kind==='ender_dragon')continue;
-        if(Math.hypot(nearby.x-m.x,nearby.z-m.z)>1.4||Math.abs(nearby.y-m.y)>1.4)continue;
+        if(!window.MineWorldCombat.sweepInRange(nearby,m,player))continue;
         applyMobHit(nearby.id,Math.max(.2,Math.min(1,hit.damage*.15)));
       }
     }
