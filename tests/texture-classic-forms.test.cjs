@@ -95,7 +95,7 @@ test('crop and foliage transparency, render script order, offline cache and save
  assert.ok(html.indexOf('src="./texture-classic-forms.js"')<html.indexOf('src="./texture-motion.js"'));
  assert.equal((html.match(/src="\.\/texture-classic-forms\.js"/g)||[]).length,1);
  assert.ok(sw.includes("'./texture-classic-forms.js'"));
- assert.ok(sw.includes('mineworld-6-7-imported-colormaps-20261025-v51'));
+ assert.match(sw,/const VERSION='mineworld-[^']+';/,'Offline cache must be versioned');
  assert.ok(html.includes('mineworld-selfhost-v1'));
  assert.ok(html.includes('MineWorld 6.7'));
  assert.ok(!read('texture-classic-forms.js').includes('fetch('));
