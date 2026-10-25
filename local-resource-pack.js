@@ -353,10 +353,10 @@ function baseCanvas(){
 // Vanilla Java grass/selected leaf sprites ship as greyscale masks. The
 // game colors them at render time; apply a neutral plains tint to locally
 // imported neutral sprites, but never recolor already-colored custom artwork.
-function tintNeutralSprite(ctx,x,y,id,face){
+function tintNeutralSprite(ctx,x,y,id,face,palette=state.tint){
  if(typeof ctx.getImageData!=='function'||typeof ctx.putImageData!=='function')return false;
- const foliage={6:state.tint.foliage,31:[97,153,97],33:[128,167,85],35:state.tint.foliage,37:state.tint.foliage,39:state.tint.foliage};
- const tint=id===1?state.tint.grass:id===7?[63,118,228]:foliage[id];
+ const foliage={6:palette.foliage,31:[97,153,97],33:[128,167,85],35:palette.foliage,37:palette.foliage,39:palette.foliage};
+ const tint=id===1?palette.grass:id===7?[63,118,228]:foliage[id];
  if(!tint||(id===1&&face!==0))return false;
  const height=id===1&&face===1?5:16;
  const data=ctx.getImageData(x,y,16,height);
@@ -410,7 +410,7 @@ function drawPackFrame(ctx,image,geometry,index,alpha=1,dx=0,dy=0){
  ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,dx,dy,16,16);
  if(alpha!==1)ctx.globalAlpha=1;
 }
-function composeGrassSideOverlay(ctx,overlay,x,y,frameIndex=0,nextIndex=frameIndex,blend=0,geometry=null){
+function composeGrassSideOverlay(ctx,overlay,x,y,frameIndex=0,nextIndex=frameIndex,blend=0,geometry=null,palette=state.tint){
  if(!overlay||!ctx)return false;
  const layer=document.createElement('canvas');layer.width=16;layer.height=16;
  const layerCtx=layer.getContext('2d',{alpha:true});
@@ -423,7 +423,7 @@ function composeGrassSideOverlay(ctx,overlay,x,y,frameIndex=0,nextIndex=frameInd
  if(typeof layerCtx.getImageData==='function'&&typeof layerCtx.putImageData==='function'){
   try{
    const png=layerCtx.getImageData(0,0,16,16);
-   if(tintOverlayPixels(png.data,state.tint.grass))layerCtx.putImageData(png,0,0);
+   if(tintOverlayPixels(png.data,palette.grass))layerCtx.putImageData(png,0,0);
   }catch(_){/* Locked-down browsers still render the untinted original sprite. */}
  }
  // Canvas source-over preserves every transparent pixel and keeps the dirt base intact.
@@ -463,10 +463,9 @@ async function readPackTints(zip){
 }
 async function applyResources(zip,sourceName){
  if(zip.entries.size===0)throw Error('No compatible block PNGs or sounds were found in the selected files.');
- window.MineWorldSound?.clearSamples();
+ // Keep the active pack untouched until the replacement contains usable assets.
  const original=await imageFromURL(META.baseURL);
  const importedTints=await readPackTints(zip);
- state.tint=importedTints.palette;
  const [canvas,ctx]=baseCanvas();ctx.drawImage(original,0,0);
  let faces=0,overlaid=0;
  const ids=new Set(),importedFaces=new Set(),cache=new Map(),metaCache=new Map(),missing=new Set(),missingFaces=[],resolved=new Map(),animated=[];
@@ -539,14 +538,14 @@ async function applyResources(zip,sourceName){
        ctx.clearRect(px,py,16,16); // Transparent Java sprites must not inherit procedural pixels.
        if(baseInfo)drawPackFrame(ctx,image,baseInfo.geometry,firstFrame(baseInfo),1,px,py);
        else ctx.drawImage(image,0,0,frame,frame,px,py,16,16);
-       tintNeutralSprite(ctx,px,py,id,face);
+       tintNeutralSprite(ctx,px,py,id,face,importedTints.palette);
      }else if(name)missing.add(name);
      // Java's side overlay is not itself a block face: it is tinted and
      // blended on top of the untouched grass_block_side.png base.
      const grassSide=id===1&&face===1;
      const overlay=grassSide?await sprite('grass_block_side_overlay'):null;
      const overlayInfo=grassSide?await spriteTimeline('grass_block_side_overlay',overlay):null;
-     if(overlay&&composeGrassSideOverlay(ctx,overlay,px,py,firstFrame(overlayInfo),firstFrame(overlayInfo),0,overlayInfo?.geometry))overlaid++;
+     if(overlay&&composeGrassSideOverlay(ctx,overlay,px,py,firstFrame(overlayInfo),firstFrame(overlayInfo),0,overlayInfo?.geometry,importedTints.palette))overlaid++;
      if(image||overlay){faces++;ids.add(id);importedFaces.add(id*3+face);}
      else missingFaces.push({id,face,name:name||'(unmapped)'});
      if(baseInfo||overlayInfo)
@@ -591,14 +590,19 @@ async function applyResources(zip,sourceName){
     level:['entity/player/levelup','random/levelup']
  };
  let audio=0;
+ const importedSoundTypes=[];
  for(const [type,candidates] of Object.entries(sounds)){
     const key=candidates.find(c=>zip.entries.has('sound:'+c));
     if(!key)continue;
-    try{if(await window.MineWorldSound?.loadSound(type,await zip.get('sound:'+key)))audio++}catch(e){console.warn('Unsupported optional sound '+type,e)}
+    try{if(await window.MineWorldSound?.loadSound(type,await zip.get('sound:'+key))){audio++;importedSoundTypes.push(type)}}catch(e){console.warn('Unsupported optional sound '+type,e)}
  }
  const items=[...zip.entries.keys()].filter(k=>k.startsWith('item:')).length;
  if(!faces&&!directionalFaces&&!audio&&!items)throw Error('No compatible block, item or sound files found.');
  if(faces||directionalFaces||state.active)await writeAtlas(canvas);
+ // Do not erase a working pack when an invalid replacement is rejected.
+ // Newly decoded sound types stay in place; old missing types are discarded.
+ window.MineWorldSound?.clearSamples(importedSoundTypes);
+ state.tint=importedTints.palette;
  state.itemArchive=zip;state.itemCache.clear();state.itemGeneration++;
  state.animations=animated;
  state.importedFaces=importedFaces;
@@ -836,7 +840,7 @@ function mountOptionsUI(){
   '🎨 Original Bedrock ZIP / Java resource pack');
 }
 function addControls(root,title){
- if(!root)return;
+ if(!root||Array.from(root.children||[]).some(el=>el.className==='mw-local-experiment'))return;
  const pane=document.createElement('section');
  pane.className='mw-local-experiment';
  pane.style.cssText='margin-top:12px;padding:12px;border:1px solid #9aba9e;background:#1c2d22;color:#f0ffe9;font:12px/1.5 system-ui;text-align:left;max-width:100%;';
@@ -967,9 +971,6 @@ addControls(document.querySelector('#pause .mw-render-panel')?.parentNode,'🎨 
 mountDefaultUI(document.querySelector('#mw-menu-root'));
 mountOptionsUI();
 addControls(document.querySelector('#welcome .seed-panel')?.parentNode,'🎨 Import local textures and sounds');
-// This module loads AFTER the menu-building script, so these panels now exist.
-mountDefaultUI(document.querySelector('#mw-menu-root'));
-mountOptionsUI();
 // Restore only packs the player explicitly opted to remember. Everything
 // stays in this browser's IndexedDB; no network request is made.
 if(packStorage?.supported)restoreTask=packStorage.load().then(async stored=>{
