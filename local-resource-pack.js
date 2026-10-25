@@ -724,6 +724,11 @@ function addControls(root,title){
  const help=document.createElement('p');
  help.textContent='Choose your own Java Edition .jar/.zip or Bedrock .mcpack in your phone Files app. Original block/item PNGs are read privately and not uploaded. The installed Minecraft app itself is not accessible from this browser. Remember this pack is optional; original entity skins need their matching models/UVs.';
  help.style.margin='7px 0';
+ const official=document.createElement('a');
+ official.href='https://github.com/Mojang/bedrock-samples/releases/download/v1.26.50.4/bedrock-samples-v1.26.50.4-full.zip';
+ official.target='_blank';official.rel='noopener noreferrer';
+ official.textContent='Download Mojang official Bedrock vanilla textures ZIP (169 MB)';
+ official.style.cssText='display:block;padding:8px 0;color:#bfffa3;text-decoration:underline;font-size:13px;';
  const file=document.createElement('input');
  file.type='file';file.accept='.zip,.jar,.mcpack,application/zip,application/java-archive';
  file.setAttribute('aria-label','Select local Java Edition resource pack or client jar');
@@ -832,7 +837,7 @@ function addControls(root,title){
    catch(e){status.textContent='Restore failed: '+e.message;}
    finally{reset.disabled=false;}
  });
- pane.append(heading,help,file,looseLabel,loose,folderLabel,folder,rememberLabel,reset,status,detail,audit,preview);root.appendChild(pane);
+ pane.append(heading,help,official,file,looseLabel,loose,folderLabel,folder,rememberLabel,reset,status,detail,audit,preview);root.appendChild(pane);
 }
 addControls(document.querySelector('#pause .mw-render-panel')?.parentNode,'🎨 Local resource pack ZIP: textures + sounds');
 addControls(document.querySelector('#mw-options-screen .mw-settings'),'🎨 Custom Java resource pack (your own texture pixels)');
