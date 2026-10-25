@@ -193,7 +193,7 @@ function install(api){
    const name=api.blockName(id);
    if(query&&!name.toLowerCase().includes(query))continue;
    const ore=[18,19,83,84].includes(id)||id>=95&&id<=108;
-   const type=ore?'ores':id>=139?'stations':id>=121&&id<=135?'end':id>=50&&id<=94?'nether':
+   const type=ore?'ores':id>=155?'stations':id>=139&&id<=154?'nature':id>=121&&id<=135?'end':id>=50&&id<=94?'nether':
       id>=5&&id<=7||id>=12&&id<=17||id>=21&&id<=49||id===1?'nature':'building';
    if(creativeTab!=='all'&&creativeTab!==type)continue;
    matches.push(id);
@@ -256,6 +256,10 @@ function install(api){
    e.preventDefault();e.stopImmediatePropagation();model.putAway();api.closeSurvival();return;
   }
   if(['INPUT','SELECT','TEXTAREA'].includes(e.target?.tagName))return;
+  if(focus!==null&&e.code==='KeyQ'){
+   e.preventDefault();e.stopImmediatePropagation();const st=model.stackAt(focus)||model.cursorStack();
+   if(st)api.drop(st.id,!!e.ctrlKey);render();return;
+  }
   if(focus!==null&&/^Digit[1-9]$/.test(e.code)){
    e.preventDefault();e.stopImmediatePropagation();model.hotkey(focus,Number(e.code.slice(-1))-1);render();
   }else if(focus!==null&&e.code==='KeyF'){
