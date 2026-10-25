@@ -343,7 +343,7 @@ async function applyResources(zip,sourceName){
  state.tint=importedTints.palette;
  const [canvas,ctx]=baseCanvas();ctx.drawImage(original,0,0);
  let faces=0,overlaid=0;
- const ids=new Set(),cache=new Map(),metaCache=new Map(),missing=new Set(),resolved=new Map(),animated=[];
+ const ids=new Set(),cache=new Map(),metaCache=new Map(),missing=new Set(),missingFaces=[],resolved=new Map(),animated=[];
  const timeline=window.MineWorldResourceAnimation;
  async function spriteTimeline(name,image){
   if(!timeline||!image||timeline.frameDimensions(image).count<=1)return null;
@@ -395,6 +395,7 @@ async function applyResources(zip,sourceName){
      const overlay=grassSide?await sprite('grass_block_side_overlay'):null;
      if(overlay&&composeGrassSideOverlay(ctx,overlay,px,py))overlaid++;
      if(image||overlay){faces++;ids.add(id);}
+     else missingFaces.push({id,face,name:name||'(unmapped)'});
      const baseTimeline=await spriteTimeline(name,image);
      const overlayTimeline=grassSide?await spriteTimeline('grass_block_side_overlay',overlay):null;
      if(baseTimeline||overlayTimeline)
@@ -431,6 +432,7 @@ async function applyResources(zip,sourceName){
  state.animationDisabled=false;
  state.active=faces>0;state.sourceName=sourceName||'selected local assets';
  state.lastResult={blocks:ids.size,faces,overlaid,animatedFaces:animated.length,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
+    missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
  window.MineWorldBridge?.refreshTextureUI?.();
@@ -586,6 +588,12 @@ function addControls(root,title){
  preview.setAttribute('aria-label','Selected local texture comparison');
  const detail=document.createElement('small');
  detail.style.cssText='display:block;overflow-wrap:anywhere;color:#cce2c1;margin:4px 0 8px;';
+ const audit=document.createElement('details');
+ audit.style.cssText='margin:6px 0;color:#dbeed6;max-height:180px;overflow:auto;';
+ const auditSummary=document.createElement('summary');
+ const auditText=document.createElement('pre');
+ auditText.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.5 monospace;';
+ audit.append(auditSummary,auditText);
  function showCoverage(result){
    if(!result)return;
    status.textContent='Matched '+result.faces+' of '+result.totalFaces+' block faces ('+
@@ -593,6 +601,10 @@ function addControls(root,title){
      ' sound events. '+(result.overlaid?'Grass uses the Java side overlay. ':'')+'Unmatched block faces keep independent MineWorld art.';
    detail.textContent=result.unmapped.length?
      'Example unmatched sprite names: '+result.unmapped.slice(0,9).join(', ')+'.':'All mapped face names were present.';
+   auditSummary.textContent='Inspect all '+result.missingFaces.length+' unmatched block faces';
+   const labels=['top','side','bottom'];
+   auditText.textContent=result.missingFaces.map(({id,face,name})=>
+     (names[id]||'Block '+id)+' (#'+id+') '+labels[face]+': '+name+'.png').join('\n')||'Every MineWorld atlas face was matched.';
    preview.replaceChildren();
    for(const [id,name] of [[1,'Grass'],[3,'Stone'],[5,'Log'],[6,'Leaves'],[11,'Planks'],
                            [19,'Iron'],[61,'Cobble'],[99,'Diamond'],[121,'End stone'],[168,'Craft']]){
@@ -632,11 +644,11 @@ function addControls(root,title){
  });
  reset.addEventListener('click',async()=>{
    reset.disabled=true;
-   try{await clear();status.textContent='Original MineWorld textures and sounds restored; imported files were not saved.';preview.replaceChildren();detail.textContent='';}
+   try{await clear();status.textContent='Original MineWorld textures and sounds restored; imported files were not saved.';preview.replaceChildren();detail.textContent='';auditText.textContent='';auditSummary.textContent='';audit.open=false;}
    catch(e){status.textContent='Restore failed: '+e.message;}
    finally{reset.disabled=false;}
  });
- pane.append(heading,help,file,looseLabel,loose,folderLabel,folder,reset,status,detail,preview);root.appendChild(pane);
+ pane.append(heading,help,file,looseLabel,loose,folderLabel,folder,reset,status,detail,audit,preview);root.appendChild(pane);
 }
 addControls(document.querySelector('#pause .mw-render-panel')?.parentNode,'🎨 Local resource pack ZIP: textures + sounds');
 addControls(document.querySelector('#mw-options-screen .mw-settings'),'🎨 Custom Java resource pack (your own texture pixels)');
