@@ -1,3 +1,13 @@
+# MineWorld 6.15 — Keep Your Java Textures Between Visits
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+The Java Edition ZIP/JAR importer now has an explicit **Remember this ZIP/JAR on this device** option. When selected, the player's own archive is stored privately in browser IndexedDB and automatically restored on future visits, including animated water, lava, and other matched block textures. The option is off by default; reset deletes the saved archive. This does not distribute Mojang art, change world saves, or require an account or server upload.
+
+The preceding directional-texture update also separated furnace, blast furnace, smoker, crafting table, and cartography table side artwork from their front artwork using spare atlas slots. Imported files provide the exact pixels; unmatched blocks still use original MineWorld art. Exact Java geometry/model/block-state fidelity is not yet complete. See RESOURCE-PACKS.md for importing and limitations.
+
+---
+
 # MineWorld 6.12 — Java resource-pack animation grids
 
 **Play:** https://rdcoleuh.github.io/My-Project/
