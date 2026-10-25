@@ -33,7 +33,7 @@ test('undersized PNG, empty pixels and unsupported canvases gracefully use fallb
 });
 test('resource importer recognizes both Java colormaps and local grass overlay',()=>{
  for(const marker of [
-  "const mapColor=relative?.match(", "found.set('colormap:'+mapColor[1]",
+  "const mapColor=relative?.match(", "keep('colormap:'+mapColor[1]",
   "'colormap:'+png[1]", "for(const key of ['grass','foliage'])",
   "const importedTints=await readPackTints(zip)",
   "state.tint=importedTints.palette", "get grassTint(){return [...state.tint.grass];}",
