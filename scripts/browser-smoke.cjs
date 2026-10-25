@@ -34,12 +34,12 @@ function pngChunk(name,data){
  size.writeUInt32BE(data.length);crc.writeUInt32BE(crc32(Buffer.concat([typ,data])));
  return Buffer.concat([size,typ,data,crc]);
 }
-function generatedPng(height,channel){
- const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(16,0);ihdr.writeUInt32BE(height,4);
+function generatedPng(height,channel,width=16){
+ const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(width,0);ihdr.writeUInt32BE(height,4);
  ihdr[8]=8;ihdr[9]=6;
- const rows=Buffer.alloc(height*(1+16*4));
- for(let y=0;y<height;y++)for(let x=0;x<16;x++){
-  const pos=y*(1+16*4)+1+x*4;
+ const rows=Buffer.alloc(height*(1+width*4));
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  const pos=y*(1+width*4)+1+x*4;
   rows[pos]=110;rows[pos+1]=(channel+y*8)%255;rows[pos+2]=140;rows[pos+3]=255;
  }
  return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),
@@ -48,7 +48,7 @@ function generatedPng(height,channel){
 function makeTestArchive(){
  const files=[
    ['resource_pack/textures/blocks/stone.png',generatedPng(16,80)],
-   ['resource_pack/textures/entity/cow/cow.png',generatedPng(16,180)],
+   ['resource_pack/textures/entity/cow/cow.png',generatedPng(32,180,64)],
    ['resource_pack/textures/items/diamond.png',generatedPng(16,225)],
    ['resource_pack/textures/blocks/water_still_grey.png',generatedPng(64,35)],
    ['resource_pack/textures/flipbook_textures.json',Buffer.from(JSON.stringify([
@@ -106,6 +106,8 @@ async function go(browser,name,mobile){
     null,{timeout:30000});
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.entities>=1&&
     window.MineWorldMobPixels?.hasImported('cow')&&
+    window.MineWorldMobPixels?.hasMapped('cow','head','front')&&
+    window.MineWorldMobPixels?.hasMapped('cow','leg','back')&&
     window.MineWorldMobPixels?.hasImported('item:diamond')),
     name+': Bedrock mob and item PNGs did not reach GPU atlas');
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.faces>=3),
@@ -121,6 +123,7 @@ async function go(browser,name,mobile){
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.bedrockAnimatedFaces>=3),
     name+': stored Bedrock animation was lost after reload');
   assert.ok(await page.evaluate(()=>window.MineWorldMobPixels?.hasImported('cow')&&
+     window.MineWorldMobPixels?.hasMapped('cow','head','front')&&
      window.MineWorldMobPixels?.hasImported('item:diamond')),
     name+': remembered mob/item skins did not restore after reload');
   await page.locator('#mw-options').click();
