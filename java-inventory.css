@@ -35,3 +35,7 @@
 #offhand-hud small{display:block;font:bold 10px monospace;color:#fff}
 #offhand-hud:hover{background:#7fa8a7}
 @media(max-width:560px){#offhand-hud{flex:0 0 32px;width:32px;height:48px;font-size:17px;border-width:2px}#offhand-hud small{font-size:8px}}
+
+.mw-java-pack-button{background:#dedede;border:2px outset #f9f9f9;color:#222;font-size:11px;padding:5px;cursor:pointer}
+.mw-java-pack-button:hover{background:#f2f2d2}
+.mw-java-item:is(canvas){object-fit:contain}
