@@ -57,7 +57,7 @@ test('overflow pages preserve old worlds containing more than 36 distinct stacks
  const {store,model,hotbar}=create();
  for(let i=0;i<56;i++)store.add('unique:'+i,1);
  model.restore(null);
- assert.equal(model.pages(),2);
+ assert.equal(model.pages(),3,'27 main slots leave 29 excess stacks across two overflow pages');
  assert.equal(model.inspect().slots.filter(Boolean).length,56);
  assert.equal(count(store),56);
  const snap=JSON.parse(JSON.stringify(model.snapshot()));
