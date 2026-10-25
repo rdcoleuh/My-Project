@@ -34,6 +34,7 @@ const stonePal={
  130:pal([204,203,156],9),131:pal([168,116,170],12),132:pal([179,125,179],15),
  55:pal([66,130,116],17),24:pal([209,193,146],14),54:pal([199,184,133],14),
  72:pal([65,34,38],10),74:pal([72,35,43],9),53:pal([118,123,121],12),
+ 25:pal([168,124,104],13),27:pal([177,90,65],12),
  25:pal([168,121,102],12),27:pal([176,87,62],11),66:pal([221,80,23],15)
 };
 const ores={
@@ -340,7 +341,7 @@ function paint(id,face,x,y){
    if(y%5===1||(x+offset)%7===1)return shade(p[3],x,y,id,4);
    return shade(pick(p,x,y,id*71,3),x,y,id,7);
  }
- if(id===68||id===69||id===67||id===58||id===121||id===130||id===131||id===132||id===55)return rock(id,face,x,y);
+ if(id===3||id===68||id===69||id===67||id===58||id===121||id===130||id===131||id===132||id===55)return rock(id,face,x,y);
  if([56,110,111,112,113,114,115,116,117,135,91].includes(id))return mineralBlock(id,face,x,y);
  if([50,65,70,71,75,76,79,81,88,85,86,90,122,123,127,129].includes(id))return endNether(id,face,x,y);
  if([2,4,21,26,28,29,46,47,57,92].includes(id))return naturalGround(id,face,x,y);
