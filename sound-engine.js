@@ -102,7 +102,12 @@ async function loadSound(type,bytes){
   imported.set(type,buf);return true;
  }catch(_){return false}
 }
-function clearSamples(){imported.clear()}
+function clearSamples(keepTypes=[]){
+ // A successful resource-pack replacement retains only newly decoded types.
+ // With no arguments (Reset), all imported sounds are removed as before.
+ const keep=new Set(Array.isArray(keepTypes)?keepTypes:[]);
+ for(const type of imported.keys())if(!keep.has(type))imported.delete(type);
+}
 function setEnabled(v){enabled=!!v;persist();return state()}
 function setVolume(v){volume=Math.max(0,Math.min(1,Number(v)||0));persist();return state()}
 function step(material=''){const now=performance.now();if(now-lastStep<270)return false;lastStep=now;return play('step',material)}
