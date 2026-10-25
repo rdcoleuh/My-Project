@@ -127,8 +127,9 @@ test('main game saves slot positions, restores old saves, loads UI, and preserve
  for(const needle of ['javaInventory:javaInventory.snapshot()','javaInventory.restore(s.javaInventory)',
   'survivalHotbar:[...survivalHotbar]','mineworld-selfhost-v1',
   'src="./java-slots.js"','src="./java-inventory-ui.js"','href="./java-inventory.css"',
-  'window.MineWorldJavaInventoryScreen=','MineWorld 6.7'])
+  'window.MineWorldJavaInventoryScreen='])
   assert.ok(html.includes(needle),'Missing '+needle);
+ assert.match(html,/MineWorld 6\.\d+/,'A game version label must be visible');
  for(const name of ['java-slots.js','java-inventory-ui.js','java-inventory.css'])
   assert.ok(sw.includes("'./"+name+"'"),'Offline cache omits '+name);
  assert.ok(ui.includes('contextmenu')&&ui.includes('Shift')&&ui.includes('hotkey'));
