@@ -87,7 +87,7 @@ test('actual animal and hostile renderers send face/part identity and preserve p
  assert.ok(animals.includes("color,'leg'"));
  assert.ok(animals.includes("face,'head'"));
  assert.ok(html.includes('MineWorldMobPixels.hasMapped(m.kind,part,face)'));
- assert.ok(html.includes('MineWorldMobPixels.uv(m.kind,corner,part,face)'));
+ assert.ok(html.includes("MineWorldEntityTextureMaps.vertexCorner(face,corner,'animal')"));
  assert.ok(html.includes('MineWorldMobPixels.hasMapped(mobKind,part,dir)'));
  assert.ok(html.includes("type.body,'leg'"),'creeper has separately mapped feet');
  assert.ok(sw.includes("'./entity-texture-maps.js'"));
