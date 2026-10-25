@@ -9,16 +9,18 @@ const source=read('visual-polish.js'),css=read('visual-polish.css');
 function boot(seed){
  const saved=new Map(seed?Object.entries(seed):[]);
  const classes=new Set();
+ const canvas={style:{}};
  const ctx={
    localStorage:{getItem:k=>saved.get(k)||null,setItem:(k,v)=>saved.set(k,v)},
    document:{
      documentElement:{classList:{toggle:(name,on)=>on?classes.add(name):classes.delete(name)}},
+     getElementById:id=>id==='world'?canvas:null,
      querySelectorAll:()=>[]
    },
    window:{}
  };
  vm.runInNewContext(source,ctx,{filename:'visual-polish.js'});
- return {prefs:ctx.window.MineWorldVisualPolish,classes,saved};
+ return {prefs:ctx.window.MineWorldVisualPolish,classes,saved,canvas};
 }
 test('polish files are loaded, versioned, and cached by the worker',()=>{
  const html=read('index.html'),sw=read('sw.js');
@@ -33,6 +35,7 @@ test('clean scaling is default; imported sprites and tiles retain nearest filter
  const x=boot();
  assert.equal(x.prefs.get().cleanScaling,true);
  assert.equal(x.classes.has('mw-retro-screen'),false);
+ assert.equal(x.canvas.style.imageRendering,'auto');
  assert.match(css,/#world\s*\{image-rendering:auto\}/);
  assert.match(css,/html\.mw-retro-screen #world\{image-rendering:pixelated\}/);
  const game=read('index.html');
@@ -46,6 +49,7 @@ test('retro screen and quiet HUD preferences are reversible and persist across r
  x.prefs.setFocusHud(true);
  assert.equal(x.classes.has('mw-retro-screen'),true);
  assert.equal(x.classes.has('mw-quiet-hud'),true);
+ assert.equal(x.canvas.style.imageRendering,'pixelated');
  assert.match(css,/html\.mw-quiet-hud #coord-readout/);
  const y=boot(Object.fromEntries(x.saved));
  assert.equal(y.prefs.get().cleanScaling,false);
@@ -53,6 +57,7 @@ test('retro screen and quiet HUD preferences are reversible and persist across r
  y.prefs.setCleanScaling(true);y.prefs.setFocusHud(false);
  assert.equal(y.classes.has('mw-retro-screen'),false);
  assert.equal(y.classes.has('mw-quiet-hud'),false);
+ assert.equal(y.canvas.style.imageRendering,'auto');
 });
 test('corrupt preferences fall back safely and world save keys are untouched',()=>{
  const x=boot({'mineworld-visual-polish-v1':'{bad json'});

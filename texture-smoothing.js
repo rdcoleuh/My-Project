@@ -20,7 +20,9 @@
    const filter=enabled?g.LINEAR:g.NEAREST;
    g.texParameteri(g.TEXTURE_2D,g.TEXTURE_MIN_FILTER,filter);
    g.texParameteri(g.TEXTURE_2D,g.TEXTURE_MAG_FILTER,filter);
-   if(canvas)canvas.style.imageRendering='pixelated';
+   // Presentation scaling is owned by MineWorldVisualPolish once initialized.
+   // Preserve legacy default for early initialization and standalone tests.
+   if(canvas&&!window.MineWorldVisualPolish)canvas.style.imageRendering='pixelated';
    return true;
  }
  function set(next){
@@ -56,7 +58,7 @@
        checkbox.checked=enabled;
        words.textContent=enabled?'Smooth textures':'Classic sharp pixels';
        description.textContent=enabled?
-         'Opt-in smooth block pixels. The game canvas remains pixelated; switch off for authentic sharp imported art.':
+         'Opt-in linear sampling of block textures. Screen scaling is a separate Clean screen edges option.':
          'Crisp, unblended Minecraft-style pixels. Best for an exact view of imported Java artwork.';
      };
      checkbox.addEventListener('change',()=>set(checkbox.checked));

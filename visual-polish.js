@@ -16,6 +16,11 @@
  const apply=()=>{
    root.classList.toggle('mw-retro-screen',!state.cleanScaling);
    root.classList.toggle('mw-quiet-hud',state.focusHud);
+   // The older texture filter sets an inline pixelated style during initial
+   // atlas creation. Override that inline style here without changing GPU
+   // block filtering or rebuilding a canvas/WebGL context.
+   const canvas=document.getElementById?.('world');
+   if(canvas)canvas.style.imageRendering=state.cleanScaling?'auto':'pixelated';
    for(const item of labels){
      item.input.checked=state[item.key];
      item.description.textContent=item.key==='cleanScaling'?
