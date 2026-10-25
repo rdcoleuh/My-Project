@@ -392,7 +392,7 @@ body.in-nether #game-wrap{background:#290f19}
 .hot-item .hot-stack-number{display:block!important;position:absolute!important;top:auto!important;right:-5px!important;bottom:-5px!important;z-index:2;min-width:12px;text-align:center;font:900 12px/1.05 monospace!important;letter-spacing:-.5px;color:#fff!important;background:#0b1609ce;border-radius:3px;padding:1px 2px;text-shadow:1px 1px #000,-1px -1px #000;pointer-events:none}
 @media(pointer:coarse){.hot-item .hot-stack-number{display:block!important;font-size:12px!important}}
 </style>
-<title>MineWorld 6.16 — Smooth & Classic Textures</title>
+<title>MineWorld 6.17 — More Accurate Java Workstation Faces</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -687,13 +687,20 @@ body.in-nether #game-wrap{background:#290f19}
 /* MineWorld original procedural 16x16 voxel pixel-art atlas. No external assets. */
 (() => {
   'use strict';
-  const SIZE=16, COLUMNS=16, ROWS=32;
-  // Five atlas tiles unused by the 169 * 3 standard faces are reserved for
-  // player-supplied Java side art. No Minecraft assets are bundled here.
+  const SIZE=16, COLUMNS=16, ROWS=64;
+  // Preserve all 507 standard faces and the five existing directional slots.
+  // A power-of-two 256x1024 atlas adds space for more Java workstation sides.
+  // No proprietary artwork is bundled; Java pixels come from the user's pack.
   const alternateFaces=Object.freeze({
     20:{tile:0,name:'furnace_side'},156:{tile:1,name:'blast_furnace_side'},
-    157:{tile:2,name:'smoker_side'},168:{tile:510,name:'crafting_table_side'},
-    158:{tile:511,name:'cartography_table_side2'}
+    157:{tile:2,name:'smoker_side'},
+    168:{tile:510,name:'crafting_table_side',sideAxis:'x'},
+    158:{tile:511,name:'cartography_table_side2',sideAxis:'x'},
+    136:{tile:512,name:'smithing_table_side',sideAxis:'x'},
+    161:{tile:513,name:'fletching_table_side',sideAxis:'x'},
+    163:{tile:514,name:'lectern_sides',sideAxis:'x'},
+    165:{tile:515,name:'loom_side',sideAxis:'x'},
+    166:{tile:516,name:'smithing_table_side',sideAxis:'x'}
   });
   const clamp=(n)=>Math.max(0,Math.min(255,Math.round(n)));
   function hash(a,b,c){let x=(Math.imul(a+17,374761393)^Math.imul(b+29,668265263)^Math.imul(c+73,1442695041))|0;x=Math.imul(x^(x>>>13),1274126177);return ((x^(x>>>16))>>>0)/4294967295}
@@ -878,8 +885,12 @@ body.in-nether #game-wrap{background:#290f19}
     for(const [key,def] of Object.entries(alternateFaces)){
       const block=Number(key),tx=(def.tile%COLUMNS)*SIZE,ty=Math.floor(def.tile/COLUMNS)*SIZE;
       for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
-        const offset=((ty+y)*canvas.width+tx+x)*4,color=tileColor(block,1,x,y);
-        for(let i=0;i<4;i++)img.data[offset+i]=color[i];
+        const offset=((ty+y)*canvas.width+tx+x)*4;
+        const color=tileColor(block,1,x,y);
+        // Original fallback side-panel seams; imported Java art replaces this.
+        const delta=def.sideAxis==='x'&&(x===3||x===12||y===4||y===12)?-21:0;
+        for(let i=0;i<3;i++)img.data[offset+i]=clamp(color[i]+delta);
+        img.data[offset+3]=color[3];
       }
     }
     ctx.putImageData(img,0,0);
@@ -1330,7 +1341,7 @@ body.in-nether #game-wrap{background:#290f19}
     // their front. +Z is the forward-facing direction until orientation
     // metadata is added to world saves; worktables use X vs Z axis.
     const alt=window.MineWorldAtlas.alternateFaces[b];
-    const textureFace=face===1&&alt&&((b===168||b===158)?f.n[0]!==0:f.n[2]!==1)?3:face;
+    const textureFace=face===1&&alt&&(alt.sideAxis==='x'?f.n[0]!==0:f.n[2]!==1)?3:face;
     // Flat directional shading preserves recognisable source pixels instead of washing them with location noise.
     const shade=f.shade;
     const vs=f.v;
@@ -4056,7 +4067,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
     '<button class="mw-pixel-btn" id="mw-multi" type="button">Multiplayer</button>'+
     '<button class="mw-pixel-btn" id="mw-creative" type="button">Creative World</button>'+
     '<div class="mw-2col"><button class="mw-pixel-btn" id="mw-options" type="button">Options…</button><button class="mw-pixel-btn" id="mw-return" type="button">World Atlas</button></div>'+
-    '</div><div class="mw-footer"><small>MineWorld 6.16 · Smooth & Classic texture display</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
+    '</div><div class="mw-footer"><small>MineWorld 6.17 · Additional Java workstation sides</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
   welcome.appendChild(main);
   const worlds=document.createElement('div');
   worlds.id='mw-world-screen';worlds.className='mw-screen mw-screen--sub';
