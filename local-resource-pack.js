@@ -14,6 +14,9 @@ const atlasW=256,atlasH=1024,tilePx=16;
 const packStorage=window.MineWorldPackStorage;
 const coverageCallbacks=[];
 let manualImportStarted=false;
+let restoreTask=Promise.resolve();
+const defaultStatusListeners=[];
+function notifyDefaultStatus(){for(const cb of defaultStatusListeners)try{cb();}catch(e){console.warn('Texture status panel:',e)}}
 const mappings=new Map();
 const bind=(id,top,side=top,bottom=side)=>mappings.set(id,[top,side,bottom]);
 for(const [id,tex] of Object.entries({
@@ -554,7 +557,22 @@ async function applyResources(zip,sourceName){
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
  window.MineWorldBridge?.refreshTextureUI?.();
+ notifyDefaultStatus();
  return state.lastResult;
+}
+async function setDefaultPack(file){
+ if(!file||typeof file.arrayBuffer!=='function')throw Error('Select the Bedrock ZIP from Files first.');
+ if(!/\.(zip|mcpack|jar)$/i.test(file.name||''))throw Error('Choose a ZIP, .mcpack, or Java JAR.');
+ manualImportStarted=true;
+ // If startup is restoring an older pack, let it finish before the new choice.
+ await restoreTask;
+ const result=await loadFile(file);
+ let saved=false;
+ try{saved=!!(await packStorage?.save?.(file));}
+ catch(error){console.warn('Pack storage unavailable:',error);}
+ for(const show of coverageCallbacks)show(result);
+ notifyDefaultStatus();
+ return {result,saved};
 }
 async function loadFile(file){
  if(!file||typeof file.arrayBuffer!=='function')throw Error('Choose a local .zip, .jar or PNG file.');
@@ -603,6 +621,7 @@ async function clear(){
  state.itemArchive=null;state.itemCache.clear();state.itemGeneration++;
  state.tint={grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()};
  await packStorage?.clear?.();
+ notifyDefaultStatus();
 }
 // Upload only changed 16×16 tiles. Animated Java PNGs remain on the user's
 // device; a new resource pack or Reset drops every decoded frame immediately.
@@ -708,13 +727,58 @@ const exposed={
  get lastResult(){return state.lastResult;},
  get grassTint(){return [...state.tint.grass];},
  get foliageTint(){return [...state.tint.foliage];},
- loadFile,loadFiles,clear,drawFace,textureName,updateAnimation,itemIcon,itemName,
+ loadFile,loadFiles,clear,setDefaultPack,drawFace,textureName,updateAnimation,itemIcon,itemName,
+ mountDefaultUI,mountOptionsUI,
  get availableItemTextures(){return state.lastResult?.items||0;},
  hasImportedFace(id,face){return state.active&&Number.isInteger(id)&&Number.isInteger(face)&&face>=0&&face<3&&state.importedFaces.has(id*3+face);},
  get animatedFaces(){return state.animations.length;},
  inspectZip(buffer){return Array.from(readArchive(buffer).entries.keys());}
 };
 window.MineWorldLocalTextures=Object.freeze(exposed);
+function mountDefaultUI(root){
+ if(!root||root.querySelector('#mw-bedrock-default-button'))return;
+ const actions=root.querySelector('.mw-main-actions');
+ if(!actions)return;
+ const button=document.createElement('button');
+ button.type='button';button.id='mw-bedrock-default-button';button.className='mw-pixel-btn';
+ button.textContent='Use original Bedrock textures';
+ button.title='Choose Mojang Bedrock ZIP and use it as your default on this device';
+ const status=document.createElement('div');
+ status.id='mw-bedrock-default-status';status.setAttribute('role','status');
+ status.style.cssText='color:#efffea;background:#102619dd;border:1px solid #b0d6a4;padding:5px 9px;font:11px/1.35 monospace;text-shadow:none;overflow-wrap:anywhere;';
+ const file=document.createElement('input');file.id='mw-bedrock-default-file';
+ file.type='file';file.accept='.zip,.mcpack,.jar,application/zip';
+ file.style.display='none';
+ file.setAttribute('aria-label','Select a Minecraft Bedrock texture ZIP as MineWorld default');
+ const link=document.createElement('a');
+ link.href='https://github.com/Mojang/bedrock-samples/releases/download/v1.26.50.4/bedrock-samples-v1.26.50.4-full.zip';
+ link.target='_blank';link.rel='noopener noreferrer';
+ link.textContent='Download Mojang’s Bedrock ZIP';
+ link.style.cssText='font:11px monospace;color:#d5f6c3;text-decoration:underline;text-shadow:none;align-self:center;';
+ const update=()=>{
+  const result=state.lastResult;
+  status.textContent=result?
+   'Active: '+state.sourceName+' · '+result.faces+'/'+result.totalFaces+' block faces · '+(result.items||0)+' item PNGs.':
+   'Select Mojang’s ZIP once; save privately as your default.';
+ };
+ defaultStatusListeners.push(update);update();
+ button.addEventListener('click',()=>file.click());
+ file.addEventListener('change',async()=>{
+  const selected=file.files?.[0];if(!selected)return;
+  button.disabled=true;status.textContent='Applying ZIP locally. Large files may use significant phone memory…';
+  try{
+   const {result,saved}=await setDefaultPack(selected);
+   status.textContent='Applied '+result.faces+'/'+result.totalFaces+' faces and '+(result.items||0)+
+    ' item PNGs. '+(saved?'Saved as default on this device.':'Storage unavailable: reselect on next visit.');
+  }catch(e){status.textContent='Could not apply selected ZIP: '+e.message;}
+  finally{button.disabled=false;file.value='';}
+ });
+ actions.append(button,status,link,file);
+}
+function mountOptionsUI(){
+ addControls(document.querySelector('#mw-options-screen .mw-settings'),
+  '🎨 Original Bedrock ZIP / Java resource pack');
+}
 function addControls(root,title){
  if(!root)return;
  const pane=document.createElement('section');
@@ -796,6 +860,7 @@ function addControls(root,title){
    }
  }
  coverageCallbacks.push(showCoverage);
+ if(state.lastResult)showCoverage(state.lastResult);
  file.addEventListener('change',async()=>{
    const selected=file.files?.[0];if(!selected)return;
    manualImportStarted=true;
@@ -840,15 +905,16 @@ function addControls(root,title){
  pane.append(heading,help,official,file,looseLabel,loose,folderLabel,folder,rememberLabel,reset,status,detail,audit,preview);root.appendChild(pane);
 }
 addControls(document.querySelector('#pause .mw-render-panel')?.parentNode,'🎨 Local resource pack ZIP: textures + sounds');
-addControls(document.querySelector('#mw-options-screen .mw-settings'),'🎨 Custom Java resource pack (your own texture pixels)');
+// Title-screen Options is created later; mountOptionsUI() adds it after the DOM exists.
 addControls(document.querySelector('#welcome .seed-panel')?.parentNode,'🎨 Import local textures and sounds');
 // Restore only packs the player explicitly opted to remember. Everything
 // stays in this browser's IndexedDB; no network request is made.
-if(packStorage?.supported)packStorage.load().then(async stored=>{
+if(packStorage?.supported)restoreTask=packStorage.load().then(async stored=>{
  if(!stored||manualImportStarted||state.active)return;
  try{
   const result=await loadFile(stored);
   if(!manualImportStarted)for(const show of coverageCallbacks)show(result);
+ notifyDefaultStatus();
  }catch(error){
   console.warn('Could not restore saved local resource pack:',error);
   await packStorage.clear();
