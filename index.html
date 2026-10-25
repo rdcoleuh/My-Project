@@ -953,7 +953,7 @@ body.in-nether #game-wrap{background:#290f19}
   const canvas = $('world');
   const weatherCanvas=$('weather-layer'),weatherCtx=weatherCanvas.getContext('2d',{alpha:true});
   const survivalRules=window.MineWorldSurvivalRules;
-  const gl = canvas.getContext('webgl', { antialias: true, alpha: false, powerPreference: 'high-performance' });
+  const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'high-performance' });
   if (!gl) {
     $('welcome').querySelector('p').textContent = 'This game needs WebGL. Please try Safari, Chrome or Edge with WebGL enabled.';
     $('start-btn').disabled = true;
@@ -1114,8 +1114,12 @@ body.in-nether #game-wrap{background:#290f19}
     updateMovementUI();
   }
   const isTouch=matchMedia('(pointer: coarse)').matches;
-  let dynamicResolution=isTouch?1.12:1.6;
-  const minResolution=isTouch?.70:.88,maxResolution=isTouch?1.16:1.68;
+  // Never render below the CSS canvas resolution: upscaling a 0.7x
+  // framebuffer makes textures and thin mob pixels appear muddy.
+  // Mobile starts above 1x for sharpness; the adaptive renderer can
+  // reduce geometry/chunks when under load without sub-1x texture blur.
+  let dynamicResolution=isTouch?1.48:1.6;
+  const minResolution=1,maxResolution=isTouch?1.6:1.68;
   let sky=[.57,.78,.91],cameraFov=72;
   const idx=(x,y,z)=>(x*D+z)*H+y;
   const inside=(x,y,z)=>Number.isInteger(x)&&Number.isInteger(y)&&Number.isInteger(z)&&x>=0&&x<W&&z>=0&&z<D&&y>=0&&y<H;
@@ -1302,7 +1306,7 @@ body.in-nether #game-wrap{background:#290f19}
       if(fps<(isTouch?27:37))dynamicResolution=Math.max(minResolution,dynamicResolution-.09);
       else if(fps>(isTouch?52:56))dynamicResolution=Math.min(maxResolution,dynamicResolution+.045);
     }else{
-      dynamicResolution=Math.min(maxResolution,isTouch?1.12:1.6);
+      dynamicResolution=Math.min(maxResolution,isTouch?1.48:1.6);
     }
     updateRenderSettingsUI();
   }
@@ -3825,8 +3829,9 @@ body.in-nether #game-wrap{background:#290f19}
     if(touchHold.place&&timers.place<=0){performPlace();timers.place=.25}
     timers.mine-=dt;timers.place-=dt;
     let w=canvas.clientWidth,h=canvas.clientHeight;
-    const dpr=Math.min(window.devicePixelRatio||1,dynamicResolution);
-    let dw=Math.min(Math.floor(w*dpr),2100),dh=Math.min(Math.floor(h*dpr),1300);
+    const dpr=Math.max(1,Math.min(window.devicePixelRatio||1,dynamicResolution));
+    let dw=Math.max(1,Math.min(Math.round(w*dpr),2100));
+    let dh=Math.max(1,Math.min(Math.round(h*dpr),1300));
     if(canvas.width!==dw||canvas.height!==dh){canvas.width=dw;canvas.height=dh;gl.viewport(0,0,dw,dh)}
     const {vp,eye,forward,aimEye}=vpMatrix(dw,dh);
     // Target from the character's real eyes, not the trailing third-person camera.
