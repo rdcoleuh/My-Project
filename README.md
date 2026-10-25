@@ -1,3 +1,13 @@
+# MineWorld 6.43 — Safer Java Multipart Texture Import
+
+- **One-part Java multipart blockstates:** When a player imports their own Java Edition ZIP/JAR or extracted resource pack, MineWorld can now follow a single unambiguous `multipart` model selected by the known default block state. Supported conditions include nested `AND`/`OR` and pipe-separated alternatives. Existing quarter-turn Y orientation, per-face UVs and directional PNGs remain available for a single full-cube model.
+- **Safe fallbacks:** Complex multi-part models (fences, panes, connections), unknown conditions, X/Z rotations and non-cube geometry are not flattened into incorrect full blocks. They continue using the previous MineWorld art or direct model import. No original game images are bundled or transmitted.
+- **Regression coverage:** Synthetic model/texture fixtures test multipart condition selection, rotations, ambiguous matches, malformed conditions and direct-model fallback. The existing 169 block IDs, saved worlds, Java-style inventory and mobile controls are unchanged.
+
+See [RESOURCE-PACKS.md](RESOURCE-PACKS.md) for supported import details and remaining limitations.
+
+---
+
 # MineWorld 6.35 — Java-Style Dropped Blocks and Crisp Inventory
 
 - **Breaking blocks in private Survival worlds now creates actual collectible ground item entities** rather than immediately adding the broken block or ore resource to the inventory. Creatively removed blocks remain non-dropping; shared multiplayer retains its prior synchronized grants until networked item entities are implemented. Ordinary block drops, mined ore loot and special-case gravel/flint are handled. Ground items retain pickup delays, save/restoration and a five-minute lifetime.
