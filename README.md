@@ -1,3 +1,13 @@
+# MineWorld 6.23 — Official Mojang Bedrock Textures ZIP (No Repackaging)
+
+**Get Mojang's own complete Bedrock texture files:** [Download bedrock-samples-v1.26.50.4-full.zip](https://github.com/Mojang/bedrock-samples/releases/download/v1.26.50.4/bedrock-samples-v1.26.50.4-full.zip) (169,385,576 bytes, ~169 MB). This is an official Mojang GitHub release, distributed under Minecraft's EULA rather than bundled or rehosted by MineWorld.
+
+In MineWorld, open **Options → Custom resource pack**, tap the official download link, save the ZIP to Files, and then select that downloaded ZIP in the picker. MineWorld can now read block, item, and supported sound files directly from the nested `resource_pack/textures/blocks/`, `resource_pack/textures/items/`, and `resource_pack/sounds/` directories in Mojang's full samples archive. Older `textures/blocks` roots, modern Java `assets/minecraft/textures/block`, extracted PNG folders and Bedrock `.mcpack` files remain supported. The player-selected ZIP is read privately in their browser; the game itself never fetches or hosts Mojang art. Up to 240 MiB of ZIP data is accepted; larger archives can consume significant memory on mobile and may require a desktop browser. Remembering a pack on the device is an optional local IndexedDB action.
+
+**Compatibility:** This is not an automatic complete pixel-perfect clone. The texture importer supports the existing 169 MineWorld block IDs, selected directional faces and mapped inventory sprites. Unmatched Minecraft textures retain independent MineWorld artwork, and entity skin images need compatible entity geometry and UV mapping to render faithfully. Mojang's file is provided directly by Mojang; the Minecraft EULA governs its use.
+
+---
+
 # MineWorld 6.22 — Bedrock Resource Packs from Your Phone
 
 MineWorld now accepts **Bedrock .mcpack** resources from a phone's Files picker, in addition to Java ZIP/JAR archives. Open Options → Custom resource pack or Inventory → Import textures and choose a .mcpack or .zip that you have in Files. Compatible packs may contain textures/blocks/*.png and textures/items/*.png; the importer matches existing block faces and item sprites, with common Bedrock filename aliases. Matched artwork uses the exact pixels from the player-selected PNG; unmatched graphics keep MineWorld's independent fallback. Optional Remember saves the chosen pack in this browser only.
