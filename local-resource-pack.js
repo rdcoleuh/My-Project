@@ -42,7 +42,7 @@ for(const [id,tex] of Object.entries({
  108:'deepslate_emerald_ore',109:'redstone_lamp_on',
  110:'lapis_block',111:'emerald_block',112:'diamond_block',
  113:'copper_block',114:'gold_block',115:'iron_block',116:'coal_block',
- 117:'redstone_block',118:'barrel_side',119:'chest_front',
+ 117:'redstone_block',118:'raw_mineral_crate_side',119:'chest_front',
  120:'chest_front',121:'end_stone',122:'chorus_plant',
  123:'chorus_flower',124:'end_crystal',125:'end_portal_frame_side',
  126:'end_portal',127:'end_gateway',128:'end_rod',129:'dragon_egg',
@@ -59,11 +59,11 @@ for(const [id,tex] of Object.entries({
  159:'brewing_stand',160:'barrel_side',161:'fletching_table_front',
  162:'cauldron_side',163:'lectern_front',164:'stonecutter_side',
  165:'loom_front',166:'smithing_table_front',167:'grindstone_side',
- 168:'crafting_table_front',169:'red_wool'
+ 168:'crafting_table_front',169:'red_bed_top'
 })){bind(Number(id),tex);}
 bind(1,'grass_block_top','grass_block_side','dirt');
 for(const [id,stem,leaf] of [
- [5,'oak_log','oak_log_top'],[15,'oak_log','oak_log_top'],
+ [5,'oak_log','oak_log_top'],[15,'poplar_log','poplar_log_top'],
  [30,'spruce_log','spruce_log_top'],[32,'birch_log','birch_log_top'],
  [34,'acacia_log','acacia_log_top'],[36,'jungle_log','jungle_log_top'],
  [38,'mangrove_log','mangrove_log_top'],[40,'cherry_log','cherry_log_top'],
@@ -83,7 +83,7 @@ bind(75,'crimson_nylium','crimson_nylium_side','netherrack');
 bind(76,'warped_nylium','warped_nylium_side','netherrack');
 bind(85,'ancient_debris_top','ancient_debris_side','ancient_debris_top');
 bind(86,'bone_block_top','bone_block_side','bone_block_top');
-bind(118,'barrel_top','barrel_side','barrel_bottom');
+bind(118,'raw_mineral_crate_top','raw_mineral_crate_side','raw_mineral_crate_bottom');
 bind(125,'end_portal_frame_top','end_portal_frame_side','end_stone');
 bind(132,'purpur_pillar_top','purpur_pillar','purpur_pillar_top');
 bind(136,'smithing_table_top','smithing_table_front','smithing_table_bottom');
@@ -102,12 +102,13 @@ bind(165,'loom_top','loom_front','loom_bottom');
 bind(166,'smithing_table_top','smithing_table_front','smithing_table_bottom');
 bind(167,'grindstone_round','grindstone_side','grindstone_pivot');
 bind(168,'crafting_table_top','crafting_table_front','oak_planks');
-bind(169,'red_wool','red_wool','red_wool');
+bind(169,'red_bed_top','red_bed_side','red_bed_bottom');
 
 function normalize(s){return String(s||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');}
 const names=window.MineWorldBlockGuide?.names||[];
 const aliases={
  grass_block_top:['grass_top'],grass_block_side:['grass_side'],grass_block_side_overlay:['grass_side_overlay'],
+ red_bed_top:['bed_top'],red_bed_side:['bed_side'],red_bed_bottom:['bed_bottom'],
  oak_log:['log_oak','log'],oak_log_top:['log_oak_top','log_top'],oak_planks:['planks_oak','planks'],oak_leaves:['leaves_oak','leaves'],
  spruce_log:['log_spruce'],spruce_log_top:['log_spruce_top'],spruce_leaves:['leaves_spruce'],spruce_planks:['planks_spruce'],
  birch_log:['log_birch'],birch_log_top:['log_birch_top'],birch_leaves:['leaves_birch'],birch_planks:['planks_birch'],
