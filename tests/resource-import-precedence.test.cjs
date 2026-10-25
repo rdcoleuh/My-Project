@@ -87,3 +87,39 @@ test('first .mcmeta frame is painted immediately for block, grass overlay and wo
  await pack.clear();
  assert.equal(pack.active,false);
 });
+
+test('extracted Java folders choose modern vanilla block files without decoding duplicates',async()=>{
+ const png=Buffer.from([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,16,0,0,0,16]);
+ for(const reverse of [false,true]){
+  const reads=[];
+  class Canvas{
+   constructor(){this.width=16;this.height=16;}
+   getContext(){return {imageSmoothingEnabled:false,clearRect(){},drawImage(){},
+    getImageData(_x,_y,w,h){return {data:new Uint8ClampedArray(w*h*4)};},putImageData(){}};}
+   toDataURL(){return 'data:image/png;base64,original';}
+  }
+  class Image{constructor(){this.width=16;this.height=16;}set src(_){queueMicrotask(()=>this.onload?.());}}
+  const gl={TEXTURE0:1,TEXTURE_2D:2,RGBA:3,UNSIGNED_BYTE:4,
+   UNPACK_FLIP_Y_WEBGL:5,TEXTURE_MIN_FILTER:6,TEXTURE_MAG_FILTER:7,NEAREST:8,
+   activeTexture(){},bindTexture(){},pixelStorei(){},texImage2D(){},texParameteri(){},isContextLost(){return false;}};
+  const window={MineWorldResourcePackContext:{gl,texture:{},baseURL:'data:image/png;base64,original'},
+   MineWorldAtlas:{dataURL:'data:image/png;base64,original'},
+   MineWorldBlockGuide:{names:Array(170).fill('unknown_block')},
+   MineWorldSound:{clearSamples(){}},MineWorldBridge:{refreshTextureUI(){}}};
+  const context={window,document:{createElement:()=>new Canvas(),querySelector:()=>null},
+   Image,URL:{createObjectURL:()=> 'blob:test',revokeObjectURL(){}},Blob,
+   Uint8Array,Uint8ClampedArray,TextDecoder,ArrayBuffer,DataView,Math,Number,
+   JSON,console,performance:{now:()=>0},queueMicrotask};
+  vm.runInNewContext(read('local-resource-pack.js'),context);
+  const file=(folder,tag)=>({name:'stone.png',webkitRelativePath:folder+'/stone.png',
+   size:png.length,arrayBuffer:async()=>{reads.push(tag);return Uint8Array.from(png).buffer;}});
+  const files=[
+   file('textures/block','root'),
+   file('Pack/assets/minecraft/textures/blocks','legacy'),
+   file('Pack/assets/minecraft/textures/block','modern')
+  ];
+  const result=await window.MineWorldLocalTextures.loadFiles(reverse?files.reverse():files);
+  assert.ok(result.faces>=3);
+  assert.deepEqual(reads,['modern'],'only highest-ranked modern vanilla PNG should be decoded');
+ }
+});
