@@ -99,7 +99,8 @@ function ring(id,x,y,top){
   // Bright smooth birch-like trunk with genuinely dark, irregular horizontal flecks.
   const scar=rand(x>>1,Math.floor(y/3),id*8)>.71&&(y%3===0||y%4===2)&&x>1&&x<15;
   const chip=x===0||x===15||x===1||x===14;
-  return shade(scar?spec.stripe:chip?[137,137,124]:spec.base,x,y,id*9,2,11);
+  const bark=shade(scar?spec.stripe:chip?[137,137,124]:spec.base,x,y,id*9,2,11);
+  return tint(bark,Math.round((rand(x,y,id*211)-.5)*17));
  }
  const fibre=rand(Math.floor(x/3),y>>2,id*14);
  const trench=(x+Math.floor(rand(x>>2,y>>2,id*12)*2))%5===0;
@@ -117,9 +118,10 @@ function leaf(id,x,y){
  const bright=n>.56,deep=n<.29;
  const gaps=(mid<.12&&edge>.62)||(macro<.16&&x%3===0&&y%2===1);
  const autumn=[12,13,14].includes(id),cherry=id===41;
- return shade(gaps?blend(base,[20,31,24],.5):
+ const clustered=shade(gaps?blend(base,[20,31,24],.5):
    deep?blend(base,[18,30,18],autumn?.23:.36):
    bright?blend(base,[232,231,174],cherry?.19:.14):base,x,y,id*18,2,11);
+ return tint(clustered,Math.round((rand(x,y,id*311+97)-.5)*19));
 }
 function ore(id,x,y,face){
  const def=ORES[id],rock=def.rock,base=rock===3?original(3,face,x,y):rock===58?original(58,face,x,y):original(50,face,x,y);
