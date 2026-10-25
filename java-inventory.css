@@ -71,3 +71,41 @@
 .mw-java-slot.mw-spread-over{outline:3px solid #87ee88;outline-offset:-2px;background:#a0ba9a}
 .mw-java-pack-button:focus-visible,.mw-java-tab:focus-visible{outline:3px solid #f1c94b}
 .mw-java-slot{user-select:none;-webkit-user-select:none}
+
+/* MineWorld 6.35: compact Java Edition-inspired survival inventory proportions.
+   Four vertically stacked armor slots, player preview, offhand and 2×2 crafting.
+   Sharp item icons are generated from original (user supplied) block faces. */
+.inventory-shell.mw-java-shell{width:min(700px,100%);padding:11px!important}
+.mw-java-ui{gap:7px}
+.mw-java-shell .mw-java-top{
+ display:grid;grid-template-columns:46px 84px 46px minmax(180px,1fr);
+ justify-content:center;align-items:center;gap:9px;
+ max-width:510px;margin:0 auto 5px;width:100%;
+}
+.mw-java-shell .mw-java-equipment{grid-template-columns:40px;grid-auto-rows:40px;gap:4px}
+.mw-java-shell .mw-java-top>.mw-java-equipment:nth-of-type(3){align-self:center}
+.mw-java-shell .mw-java-top .mw-java-player{width:80px;min-height:174px}
+.mw-java-shell .mw-java-top .mw-java-avatar{width:64px;height:118px}
+.mw-java-shell .mw-java-top .mw-java-craft{min-width:0;max-width:none;width:100%;flex:none}
+.mw-java-shell .mw-java-grid{max-width:486px;gap:2px}
+.mw-java-shell .mw-java-slot{border-width:2px;image-rendering:pixelated}
+.mw-java-shell .mw-block-item-3d{width:88%;height:88%;object-fit:contain;image-rendering:pixelated}
+.mw-java-creative-panel canvas,.mw-java-shell .mw-java-item-art,.mw-java-shell img{image-rendering:pixelated}
+.mw-java-creative-panel .mw-java-creative-grid button{border-width:2px}
+@media(max-width:560px){
+ .inventory-shell.mw-java-shell{padding:5px!important}
+ .mw-java-shell .mw-java-top{
+  grid-template-columns:34px 56px 34px minmax(0,1fr);gap:5px
+ }
+ .mw-java-shell .mw-java-equipment{grid-template-columns:30px;grid-auto-rows:30px;gap:3px}
+ .mw-java-shell .mw-java-top .mw-java-player{width:54px;min-height:136px}
+ .mw-java-shell .mw-java-top .mw-java-avatar{width:48px;height:86px}
+ .mw-java-shell .mw-java-top .mw-java-craft{max-width:100%;min-width:0}
+ .mw-java-craft .craft-workspace{padding:3px!important}
+ .mw-java-shell .mw-java-grid{gap:1px}
+ .mw-java-shell .mw-java-slot{border-width:1px}
+}
+@media(max-width:350px){
+ .mw-java-shell .mw-java-top{grid-template-columns:34px 60px 34px}
+ .mw-java-shell .mw-java-top .mw-java-craft{grid-column:1/-1}
+}
