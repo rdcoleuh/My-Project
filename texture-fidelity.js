@@ -118,6 +118,8 @@ function leaf(id,x,y){
  const bright=n>.56,deep=n<.29;
  const gaps=(mid<.12&&edge>.62)||(macro<.16&&x%3===0&&y%2===1);
  const autumn=[12,13,14].includes(id),cherry=id===41;
+ // Small real cutout windows create depth through leaf faces at nearest-neighbor sampling.
+ if(gaps&&edge>.75)return [0,0,0,0];
  const clustered=shade(gaps?blend(base,[20,31,24],.5):
    deep?blend(base,[18,30,18],autumn?.23:.36):
    bright?blend(base,[232,231,174],cherry?.19:.14):base,x,y,id*18,2,11);
