@@ -11,6 +11,7 @@ function install(api){
  const model=api.model;
  shell.classList.add('mw-java-shell');
  const root=doc.createElement('div');root.className='mw-java-ui';shell.appendChild(root);
+ const craftWorkspace=doc.getElementById('craft-workspace');
  let page=0,selected=null,focus=null,creativeOpen=false;
  function node(parent,tag,cls,text){
   const el=doc.createElement(tag);
@@ -60,7 +61,8 @@ function install(api){
   return button;
  }
  function render(){
-  // Build the slots before openGear removes .hidden, so the first opening is populated.
+  // Keep the existing active crafting DOM/events alive while rebuilding the slot grid.
+  if(craftWorkspace&&root.contains(craftWorkspace))panel.appendChild(craftWorkspace);
   model.normalize();root.replaceChildren();
   const heading=node(root,'div','mw-java-head');
   node(heading,'strong','mw-java-title','Inventory · 27 + 9 slots');
@@ -89,7 +91,9 @@ function install(api){
   node(top,'div','mw-java-player','🧍');
   const util=node(top,'div','mw-java-equipment');
   slot(util,'offhand','Offhand');
-  node(top,'div','mw-java-top-label','2×2 crafting: use the functional crafting grid below. Larger grids are available near a crafting table.');
+  const dock=node(top,'div','mw-java-craft');
+  if(craftWorkspace)dock.appendChild(craftWorkspace);
+  else node(dock,'div','mw-java-top-label','Crafting grid unavailable');
   const nav=node(root,'div','mw-java-nav');
   node(nav,'strong','mw-java-title','Inventory · 3 rows of 9');
   const controls=node(nav,'div','mw-java-nav');
