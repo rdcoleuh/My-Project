@@ -52,5 +52,11 @@ function sweepInRange(other,primary,attacker){
    Math.abs(other.y-primary.y)<=.35&&
    Math.hypot(other.x-attacker.x,other.z-attacker.z)<=4.75;
 }
-window.MineWorldCombat=Object.freeze({stats,charge,strike,knockback,sweepInRange});
+// Smooth one-shot attack animation, independent of damage/cooldown calculations.
+function swing(elapsedMs){
+ if(!Number.isFinite(elapsedMs)||elapsedMs<0||elapsedMs>=420)return 0;
+ const phase=elapsedMs/420;
+ return Math.sin(Math.PI*phase);
+}
+window.MineWorldCombat=Object.freeze({stats,charge,strike,knockback,sweepInRange,swing});
 })();
