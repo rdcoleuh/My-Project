@@ -268,6 +268,8 @@ async function writeAtlas(canvas){
  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,canvas);
  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+ // Preserve Smooth/Classic preference after importing, restoring or reloading a pack.
+ window.MineWorldTextureSmoothing?.apply(gl,META.texture);
  window.MineWorldAtlas.dataURL=canvas.toDataURL('image/png');
  state.canvas=canvas;
 }
