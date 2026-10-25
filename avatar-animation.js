@@ -14,7 +14,7 @@ function pose({time=0,moving=false,sprinting=false,crouching=false,grounded=true
  // A small idle arm movement prevents rigid statue poses.
  const idle=moving?0:Math.sin(t*1.8)*.025;
  return Object.freeze({
-  legL:stride,legR:-stride,
+  legL:stride,legR:stride===0?0:-stride,
   armL:-stride*.78+idle,armR:stride*.78-idle,
   bob:moving&&grounded?Math.abs(Math.cos(phase))*(sprinting?.035:.018):0
  });
