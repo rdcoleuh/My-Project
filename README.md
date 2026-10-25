@@ -1,3 +1,10 @@
+# MineWorld 6.44 — Java bounded-cuboid models and state safety
+
+- **Original Java block geometry import (bounded):** Player-selected Java Edition ZIP/JAR packs can now render a **single axis-aligned cuboid** such as an inset or half-height block when its model resolves all six owned PNGs and declares valid explicit UV rectangles for all six sides. Imported geometry is also used by collision and targeting, with a complete reset when the local pack is removed. Multi-element shapes (stairs, fences, doors), element rotations, or rotated non-cube blockstates still require a dedicated mesh renderer and retain the original fallback. No original Minecraft bitmaps are included.
+- **Safer Java blockstates:** Variant selection no longer substitutes an incompatible state just because its key sorts first. The matching default-property variant wins; ambiguous or unsupported states fall back without silently applying the wrong orientation.
+- **Worlds and mobile:** Existing world-save format and controls are unchanged. Asset-derived geometry exists only in memory while the locally selected pack is active. The versioned offline cache has been refreshed.
+- **Verification:** Automated regression cases cover partial-model bounds, malformed and incomplete models, state selection, and geometry import/reset. Verify appearance and collision against a personally supplied Java pack on a physical phone as well; CI's synthetic fixtures cannot prove visual equivalence for every Minecraft model.
+
 # MineWorld 6.43 — Safer Java Multipart Texture Import
 
 - **One-part Java multipart blockstates:** When a player imports their own Java Edition ZIP/JAR or extracted resource pack, MineWorld can now follow a single unambiguous `multipart` model selected by the known default block state. Supported conditions include nested `AND`/`OR` and pipe-separated alternatives. Existing quarter-turn Y orientation, per-face UVs and directional PNGs remain available for a single full-cube model.

@@ -490,10 +490,10 @@ async function applyResources(zip,sourceName){
  const ids=new Set(),importedFaces=new Set(),cache=new Map(),decoded=new Map(),metaCache=new Map(),missing=new Set(),missingFaces=[],resolved=new Map(),animated=[];
  const timeline=window.MineWorldResourceAnimation;
  const modelResolver=window.MineWorldJavaModelFaces;
- const modelFaces=new Map(),modelTransforms=new Map();let modelMappedFaces=0;
+ const modelFaces=new Map(),modelTransforms=new Map(),modelShapes=new Map();let modelMappedFaces=0;
  function markTransform(id,dir){
   const data=modelFaces.get(id)?.faceUV?.[dir];
-  if(!data||window.MineWorldBlockModels?.isPartial?.(id))return;
+  if(!data||(window.MineWorldBlockModels?.isPartial?.(id)&&!modelFaces.get(id)?.shape))return;
   if(!modelTransforms.has(id))modelTransforms.set(id,{});
   modelTransforms.get(id)[dir]=data;
  }
@@ -502,7 +502,7 @@ async function applyResources(zip,sourceName){
      const model=modelResolver.nameFor(id,names[id]);
      if(!model)continue;
      const refs=await modelResolver.resolve(zip,model);
-     if(refs)modelFaces.set(id,refs);
+     if(refs){modelFaces.set(id,refs);if(refs.shape)modelShapes.set(id,refs.shape);}
    }
  }
  const bedrock=window.MineWorldBedrockFlipbooks;
@@ -752,6 +752,7 @@ async function applyResources(zip,sourceName){
   throw Error('No compatible block, item or sound files found.');
  if(faces||directionalFaces||modelDirectionalFaces||state.active)await writeAtlas(canvas);
  sideAllocator?.commit(mappedSides);
+ window.MineWorldBlockModels?.commitImported?.(modelShapes);
  window.MineWorldJavaFaceTransforms?.commit(modelTransforms);
  window.MineWorldBridge?.refreshWorldMeshes?.();
  // Do not erase a working pack when an invalid replacement is rejected.
@@ -768,7 +769,7 @@ async function applyResources(zip,sourceName){
  state.lastAnimationAt=-Infinity;
  state.animationDisabled=false;
  state.active=faces+directionalFaces+modelDirectionalFaces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,modelUVFaces:window.MineWorldJavaFaceTransforms?.stats().faces||0,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
+ state.lastResult={blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,modelGeometryBlocks:modelShapes.size,modelUVFaces:window.MineWorldJavaFaceTransforms?.stats().faces||0,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
@@ -845,6 +846,7 @@ async function clear(){
  const [canvas,ctx]=baseCanvas();ctx.drawImage(img,0,0);
  await writeAtlas(canvas);
  window.MineWorldJavaDirectionalFaces?.commit(new Map());
+ window.MineWorldBlockModels?.commitImported?.(new Map());
  window.MineWorldJavaFaceTransforms?.commit(new Map());
  window.MineWorldBridge?.refreshWorldMeshes?.();
  window.MineWorldSound?.clearSamples();window.MineWorldMobPixels?.applyImported?.(new Map());window.MineWorldBridge?.refreshTextureUI?.();

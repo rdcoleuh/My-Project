@@ -1,6 +1,6 @@
-/* MineWorld — local Java block-model texture references, no bundled bitmaps.
- * Reads only player-selected minecraft:block JSON; does not render arbitrary
- * geometry, blockstate rotations, or non-cube models.
+/* MineWorld — local Java model textures and bounded cuboids, no bundled bitmaps.
+ * Reads only player-selected minecraft:block JSON. Multi-element or rotated
+ * geometry stays on the proven original fallback; simple cuboids are imported.
  */
 (()=>{
 'use strict';
@@ -75,16 +75,23 @@ function stateVariant(data){
  if(!data||typeof data!=='object'||Array.isArray(data))return null;
  const variants=data.variants;
  if(variants&&typeof variants==='object'&&!Array.isArray(variants)){
-  const choices=Object.entries(variants).filter(([key])=>
-   key===''||key.split(',').every(part=>/^[a-z_]+=[a-z0-9_]+$/.test(part)));
-  const score=key=>key===''?-1:key.split(',').reduce((sum,part)=>{
-   const [name,value]=part.split('=');
-   return sum+(DEFAULT_STATE[name]===value?0:DEFAULT_STATE[name]===undefined?2:5);
-  },0);
-  choices.sort((a,b)=>score(a[0])-score(b[0])||a[0].localeCompare(b[0]));
-  for(const [,candidate] of choices){
-   const chosen=variantModel(candidate);
-   if(chosen)return chosen;
+  const valid=[];
+  for(const [key,value] of Object.entries(variants)){
+   if(key===''){valid.push({key,parts:0,value});continue;}
+   const pieces=key.split(',');
+   if(!pieces.every(part=>/^[a-z_]+=[a-z0-9_]+$/.test(part)))continue;
+   if(!pieces.every(part=>{
+     const [name,expected]=part.split('=');
+     return Object.hasOwn(DEFAULT_STATE,name)&&DEFAULT_STATE[name]===expected;
+   }))continue;
+   valid.push({key,parts:pieces.length,value});
+  }
+  // A specific *matching* state wins. Never select a different state just
+  // because it happens to be the closest name alphabetically.
+  valid.sort((a,b)=>b.parts-a.parts||a.key.localeCompare(b.key));
+  for(const choice of valid){
+   const picked=variantModel(choice.value);
+   if(picked)return picked;
   }
  }
  if(!Array.isArray(data.multipart)||!data.multipart.length||data.multipart.length>128)return null;
@@ -128,20 +135,37 @@ async function resolve(zip,modelName){
     if(clean(key)&&typeof value==='string')textures[key]=value;
   let faces=inherited?.faces||null;
   let fullCube=inherited?.fullCube??true;
+  let shape=inherited?.shape||null;
   if(Array.isArray(data.elements)){
    const elements=data.elements;
-   // A single full-size cube is the only geometry this 3-face atlas can
-   // represent faithfully. Other models retain their established fallback.
-   fullCube=elements.length===1&&
-    JSON.stringify(elements[0]?.from)==='[0,0,0]'&&
-    JSON.stringify(elements[0]?.to)==='[16,16,16]'&&
-    !elements[0]?.rotation;
-   if(fullCube)faces=elements[0].faces||null;
+   const el=elements.length===1?elements[0]:null;
+   const from=el?.from,to=el?.to;
+   const bounds=Array.isArray(from)&&Array.isArray(to)&&from.length===3&&to.length===3&&
+    from.every((n,i)=>Number.isFinite(n)&&n>=0&&n<to[i]&&to[i]<=16);
+   // A single axis-aligned cuboid can use the existing cube mesh and hitbox.
+   // Multi-part, cullface-dependent, angled, and rotated forms need a separate
+   // model renderer and must continue using established fallback geometry.
+   fullCube=!!bounds&&!el.rotation&&from.every(n=>n===0)&&to.every(n=>n===16);
+   shape=null;faces=null;
+   if(bounds&&!el.rotation){
+    faces=el.faces&&typeof el.faces==='object'&&!Array.isArray(el.faces)?el.faces:null;
+    if(!fullCube&&faces&&['up','down','north','south','east','west'].every(
+      dir=>faces[dir]&&typeof faces[dir].texture==='string'&&
+      Array.isArray(faces[dir].uv)&&faces[dir].uv.length===4&&
+      faces[dir].uv.every(n=>Number.isFinite(n)&&n>=0&&n<=16)
+    )){
+     shape=Object.freeze({left:from[0]/16,bottom:from[1]/16,front:from[2]/16,
+      right:to[0]/16,top:to[1]/16,back:to[2]/16});
+    }
+   }
   }
-  return {textures,faces,fullCube};
+  return {textures,faces,fullCube,shape};
  }
  const data=await load(start,0);
- if(!data||!data.fullCube)return null;
+ if(!data||(!data.fullCube&&!data.shape))return null;
+ // A non-cubic shape rotated around Y would require rotated bounds/collision.
+ // Leave those cases to the fallback until that rendering path exists.
+ if(data.shape&&turns!==0)return null;
  const follow=ref=>{
   let value=ref;
   const seen=new Set();
@@ -175,6 +199,12 @@ async function resolve(zip,modelName){
  const allowed=value=>value&&zip.entries.has(value)?value:null;
  const result={top:allowed(top),side:allowed(side),bottom:allowed(bottom)};
  const dirs=['north','south','east','west'];
+ if(data.shape){
+  // Do not replace geometry unless all six corresponding owned sprites exist.
+  // Partial imports must never leave transparent sides or mismatched hitboxes.
+  if(!allowed(top)||!allowed(bottom)||!sides.every(allowed))return null;
+  result.shape=data.shape;
+ }
  const cardinal=Object.fromEntries(dirs.map((dir,i)=>[dir,allowed(sides[i])]));
  if(new Set(Object.values(cardinal).filter(Boolean)).size>1)result.sides=cardinal;
  // Store player-provided full-cube per-face UVs/90-degree rotations. Rendering

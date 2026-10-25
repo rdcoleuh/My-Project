@@ -37,9 +37,27 @@
     138:make(0,0,0,16,15,16), // hydrated farmland
   });
   const FULL=Object.freeze({left:0,bottom:0,front:0,right:1,top:1,back:1});
-  const isPartial=id=>Object.hasOwn(shapes,id);
+  let imported=new Map();
+  function validShape(value){
+    if(!value||typeof value!=='object')return null;
+    const keys=['left','bottom','front','right','top','back'];
+    if(!keys.every(k=>Number.isFinite(value[k])&&value[k]>=0&&value[k]<=1))return null;
+    if(!(value.left<value.right&&value.bottom<value.top&&value.front<value.back))return null;
+    return Object.freeze(Object.fromEntries(keys.map(k=>[k,value[k]])));
+  }
+  function commitImported(rows){
+    const next=new Map();
+    if(rows?.entries)for(const [id,raw] of rows){
+      if(!Number.isInteger(id)||id<1||id>169)continue;
+      const bounds=validShape(raw);
+      if(bounds)next.set(id,bounds);
+    }
+    imported=next;return imported.size;
+  }
+  const shape=id=>imported.get(id)||shapes[id]||FULL;
+  const isPartial=id=>imported.has(id)||Object.hasOwn(shapes,id);
   window.MineWorldBlockModels=Object.freeze({
-    shape:id=>shapes[id]||FULL,isPartial,
+    shape,isPartial,commitImported,importedCount:()=>imported.size,
     variants:Object.keys(shapes).map(Number),
     texturePixels:16,normalBlockMeters:1
   });
