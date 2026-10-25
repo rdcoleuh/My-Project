@@ -2,7 +2,7 @@
 
 **Play:** https://rdcoleuh.github.io/My-Project/
 
-Version 6.6 replaces the old scrolling Survival backpack with a persistent Java-style layout: **27 main inventory slots, nine separate hotbar slots, armor positions, an offhand slot, a held cursor stack and safe overflow pages** for older saves with unusually large inventories. The original crafting grid and recipes remain available below the main inventory.
+Version 6.6 replaces the old scrolling Survival backpack with a persistent Java-style layout: **27 main inventory slots, nine separate hotbar slots, armor positions, an offhand slot, a held cursor stack and safe overflow pages** for older saves with unusually large inventories. The existing functional 2×2 crafting grid is integrated beside armor in the inventory panel, and larger crafting stations and recipe menus still work.
 
 - **Move and split:** Left click/tap pick up and place a stack; right click/contextmenu splits a stack in half or places one item; Shift+click moves a stack between inventory and hotbar; drag/drop swaps or merges stacks; hover + number key 1–9 swaps with a hotbar slot.
 - **Offhand:** Press F in Survival (or click the offhand button beside the hotbar) to swap the selected hotbar item with the offhand. F still toggles flight in Creative.
