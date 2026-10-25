@@ -43,3 +43,17 @@ test('stalled animals do not fake a walk cycle and riders do not keep old moveme
  assert.ok(src.includes('m.step=4;m.moving=false;continue;'));
  assert.ok(!src.includes('m.gait=(m.gait||0)+dt*(m.following?8.1:m.fleeTime>0?10:3.7);\n        if(m.baby)'));
 });
+
+test('animal clearance checks feet and head before walking into a low roof',()=>{
+ const ctx={window:{}};vm.runInNewContext(read('animal-behavior.js'),ctx);
+ const can=ctx.window.MineWorldAnimalBehavior.canOccupy;
+ const wall=(x,y,z)=>x===3&&z===4&&y===11;
+ assert.equal(can(3.5,10,4.5,.7,wall),true,'chicken fits under overhang');
+ assert.equal(can(3.5,10,4.5,1.4,wall),false,'cow cannot clip into roof');
+ assert.equal(can(3.5,10,4.5,2.375,wall),false,'camel needs head room');
+ assert.equal(can(2.5,10,4.5,2.375,wall),true);
+ assert.equal(can(NaN,10,4,1.4,wall),false);
+ assert.ok(src.includes('animals.canOccupy(nx,ground,nz,animalModels.MODELS[m.kind]?.height||1.8,'));
+ assert.ok(src.includes('animals.canOccupy(x,y,z,animalModels.MODELS[kind]?.height||1.8,'));
+ assert.ok(src.includes("b.addEventListener('lostpointercapture',()=>{touchHold[verb]=false;if(verb==='mine')cancelMining();});"));
+});
