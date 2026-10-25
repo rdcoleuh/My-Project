@@ -61,3 +61,21 @@ test('world integration uses shared boxes for movement, placement and three-bloc
  assert.ok(html.includes('collisionFree(x,y,z,kind)'));
  assert.ok(html.includes('version:13'), 'existing worlds must keep their save schema');
 });
+
+test('Java F3+B hitbox debug shares targeting bounds and includes mobile toggle',()=>{
+ const box=h.box({kind:'cow',x:4,y:2,z:5});
+ const lines=h.wireframe(box);
+ assert.equal(lines.length,24,'twelve debug edges');
+ assert.ok(lines.every(p=>p.length===3&&p.every(Number.isFinite)));
+ assert.ok(Math.abs(h.distanceToBox([0,3,5],box)-3.55)<1e-8);
+ assert.equal(h.distanceToBox([4,3,5],box),0);
+ assert.equal(h.distanceToBox([NaN,0,0],box),Infinity);
+ const html=read('index.html');
+ assert.ok(html.includes('function drawEntityHitboxes()'));
+ assert.ok(html.includes('drawEntityHitboxes();'));
+ assert.ok(html.includes("if(keys.has('F3')){showHitboxes=!showHitboxes"));
+ assert.ok(html.includes("btn.id='mw-hitbox-toggle'"));
+ assert.ok(html.includes('entityHitboxes.rayDistance(eye,dir,'));
+ assert.ok(html.includes("entityHitboxes.box({x:vx,y:v.y,z:vz,kind:'villager'})"));
+ assert.ok(html.includes('entityHitboxes.distanceToBox([player.x,player.y+'));
+});
