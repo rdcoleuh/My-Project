@@ -938,7 +938,11 @@ function addControls(root,title){
  pane.append(heading,help,official,file,looseLabel,loose,folderLabel,folder,rememberLabel,reset,status,detail,audit,preview);root.appendChild(pane);
 }
 addControls(document.querySelector('#pause .mw-render-panel')?.parentNode,'🎨 Local resource pack ZIP: textures + sounds');
-// Title-screen Options is created later; mountOptionsUI() adds it after the DOM exists.
+// The title-screen code runs before this external importer script.
+// Mount the main-menu Bedrock selector and Options panel only after the
+// importer API and the actual title-screen DOM both exist.
+mountDefaultUI(document.querySelector('#mw-menu-root'));
+mountOptionsUI();
 addControls(document.querySelector('#welcome .seed-panel')?.parentNode,'🎨 Import local textures and sounds');
 // Restore only packs the player explicitly opted to remember. Everything
 // stays in this browser's IndexedDB; no network request is made.
