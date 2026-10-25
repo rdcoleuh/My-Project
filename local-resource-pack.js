@@ -11,6 +11,9 @@ if(!META||!META.gl||!META.texture||!META.baseURL){
  return;
 }
 const atlasW=256,atlasH=512,tilePx=16;
+const packStorage=window.MineWorldPackStorage;
+const coverageCallbacks=[];
+let manualImportStarted=false;
 const mappings=new Map();
 const bind=(id,top,side=top,bottom=side)=>mappings.set(id,[top,side,bottom]);
 for(const [id,tex] of Object.entries({
@@ -556,6 +559,7 @@ async function clear(){
  state.active=false;state.sourceName='';state.lastResult=null;
  state.animations=[];state.importedFaces=new Set();state.originalImage=null;state.lastAnimationAt=-Infinity;
  state.tint={grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()};
+ await packStorage?.clear?.();
 }
 // Upload only changed 16×16 tiles. Animated Java PNGs remain on the user's
 // device; a new resource pack or Reset drops every decoded frame immediately.
@@ -654,6 +658,15 @@ function addControls(root,title){
  folder.accept='.png,image/png,.ogg,audio/ogg,.mcmeta,application/json';
  folder.setAttribute('aria-label','Choose extracted Java block textures folder');
  folder.style.cssText='display:block;width:100%;max-width:100%;color:white;font-size:13px;margin:8px 0;';
+ const rememberLabel=document.createElement('label');
+ rememberLabel.style.cssText='display:flex;align-items:center;gap:8px;margin:8px 0;font-size:12px;';
+ const remember=document.createElement('input');remember.type='checkbox';
+ remember.disabled=!packStorage?.supported;
+ const rememberText=document.createElement('span');
+ rememberText.textContent=packStorage?.supported?
+   'Remember this ZIP/JAR on this device (private browser storage)':
+   'Remember pack unavailable in this browser';
+ rememberLabel.append(remember,rememberText);
  const reset=document.createElement('button');reset.type='button';reset.textContent='Restore original art & sounds';reset.className='ui-button';
  reset.style.cssText='min-height:38px;margin:4px 0;';
  const status=document.createElement('p');status.setAttribute('role','status');
@@ -694,39 +707,63 @@ function addControls(root,title){
      preview.appendChild(tile);
    }
  }
+ coverageCallbacks.push(showCoverage);
  file.addEventListener('change',async()=>{
    const selected=file.files?.[0];if(!selected)return;
+   manualImportStarted=true;
    file.disabled=true;loose.disabled=true;folder.disabled=true;reset.disabled=true;status.textContent='Applying your selected local ZIP texture files…';
-   try{showCoverage(await loadFile(selected));}
+   try{
+     const result=await loadFile(selected);
+     const saved=remember.checked?await packStorage?.save?.(selected):false;
+     if(!saved)await packStorage?.clear?.();
+     showCoverage(result);
+     if(saved)status.textContent+=' Your pack is saved only on this device and will reload next visit.';
+     else if(remember.checked)status.textContent+=' This browser could not save the pack; import it again next visit.';
+   }
    catch(e){status.textContent='Could not apply pack: '+e.message;}
    finally{file.disabled=false;loose.disabled=false;folder.disabled=false;reset.disabled=false;file.value='';}
  });
  loose.addEventListener('change',async()=>{
    const files=loose.files;
    if(!files?.length)return;
+   manualImportStarted=true;
    loose.disabled=true;file.disabled=true;folder.disabled=true;reset.disabled=true;
    status.textContent='Matching selected PNG sprites directly by their filenames…';
-   try{showCoverage(await loadFiles(files));}
+   try{showCoverage(await loadFiles(files));await packStorage?.clear?.();}
    catch(e){status.textContent='Could not apply selected images: '+e.message;}
    finally{loose.disabled=false;file.disabled=false;folder.disabled=false;reset.disabled=false;loose.value='';}
  });
  folder.addEventListener('change',async()=>{
    if(!folder.files?.length)return;
+   manualImportStarted=true;
    file.disabled=true;loose.disabled=true;folder.disabled=true;reset.disabled=true;
    status.textContent='Reading your own extracted PNG textures locally…';
-   try{showCoverage(await loadFiles(folder.files));}
+   try{showCoverage(await loadFiles(folder.files));await packStorage?.clear?.();}
    catch(e){status.textContent='Folder import failed: '+e.message;}
    finally{file.disabled=false;loose.disabled=false;folder.disabled=false;reset.disabled=false;folder.value='';}
  });
  reset.addEventListener('click',async()=>{
+   manualImportStarted=true;
    reset.disabled=true;
    try{await clear();status.textContent='Original MineWorld textures and sounds restored; imported files were not saved.';preview.replaceChildren();detail.textContent='';auditText.textContent='';auditSummary.textContent='';audit.open=false;}
    catch(e){status.textContent='Restore failed: '+e.message;}
    finally{reset.disabled=false;}
  });
- pane.append(heading,help,file,looseLabel,loose,folderLabel,folder,reset,status,detail,audit,preview);root.appendChild(pane);
+ pane.append(heading,help,file,looseLabel,loose,folderLabel,folder,rememberLabel,reset,status,detail,audit,preview);root.appendChild(pane);
 }
 addControls(document.querySelector('#pause .mw-render-panel')?.parentNode,'🎨 Local resource pack ZIP: textures + sounds');
 addControls(document.querySelector('#mw-options-screen .mw-settings'),'🎨 Custom Java resource pack (your own texture pixels)');
 addControls(document.querySelector('#welcome .seed-panel')?.parentNode,'🎨 Import local textures and sounds');
+// Restore only packs the player explicitly opted to remember. Everything
+// stays in this browser's IndexedDB; no network request is made.
+if(packStorage?.supported)packStorage.load().then(async stored=>{
+ if(!stored||manualImportStarted||state.active)return;
+ try{
+  const result=await loadFile(stored);
+  if(!manualImportStarted)for(const show of coverageCallbacks)show(result);
+ }catch(error){
+  console.warn('Could not restore saved local resource pack:',error);
+  await packStorage.clear();
+ }
+}).catch(error=>console.warn('Local pack storage unavailable:',error));
 })();
