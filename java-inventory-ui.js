@@ -97,7 +97,20 @@ function install(api){
     render();
    });
   }
-  node(top,'div','mw-java-player','🧍');
+  const playerBox=node(top,'div','mw-java-player');
+  const avatar=node(playerBox,'canvas','mw-java-avatar');
+  avatar.width=24;avatar.height=40;
+  const avatarCtx=avatar.getContext('2d');
+  if(avatarCtx){
+    avatarCtx.imageSmoothingEnabled=false;
+    const box=(x,y,w,h,c)=>{avatarCtx.fillStyle=c;avatarCtx.fillRect(x,y,w,h);};
+    // Original small pixel adventurer; not a copied character sprite.
+    box(7,1,10,3,'#342b25');box(6,4,12,8,'#b9855e');box(6,4,12,2,'#4a3526');
+    box(8,8,2,2,'#233139');box(14,8,2,2,'#233139');
+    box(8,12,8,14,'#3d8b9c');box(5,13,3,15,'#bb8a67');box(16,13,3,15,'#bb8a67');
+    box(9,26,3,11,'#363e68');box(12,26,3,11,'#2b3560');
+    box(8,37,5,3,'#3a3430');box(13,37,4,3,'#3a3430');
+  }
   const util=node(top,'div','mw-java-equipment');
   slot(util,'offhand','Offhand');
   const dock=node(top,'div','mw-java-craft');
@@ -141,14 +154,43 @@ function install(api){
  search.setAttribute('aria-label','Search creative blocks');
  const status=node(modal,'p','mw-java-help','Click a block to assign it to your selected hotbar slot; keys 1–9 change selection.');
  const packButton=node(modal,'button','mw-java-close','Import your own Java Edition texture pack (ZIP/JAR)');packButton.type='button';packButton.addEventListener('click',pickPack);
+ const categories=node(modal,'div','mw-java-tabs');
+ const types=[
+  ['all','All'],['building','Building'],['nature','Nature'],
+  ['ores','Ores'],['nether','Nether'],['end','End'],['stations','Stations']
+ ];
+ for(const [id,label] of types){
+  const b=node(categories,'button','mw-java-tab',label);b.type='button';
+  b.addEventListener('click',()=>{creativeTab=id;creativePage=0;renderCreative();});
+ }
+ const paging=node(modal,'div','mw-java-nav');
+ const prevPage=node(paging,'button','mw-java-close','◀ Previous'),
+       pageLabel=node(paging,'span','mw-java-title',''),
+       nextPage=node(paging,'button','mw-java-close','Next ▶');
+ prevPage.addEventListener('click',()=>{creativePage=Math.max(0,creativePage-1);renderCreative();});
+ nextPage.addEventListener('click',()=>{creativePage++;renderCreative();});
+ const hotPreview=node(modal,'div','mw-java-hot-preview');
  const collection=node(modal,'div','mw-java-creative-grid');
  function renderCreative(){
   const query=search.value.trim().toLowerCase();
-  collection.replaceChildren();let results=0;
+  collection.replaceChildren();hotPreview.replaceChildren();
+  for(const b of categories.querySelectorAll('button'))b.classList.toggle('mw-active',b.textContent===types.find(t=>t[0]===creativeTab)?.[1]);
+  const matches=[];
   for(let id=1;id<=169;id++){
    const name=api.blockName(id);
    if(query&&!name.toLowerCase().includes(query))continue;
-   results++;
+   const ore=[18,19,83,84].includes(id)||id>=95&&id<=108;
+   const type=id>=139?'stations':id>=121&&id<=135?'end':id>=50&&id<=94?'nether':
+      ore?'ores':id>=5&&id<=7||id>=12&&id<=17||id>=21&&id<=49||id===1?'nature':'building';
+   if(creativeTab!=='all'&&creativeTab!==type)continue;
+   matches.push(id);
+  }
+  const maxPage=Math.max(1,Math.ceil(matches.length/54));
+  creativePage=Math.min(creativePage,maxPage-1);
+  pageLabel.textContent=(creativePage+1)+' / '+maxPage+' · '+matches.length+' blocks';
+  prevPage.disabled=creativePage===0;nextPage.disabled=creativePage===maxPage-1;
+  for(const id of matches.slice(creativePage*54,creativePage*54+54)){
+   const name=api.blockName(id);
    const b=node(collection,'button');b.type='button';b.title=name;
    b.setAttribute('aria-label','Add '+name+' to selected hotbar slot');
    const canvas=node(b,'canvas');canvas.width=canvas.height=16;
@@ -160,9 +202,16 @@ function install(api){
      image.data.set(window.MineWorldPixelMaterials.paint(id,0,x,y),(y*16+x)*4);
     ctx.putImageData(image,0,0);
    }else if(!imported&&!ctx)b.textContent='▦';
-   b.addEventListener('click',()=>{api.assignCreative(id);status.textContent=name+' assigned. Select another block or close inventory.';});
+   b.addEventListener('click',()=>{api.assignCreative(id);status.textContent=name+' assigned. Select another block or close inventory.';renderCreative();});
   }
-  if(!results)node(collection,'div','','No blocks found');
+  if(!matches.length)node(collection,'div','','No blocks found');
+  node(hotPreview,'span','mw-java-title','Selected hotbar:');
+  for(let i=0;i<9;i++){
+   const b=node(hotPreview,'button','mw-java-hot-tile'+(i===api.activeCreativeSlot()?' mw-active':''));
+   b.type='button';b.textContent=String(i+1);
+   b.title='Select hotbar slot '+(i+1);
+   b.addEventListener('click',()=>{api.selectCreative(i);renderCreative();});
+  }
  }
  const packFile=node(modal,'input');packFile.type='file';packFile.accept='.zip,.jar,application/zip,application/java-archive';packFile.style.display='none';packFile.setAttribute('aria-label','Choose a local Java Edition resource pack');
  function pickPack(){if(!window.MineWorldLocalTextures){status.textContent='Start a world to enable local resource pack textures.';return;}packFile.click();}
@@ -175,7 +224,7 @@ function install(api){
    }catch(error){status.textContent='Could not import pack: '+error.message;}
    finally{packFile.value='';}
  });
- search.addEventListener('input',renderCreative);
+ search.addEventListener('input',()=>{creativePage=0;renderCreative();});
  function openCreative(){creativeOpen=true;overlay.classList.add('mw-open');renderCreative();search.focus();}
  function closeCreative(){creativeOpen=false;overlay.classList.remove('mw-open');search.blur();api.onCreativeClose?.();}
  function keydown(e){
