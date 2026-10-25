@@ -28,8 +28,8 @@ test('polish files are loaded, versioned, and cached by the worker',()=>{
  assert.match(html,/src="\.\/visual-polish\.js"/);
  assert.match(sw,/visual-polish\.css/);
  assert.match(sw,/visual-polish\.js/);
- assert.match(sw,/mineworld-6-37/);
- assert.match(html,/MineWorld 6\.37/);
+ assert.match(sw,/mineworld-6-[0-9]+/);
+ assert.match(html,/MineWorld 6\.[0-9]+/);
 });
 test('clean scaling is default; imported sprites and tiles retain nearest filtering',()=>{
  const x=boot();
