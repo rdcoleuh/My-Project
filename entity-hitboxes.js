@@ -95,6 +95,17 @@ function rayDistance(origin,direction,bounds,maxDistance=Infinity){
  }
  return entry<=maxDistance?entry:null;
 }
+function wireframe(bounds){
+ if(!bounds)return [];
+ const corners=[
+  [bounds.minX,bounds.minY,bounds.minZ],[bounds.maxX,bounds.minY,bounds.minZ],
+  [bounds.maxX,bounds.maxY,bounds.minZ],[bounds.minX,bounds.maxY,bounds.minZ],
+  [bounds.minX,bounds.minY,bounds.maxZ],[bounds.maxX,bounds.minY,bounds.maxZ],
+  [bounds.maxX,bounds.maxY,bounds.maxZ],[bounds.minX,bounds.maxY,bounds.maxZ]
+ ];
+ const pairs=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+ return pairs.flatMap(([a,b])=>[corners[a],corners[b]]);
+}
 // World collision test, conservatively checks *all* occupied X/Z columns.
 // blockShape(blockId) supplies one existing block collision cuboid.
 function canOccupy(entity,blockAt,blockShape,collidable,worldBounds){
@@ -118,5 +129,5 @@ function canOccupy(entity,blockAt,blockShape,collidable,worldBounds){
    }
  return true;
 }
-window.MineWorldEntityHitboxes=Object.freeze({DATA,dimensions,box,intersects,rayDistance,canOccupy});
+window.MineWorldEntityHitboxes=Object.freeze({DATA,dimensions,box,intersects,rayDistance,wireframe,canOccupy});
 })();
