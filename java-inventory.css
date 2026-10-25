@@ -67,3 +67,7 @@
 .mw-java-creative-panel .mw-java-creative-grid button{position:relative}
 .mw-java-creative-panel .mw-java-creative-grid button:active{filter:brightness(1.25)}
 @media(max-width:560px){.mw-java-player{flex-basis:62px;min-height:82px}.mw-java-avatar{width:44px;height:75px}.mw-java-top{gap:6px}.mw-java-craft{flex-basis:230px;max-width:100%}.mw-java-creative-panel{max-height:91dvh}.mw-java-hot-tile{width:26px;height:26px}.mw-java-tabs button{font-size:10px;padding:4px 5px}}
+
+.mw-java-slot.mw-spread-over{outline:3px solid #87ee88;outline-offset:-2px;background:#a0ba9a}
+.mw-java-pack-button:focus-visible,.mw-java-tab:focus-visible{outline:3px solid #f1c94b}
+.mw-java-slot{user-select:none;-webkit-user-select:none}
