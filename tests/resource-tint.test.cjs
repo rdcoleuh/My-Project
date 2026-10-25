@@ -27,13 +27,13 @@ test('already-colorized Java resource pack sprites are never recolored',()=>{
  assert.equal(tint(a.ctx,0,0,1,0),false);
  assert.equal(a.state.written,null);
 });
-test('vanilla side grass only tints top few pixels, not dirt below',()=>{
+test('Java grass side base stays untinted; separate overlay carries green',()=>{
  const side=pixelContext([120,120,120]);
- assert.equal(tint(side.ctx,0,0,1,1),true);
- assert.equal(side.state.h,5);
- const dirt=pixelContext([131,87,51]);
- assert.equal(tint(dirt.ctx,0,0,1,1),false);
- assert.equal(dirt.state.written,null);
+ assert.equal(tint(side.ctx,0,0,1,1),false);
+ assert.equal(side.state.written,null);
+ const bottom=pixelContext([131,87,51]);
+ assert.equal(tint(bottom.ctx,0,0,1,2),false);
+ assert.equal(bottom.state.written,null);
 });
 test('neutral leaf assets tint and stone/dirt resource pack art does not',()=>{
  const leaves=pixelContext([180,180,180]);
