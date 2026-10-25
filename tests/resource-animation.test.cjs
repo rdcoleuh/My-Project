@@ -88,6 +88,14 @@ test('player-supplied animated PNG updates only changed GPU tiles and resets saf
  }));
  const pack=window.MineWorldLocalTextures;
  assert.equal(pack.textureName(169,2),'red_wool','Wool bottom must never become oak planks');
+ assert.equal(pack.textureName(137,0),'farmland');
+ assert.equal(pack.textureName(137,1),'dirt','Dry farmland side uses vanilla dirt');
+ assert.equal(pack.textureName(138,2),'dirt','Wet farmland underside uses vanilla dirt');
+ assert.equal(pack.textureName(58,0),'deepslate_top','Deepslate top is distinct from sides');
+ assert.equal(pack.textureName(58,1),'deepslate');
+ assert.equal(pack.textureName(54,1),'chiseled_sandstone');
+ assert.equal(pack.textureName(54,0),'sandstone_top');
+ assert.equal(pack.textureName(167,0),'grindstone_round');
  const result=await pack.loadFiles(input);
  assert.equal(result.animatedFaces,3);
  assert.equal(pack.animatedFaces,3);
