@@ -1,3 +1,11 @@
+## 6.42 — quarter-turn Java default blockstates (October 25, 2026)
+
+For player-supplied Java Edition blockstate JSON, MineWorld now accepts default cube-model variants with supported `y` rotations (0°, 90°, 180°, and 270°). Their north/south/east/west textures map to the correct world sides, and the UV direction of top/bottom faces accounts for the turn unless `uvlock` is set. All transformations use imported local PNGs at nearest-neighbor sampling. The block's placement orientation is still fixed; variable per-placement facing, rotated X/Z blockstates, multipart models, and non-cube geometry are not supported. World save keys and block IDs are unchanged.
+
+## 6.41 — player-imported Java cube face UVs (October 25, 2026)
+
+MineWorld can now apply source `models/block/*.json` face `uv` rectangles and `rotation` values to loaded full-cube blocks. It crops, flips, and rotates UV coordinates rather than resampling the bitmap, so player-supplied textures retain sharp pixels. Missing or malformed artwork leaves MineWorld's existing fallback intact, and restoring original art clears imported transforms.
+
 # MineWorld — Player-supplied Java resource packs and animation
 
 ## 6.36 — read Java blockstate defaults from player-selected archives (October 25, 2026)

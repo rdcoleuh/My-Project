@@ -46,7 +46,7 @@ const DEFAULT_STATE=Object.freeze({
  attachment:'floor',face:'floor',rotation:'0',hinge:'left',
  occupied:'false',enabled:'true',shape:'straight'
 });
-function stateModel(data){
+function stateVariant(data){
  const variants=data?.variants;
  if(!variants||typeof variants!=='object'||Array.isArray(variants))return null;
  const choices=Object.entries(variants).filter(([key])=>
@@ -59,21 +59,28 @@ function stateModel(data){
  for(const [,variant] of choices){
   const candidate=Array.isArray(variant)?variant[0]:variant;
   if(!candidate||typeof candidate!=='object'||Array.isArray(candidate))continue;
-  if((candidate.x??0)!==0||(candidate.y??0)!==0)continue;
-  const path=modelPath(candidate.model);
-  if(path)return path;
+  const y=candidate.y??0;
+  // Only Y-axis quarter turns preserve a full cube without changing its
+  // collision bounds. X/Z-rotated and multipart models still fall back.
+  if((candidate.x??0)!==0||(candidate.z??0)!==0||
+      !Number.isInteger(y)||![0,90,180,270].includes(y))continue;
+  const name=modelPath(candidate.model);
+  if(name)return {name,y,uvlock:candidate.uvlock===true};
  }
  return null;
 }
+function stateModel(data){return stateVariant(data)?.name||null;}
 async function resolve(zip,modelName){
- let start=clean(modelName);
+ let start=clean(modelName),turns=0,uvlock=false;
  if(!start||!zip?.entries||typeof zip.get!=='function')return null;
  if(zip.entries.has('state:'+start)){
   try{
    const bytes=await zip.get('state:'+start);
    if(bytes&&bytes.length<=131072){
-    const preferred=stateModel(JSON.parse(new TextDecoder().decode(bytes)));
-    if(preferred&&zip.entries.has('model:'+preferred))start=preferred;
+    const preferred=stateVariant(JSON.parse(new TextDecoder().decode(bytes)));
+    if(preferred&&zip.entries.has('model:'+preferred.name)){
+      start=preferred.name;turns=preferred.y/90;uvlock=preferred.uvlock;
+    }
    }
   }catch(_){/* Malformed optional blockstates cannot break texture imports. */}
  }
@@ -121,8 +128,13 @@ async function resolve(zip,modelName){
   }
   return texturePath(value);
  };
+ const compass=['north','east','south','west'];
+ const sourceFace=dir=>{
+  const index=compass.indexOf(dir);
+  return index<0?dir:compass[(index-turns+4)%4];
+ };
  const field=(dir,keys)=>{
-  const exact=data.faces?.[dir]?.texture;
+  const exact=data.faces?.[sourceFace(dir)]?.texture;
   if(typeof exact==='string')return follow(exact);
   for(const key of keys)if(typeof data.textures[key]==='string'){
    const value=follow('#'+key);if(value)return value;
@@ -145,10 +157,13 @@ async function resolve(zip,modelName){
  // samples the exact local PNG pixels; the bitmap is never rotated or blurred.
  const faceUV={};
  for(const dir of ['up','down',...dirs]){
-  const face=data.faces?.[dir];
+  const face=data.faces?.[sourceFace(dir)];
   if(!face||typeof face!=='object')continue;
-  const rotation=face.rotation??0,uv=face.uv;
-  if(!Number.isInteger(rotation)||![0,90,180,270].includes(rotation))continue;
+  const baseRotation=face.rotation??0,uv=face.uv;
+  const modelTurn=!uvlock&&dir==='up'?turns*90:
+     !uvlock&&dir==='down'?((4-turns)%4)*90:0;
+  const rotation=(baseRotation+modelTurn)%360;
+  if(!Number.isInteger(baseRotation)||![0,90,180,270].includes(baseRotation))continue;
   if(uv!==undefined&&(!Array.isArray(uv)||uv.length!==4||
    !uv.every(n=>Number.isFinite(n)&&n>=0&&n<=16)))continue;
   if(rotation||uv)faceUV[dir]={rotation,uv:uv?[...uv]:[0,0,16,16]};
@@ -156,5 +171,5 @@ async function resolve(zip,modelName){
  if(Object.keys(faceUV).length)result.faceUV=faceUV;
  return result.sides||Object.values(result).some(Boolean)?result:null;
 }
-window.MineWorldJavaModelFaces=Object.freeze({nameFor,resolve,modelPath,texturePath,stateModel});
+window.MineWorldJavaModelFaces=Object.freeze({nameFor,resolve,modelPath,texturePath,stateModel,stateVariant});
 })();

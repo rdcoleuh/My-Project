@@ -42,7 +42,8 @@ test('malformed, modded and missing blockstates preserve direct model fallback',
  assert.equal((await m.resolve(pack,'stone')).top,'block:stone');
  pack.entries.set('state:stone',Uint8Array.from([255]));
  assert.equal((await m.resolve(pack,'stone')).bottom,'block:stone');
- assert.equal(m.stateModel({variants:{'':{model:'minecraft:block/stone',y:90}}}),null);
+ assert.equal(m.stateModel({variants:{'':{model:'minecraft:block/stone',y:90}}}),'stone');
+ assert.equal(m.stateModel({variants:{'':{model:'minecraft:block/stone',x:90}}}),null);
 });
 function archive(files){
  const local=[],central=[];let offset=0;
@@ -76,4 +77,47 @@ test('ZIP importer reads only vanilla Java blockstate JSON, including root packs
  assert.equal(Buffer.from(await packed.get('state:stone')).toString(),Buffer.from(data).toString());
  assert.equal(Buffer.from(await packed.get('state:dirt')).toString(),Buffer.from(data).toString());
  assert.equal(packed.entries.has('state:evil'),false);
+});
+
+test('default state Y rotation maps imported Java north/south/east/west cube art correctly',async()=>{
+ const m=resolver();
+ const model={elements:[{from:[0,0,0],to:[16,16,16],faces:{
+  up:{texture:'#top',rotation:90},down:{texture:'#top'},
+  north:{texture:'#north'},south:{texture:'#south'},
+  east:{texture:'#east'},west:{texture:'#west'}
+ }}],textures:{
+  top:'minecraft:block/top',north:'minecraft:block/north',
+  south:'minecraft:block/south',east:'minecraft:block/east',west:'minecraft:block/west'
+ }};
+ const pack=zip(Object.fromEntries([
+  ['state:furnace',enc({variants:{
+   'facing=north':{model:'minecraft:block/cube_custom',y:90},
+   'facing=south':{model:'minecraft:block/cube_custom',y:0}
+  }})],['model:cube_custom',enc(model)],
+  ...['top','north','south','east','west'].map(n=>['block:'+n,Uint8Array.from([1])])
+ ]));
+ const result=await m.resolve(pack,'furnace');
+ // Positive 90° Y: source north points east, source west points north.
+ assert.equal(result.sides.east,'block:north');
+ assert.equal(result.sides.north,'block:west');
+ assert.equal(result.sides.south,'block:east');
+ assert.equal(result.sides.west,'block:south');
+ assert.equal(result.faceUV.up.rotation,180);
+ assert.equal(result.faceUV.down.rotation,270);
+ assert.equal(m.stateVariant({variants:{'':{model:'minecraft:block/cube_custom',y:90}}}).y,90);
+});
+test('uvlock leaves top texture orientation fixed when a default blockstate rotates',async()=>{
+ const m=resolver();
+ const pack=zip({
+  'state:stone':enc({variants:{'':{model:'minecraft:block/custom',y:270,uvlock:true}}}),
+  'model:custom':enc({textures:{all:'minecraft:block/stone'},
+   elements:[{from:[0,0,0],to:[16,16,16],faces:{
+     up:{texture:'#all',rotation:90},north:{texture:'#all'},east:{texture:'#all'},
+     south:{texture:'#all'},west:{texture:'#all'},down:{texture:'#all'}
+   }}]}),
+  'block:stone':Uint8Array.from([1])
+ });
+ const result=await m.resolve(pack,'stone');
+ assert.equal(result.faceUV.up.rotation,90);
+ assert.equal(result.faceUV.down,undefined);
 });
