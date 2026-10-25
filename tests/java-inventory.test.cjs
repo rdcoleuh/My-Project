@@ -77,6 +77,49 @@ test('closing inventory returns cursor stack without losing items',()=>{
  assert.equal(model.stackAt(0).qty,17);
  assert.equal(count(store),17);uniq(model);
 });
+test('double click collects matching stacks up to 64 with no duplication',()=>{
+ const {store,model}=create();
+ store.add('block:3',130);model.normalize();
+ assert.equal(model.stackAt(2).qty,2);
+ model.click(2);assert.equal(model.cursorStack().qty,2);
+ assert.equal(model.collect(2),true);
+ assert.equal(model.cursorStack().qty,64);
+ assert.equal(count(store),130);
+ uniq(model);
+});
+test('left and right cursor dragging distributes items and keeps exact totals',()=>{
+ const {store,model}=create();store.add('block:3',20);model.normalize();
+ model.click(0);assert.equal(model.distribute([1,2,3],false),true);
+ for(const pos of [1,2,3])assert.equal(model.stackAt(pos).qty,6);
+ assert.equal(model.cursorStack().qty,2);
+ assert.equal(model.distribute([4,5],true),true);
+ assert.equal(model.stackAt(4).qty,1);
+ assert.equal(model.stackAt(5).qty,1);
+ assert.equal(model.cursorStack(),null);
+ assert.equal(count(store),20);uniq(model);
+});
+test('cursor distribution respects 64 cap and avoids incompatible stacks',()=>{
+ const {store,model}=create();
+ store.add('block:3',75);store.add('block:4',1);
+ model.normalize();
+ const original=store.count('block:3')+store.count('block:4');
+ model.click(1); // 11 stones on cursor
+ assert.equal(model.distribute([0,2],false),true);
+ assert.equal(model.stackAt(0).qty,64);
+ assert.equal(model.stackAt(2).qty,5);
+ assert.equal(model.cursorStack().qty,6);
+ assert.equal(store.count('block:3')+store.count('block:4'),original);
+ uniq(model);
+});
+test('creative UI supports paged categories and imported previews remain visible',()=>{
+ const ui=read('java-inventory-ui.js');
+ for(const needle of ['mw-java-tabs','creativePage','creativeTab','activeCreativeSlot','renderCreative()',
+  'window.MineWorldLocalTextures?.active','else if(!imported&&!ctx)','dblclick','model.collect(pos)','touchSplit',
+  'api.armorType(s.key)'])assert.ok(ui.includes(needle),'Missing '+needle);
+ const css=read('java-inventory.css');
+ for(const rule of ['.mw-java-hot-preview','.mw-java-tabs','.mw-java-avatar','.mw-java-item-detail'])
+  assert.ok(css.includes(rule),'Missing style '+rule);
+});
 test('main game saves slot positions, restores old saves, loads UI, and preserves gameplay',()=>{
  const html=read('index.html'),sw=read('sw.js'),ui=read('java-inventory-ui.js');
  for(const needle of ['javaInventory:javaInventory.snapshot()','javaInventory.restore(s.javaInventory)',
