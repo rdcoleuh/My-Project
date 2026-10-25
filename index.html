@@ -1831,8 +1831,14 @@ body.in-nether #game-wrap{background:#290f19}
         const swatch=document.createElement('div');swatch.className='swatch';
         const tile=id*3,tx=((tile%16)/15*100).toFixed(2),ty=(Math.floor(tile/16)/31*100).toFixed(2);
         swatch.style.backgroundColor=SWATCH[id]||'#777';
-        swatch.style.backgroundImage='url('+window.MineWorldAtlas.dataURL+')';
-        swatch.style.backgroundSize='1600% 3200%';swatch.style.backgroundPosition=tx+'% '+ty+'%';
+        const imported=window.MineWorldLocalTextures?.active;
+        if(imported){
+          const sprite=document.createElement('canvas');sprite.className='mw-imported-swatch';sprite.width=sprite.height=16;
+          if(window.MineWorldLocalTextures.drawFace(sprite.getContext('2d'),id,0))swatch.appendChild(sprite);
+        }else{
+          swatch.style.backgroundImage='url('+window.MineWorldAtlas.dataURL+')';
+          swatch.style.backgroundSize='1600% 3200%';swatch.style.backgroundPosition=tx+'% '+ty+'%';
+        }
         if(survival&&count>0)swatch.appendChild(qty);
         button.appendChild(swatch);
       }else{
