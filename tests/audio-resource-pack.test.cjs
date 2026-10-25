@@ -145,3 +145,32 @@ test('game wires sound events, imported texture atlas, original save keys and of
  for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))if(m[1].trim())new Function(m[1]);
  assert.ok(readme.length>100);
 });
+
+test('Java JAR import ignores modded namespaces while accepting vanilla, nested and legacy paths',async()=>{
+ const src=read('local-resource-pack.js');
+ const body=src.match(/function readArchive\(buffer\)\{[\s\S]*?(?=\nfunction imageFromPng)/)?.[0];
+ assert.ok(body,'ZIP parser should be accessible for regression tests');
+ const parse=vm.runInNewContext(body+'\nreadArchive',{
+  ArrayBuffer,DataView,Uint8Array,TextDecoder,Blob,DecompressionStream,Math,Error
+ });
+ const archive=packZip([
+  ['assets/minecraft/textures/block/stone.png',[1,2,3]],
+  ['assets/othermod/textures/block/stone.png',[9,9,9]],
+  ['assets/othermod/textures/block/lapis_block.png',[9]],
+  ['pack/assets/minecraft/textures/blocks/grass_side.png',[4]],
+  ['textures/block/farmland.png',[5]],
+  ['assets/minecraft/textures/block/water_still.png.mcmeta',[123,125]],
+  ['assets/othermod/textures/colormap/grass.png',[7]],
+  ['assets/minecraft/textures/colormap/foliage.png',[8]],
+  ['assets/minecraft/sounds/block/stone/break1.ogg',[79,103,103,83]],
+  ['assets/othermod/sounds/block/stone/extra.ogg',[79,103,103,83]]
+ ]);
+ const zip=parse(archive);
+ const keys=[...zip.entries.keys()];
+ assert.deepEqual([...await zip.get('stone')],[1,2,3],
+  'Modded stone must never override Minecraft vanilla stone');
+ for(const key of ['grass_side','farmland','meta:water_still','colormap:foliage','sound:block/stone/break1'])
+  assert.ok(keys.includes(key),'Missing valid Java resource '+key);
+ for(const key of ['lapis_block','colormap:grass','sound:block/stone/extra'])
+  assert.equal(keys.includes(key),false,'Leaked resource from other mod namespace: '+key);
+});
