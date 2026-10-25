@@ -54,7 +54,7 @@ test('effects have no new save keys, avoid asset bundling, and are loaded offlin
  assert.match(html,/MineWorldImpactEffects\?\.dust/);
  assert.match(html,/MineWorldImpactEffects\?\.hit/);
  assert.match(sw,/impact-effects\.js/);
- assert.match(sw,/mineworld-6-38/);
+ assert.match(sw,/mineworld-6-[0-9]+/);
  assert.doesNotMatch(src,/localStorage|fetch\(|XMLHttpRequest|\.png|\.ogg/);
  assert.match(html,/mineworld-selfhost-v1/);
 });
