@@ -1,3 +1,21 @@
+# MineWorld 6.5 — Stronger Classic Block Silhouettes
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+This release goes beyond 6.4's small pixel highlights. A new, locally generated `texture-classic-forms.js` layer **redraws more than 60 iconic block variants**, with deliberately arranged original 16×16 shapes and distinct faces. The rest of the 169-block catalog keeps its existing 6.4 detail stack.
+
+- **Terrain:** More legible green grass blades and dirt side, clustered natural stone, variegated sand, irregular gravel and cobblestone fieldstones.
+- **Building:** Tighter horizontal plank grain, clear staggered mortar lines for clay/stone/Nether/End bricks, and layered sandstone.
+- **Trees:** Species-specific bark and tree-ring patterns, bright birch scars, clumpy foliage colors and preserved leaf cutouts.
+- **Minerals:** Chunky, angular mineral inclusions in separate stone and deepslate hosts for coal, iron, copper, gold, redstone, lapis, diamond and emerald.
+- **Special materials:** Clear glass reflections, deeper obsidian, distinct Nether rock patterns and pitted End stone.
+
+No proprietary Minecraft/Eaglercraft texture files are copied. This is standalone original artwork inspired by the recognizable block categories. Players with their own compatible Java resource pack can use the existing in-browser custom resource-pack importer for actual licensed/personal texture assets.
+
+**Compatibility:** Block IDs, world data and save keys, the original resource-pack importer, crafting and workstation imagery, movement, animation and gameplay modules are not migrated or replaced. Existing worlds should continue loading. The full **76-test GitHub Actions regression suite passed**, including new checks for all 169 materials and top/side/bottom faces, crop transparency, distinct rock-host ores, save wiring, mobile/offline precaching and unique block-side signatures. GitHub Pages deployed successfully.
+
+---
+
 # MineWorld 6.4 — 169-Block Pixel Microdetail Pass
 
 **Play:** https://rdcoleuh.github.io/My-Project/
