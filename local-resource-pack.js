@@ -117,6 +117,50 @@ const aliases={
  dark_oak_log:['log_big_oak'],dark_oak_log_top:['log_big_oak_top'],dark_oak_planks:['planks_big_oak'],dark_oak_leaves:['leaves_big_oak'],
  stone_bricks:['stonebrick'],bricks:['brick'],nether_bricks:['nether_brick'],sandstone:['sandstone_normal']
 };
+// Legacy Java Edition (pre-flattening) filenames. Match player-owned older
+// client JARs without renaming their assets or bundling any original artwork.
+// Modern names always win because resolveName() tries the canonical key first.
+Object.assign(aliases,{
+ furnace_front:['furnace_front_off'],
+ crafting_table_top:['workbench_top'],
+ crafting_table_front:['workbench_front'],
+ crafting_table_side:['workbench_side'],
+ packed_ice:['ice_packed'],
+ terracotta:['hardened_clay'],
+ red_terracotta:['hardened_clay_stained_red'],
+ red_sand:['sand_red'],
+ coarse_dirt:['dirt_coarse'],
+ podzol_top:['dirt_podzol_top'],
+ podzol_side:['dirt_podzol_side'],
+ red_mushroom:['mushroom_red'],
+ red_mushroom_block:['mushroom_block_skin_red'],
+ brown_mushroom_block:['mushroom_block_skin_brown'],
+ chiseled_sandstone:['sandstone_carved'],
+ prismarine:['prismarine_rough'],
+ nether_quartz_ore:['quartz_ore'],
+ nether_wart_stage2:['nether_wart_stage_2'],
+ end_stone_bricks:['end_bricks'],
+ nether_portal:['portal'],
+ red_wool:['wool_colored_red'],
+ farmland:['farmland_dry'],
+ farmland_moist:['farmland_wet'],
+ wheat_stage0:['wheat_stage_0','crops_0'],
+ wheat_stage2:['wheat_stage_2','crops_2'],
+ wheat_stage4:['wheat_stage_4','crops_4'],
+ wheat_stage7:['wheat_stage_7','crops_7'],
+ carrots_stage0:['carrots_stage_0'],
+ carrots_stage1:['carrots_stage_1'],
+ carrots_stage2:['carrots_stage_2'],
+ carrots_stage3:['carrots_stage_3'],
+ potatoes_stage0:['potatoes_stage_0'],
+ potatoes_stage1:['potatoes_stage_1'],
+ potatoes_stage2:['potatoes_stage_2'],
+ potatoes_stage3:['potatoes_stage_3'],
+ beetroots_stage0:['beetroots_stage_0'],
+ beetroots_stage1:['beetroots_stage_1'],
+ beetroots_stage2:['beetroots_stage_2'],
+ beetroots_stage3:['beetroots_stage_3']
+});
 function textureName(id,face){
  const def=mappings.get(id);
  return def?def[face]:(normalize(names[id])||null);
