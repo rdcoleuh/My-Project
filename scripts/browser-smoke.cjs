@@ -137,6 +137,22 @@ async function go(browser,name,mobile){
   await play.click({timeout:20000});
   await page.waitForFunction(()=>document.querySelector('#welcome')?.classList.contains('hidden'),null,{timeout:25000});
   await page.waitForTimeout(600);
+  // Verify actual displacement, not merely that the Play screen opens.
+  const before=await page.evaluate(()=>window.MineWorldBridge.getPlayer());
+  if(!mobile){
+    await page.keyboard.down('w');await page.waitForTimeout(850);await page.keyboard.up('w');
+  }else{
+    const area=await page.locator('#joystick').boundingBox();
+    assert.ok(area,name+': touch joystick not visible');
+    const x=area.x+area.width/2,y=area.y+area.height/2;
+    await page.mouse.move(x,y);await page.mouse.down();
+    await page.mouse.move(x,y-area.height*.36,{steps:4});
+    await page.waitForTimeout(850);await page.mouse.up();
+  }
+  const after=await page.evaluate(()=>window.MineWorldBridge.getPlayer());
+  assert.ok(Math.hypot(after.x-before.x,after.z-before.z)>.14,
+    name+': movement was blocked by collision or controls ('+
+      JSON.stringify({before,after})+')');
   if(!mobile){
     // Chrome redirects all pointer events to the canvas while pointer-locked.
     // ESC should open Pause; if Chrome consumes it to unlock, use the button.
@@ -153,7 +169,7 @@ async function go(browser,name,mobile){
   await page.locator('#home-btn').click();
   await page.locator('#mw-menu-root.active').waitFor({state:'visible',timeout:15000});
   if(errors.length)throw Error(name+' browser console/runtime errors:\n'+errors.slice(0,8).join('\n'));
-  process.stdout.write(name+': Bedrock ZIP import/persistent reload, five menu actions, gameplay, pause and return passed\n');
+  process.stdout.write(name+': Bedrock ZIP import/persistent reload, real movement, menu actions, gameplay, pause and return passed\n');
  }finally{await context.close();}
 }
 (async()=>{
