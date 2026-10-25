@@ -42,7 +42,8 @@ test('every new mob has an original block model within budget and finite color/p
 });
 test('new mobs obey region filters and swimming tags',()=>{
  assert.equal(mobs.pickBiome('Swamp',0), 'frog');
- assert.equal(mobs.pickBiome('Desert',0), 'armadillo');
+ assert.equal(mobs.pickBiome('Desert',0), 'rabbit');
+ assert.equal(mobs.pickBiome('Savanna',0), 'armadillo');
  assert.equal(mobs.pickBiome('Mushroom Fields',0), 'mooshroom');
  assert.equal(mobs.pickBiome('Swamp',0,true), 'bogged');
  assert.equal(mobs.pickBiome('Snowy Plains',0,true), 'stray');
