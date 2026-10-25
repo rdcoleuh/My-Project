@@ -41,6 +41,9 @@ test('neutral leaf assets tint and stone/dirt resource pack art does not',()=>{
  const soil=pixelContext([180,180,180]);
  assert.equal(tint(soil.ctx,0,0,2,0),false);
 });
+test('optional tint safely skips low-feature browser canvases',()=>{
+ assert.equal(tint({drawImage(){}},0,0,1,0),false);
+});
 test('resource files stay local, ZIP sprite matching still wired to atlas',()=>{
  new Function(src);
  assert.ok(src.includes('tintNeutralSprite(ctx,column*16,row*16,id,face)'));
