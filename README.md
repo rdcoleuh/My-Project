@@ -1,3 +1,13 @@
+# MineWorld 6.33 — Sharper 16px Blocks and Face-Correct Mob Skins
+
+- **Player-owned entity skins:** Added per-cuboid head, body, and leg/arm face-sheet UV rectangles for six shared legacy-format species: cow, pig, sheep, creeper, zombie, and skeleton. The new atlas uses isolated nearest-neighbor 16px face tiles rather than stretching the same small head sample over every body part. Face-corner orientation is adapted separately for animals and hostile cuboids, preserving source top/front/back orientation. Creepers now visibly have four separately mapped legs. Existing procedural models and unsupported imported skin layouts retain fallback art.
+- **Sharper fallback blocks:** Reduced isolated randomized bright/dark speckles and shifted common grass, dirt, stone, sand, gravel, bricks, planks and other explicitly detailed materials toward readable multi-pixel clusters. Imported Java/Bedrock bitmaps still override all fallback art and are not modified by these changes. The classic nearest-neighbor filter remains the default.
+- **Verification:** Added synthetic UV dimension, per-face orientation, palette/atlas restoration, and desktop/mobile Chrome pack-restore tests with a generated 64x32 skin. The existing real keyboard/touch movement smoke tests and save-format regression tests remain enabled.
+
+**Unfinished and not claimed:** This does not implement original Bedrock geometry and UV layouts for every mob (especially newer entity versions, TGA-only skins and unusual multi-part models); the six known map layouts are based on classic cuboid skin sheets. Nor does it establish pixel-for-pixel parity for all block models, 169 fallback tiles, armor layers, or unverified phone/GPU configurations. No original Minecraft bitmaps or proprietary source files were bundled.
+
+---
+
 # MineWorld 6.31 — Bedrock Mob Skins, Item Art and Movement Recovery
 
 **Player movement:** Added a safe blocked-position recovery when starting/resuming a world, preserving the existing world, inventory, saved block edits and entity IDs. The updated browser smoke runner verifies physical movement by WASD in desktop Chrome and touch joystick drag in emulated mobile Chrome, rather than just loading the world. This does not prove every location in an existing saved world is navigable.
