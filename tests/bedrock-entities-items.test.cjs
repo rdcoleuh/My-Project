@@ -29,6 +29,8 @@ test('Bedrock entity subfolders and item files are recognized without mod namesp
  const files=[
   ['resource_pack/textures/entity/cow/cow.png',fakePng],
   ['resource_pack/textures/entity/creeper/creeper.png',fakePng],
+  ['resource_pack/textures/entity/pig/pig_v3.png',fakePng],
+  ['resource_pack/entity/pig.entity.json',Buffer.from(JSON.stringify({'minecraft:client_entity':{description:{textures:{default:'textures/entity/pig/pig_v3'}}}}))],
   ['resource_pack/textures/items/diamond.png',fakePng],
   ['assets/othermod/textures/entity/cow/cow.png',[99]],
   ['assets/minecraft/textures/entity/zombie/zombie.png',fakePng],
@@ -36,7 +38,7 @@ test('Bedrock entity subfolders and item files are recognized without mod namesp
  ];
  const archive=reader(zip(files));
  for(const key of ['entity:cow/cow','entity:creeper/creeper','entity:zombie/zombie',
-  'entity:spider/spider','item:diamond'])assert.ok(archive.entries.has(key),key);
+  'entity:spider/spider','entity:pig/pig_v3','entity-def:pig','item:diamond'])assert.ok(archive.entries.has(key),key);
  assert.deepEqual([...await archive.get('entity:cow/cow')], [...fakePng]);
 });
 test('player-owned mob skins and dropped item PNGs feed the runtime atlas and reset safely',async()=>{
@@ -60,7 +62,7 @@ test('player-owned mob skins and dropped item PNGs feed the runtime atlas and re
  const window={MineWorldAtlas:{dataURL:'data:image/png;base64,dummy'},
   MineWorldResourcePackContext:{gl,texture:{},baseURL:'data:image/png;base64,dummy'},
   MineWorldBlockGuide:{names:Array(170).fill('unknown_block')},
-  MineWorldMobPixels:{kinds:['cow','creeper','zombie','vehicle'],
+  MineWorldMobPixels:{kinds:['cow','creeper','zombie','pig','vehicle'],
    applyImported(entries){imports.push(new Map(entries));return entries.size;}},
   MineWorldSound:{clearSamples(){}},MineWorldBridge:{refreshTextureUI(){}}};
  const ctx={window,document:{createElement:()=>new FakeCanvas(),querySelector:()=>null},
@@ -71,14 +73,17 @@ test('player-owned mob skins and dropped item PNGs feed the runtime atlas and re
  const file={name:'player-bedrock.zip',arrayBuffer:async()=>zip([
   ['resource_pack/textures/entity/cow/cow.png',fakePng],
   ['resource_pack/textures/entity/creeper/creeper.png',fakePng],
+  ['resource_pack/textures/entity/pig/pig_v3.png',fakePng],
+  ['resource_pack/entity/pig.entity.json',Buffer.from(JSON.stringify({'minecraft:client_entity':{description:{textures:{default:'textures/entity/pig/pig_v3'}}}}))],
   ['resource_pack/textures/items/diamond.png',fakePng]
  ])};
  const result=await window.MineWorldLocalTextures.loadFile(file);
- assert.equal(result.entities,2);
+ assert.equal(result.entities,3);
  assert.equal(result.items,1);
  assert.equal(result.worldItemSprites,1);
  assert.equal(imports.length,1);
  assert.ok(imports[0].has('cow'));assert.ok(imports[0].has('creeper'));
+ assert.ok(imports[0].has('pig'),'modern pig_v3 client-entity path must resolve');
  assert.ok(imports[0].has('item:diamond'));
  const icon=await window.MineWorldLocalTextures.itemIcon('diamond');
  assert.ok(icon.startsWith('data:image/png;'));
