@@ -1,3 +1,15 @@
+# MineWorld 6.25 — Bedrock Animated Tiles and Fixed Face Orientation
+
+The game now recognizes **Bedrock flipbook animation metadata** from a player-selected Mojang resource pack, including the official full `bedrock-samples` ZIP. It reads `resource_pack/textures/flipbook_textures.json` (or `textures/flipbook_textures.json` in extracted or smaller packs), matches available PNGs to MineWorld's existing block atlas, and plays supported animations using Bedrock's 20-ticks-per-second timing, frame order, and per-texture blend choice. Supported imported animated faces are drawn frame-by-frame into the existing local 16×16 GPU atlas; unaffected faces keep their original procedural motion. The diagnostic importer now reports how many Bedrock animations it actually matched. Java's `.png.mcmeta` animations remain supported and take precedence when both formats are present.
+
+**Side texture fix:** World-mesh UVs now orient each surface according to its outward normal. This keeps the top of north/south/east/west side graphics upright instead of flipping them, and gives up/down faces a consistent north-facing reference. Directional workstation face selection from earlier releases stays intact. No block IDs, saved-world data, or purchased assets were changed.
+
+**Use:** In MineWorld, choose **Use original Bedrock textures**, select your personally downloaded Mojang ZIP, and allow it to be remembered privately if desired. Existing remembered packs will automatically gain animation support when they load under 6.25.
+
+**Limitations:** This update covers animation definitions that match MineWorld's current 169 block IDs / available atlas faces, **not every Bedrock feature**. Entity bone animation controllers, particles, weather, held-item states, block-state rotations, 3D animations and models require separate compatible renderers. The importer never copies licensed Mojang images into MineWorld's public repository. The real 169 MB Mojang ZIP and physical-phone appearance have not been fully manually smoke-tested; browser tests use synthetic PNGs/ZIPs.
+
+---
+
 # MineWorld 6.24 — Verified Bedrock Face-Mapping Expansion
 
 This release improves **24 Bedrock Samples sprite filename aliases** verified against the official Mojang `resource_pack/textures/blocks/` file listing. These include oak/spruce/birch/acacia/jungle/mangrove/pale-oak leaves, grass sides, bamboo, rose bushes, dripstone, crimson and warped nylium, crimson stems, twisting vines, End portal frames, shulker tops, fletching tables, and bed faces. Java Edition canonical names still take precedence; legacy alternatives are retained. The new `tests/bedrock-sample-aliases.test.cjs` checks the mappings and their priority.
