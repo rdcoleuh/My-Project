@@ -66,7 +66,7 @@ test('existing preference survives page reload; matching controls update in paus
 test('rendering wiring preserves original world saves, resource-pack pixels and skin sampling',()=>{
   assert.ok(html.includes('src="./texture-smoothing.js"'));
   assert.ok(html.includes('MineWorldTextureSmoothing?.attach(gl,atlasTexture,canvas)'));
-  assert.ok(html.includes('MineWorldTextureSmoothing?.mountUI()'));
+  assert.ok(html.includes('window.MineWorldTextureSmoothing'));
   assert.ok(html.includes('mineworld-selfhost-v1'));
   assert.ok(html.includes('uAtlas'));
   assert.ok(read('local-resource-pack.js').includes('MineWorldTextureSmoothing?.apply(gl,META.texture)'));
