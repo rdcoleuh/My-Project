@@ -1,3 +1,24 @@
+# MineWorld 6.3 — Cleaner Classic-Style Terrain & Building Blocks
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+This is another **direct game-texture update**, not a mockup. All designs are independently authored, with **exactly 16×16 source texels per face** and nearest-neighbor rendering; no Minecraft texture bitmaps, copied pixel maps, or Eaglercraft packages are distributed.
+
+- **Grass:** Separately illustrated green top, stepped grassy side edge, dirt underside, and overhanging blades; existing biome-aware grass tint remains.
+- **Dirt, coarse dirt, sand, red sand and gravel:** More readable clustered earth and small pebbles instead of uncontrolled noise.
+- **Smooth stone and cobblestone:** Smoother stone palette with scattered chips; cobblestone now uses a distinctive irregular mortar-and-rock silhouette rather than repeated uniform bricks.
+- **Wooden planks, clay bricks and stone bricks:** Horizontal plank seams, knots, staggered masonry courses and shaded material edges.
+- **Sandstone, podzol and farmland:** More distinctive top/side/bottom texture behavior; dry versus irrigated soil are visibly different.
+- **The 6.2 refinements stay intact:** improved logs, leaves, ore clusters, Nether, End and workstation details, plus transparent crop growth sprites.
+
+Existing world IDs, game inventory, controls, skin customization and multiplayer are unchanged. The updated service worker refreshes the offline block atlas.
+
+**Verification:** The full automated regression suite passes, including a new 16px core-material test that checks grass/dirt separation, stone and cobblestone differences, recognizable plank/brick seams, hydration colors and save compatibility. The tests cover all **169 block IDs** and their three texture faces, but final appearance can still vary with browser/device rendering.
+
+For the **actual pixels from your own compatible Java Edition resource pack**, open **Options → Custom Java resource pack** and select an eligible ZIP/JAR file. This browser-local option does not upload your texture files or add them to the public repository.
+
+---
+
 # MineWorld 6.2 — Texture Fidelity Pass
 
 **Play:** https://rdcoleuh.github.io/My-Project/
