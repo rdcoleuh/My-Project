@@ -1,3 +1,13 @@
+# MineWorld 6.28 — Mining and Animal Movement Repairs
+
+**Mining:** The block-breaking job now cancels immediately when desktop mouse input ends or mobile Mine-button touch input ends, is canceled, or loses pointer capture. It no longer continues destroying a block after the user releases the control. The block selection outline and independent fracture lines now follow the actual shape of partial blocks (such as lanterns, farmland, beds, and thin stems) instead of appearing around a floating full-size cube when imported Java/Bedrock textures are active.
+
+**Animals:** Land animals now animate their walking legs only after they physically move, rather than when they merely attempt to move into an obstacle. Ridden and stationary tamed animals explicitly stop the walking animation. Spawn and walk checks account for an animal's full body height; this reduces clipping into low solid ceilings and above-ground walls. Both changes preserve existing creature IDs, mob data, worlds, saves, renderer materials, and touch controls.
+
+**Tests:** New targeted regression tests cover block crack geometry, mouse/touch release, trapped-mob gait logic, vertical animal clearance, and source integration. The GitHub Actions suite includes desktop and emulated mobile Chrome smoke testing, but real player-supplied texture ZIPs and physical-device edge cases are still not exhaustively verified. No Minecraft original bitmaps are bundled; imported textures remain on the player's device.
+
+---
+
 # MineWorld 6.27 — Safer Resource-Pack Replacement and Cleaner Options Menu
 
 MineWorld now **keeps the previously working local texture atlas, biome palette and imported sounds when a replacement pack contains no usable block, item or sound assets**. Earlier builds could clear sounds before validating a new resource pack. A successful replacement now retains newly decoded sound types and removes stale imported samples without wiping the new ones. The Options menu no longer shows duplicate resource-pack import panels; this is especially useful on small mobile screens. Existing worlds, block IDs, inventories, and player-owned asset files are unchanged. Added a regression test covering invalid import recovery, preserved sounds/texture state, and the Options panel count; prior biome-tint tests now verify that candidate palettes are used before committing the new pack.
