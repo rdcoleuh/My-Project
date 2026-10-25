@@ -210,6 +210,33 @@ function baseCanvas(){
  ctx.imageSmoothingEnabled=false;
  return [canvas,ctx];
 }
+// Vanilla Java grass/selected leaf sprites ship as greyscale masks. The
+// game colors them at render time; apply a neutral plains tint to locally
+// imported neutral sprites, but never recolor already-colored custom artwork.
+function tintNeutralSprite(ctx,x,y,id,face){
+ const foliage={6:[109,169,82],31:[96,132,82],33:[130,158,87],35:[114,158,75],37:[109,169,82],39:[108,154,87]};
+ const tint=id===1?[145,189,89]:foliage[id];
+ if(!tint||(id===1&&face===2))return false;
+ const height=id===1&&face===1?5:16;
+ const data=ctx.getImageData(x,y,16,height);
+ let grey=0,visible=0;
+ for(let i=0;i<data.data.length;i+=4){
+  const a=data.data[i+3];if(!a)continue;visible++;
+  const r=data.data[i],g=data.data[i+1],b=data.data[i+2];
+  if(Math.max(r,g,b)-Math.min(r,g,b)<=18)grey++;
+ }
+ if(visible<16||grey/visible<.65)return false;
+ for(let i=0;i<data.data.length;i+=4){
+  if(!data.data[i+3])continue;
+  const r=data.data[i],g=data.data[i+1],b=data.data[i+2];
+  if(Math.max(r,g,b)-Math.min(r,g,b)>18)continue;
+  data.data[i]=Math.round(r*tint[0]/255);
+  data.data[i+1]=Math.round(g*tint[1]/255);
+  data.data[i+2]=Math.round(b*tint[2]/255);
+ }
+ ctx.putImageData(data,x,y);
+ return true;
+}
 async function applyResources(zip,sourceName){
  if(zip.entries.size===0)throw Error('No compatible block PNGs or sounds were found in the selected files.');
  window.MineWorldSound?.clearSamples();
@@ -239,6 +266,7 @@ async function applyResources(zip,sourceName){
      // For animated PNG strips, draw frame zero. Standard 16px vanilla files remain pixel-exact.
      const frame=Math.min(image.width,image.height);
      ctx.drawImage(image,0,0,frame,frame,column*16,row*16,16,16);
+     tintNeutralSprite(ctx,column*16,row*16,id,face);
      faces++;ids.add(id);
    }
  }
