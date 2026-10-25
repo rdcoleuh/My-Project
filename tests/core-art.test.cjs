@@ -1,4 +1,4 @@
-/* MineWorld 6.4 — pixel-art visual invariants for independently authored core blocks. */
+/* MineWorld 6.5 — pixel-art visual invariants for independently authored core blocks. */
 const {test}=require('node:test'),assert=require('node:assert/strict'),
  fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..'),read=file=>fs.readFileSync(path.join(root,file),'utf8');
@@ -52,7 +52,7 @@ test('renderer loads new material layer before atlas generation, without changin
   assert.ok(sw.includes("'./"+f+"'"),'Missing painter cache entry '+f);
  }
  assert.ok(html.indexOf('src="./utility-materials.js"')<html.indexOf('src="./core-pixel-art.js"'));
- assert.ok(html.includes('MineWorld 6.4'));
+ assert.ok(html.includes('MineWorld 6.5'));
  assert.ok(html.includes('mineworld-selfhost-v1'));
  assert.ok(!read('texture-facets.js').includes('fetch('));
  assert.ok(!read('core-pixel-art.js').includes('fetch('),'Original art must not make external asset requests');
