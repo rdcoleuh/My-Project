@@ -76,6 +76,6 @@ test('load ordering, caching and existing save keys remain intact',()=>{
  assert.ok(a>=0&&a<b&&b<c);
  assert.equal((html.match(/src="\.\/texture-precision\.js"/g)||[]).length,1);
  assert.ok(sw.includes("'./texture-precision.js'"));
- assert.ok(sw.includes('mineworld-6-7-inventory-texture-20261025-v48'));
+ assert.ok(sw.includes('mineworld-6-7-inventory-texture-20261025-v49'));
  for(const marker of ['MineWorld 6.7','mineworld-selfhost-v1','javaInventory:javaInventory.snapshot()','survivalHotbar:[...survivalHotbar]'])assert.ok(html.includes(marker),marker);
 });
