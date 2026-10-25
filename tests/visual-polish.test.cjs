@@ -38,7 +38,7 @@ test('clean scaling is default; imported sprites and tiles retain nearest filter
  const game=read('index.html');
  assert.match(game,/antialias: false/);
  assert.match(read('texture-smoothing.js'),/g\.NEAREST/);
- assert.match(read('pixel-materials.js'),/NEAREST/);
+ assert.match(read('texture-atlas.js'),/gl\.NEAREST/);
 });
 test('retro screen and quiet HUD preferences are reversible and persist across reloads',()=>{
  const x=boot();
