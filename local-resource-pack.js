@@ -490,7 +490,13 @@ async function applyResources(zip,sourceName){
  const ids=new Set(),importedFaces=new Set(),cache=new Map(),decoded=new Map(),metaCache=new Map(),missing=new Set(),missingFaces=[],resolved=new Map(),animated=[];
  const timeline=window.MineWorldResourceAnimation;
  const modelResolver=window.MineWorldJavaModelFaces;
- const modelFaces=new Map();let modelMappedFaces=0;
+ const modelFaces=new Map(),modelTransforms=new Map();let modelMappedFaces=0;
+ function markTransform(id,dir){
+  const data=modelFaces.get(id)?.faceUV?.[dir];
+  if(!data||window.MineWorldBlockModels?.isPartial?.(id))return;
+  if(!modelTransforms.has(id))modelTransforms.set(id,{});
+  modelTransforms.get(id)[dir]=data;
+ }
  if(modelResolver&&[...zip.entries.keys()].some(key=>key.startsWith('model:'))){
    for(let id=1;id<=169;id++){
      const model=modelResolver.nameFor(id,names[id]);
@@ -574,7 +580,13 @@ async function applyResources(zip,sourceName){
      const name=modelFace||textureName(id,face);
 
      const image=await sprite(name);
-     if(image&&modelFace)modelMappedFaces++;
+     if(image&&modelFace){
+      modelMappedFaces++;
+      if(face===0)markTransform(id,'up');
+      else if(face===2)markTransform(id,'down');
+      else if(!modelFaces.get(id)?.sides)
+       for(const dir of ['north','south','east','west'])markTransform(id,dir);
+     }
      const baseInfo=await spriteTimeline(name,image);
      const column=(id*3+face)%16,row=Math.floor((id*3+face)/16);
      const px=column*16,py=row*16;
@@ -616,6 +628,7 @@ async function applyResources(zip,sourceName){
    else ctx.drawImage(image,0,0,Math.min(image.width,image.height),
      Math.min(image.width,image.height),px,py,16,16);
    row[dir]={tile:entry.tile};modelDirectionalFaces++;
+   markTransform(id,dir);
    if(info)animated.push({id,face:5,px,py,image,overlay:null,
      baseTimeline:info.timeline,baseGeometry:info.geometry,
      overlayTimeline:null,overlayGeometry:null,lastKey:''});
@@ -739,6 +752,7 @@ async function applyResources(zip,sourceName){
   throw Error('No compatible block, item or sound files found.');
  if(faces||directionalFaces||modelDirectionalFaces||state.active)await writeAtlas(canvas);
  sideAllocator?.commit(mappedSides);
+ window.MineWorldJavaFaceTransforms?.commit(modelTransforms);
  window.MineWorldBridge?.refreshWorldMeshes?.();
  // Do not erase a working pack when an invalid replacement is rejected.
  // Newly decoded sound types stay in place; old missing types are discarded.
@@ -754,7 +768,7 @@ async function applyResources(zip,sourceName){
  state.lastAnimationAt=-Infinity;
  state.animationDisabled=false;
  state.active=faces+directionalFaces+modelDirectionalFaces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
+ state.lastResult={blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,modelUVFaces:window.MineWorldJavaFaceTransforms?.stats().faces||0,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
@@ -831,6 +845,7 @@ async function clear(){
  const [canvas,ctx]=baseCanvas();ctx.drawImage(img,0,0);
  await writeAtlas(canvas);
  window.MineWorldJavaDirectionalFaces?.commit(new Map());
+ window.MineWorldJavaFaceTransforms?.commit(new Map());
  window.MineWorldBridge?.refreshWorldMeshes?.();
  window.MineWorldSound?.clearSamples();window.MineWorldMobPixels?.applyImported?.(new Map());window.MineWorldBridge?.refreshTextureUI?.();
  state.active=false;state.sourceName='';state.lastResult=null;

@@ -141,6 +141,19 @@ async function resolve(zip,modelName){
  const dirs=['north','south','east','west'];
  const cardinal=Object.fromEntries(dirs.map((dir,i)=>[dir,allowed(sides[i])]));
  if(new Set(Object.values(cardinal).filter(Boolean)).size>1)result.sides=cardinal;
+ // Store player-provided full-cube per-face UVs/90-degree rotations. Rendering
+ // samples the exact local PNG pixels; the bitmap is never rotated or blurred.
+ const faceUV={};
+ for(const dir of ['up','down',...dirs]){
+  const face=data.faces?.[dir];
+  if(!face||typeof face!=='object')continue;
+  const rotation=face.rotation??0,uv=face.uv;
+  if(!Number.isInteger(rotation)||![0,90,180,270].includes(rotation))continue;
+  if(uv!==undefined&&(!Array.isArray(uv)||uv.length!==4||
+   !uv.every(n=>Number.isFinite(n)&&n>=0&&n<=16)))continue;
+  if(rotation||uv)faceUV[dir]={rotation,uv:uv?[...uv]:[0,0,16,16]};
+ }
+ if(Object.keys(faceUV).length)result.faceUV=faceUV;
  return result.sides||Object.values(result).some(Boolean)?result:null;
 }
 window.MineWorldJavaModelFaces=Object.freeze({nameFor,resolve,modelPath,texturePath,stateModel});

@@ -395,7 +395,7 @@ body.in-nether #game-wrap{background:#290f19}
 @media(pointer:coarse){.hot-item .hot-stack-number{display:block!important;font-size:12px!important}}
 </style>
 <link rel="stylesheet" href="./visual-polish.css">
-<title>MineWorld 6.40 — Razor-Sharp Pixel Rendering</title>
+<title>MineWorld 6.41 — Imported Java Face UVs</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -649,7 +649,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v6.40 · SHARP PIXELS & JAVA TEXTURES</div>
+  <div class="version">MINEWORLD v6.41 · SHARP PIXELS & JAVA MODEL UVS</div>
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./texture-refinement.js"></script>
@@ -1425,8 +1425,11 @@ body.in-nether #game-wrap{background:#290f19}
             // end portal frame uses [0,3,16,16]. Bottom-align those 13/15px
             // side strips rather than cropping the source's bottom pixels.
             offsetV=f.n[1]===0&&[125,137,138].includes(b)?1-height:0,
-            uv=window.MineWorldAtlas.uv(b,textureFace,window.MineWorldFaceUV.corner(f.n,v),spanU,spanV,0,offsetV,
-               face===1?window.MineWorldJavaDirectionalFaces?.tile(b,f.n):null);
+            sourceCorner=window.MineWorldFaceUV.corner(f.n,v),
+            sourceTile=face===1?window.MineWorldJavaDirectionalFaces?.tile(b,f.n):null,
+            originalUV=window.MineWorldAtlas.uv(b,textureFace,sourceCorner,spanU,spanV,0,offsetV,sourceTile),
+            uv=window.MineWorldJavaFaceTransforms?.sample(
+               b,f.n,sourceCorner,window.MineWorldAtlas,textureFace,sourceTile,originalUV)||originalUV;
       const px=crop?x+.14+v[0]*.72:x+shape.left+v[0]*(shape.right-shape.left),
             py=crop?y+v[1]*(.22+crop.stage*.22):y+shape.bottom+v[1]*(shape.top-shape.bottom),
             pz=crop?z+.14+v[2]*.72:z+shape.front+v[2]*(shape.back-shape.front);
@@ -4555,6 +4558,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
 <script src="./local-pack-storage.js"></script>
 <script src="./java-model-faces.js"></script>
 <script src="./java-directional-faces.js"></script>
+<script src="./java-face-transforms.js"></script>
 <script src="./local-resource-pack.js"></script>
 <script src="./visual-polish.js"></script>
 </body>

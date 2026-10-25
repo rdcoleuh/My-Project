@@ -57,7 +57,7 @@ function makeTestArchive(){
        west:'minecraft:block/furnace_west'},
      elements:[{from:[0,0,0],to:[16,16,16],faces:{
        up:{texture:'#top'},down:{texture:'#top'},
-       north:{texture:'#front'},south:{texture:'#back'},
+       north:{texture:'#front',rotation:90,uv:[2,1,14,15]},south:{texture:'#back'},
        east:{texture:'#east'},west:{texture:'#west'}}}]
    }))],
    ...['furnace_top','furnace_front','furnace_back','furnace_side','furnace_west'].map(
@@ -149,6 +149,12 @@ async function go(browser,name,mobile){
       api?.tile(20,[0,0,-1])!==api?.tile(20,[0,0,1])&&
       api?.tile(20,[1,0,0])!==api?.tile(20,[-1,0,0]);
   }),name+': Java furnace cardinal texture mapping is incorrect');
+  assert.ok(await page.evaluate(()=>{
+    const tr=window.MineWorldJavaFaceTransforms;
+    const descriptor=tr?.descriptor(20,[0,0,-1]);
+    return descriptor?.rotation===90&&descriptor.uv.join(',')==='2,1,14,15'&&
+      window.MineWorldLocalTextures?.lastResult?.modelUVFaces>=1;
+  }),name+': Java model face UV crop or 90-degree rotation was ignored');
   assert.ok(await page.evaluate(()=>
     window.MineWorldLocalTextures.updateAnimation(performance.now()+1000,60,false)>=3),
     name+': imported water animation did not update GPU atlas');
@@ -159,6 +165,8 @@ async function go(browser,name,mobile){
     name+': stored Bedrock animation was lost after reload');
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.modelDirectionalFaces>=4),
     name+': Java directional model textures did not persist after reload');
+  assert.ok(await page.evaluate(()=>window.MineWorldJavaFaceTransforms?.descriptor(20,[0,0,-1])?.rotation===90),
+    name+': Java face rotation was lost after saved pack reload');
   assert.ok(await page.evaluate(()=>window.MineWorldMobPixels?.hasImported('cow')&&
      window.MineWorldMobPixels?.hasMapped('cow','head','front')&&
      window.MineWorldMobPixels?.hasImported('item:diamond')),
