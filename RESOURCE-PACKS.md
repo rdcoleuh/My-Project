@@ -1,6 +1,10 @@
+## 6.43 — safe Java multipart default cube selection (October 25, 2026)
+
+Player-supplied Java Edition blockstates with a `multipart` array can now select a **single matching full-cube model** when the known default state unambiguously matches one part. Conditions support `AND`, `OR`, and pipe-separated alternatives such as `facing=north|west`; quarter-turn Y rotations, `uvlock`, inherited texture variables, distinct cardinal faces, and face UVs continue through the existing local-only renderer. Unknown properties, unsupported rotations, multiple matching parts (such as fences or panes), and non-cube geometry safely retain MineWorld's fallback textures. No original game bitmaps are shipped, and saves, block IDs, and mobile controls are unchanged.
+
 ## 6.42 — quarter-turn Java default blockstates (October 25, 2026)
 
-For player-supplied Java Edition blockstate JSON, MineWorld now accepts default cube-model variants with supported `y` rotations (0°, 90°, 180°, and 270°). Their north/south/east/west textures map to the correct world sides, and the UV direction of top/bottom faces accounts for the turn unless `uvlock` is set. All transformations use imported local PNGs at nearest-neighbor sampling. The block's placement orientation is still fixed; variable per-placement facing, rotated X/Z blockstates, multipart models, and non-cube geometry are not supported. World save keys and block IDs are unchanged.
+For player-supplied Java Edition blockstate JSON, MineWorld now accepts default cube-model variants with supported `y` rotations (0°, 90°, 180°, and 270°). Their north/south/east/west textures map to the correct world sides, and the UV direction of top/bottom faces accounts for the turn unless `uvlock` is set. All transformations use imported local PNGs at nearest-neighbor sampling. The block's placement orientation is still fixed; variable per-placement facing, rotated X/Z blockstates, complex multipart geometry, and non-cube geometry are not supported. World save keys and block IDs are unchanged.
 
 ## 6.41 — player-imported Java cube face UVs (October 25, 2026)
 
