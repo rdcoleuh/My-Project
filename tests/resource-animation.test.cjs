@@ -87,7 +87,12 @@ test('player-supplied animated PNG updates only changed GPU tiles and resets saf
   name,size:bytes.length,arrayBuffer:async()=>Uint8Array.from(bytes).buffer
  }));
  const pack=window.MineWorldLocalTextures;
- assert.equal(pack.textureName(169,2),'red_wool','Wool bottom must never become oak planks');
+ assert.equal(pack.textureName(169,0),'red_bed_top','A red bed must not be overwritten by red wool');
+ assert.equal(pack.textureName(169,1),'red_bed_side');
+ assert.equal(pack.textureName(169,2),'red_bed_bottom');
+ assert.equal(pack.textureName(118,1),'raw_mineral_crate_side','MineWorld crate is not a barrel');
+ assert.equal(pack.textureName(160,1),'barrel_side','Real barrel still imports Java barrel textures');
+ assert.equal(pack.textureName(15,1),'poplar_log','Fictional poplar must not become an oak log');
  assert.equal(pack.textureName(137,0),'farmland');
  assert.equal(pack.textureName(137,1),'dirt','Dry farmland side uses vanilla dirt');
  assert.equal(pack.textureName(138,2),'dirt','Wet farmland underside uses vanilla dirt');
