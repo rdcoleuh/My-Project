@@ -3273,9 +3273,7 @@ body.in-nether #game-wrap{background:#290f19}
       if(extraMobs?.isAquatic(m.kind)){
         const level=Math.floor(m.y),canSwim=get(Math.floor(nx),level,Math.floor(nz))===7;
         if(canSwim){m.x=nx;m.z=nz;m.y=Math.max(1,level+.2+Math.sin(dayClock*1.5+m.id)*.12);}
-        continue;
-      }
-      if(Math.abs(ground-m.y)<1.25&&get(Math.floor(nx),ground,Math.floor(nz))===0){m.x=nx;m.z=nz;m.y=ground}else if(['ghast','blaze','happy_ghast','ghastling','wither'].includes(m.kind)){m.x=nx;m.z=nz;m.y=Math.max(ground+3,Math.min(H-6,m.y+Math.sin(dayClock+m.id)*dt*.4));}
+      }else if(Math.abs(ground-m.y)<1.25&&get(Math.floor(nx),ground,Math.floor(nz))===0){m.x=nx;m.z=nz;m.y=ground}else if(['ghast','blaze','happy_ghast','ghastling','wither'].includes(m.kind)){m.x=nx;m.z=nz;m.y=Math.max(ground+3,Math.min(H-6,m.y+Math.sin(dayClock+m.id)*dt*.4));}
       if(chase&&m.attack<=0){
         const mul=difficulty==='hard'?1.65:difficulty==='easy'?.65:1;
         if(dist<1.55){
