@@ -674,7 +674,7 @@ async function applyResources(zip,sourceName){
   }catch(error){console.warn('Skipping unsupported local item PNG '+key,error);}
  }
  if(!faces&&!directionalFaces&&!audio&&!items&&!mobArt.size)
-  throw Error('No compatible block, item, mob or sound files found.');
+  throw Error('No compatible block, item or sound files found.');
  if(faces||directionalFaces||state.active)await writeAtlas(canvas);
  // Do not erase a working pack when an invalid replacement is rejected.
  // Newly decoded sound types stay in place; old missing types are discarded.
