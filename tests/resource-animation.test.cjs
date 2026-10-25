@@ -113,4 +113,9 @@ test('player-supplied animated PNG updates only changed GPU tiles and resets saf
  await pack.clear();
  assert.equal(pack.animatedFaces,0);
  assert.equal(pack.updateAnimation(200,60,false),0);
+ const modded={name:'water_still.png',
+  webkitRelativePath:'MyPack/assets/othermod/textures/block/water_still.png',
+  size:png.length,arrayBuffer:async()=>Uint8Array.from(png).buffer};
+ await assert.rejects(pack.loadFiles([modded]),/No compatible block PNGs or sounds/,
+  'Mod namespace files must not override original vanilla sprite names');
 });
