@@ -214,6 +214,7 @@ function baseCanvas(){
 // game colors them at render time; apply a neutral plains tint to locally
 // imported neutral sprites, but never recolor already-colored custom artwork.
 function tintNeutralSprite(ctx,x,y,id,face){
+ if(typeof ctx.getImageData!=='function'||typeof ctx.putImageData!=='function')return false;
  const foliage={6:[109,169,82],31:[96,132,82],33:[130,158,87],35:[114,158,75],37:[109,169,82],39:[108,154,87]};
  const tint=id===1?[145,189,89]:foliage[id];
  if(!tint||(id===1&&face===2))return false;
