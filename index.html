@@ -3692,6 +3692,7 @@ body.in-nether #game-wrap{background:#290f19}
     drop:(id,all)=>{selectedStackId=id;dropSelection(!!all);},
     closeSurvival:closeGear,
     selectCreative:selectHotbarSlot,
+    activeCreativeSlot:()=>selection,
     assignCreative:id=>{HOT9[selection]=id;HOTSETS[hotbarPage][selection]=id;markSave();updateHotbar();},
     refreshGame:updateHotbar,
     onCreativeClose:()=>{if(started)start();else $('welcome').classList.remove('hidden');}
