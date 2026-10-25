@@ -685,6 +685,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./chunk-planner.js"></script>
 <script src="./stack-inventory.js"></script>
 <script src="./java-slots.js"></script>
+<script src="./block-item-icons.js"></script>
 <script src="./java-inventory-ui.js"></script>
 <script src="./movement-modes.js"></script>
 <script src="./survival-hunger.js"></script>
@@ -1947,9 +1948,12 @@ body.in-nether #game-wrap{background:#290f19}
         const swatch=document.createElement('div');swatch.className='swatch';
         const tile=id*3,tx=((tile%16)/15*100).toFixed(2),ty=(Math.floor(tile/16)/31*100).toFixed(2);
         swatch.style.backgroundColor=SWATCH[id]||'#777';
-        const imported=window.MineWorldLocalTextures?.active;
-        if(imported){
-          const sprite=document.createElement('canvas');sprite.className='mw-imported-swatch';sprite.width=sprite.height=16;
+        const sprite=document.createElement('canvas');
+        sprite.className='mw-imported-swatch';sprite.width=sprite.height=32;
+        const iso=window.MineWorldBlockItemIcons?.paint(sprite,id);
+        if(iso)swatch.appendChild(sprite);
+        else if(window.MineWorldLocalTextures?.active){
+          sprite.width=sprite.height=16;
           if(window.MineWorldLocalTextures.drawFace(sprite.getContext('2d'),id,0))swatch.appendChild(sprite);
         }else{
           swatch.style.backgroundImage='url('+window.MineWorldAtlas.dataURL+')';
