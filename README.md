@@ -1,3 +1,11 @@
+# MineWorld 6.24 — Verified Bedrock Face-Mapping Expansion
+
+This release improves **24 Bedrock Samples sprite filename aliases** verified against the official Mojang `resource_pack/textures/blocks/` file listing. These include oak/spruce/birch/acacia/jungle/mangrove/pale-oak leaves, grass sides, bamboo, rose bushes, dripstone, crimson and warped nylium, crimson stems, twisting vines, End portal frames, shulker tops, fletching tables, and bed faces. Java Edition canonical names still take precedence; legacy alternatives are retained. The new `tests/bedrock-sample-aliases.test.cjs` checks the mappings and their priority.
+
+**To use the original textures:** download Mojang's ZIP below, then select **Use original Bedrock textures** on MineWorld's main menu. The chosen pack is applied to mapped blocks and items; the browser attempts to remember it privately on that device. If storage is unavailable, choose the ZIP again on the next visit. No original Mojang bitmap is checked into this public repository. Some MineWorld faces and all non-compatible entity models will still use original independent art.
+
+---
+
 # MineWorld 6.23 — Official Mojang Bedrock Textures ZIP (No Repackaging)
 
 **Get Mojang's own complete Bedrock texture files:** [Download bedrock-samples-v1.26.50.4-full.zip](https://github.com/Mojang/bedrock-samples/releases/download/v1.26.50.4/bedrock-samples-v1.26.50.4-full.zip) (169,385,576 bytes, ~169 MB). This is an official Mojang GitHub release, distributed under Minecraft's EULA rather than bundled or rehosted by MineWorld.
