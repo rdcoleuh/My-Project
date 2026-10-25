@@ -1336,6 +1336,24 @@ body.in-nether #game-wrap{background:#290f19}
     return entityHitboxes.canOccupy({x,y,z,kind,baby,hitboxState:heightState},
       get,window.MineWorldBlockModels.shape,solid,{width:W,height:H,depth:D});
   }
+  function recoverStuckPlayer(){
+    // Legacy saved positions can place the feet just inside a newly refined
+    // collision volume. Move only a blocked player to the closest clear spot,
+    // never reset the world, inventory, or entire player state.
+    if(collisionFree(player.x,player.y+.025,player.z,'player',isCrouching?'crouching':''))return false;
+    const px=player.x,py=player.y,pz=player.z;
+    const offsets=[[0,0],[.35,0],[-.35,0],[0,.35],[0,-.35],
+      [.7,0],[-.7,0],[0,.7],[0,-.7],[.7,.7],[-.7,-.7],[.7,-.7],[-.7,.7]];
+    for(const dy of [0,.06,.125,.25,.5,.75,1,1.5,2,3]){
+      for(const [dx,dz] of offsets){
+        if(!collisionFree(px+dx,py+dy+.025,pz+dz,'player',isCrouching?'crouching':''))continue;
+        player.x=px+dx;player.y=py+dy;player.z=pz+dz;player.vy=0;
+        markSave();toast('Adjusted your position to clear a blocked hitbox');
+        return true;
+      }
+    }
+    return false;
+  }
   function blockAtFeet(x,y,z,height=isCrouching?1.5:1.8){
     // Java player: 0.6-wide box, 1.8 standing / 1.5 sneaking.
     return !collisionFree(x,y+.025,z,'player',height<=1.5?'crouching':'');
@@ -2926,7 +2944,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(hunger>=16&&health<20&&healPulse>=9){healPulse=0;health=clamp(health+1,0,20);updateSurvivalHUD();}
   }
   function updateFlyButton(){$('fly-btn').textContent='✦ Flying: '+(player.fly?'On':'Off')}
-  function start(){if(!started){started=true;requestAnimationFrame(render)}lastTime=performance.now();paused=false;sound?.play('click');$('welcome').classList.add('hidden');$('pause').classList.add('hidden');if(!isTouch&&canvas.requestPointerLock)canvas.requestPointerLock()?.catch?.(()=>{});toast('World ready — have fun!')}
+  function start(){recoverStuckPlayer();if(!started){started=true;requestAnimationFrame(render)}lastTime=performance.now();paused=false;sound?.play('click');$('welcome').classList.add('hidden');$('pause').classList.add('hidden');if(!isTouch&&canvas.requestPointerLock)canvas.requestPointerLock()?.catch?.(()=>{});toast('World ready — have fun!')}
   function menu(){paused=true;isSprinting=false;updateMovementUI();cancelMining();mouseMiningHeld=false;keys.clear();movement.x=0;movement.y=0;touchHold.mine=false;touchHold.place=false;updateRenderSettingsUI();$('pause').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock();save()}
   function jump(){if(paused)return;if(mount){mountLift=.28;sound?.play('jump');return;}if(player.fly){player.y+=.7;return}if(player.ground){player.vy=8;player.ground=false;sound?.play('jump');if(gameMode==='survival')hungerDrain+=isSprinting?.2:.05;}}
   const RIDE_KINDS={horse:{speed:10,saddle:true},donkey:{speed:7,saddle:true},mule:{speed:8,saddle:true},camel:{speed:8,saddle:true},llama:{speed:3,saddle:false,unsteerable:true},pig:{speed:5,saddle:true,control:'carrotStick'},strider:{speed:6,saddle:true,control:'fungusStick'},skeleton_horse:{speed:10,saddle:false},zombie_horse:{speed:9,saddle:true},happy_ghast:{speed:10,harness:true,flying:true}};
