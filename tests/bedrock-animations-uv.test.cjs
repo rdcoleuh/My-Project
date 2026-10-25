@@ -77,7 +77,7 @@ test('all six cube surfaces use upright and deterministic pixel UVs',()=>{
  }
  const html=read('index.html');
  assert.ok(html.includes('MineWorldFaceUV.corner(f.n,v)'));
- assert.ok(/uv\(b,textureFace,window\.MineWorldFaceUV\.corner\(f\.n,v\),spanU,spanV(?:,0,offsetV)?\)/.test(html));
+ assert.ok(html.includes('uv(b,textureFace,window.MineWorldFaceUV.corner(f.n,v),spanU,spanV,0,offsetV,'));
  assert.ok(read('sw.js').includes("'./block-face-uv.js'"));
 });
 function fakeImporter(){
