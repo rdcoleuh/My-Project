@@ -24,7 +24,7 @@ function stats(weapon,tier){
  return {weapon:level?kind:'fist',damage:kind==='fist'?1:DAMAGE[kind][level],speed:kind==='fist'?4:SPEED[kind][level]};
 }
 function charge(elapsedMs,speed){
- const elapsed=Number.isFinite(elapsedMs)?Math.max(0,elapsedMs):0;
+ const elapsed=elapsedMs===Infinity?1e9:Number.isFinite(elapsedMs)?Math.max(0,elapsedMs):0;
  return clamp((elapsed/1000+0.025)*clamp(Number(speed)||4,.2,20),0,1);
 }
 function strike({weapon='fist',tier='none',elapsedMs=Infinity,falling=false,grounded=true,sprinting=false,creative=false}={}){
