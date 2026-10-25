@@ -53,6 +53,8 @@ test('furnaces use their front only on +Z, while worktables have distinct X-axis
   assert.deepEqual(selected(20,[1,0,0]),[3]);
   assert.deepEqual(selected(168,[1,0,0]),[3]);
   assert.deepEqual(selected(168,[0,0,1]),[1]);
+  assert.deepEqual(selected(168,[-1,0,0]),[1],'Java west crafting face is front');
+  assert.deepEqual(selected(168,[0,0,-1]),[3],'Java south crafting face is side');
   for(const id of [136,161,163,165,166]){
     assert.deepEqual(selected(id,[1,0,0]),[3],id+' uses side texture on X axis');
     assert.deepEqual(selected(id,[0,0,1]),[1],id+' retains front texture on +Z');
