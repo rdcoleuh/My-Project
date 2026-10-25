@@ -25,10 +25,13 @@ test('ten directional sprites have stable unique atlas slots outside the 507 nor
   assert.equal(names[163],'lectern_sides');
   assert.equal(names[165],'loom_side');
   assert.equal(names[166],'smithing_table_side');
+  assert.equal(atlas.alternateFaces[158].extra.name,'cartography_table_side3');
+  assert.equal(atlas.alternateFaces[158].extra.tile,517);
   assert.ok(html.includes('COLUMNS=16, ROWS=64'),'extra sprites must fit the expanded atlas');
   assert.notDeepEqual(atlas.uv(20,1,0),atlas.uv(20,3,0));
   assert.notDeepEqual(atlas.uv(168,1,0),atlas.uv(168,3,0));
   for(const id of [136,161,163,165,166])assert.notDeepEqual(atlas.uv(id,1,0),atlas.uv(id,3,0));
+  assert.notDeepEqual(atlas.uv(158,3,0),atlas.uv(158,4,0),'third cartography side has its own tile');
   assert.deepEqual(atlas.uv(3,1,0),atlas.uv(3,3,0),'ordinary block sides remain unchanged');
 });
 test('furnaces use their front only on +Z, while worktables have distinct X-axis sides',()=>{
@@ -36,7 +39,7 @@ test('furnaces use their front only on +Z, while worktables have distinct X-axis
   assert.ok(match,'mesh face builder is present');
   const faces=[];
   const window={
-    MineWorldAtlas:{alternateFaces:{20:{tile:0},156:{tile:1},157:{tile:2},168:{tile:510,sideAxis:'x'},158:{tile:511,sideAxis:'x'},136:{tile:512,sideAxis:'x'},161:{tile:513,sideAxis:'x'},163:{tile:514,sideAxis:'x'},165:{tile:515,sideAxis:'x'},166:{tile:516,sideAxis:'x'}},
+    MineWorldAtlas:{alternateFaces:{20:{tile:0},156:{tile:1},157:{tile:2},168:{tile:510,sideAxis:'x'},158:{tile:511,sideAxis:'x',extra:{tile:517,name:'cartography_table_side3'}},136:{tile:512,sideAxis:'x'},161:{tile:513,sideAxis:'x'},163:{tile:514,sideAxis:'x'},165:{tile:515,sideAxis:'x'},166:{tile:516,sideAxis:'x'}},
       uv:(block,face)=>{faces.push({block,face});return [0,0];}},
     MineWorldVillages:{cropAt:()=>null},
     MineWorldBlockModels:{shape:()=>({left:0,right:1,bottom:0,top:1,front:0,back:1})}
@@ -55,15 +58,25 @@ test('furnaces use their front only on +Z, while worktables have distinct X-axis
     assert.deepEqual(selected(id,[0,0,1]),[1],id+' retains front texture on +Z');
   }
   assert.deepEqual(selected(158,[-1,0,0]),[3]);
+  assert.deepEqual(selected(158,[1,0,0]),[4]);
+  assert.deepEqual(selected(158,[0,0,1]),[4]);
+  assert.deepEqual(selected(158,[0,0,-1]),[1]);
   assert.deepEqual(selected(3,[1,0,0]),[1]);
   assert.deepEqual(selected(20,[0,1,0]),[0]);
 });
 test('importer retains 507 ordinary faces and imports up to ten extra workstation sides from player PNGs',()=>{
   const pack=fs.readFileSync(path.join(__dirname,'..','local-resource-pack.js'),'utf8');
   assert.match(pack,/Object\.entries\(window\.MineWorldAtlas\?\.alternateFaces\|\|\{\}\)/);
-  assert.match(pack,/const image=await sprite\(extra\.name\)/);
+  assert.match(pack,/const image=await sprite\(variant\.name\)/);
+  assert.match(pack,/for\(const \[variantIndex,variant\] of \[extra,extra\.extra\]\.entries\(\)\)/);
   assert.match(pack,/if\(faces\|\|directionalFaces\|\|state\.active\)await writeAtlas\(canvas\)/);
   assert.match(pack,/totalFaces:169\*3/);
   assert.match(pack,/atlasH=1024/);
+  assert.equal(atlasTestBottom(pack,158,2),'dark_oak_planks');
+  assert.equal(atlasTestBottom(pack,161,2),'birch_planks');
   assert.match(pack,/state\.active=faces\+directionalFaces>0/);
 });
+function atlasTestBottom(source,id,face){
+  const m=source.match(new RegExp('bind\\('+id+",'[^']+','[^']+','([^']+)'\\)"));
+  return m&&face===2?m[1]:null;
+}
