@@ -98,6 +98,13 @@ test('player-supplied animated PNG updates only changed GPU tiles and resets saf
  assert.equal(pack.textureName(167,0),'grindstone_round');
  const result=await pack.loadFiles(input);
  assert.equal(result.animatedFaces,3);
+ assert.equal(result.faces+result.missingFaces.length,507,
+  'Every MineWorld atlas face must be either mapped or named in the audit');
+ assert.ok(result.missingFaces.some(f=>f.id===119&&f.name==='chest_front'),
+  'Chest entity artwork should be clearly reported when no matching sprite exists');
+ assert.ok(result.missingFaces.some(f=>f.id===137&&f.face===1&&f.name==='dirt'),
+  'Farmland side must request vanilla dirt, not farmland top');
+
  assert.equal(pack.animatedFaces,3);
  assert.equal(pack.updateAnimation(0,60,false),3);
  assert.equal(pack.updateAnimation(30,60,false),0);
