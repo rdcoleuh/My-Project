@@ -5,6 +5,7 @@
 (()=>{
  'use strict';
  const SIZE=16,COLS=16;
+ const faceKey=(kind,part,face)=>kind+'|'+part+'|'+face;
  const corners=[[0,0],[0,1],[1,1],[1,0]];
  let positions=new Map(),rows=1,baseKinds=[],canvas=null,ctx=null,gpu=null,texture=null;
  let imported=new Set();
@@ -59,7 +60,22 @@
    const entries=[...artworks].filter(([name,img])=>typeof name==='string'&&img&&
      Number.isFinite(img.width)&&Number.isFinite(img.height)&&img.width>0&&img.height>0&&
      img.width<=2048&&img.height<=2048);
-   const keys=[...baseKinds,...entries.map(([name])=>name).filter(name=>!baseKinds.includes(name))];
+   // Keep original species positions stable, but reserve one atlas tile for
+   // every mapped cuboid face. This avoids stretching a single head sample
+   // over legs, back, belly and other body parts.
+   const mapper=window.MineWorldEntityTextureMaps;
+   const faceTiles=[];
+   for(const [kind,img] of entries){
+     if(kind.startsWith('item:')||!mapper)continue;
+     for(const part of Object.keys(mapper.defs[kind]||{})){
+       for(const face of mapper.faces){
+         const rect=mapper.rect(kind,part,face,img);
+         if(rect)faceTiles.push({key:faceKey(kind,part,face),img,rect});
+       }
+     }
+   }
+   const keys=[...baseKinds,...entries.map(([name])=>name).filter(name=>!baseKinds.includes(name)),
+     ...faceTiles.map(tile=>tile.key)];
    positions=new Map(keys.map((key,i)=>[key,i]));
    rows=Math.max(1,Math.ceil(keys.length/COLS));
    canvas.width=COLS*SIZE;canvas.height=rows*SIZE;
@@ -87,18 +103,27 @@
      ctx.drawImage(img,sx,sy,sw,sh,dx,dy,SIZE,SIZE);
      imported.add(key);
    }
+   for(const {key,img,rect} of faceTiles){
+     const index=positions.get(key),dx=(index%COLS)*SIZE,dy=Math.floor(index/COLS)*SIZE;
+     ctx.imageSmoothingEnabled=false;
+     ctx.drawImage(img,rect.x,rect.y,rect.width,rect.height,dx,dy,SIZE,SIZE);
+   }
    gpu.activeTexture(gpu.TEXTURE0);gpu.bindTexture(gpu.TEXTURE_2D,texture);
    gpu.pixelStorei(gpu.UNPACK_FLIP_Y_WEBGL,false);
    gpu.texImage2D(gpu.TEXTURE_2D,0,gpu.RGBA,gpu.RGBA,gpu.UNSIGNED_BYTE,canvas);
    return imported.size;
  }
- function uv(kind,corner){
-   const index=positions.get(kind)??positions.get('vehicle')??0;
+ function hasMapped(kind,part,face){
+   return imported.has(kind)&&positions.has(faceKey(kind,part,face));
+ }
+ function uv(kind,corner,part,face){
+   const index=(part&&face?positions.get(faceKey(kind,part,face)):undefined)
+     ??positions.get(kind)??positions.get('vehicle')??0;
    const col=index%COLS,row=Math.floor(index/COLS),point=corners[corner&3]||corners[0];
    return [(col*SIZE+.5+point[0]*(SIZE-1))/(SIZE*COLS),
     (row*SIZE+.5+point[1]*(SIZE-1))/(SIZE*rows)];
  }
  window.MineWorldMobPixels=Object.freeze({create,uv,shade,applyImported,
-  hasImported:key=>imported.has(key),get kinds(){return baseKinds.slice();},
+  hasImported:key=>imported.has(key),hasMapped,get kinds(){return baseKinds.slice();},
   get importedCount(){return imported.size;},get count(){return positions.size;},size:SIZE});
 })();
