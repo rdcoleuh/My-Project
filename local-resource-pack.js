@@ -260,6 +260,7 @@ function readArchive(buffer){
    const matchSound=relative?.match(/^sounds\/([a-z0-9_./-]+)\.ogg$/);
    const matchMeta=relative?.match(/^textures\/(?:block|blocks)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png\.mcmeta$/);
    const mapColor=relative?.match(/^textures\/colormap\/(grass|foliage)\.png$/);
+   const bedrockFlipbook=relative==='textures/flipbook_textures.json';
    const priority=(namespace?8:0)+(bedrock?4:0)+
      (relative?.startsWith('textures/block/')?2:0)+
      (relative&&!/^textures\/(?:block|blocks|item|items)\/[^/]+\//.test(relative)?1:0);
@@ -270,6 +271,8 @@ function readArchive(buffer){
      keep('item:'+item[1],{method,size,expanded,local},priority);
    if(matchMeta&&size<131072&&expanded<131072&&(method===0||method===8))
      keep('meta:'+matchMeta[1],{method,size,expanded,local},priority);
+   if(bedrockFlipbook&&size<256*1024&&expanded<256*1024&&(method===0||method===8))
+     keep('bedrock:flipbook',{method,size,expanded,local},priority);
    if(mapColor&&size<4*1024*1024&&expanded<4*1024*1024&&(method===0||method===8))
      keep('colormap:'+mapColor[1],{method,size,expanded,local},priority);
    if(matchSound&&size<4*1024*1024&&expanded<4*1024*1024&&(method===0||method===8))
@@ -468,11 +471,30 @@ async function applyResources(zip,sourceName){
  let faces=0,overlaid=0;
  const ids=new Set(),importedFaces=new Set(),cache=new Map(),metaCache=new Map(),missing=new Set(),missingFaces=[],resolved=new Map(),animated=[];
  const timeline=window.MineWorldResourceAnimation;
+ const bedrock=window.MineWorldBedrockFlipbooks;
+ let bedrockEntries=new Map(),bedrockAnimatedFaces=0;
+ if(bedrock&&zip.entries.has('bedrock:flipbook')){
+   try{
+     const bytes=await zip.get('bedrock:flipbook');
+     if(bytes&&bytes.length<=256*1024)
+       bedrockEntries=bedrock.parse(new TextDecoder().decode(bytes));
+   }catch(e){console.warn('Ignoring invalid local Bedrock flipbook metadata:',e);}
+ }
  const firstFrame=info=>info?.timeline?.frames?.[0]?.index??0;
  async function spriteTimeline(name,image){
   if(!timeline||!image)return null;
   const resolvedName=resolveName(name),key='meta:'+resolvedName;
-  if(!resolvedName||!zip.entries.has(key))return null;
+  if(!resolvedName)return null;
+  if(!zip.entries.has(key)){
+    const entry=bedrock.match(bedrockEntries,resolvedName);
+    if(!entry)return null;
+    const geometry=bedrock.geometry(image,entry);
+    if(geometry.count<=1)return null;
+    const bedrockTimeline=bedrock.timeline(entry,geometry.count);
+    if(!bedrockTimeline)return null;
+    bedrockAnimatedFaces++;
+    return {timeline:bedrockTimeline,geometry};
+  }
   if(!metaCache.has(key)){
    metaCache.set(key,(async()=>{
     try{
@@ -585,7 +607,7 @@ async function applyResources(zip,sourceName){
  state.lastAnimationAt=-Infinity;
  state.animationDisabled=false;
  state.active=faces+directionalFaces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={blocks:ids.size,faces,directionalFaces,items,overlaid,animatedFaces:animated.length,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
+ state.lastResult={blocks:ids.size,faces,directionalFaces,items,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
@@ -631,6 +653,7 @@ async function loadFiles(fileList){
    if(ogg){const path=name.match(/(?:^|\/)sounds\/([a-z0-9_./-]+)\.ogg$/);if(path)key='sound:'+path[1];}
    if(png&&name.includes('/colormap/')&&['grass','foliage'].includes(png[1]))key='colormap:'+png[1];
    if(meta)key='meta:'+meta[1];
+   if(leaf==='flipbook_textures.json'&&/(?:^|\/)textures\/flipbook_textures\.json$/.test(name))key='bedrock:flipbook';
    if(!key)continue;
    if(Number.isFinite(file.size)&&file.size>6*1024*1024)continue;
    total+=Number.isFinite(file.size)?file.size:0;
@@ -871,7 +894,7 @@ function addControls(root,title){
  function showCoverage(result){
    if(!result)return;
    status.textContent='Matched '+result.faces+' of '+result.totalFaces+' block faces ('+
-     result.coverage+'%) across '+result.blocks+' block types, '+(result.directionalFaces||0)+' dedicated directional side faces, '+(result.items||0)+' original item PNGs, '+result.animatedFaces+' animated faces and '+result.sounds+
+     result.coverage+'%) across '+result.blocks+' block types, '+(result.directionalFaces||0)+' dedicated directional side faces, '+(result.items||0)+' original item PNGs, '+result.animatedFaces+' animated faces ('+(result.bedrockAnimatedFaces||0)+' from Bedrock flipbooks) and '+result.sounds+
      ' sound events. '+(result.overlaid?'Grass uses the Java side overlay. ':'')+'Unmatched block faces keep independent MineWorld art.';
    detail.textContent=result.unmapped.length?
      'Example unmatched sprite names: '+result.unmapped.slice(0,9).join(', ')+'.':'All mapped face names were present.';
