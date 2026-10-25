@@ -107,7 +107,7 @@ function ring(id,x,y,top){
  const crack=trench&&fibre>.21;
  const fleck=rand(x,y,id*14+11)>.94;
  const c=crack?spec.stripe:fleck?spec.core:fibre>.54?blend(spec.base,spec.stripe,.15):spec.base;
- return shade(c,x,y,id*7,3,17);
+ return tint(shade(c,x,y,id*7,3,17),Math.round((rand(x,y,id*1013)-.5)*17));
 }
 function leaf(id,x,y){
  const base=LEAVES[id];
