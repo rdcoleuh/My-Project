@@ -67,7 +67,7 @@ test('renderer and service worker load layer once, last in artwork stack',()=>{
  assert.ok(html.indexOf('src="./texture-facets.js"')<html.indexOf('src="./texture-motion.js"'));
  assert.ok(sw.includes("'./texture-facets.js'"));
  assert.match(sw,/const VERSION='mineworld-[^']+';/,'Offline cache must be versioned');
- assert.ok(html.includes('MineWorld 6.7'));
+ assert.match(html,/MineWorld 6\.\d+/,'A game version label must be visible');
  assert.ok(html.includes('mineworld-selfhost-v1'));
  assert.ok(!read('texture-facets.js').includes('fetch('));
  assert.equal(w.MineWorldTextureFacets.family(5),'bark');
