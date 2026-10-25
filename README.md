@@ -1,3 +1,22 @@
+# MineWorld 6.2 — Texture Fidelity Pass
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+This update continues refining the game's **independently generated, Minecraft-style 16×16 block art**, not just the title screen.
+
+- **Logs:** Separate cut-end rings and vertical bark for oak, spruce, birch, jungle, acacia, mangrove, cherry, pale oak, and Nether stems. Bark now has clearer pixel-by-pixel grain.
+- **Leaves:** More natural species-specific colors, layered clusters, and tiny transparent holes, with sharper nearest-neighbor pixels.
+- **Minerals:** Distinct embedded coal, iron, copper, gold, redstone, lapis, diamond, and emerald clusters across normal-stone and deepslate ores.
+- **Other blocks:** More distinctive sediment, blackstone, basalt, netherrack, magma, nylium, End stone, end bricks, purpur, mineral storage blocks and structural details. Existing 6.1 workstation icons and face-specific designs remain in place.
+- **Crops:** Wheat, carrots, potatoes, and beetroots now use transparent sprite cutouts with visibly different growth stages, instead of solid earthy squares.
+- **Existing custom packs:** **Options → Custom Java resource pack** now exposes local ZIP/JAR importing alongside the existing in-world options. The importer recognizes more old Java resource-pack log and leaf filenames. For a pixel-for-pixel match, import eligible resource textures from files you have the right to use; your assets stay local and are not uploaded into the public GitHub project.
+
+**Testing:** Automated tests check every pixel of all 169 block IDs on all three material faces, distinct block patterns, full source pixel resolution, bark/leaf details, crop transparency, and preexisting gameplay. Browser/phone rendering still needs hands-on checking. The update does not change world-save IDs, inventory, controls, or save data.
+
+The public repo **does not include Mojang/Eaglercraft texture files**. Minecraft is a trademark of its respective owners; MineWorld is an independently developed project.
+
+---
+
 # MineWorld 6.1 — Much More Recognizable 16×16 Block Artwork
 
 **Play:** https://rdcoleuh.github.io/My-Project/
