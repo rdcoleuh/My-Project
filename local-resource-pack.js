@@ -898,7 +898,7 @@ function mountDefaultUI(root){
  const update=()=>{
   const result=state.lastResult;
   status.textContent=result?
-   'Active: '+state.sourceName+' · '+result.faces+'/'+result.totalFaces+' block faces · '+(result.items||0)+' item PNGs.':
+   'Active: '+state.sourceName+' · '+result.faces+'/'+result.totalFaces+' block faces · '+(result.items||0)+' item PNGs · '+(result.entities||0)+' mob skins.':
    'Select Mojang’s ZIP once; save privately as your default.';
  };
  defaultStatusListeners.push(update);update();
@@ -909,7 +909,7 @@ function mountDefaultUI(root){
   try{
    const {result,saved}=await setDefaultPack(selected);
    status.textContent='Applied '+result.faces+'/'+result.totalFaces+' faces and '+(result.items||0)+
-    ' item PNGs. '+(saved?'Saved as default on this device.':'Storage unavailable: reselect on next visit.');
+    ' item PNGs and '+(result.entities||0)+' mob skins. '+(saved?'Saved as default on this device.':'Storage unavailable: reselect on next visit.');
   }catch(e){status.textContent='Could not apply selected ZIP: '+e.message;}
   finally{button.disabled=false;file.value='';}
  });
@@ -926,7 +926,7 @@ function addControls(root,title){
  pane.style.cssText='margin-top:12px;padding:12px;border:1px solid #9aba9e;background:#1c2d22;color:#f0ffe9;font:12px/1.5 system-ui;text-align:left;max-width:100%;';
  const heading=document.createElement('strong');heading.textContent=title||'Your exact local textures';
  const help=document.createElement('p');
- help.textContent='Choose your own Java Edition .jar/.zip or Bedrock .mcpack in your phone Files app. Original block/item PNGs are read privately and not uploaded. The installed Minecraft app itself is not accessible from this browser. Remember this pack is optional; original entity skins need their matching models/UVs.';
+ help.textContent='Choose your own Java Edition .jar/.zip or Bedrock .mcpack in your phone Files app. Block textures, item icons, world drop sprites and mob skin colors are read privately. Skins are fitted to MineWorld models; original Bedrock model UVs are not fully reproduced. The installed Minecraft app itself is not accessible from this browser.';
  help.style.margin='7px 0';
  const official=document.createElement('a');
  official.href='https://github.com/Mojang/bedrock-samples/releases/download/v1.26.50.4/bedrock-samples-v1.26.50.4-full.zip';
@@ -978,7 +978,7 @@ function addControls(root,title){
  function showCoverage(result){
    if(!result)return;
    status.textContent='Matched '+result.faces+' of '+result.totalFaces+' block faces ('+
-     result.coverage+'%) across '+result.blocks+' block types, '+(result.directionalFaces||0)+' dedicated directional side faces, '+(result.items||0)+' original item PNGs, '+result.animatedFaces+' animated faces ('+(result.bedrockAnimatedFaces||0)+' from Bedrock flipbooks) and '+result.sounds+
+     result.coverage+'%) across '+result.blocks+' block types, '+(result.directionalFaces||0)+' dedicated directional side faces, '+(result.items||0)+' item PNGs, '+(result.entities||0)+' mob skins, '+(result.worldItemSprites||0)+' 3D item sprites, '+result.animatedFaces+' animated faces ('+(result.bedrockAnimatedFaces||0)+' from Bedrock flipbooks) and '+result.sounds+
      ' sound events. '+(result.overlaid?'Grass uses the Java side overlay. ':'')+'Unmatched block faces keep independent MineWorld art.';
    detail.textContent=result.unmapped.length?
      'Example unmatched sprite names: '+result.unmapped.slice(0,9).join(', ')+'.':'All mapped face names were present.';
