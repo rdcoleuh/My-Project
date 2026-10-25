@@ -39,7 +39,22 @@ function install(api){
  function itemView(key,where){
   if(!key)return;
   if(key.startsWith('block:'))blockImage(Number(key.slice(6)),where);
-  else node(where,'span','mw-java-emoji',api.icon(key));
+  else{
+   const visual=node(where,'span','mw-java-emoji',api.icon(key));
+   // Original Java PNG icons are decoded strictly from a user-selected local archive.
+   // Keep the fallback emoji until the asset finishes loading; never fetch remotely.
+   const getIcon=window.MineWorldLocalTextures?.itemIcon;
+   if(typeof getIcon==='function')getIcon(key).then(src=>{
+    if(!src||visual.isConnected===false)return;
+    const picture=doc.createElement('img');
+    picture.className='mw-java-item-art';
+    picture.alt=api.label(key);
+    picture.width=picture.height=16;
+    picture.style.cssText='width:24px;height:24px;image-rendering:pixelated;object-fit:contain;';
+    picture.src=src;
+    visual.replaceChildren(picture);
+   }).catch(()=>{});
+  }
  }
  function slot(parent,pos,hint){
   const s=model.stackAt(pos),button=node(parent,'button','mw-java-slot'+(focus===pos?' mw-focused':''));
@@ -232,7 +247,7 @@ function install(api){
    const file=packFile.files?.[0];if(!file)return;
    status.textContent='Applying textures locally from '+file.name+'…';
    try{const r=await window.MineWorldLocalTextures.loadFile(file);
-     status.textContent='Local pack active · matched '+r.faces+' of '+r.totalFaces+' block faces across '+r.blocks+' blocks. Unmatched faces retain MineWorld art.';
+     status.textContent='Local pack active · matched '+r.faces+' of '+r.totalFaces+' block faces and '+(r.items||0)+' direct Java inventory PNGs. Unmatched art stays MineWorld original.';
      renderCreative();if(!panel.classList.contains('hidden'))render();api.refreshGame?.();
    }catch(error){status.textContent='Could not import pack: '+error.message;}
    finally{packFile.value='';}
