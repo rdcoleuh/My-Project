@@ -7,7 +7,7 @@ const m=window.MineWorldPixelMaterials;if(!m)return;
 const old=m.paint,c=n=>Math.max(0,Math.min(255,Math.round(n)));
 function h(x,y,s){let t=Math.imul((x|0)+1473,1597334677)^Math.imul((y|0)+392,3812015801)^Math.imul((s|0)+61,95868997);t=Math.imul(t^(t>>>15),2246822519);return ((t^(t>>>13))>>>0)/4294967295}
 function color(rgb,shade=0){return [c(rgb[0]+shade),c(rgb[1]+shade),c(rgb[2]+shade),255]}
-function choose(p,x,y,s,area=3){const v=h(Math.floor(x/area),Math.floor(y/area),s)*.6+h(x,y,s+99)*.4;return color(p[v<.19?0:v<.47?1:v<.78?2:3],h(x,y,s+12)>.95?8:0)}
+function choose(p,x,y,s,area=3){const v=h(Math.floor(x/area),Math.floor(y/area),s)*.88+h(x,y,s+99)*.12;return color(p[v<.19?0:v<.47?1:v<.78?2:3],h(x,y,s+12)>.993?6:0)}
 const grass=[[38,93,31],[55,113,35],[75,137,46],[103,161,52]];
 const earth=[[71,48,33],[101,69,44],[133,91,58],[159,113,75]];
 const stone=[[86,87,86],[110,110,109],[131,133,131],[156,156,151]];
@@ -31,21 +31,21 @@ function grassTile(face,x,y){
 function dirtTile(x,y){
  const root=h(x>>2,y>>2,201)>.71&&(x+3*y)%9===1;
  if(root)return color([77,70,49]);
- const pebble=h(x,y,281)>.935;
+ const pebble=h(x,y,281)>.985;
  if(pebble)return color([141,130,111]);
  return choose(earth,x,y,202,3);
 }
 function stoneTile(x,y){
  const crack=h(x>>2,y>>2,150)>.72&&(x%4===1||y%5===0)&&h(x,y,151)>.4;
  if(crack)return color([72,76,74]);
- const grain=h(x,y,199)>.966;
+ const grain=h(x,y,199)>.993;
  if(grain)return color([171,172,168]);
  return choose(stone,x,y,145,3);
 }
 function sandTile(x,y){
  const spot=h(x,y,91);
- if(spot>.945)return color([154,141,105]);
- if(spot<.045)return color([250,238,191]);
+ if(spot>.985)return color([154,141,105]);
+ if(spot<.02)return color([250,238,191]);
  return choose(sand,x,y,88,4);
 }
 function brickTile(x,y){
@@ -75,7 +75,7 @@ function rubbleTile(x,y){
 function gravelTile(x,y){
  const pebble=h(x>>1,y>>1,514),grain=h(x,y,514);
  if(pebble>.77&&grain>.45)return color([71,73,75]);
- if(grain>.90)return color([194,191,183]);
+ if(grain>.965)return color([194,191,183]);
  return choose(gravel,x,y,518,2);
 }
 function furnaceTile(face,x,y){
@@ -154,6 +154,6 @@ m.paint=function(id,face,x,y){
  if(id===169)return bedTile(face,x,y);
  return old(id,face,x,y);
 };
-m.version='6.0-original-16px-material-detail';
+m.version='6.32-crisp-clustered-pixel-fallback';
 window.MineWorldTextureClarity=Object.freeze({ids:[...replace],version:m.version,pixelSize:16});
 })();
