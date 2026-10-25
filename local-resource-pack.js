@@ -329,7 +329,7 @@ function tintOverlayPixels(data,tint){
 // The decoded texture stays local and is reduced to one 16x16 atlas tile.
 function drawPackFrame(ctx,image,geometry,index,alpha=1,dx=0,dy=0){
  if(!image)return;
- const rect=window.MineWorldResourceAnimation?.frameRect(image,index,geometry)||
+ const rect=(typeof window!=='undefined'&&window.MineWorldResourceAnimation?.frameRect(image,index,geometry))||
    {x:0,y:0,width:Math.min(image.width,image.height),height:Math.min(image.width,image.height)};
  if(alpha!==1)ctx.globalAlpha=alpha;
  ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,dx,dy,16,16);
