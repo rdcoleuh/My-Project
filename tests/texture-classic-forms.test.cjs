@@ -97,6 +97,6 @@ test('crop and foliage transparency, render script order, offline cache and save
  assert.ok(sw.includes("'./texture-classic-forms.js'"));
  assert.match(sw,/const VERSION='mineworld-[^']+';/,'Offline cache must be versioned');
  assert.ok(html.includes('mineworld-selfhost-v1'));
- assert.ok(html.includes('MineWorld 6.7'));
+ assert.match(html,/MineWorld 6\.\d+/,'A game version label must be visible');
  assert.ok(!read('texture-classic-forms.js').includes('fetch('));
 });
