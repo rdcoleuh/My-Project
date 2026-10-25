@@ -15,6 +15,12 @@ Legacy Java client JARs (before the 1.13 texture-name flattening) are supported 
 
 For exact grass block layering, the importer draws `grass_block_side.png` first and composites the transparent `grass_block_side_overlay.png` with a biome tint. When supplied, `textures/colormap/grass.png` and `textures/colormap/foliage.png` determine the plains colors of neutral grass and foliage. Colored custom-pack sprites are not recolored.
 
+## Keep your original Java textures between visits
+
+After selecting a Java Edition ZIP/JAR, check **Remember this ZIP/JAR on this device** before importing. MineWorld stores the player-supplied archive in that browser's IndexedDB, then automatically reapplies its textures and animations on later visits. The option is **off by default**; a normal import remains memory-only. Nothing is uploaded to the game server or committed to GitHub.
+
+Browser private mode, storage quotas, unsupported browsers, or cleared site data can prevent persistence. MineWorld still imports the pack for the current session if saving fails. **Restore original art & sounds** also clears the remembered archive. Individual extracted PNG/folder imports are temporary and replace any previously remembered ZIP/JAR.
+
 ## Java-style animated PNGs
 
 The importer now supports sprite strips with accompanying animation metadata, such as:
@@ -25,7 +31,7 @@ The importer now supports sprite strips with accompanying animation metadata, su
 
 The metadata can specify `animation.frametime`, a custom `animation.frames` order with per-frame `time`, `animation.interpolate`, and explicit `animation.width` / `animation.height` frame dimensions. Horizontal and multi-row sprite sheets are supported; frame indexes run left-to-right and then top-to-bottom. Frames advance at Java's 20-tick-per-second timing, uploading only changed 16×16 GPU tiles. On slow devices updates are throttled, but the timeline still advances. Transparent imported PNGs no longer show underlying procedural pixels.
 
-**Limitations:** The imported artwork is resampled to MineWorld's 16×16 atlas tiles. Java resource-pack model JSON, arbitrary block-state variants, custom renderers, emissive overlays, and all special-case animation behaviors are not yet reproduced. Interpolation uses canvas blending rather than a byte-for-byte copy of Minecraft's renderer. Some MineWorld blocks do not have a matching Java block. Player-supplied assets are not persisted across reloads. No native Eaglercraft `.epk` support. Only use files you have the right to use.
+**Limitations:** The imported artwork is resampled to MineWorld's 16×16 atlas tiles. Java resource-pack model JSON, arbitrary block-state variants, custom renderers, emissive overlays, and all special-case animation behaviors are not yet reproduced. Interpolation uses canvas blending rather than a byte-for-byte copy of Minecraft's renderer. Some MineWorld blocks do not have a matching Java block. Player-supplied ZIP/JAR archives persist only when the player explicitly enables on-device IndexedDB storage; otherwise all imports are temporary. No native Eaglercraft `.epk` support. Only use files you have the right to use.
 
 ## Gameplay and verification
 
