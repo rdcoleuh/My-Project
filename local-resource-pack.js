@@ -97,12 +97,12 @@ bind(164,'stonecutter_top','stonecutter_side','stonecutter_bottom');
 bind(165,'loom_top','loom_front','loom_bottom');
 bind(166,'smithing_table_top','smithing_table_front','smithing_table_bottom');
 bind(168,'crafting_table_top','crafting_table_front','oak_planks');
-bind(169,'red_wool','red_wool','oak_planks');
+bind(169,'red_wool','red_wool','red_wool');
 
 function normalize(s){return String(s||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');}
 const names=window.MineWorldBlockGuide?.names||[];
 const aliases={
- grass_block_top:['grass_top'],grass_block_side:['grass_side'],
+ grass_block_top:['grass_top'],grass_block_side:['grass_side'],grass_block_side_overlay:['grass_side_overlay'],
  oak_log:['log_oak','log'],oak_log_top:['log_oak_top','log_top'],oak_planks:['planks_oak','planks'],oak_leaves:['leaves_oak','leaves'],
  spruce_log:['log_spruce'],spruce_log_top:['log_spruce_top'],spruce_leaves:['leaves_spruce'],spruce_planks:['planks_spruce'],
  birch_log:['log_birch'],birch_log_top:['log_birch_top'],birch_leaves:['leaves_birch'],birch_planks:['planks_birch'],
@@ -225,7 +225,7 @@ function baseCanvas(){
 function tintNeutralSprite(ctx,x,y,id,face){
  if(typeof ctx.getImageData!=='function'||typeof ctx.putImageData!=='function')return false;
  const foliage={6:state.tint.foliage,31:[97,153,97],33:[128,167,85],35:state.tint.foliage,37:state.tint.foliage,39:state.tint.foliage};
- const tint=id===1?state.tint.grass:foliage[id];
+ const tint=id===1?state.tint.grass:id===7?[63,118,228]:foliage[id];
  if(!tint||(id===1&&face!==0))return false;
  const height=id===1&&face===1?5:16;
  const data=ctx.getImageData(x,y,16,height);
