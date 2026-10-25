@@ -1,4 +1,4 @@
-/* MineWorld 6.6: slot layout and item conservation regression tests. */
+/* MineWorld 6.7: slot layout and item conservation regression tests. */
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..');
@@ -82,7 +82,7 @@ test('main game saves slot positions, restores old saves, loads UI, and preserve
  for(const needle of ['javaInventory:javaInventory.snapshot()','javaInventory.restore(s.javaInventory)',
   'survivalHotbar:[...survivalHotbar]','mineworld-selfhost-v1',
   'src="./java-slots.js"','src="./java-inventory-ui.js"','href="./java-inventory.css"',
-  'window.MineWorldJavaInventoryScreen=','MineWorld 6.6'])
+  'window.MineWorldJavaInventoryScreen=','MineWorld 6.7'])
   assert.ok(html.includes(needle),'Missing '+needle);
  for(const name of ['java-slots.js','java-inventory-ui.js','java-inventory.css'])
   assert.ok(sw.includes("'./"+name+"'"),'Offline cache omits '+name);
