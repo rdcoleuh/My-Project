@@ -9,7 +9,7 @@ function load(){
  vm.createContext(w);
  for(const p of ['pixel-materials.js','texture-refinement.js','texture-details.js',
   'texture-polish.js','texture-workshop.js','classic-materials.js',
-  'texture-clarity.js','readable-materials.js','utility-materials.js']){
+  'texture-clarity.js','readable-materials.js','texture-fidelity.js','utility-materials.js']){
   vm.runInContext(read(p),w,{filename:p,timeout:30000});
  }
  return w.window;
@@ -38,6 +38,8 @@ test('all 169 block IDs have valid 16×16 faces and unique side materials',()=>{
  assert.equal(seen.size,169);
  assert.equal(w.MineWorldReadableMaterials.pixelsPerFace,16);
  assert.ok(w.MineWorldReadableMaterials.ids.length>=70,'Expected broad block-family coverage');
+ assert.equal(w.MineWorldTextureFidelity.pixelSize,16);
+ assert.ok(w.MineWorldTextureFidelity.improvedIds.length>=120,'Enhanced textures should cover a broad set of blocks');
 });
 test('logs have coherent vertical bark and different ringed endgrain',()=>{
  for(const id of [5,15,30,32,34,36,38,40,42,78,80]){
@@ -112,9 +114,26 @@ test('palette is stable across visits and original Minecraft texture files are n
  const html=read('index.html'),sw=read('sw.js');
  assert.ok(html.includes('src="./readable-materials.js"'));
  assert.ok(html.includes('src="./utility-materials.js"'));
+ assert.ok(html.includes('src="./texture-fidelity.js"'));
+ assert.ok(sw.includes("'./texture-fidelity.js'"));
  assert.ok(sw.includes("'./readable-materials.js'"));
  assert.ok(sw.includes("'./utility-materials.js'"));
  assert.ok(html.includes('MineWorld 6.2'));
  const a=html.indexOf('src="./texture-clarity.js"'),b=html.indexOf('src="./readable-materials.js"');
+ const c=html.indexOf('src="./texture-fidelity.js"'),d=html.indexOf('src="./utility-materials.js"');
+ assert.ok(b<c&&c<d,'fidelity must enhance classic colors without replacing detailed workstation UI');
  assert.ok(a>=0&&a<b,'new source should override previous paint stack');
+});
+
+test('crop growth frames have cutout alpha, mature stalks and species-specific colored tops',()=>{
+ for(const start of [139,143,147,151]){
+  const young=start,mature=start+3;
+  const sample=Array.from({length:256},(_,i)=>P(mature,1,i%16,Math.floor(i/16)));
+  const youngOpaque=Array.from({length:256},(_,i)=>P(young,1,i%16,Math.floor(i/16))).filter(v=>v[3]>0).length;
+  const grownOpaque=sample.filter(v=>v[3]>0).length;
+  assert.ok(youngOpaque>0&&grownOpaque>youngOpaque,'mature crops should be fuller '+mature);
+  assert.ok(sample.some(v=>v[3]===0),'crop cutout must retain transparent pixels '+mature);
+ }
+ const species=[142,146,150,154].map(id=>signature(id,1));
+ assert.equal(new Set(species).size,4,'crop families should be visibly different');
 });
