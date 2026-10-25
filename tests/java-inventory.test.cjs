@@ -104,10 +104,12 @@ test('cursor distribution respects 64 cap and avoids incompatible stacks',()=>{
  model.normalize();
  const original=store.count('block:3')+store.count('block:4');
  model.click(1); // 11 stones on cursor
- assert.equal(model.distribute([0,2],false),true);
+ assert.equal(model.distribute([0,2,3,4],false),true);
  assert.equal(model.stackAt(0).qty,64);
- assert.equal(model.stackAt(2).qty,5);
- assert.equal(model.cursorStack().qty,6);
+ assert.equal(model.stackAt(2).key,'block:4');
+ assert.equal(model.stackAt(3).qty,5);
+ assert.equal(model.stackAt(4).qty,5);
+ assert.equal(model.cursorStack().qty,1);
  assert.equal(store.count('block:3')+store.count('block:4'),original);
  uniq(model);
 });
