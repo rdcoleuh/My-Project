@@ -103,6 +103,10 @@ test('player-supplied animated PNG updates only changed GPU tiles and resets saf
  assert.equal(pack.textureName(167,0),'grindstone_round');
  const result=await pack.loadFiles(input);
  assert.equal(result.animatedFaces,3);
+ assert.equal(pack.hasImportedFace(7,0),true,'Imported water top is protected from procedural animation');
+ assert.equal(pack.hasImportedFace(7,1),true,'Imported water side is protected from procedural animation');
+ assert.equal(pack.hasImportedFace(66,0),false,'Unmatched lava still animates procedurally');
+ assert.equal(pack.hasImportedFace(7,3),false,'Invalid face indices never match');
  assert.equal(result.faces+result.missingFaces.length,507,
   'Every MineWorld atlas face must be either mapped or named in the audit');
  assert.ok(result.missingFaces.some(f=>f.id===119&&f.name==='chest_front'),
@@ -116,6 +120,7 @@ test('player-supplied animated PNG updates only changed GPU tiles and resets saf
  assert.equal(pack.updateAnimation(100,60,false),3);
  assert.equal(uploads.length,6);
  await pack.clear();
+ assert.equal(pack.hasImportedFace(7,0),false,'Reset restores original animation ownership');
  assert.equal(pack.animatedFaces,0);
  assert.equal(pack.updateAnimation(200,60,false),0);
  const modded={name:'water_still.png',
