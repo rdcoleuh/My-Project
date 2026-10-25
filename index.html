@@ -3687,6 +3687,7 @@ body.in-nether #game-wrap{background:#290f19}
     closeSurvival:closeGear,
     selectCreative:selectHotbarSlot,
     assignCreative:id=>{HOT9[selection]=id;HOTSETS[hotbarPage][selection]=id;markSave();updateHotbar();},
+    refreshGame:updateHotbar,
     onCreativeClose:()=>{if(started)start();else $('welcome').classList.remove('hidden');}
   });
   $('inventory-toggle').addEventListener('click',toggleInventory);
