@@ -4,9 +4,10 @@
  */
 (()=>{
  'use strict';
- const KEY='mineworld-texture-smoothing-v1';
- let enabled=true,gl=null,texture=null,canvas=null;
- try{const saved=localStorage.getItem(KEY);if(saved==='classic')enabled=false;else if(saved==='smooth')enabled=true;}catch(_){}
+ // v2 intentionally resets the old Smooth-by-default setting once; future manual selections persist.
+ const KEY='mineworld-texture-smoothing-v2';
+ let enabled=false,gl=null,texture=null,canvas=null;
+ try{const saved=localStorage.getItem(KEY);if(saved==='smooth')enabled=true;}catch(_){}
  const listeners=new Set();
  function apply(g=gl,t=texture){
    if(!g||!t)return false;
