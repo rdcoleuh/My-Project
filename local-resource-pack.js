@@ -468,7 +468,7 @@ async function applyResources(zip,sourceName){
  const importedTints=await readPackTints(zip);
  const [canvas,ctx]=baseCanvas();ctx.drawImage(original,0,0);
  let faces=0,overlaid=0;
- const ids=new Set(),importedFaces=new Set(),cache=new Map(),metaCache=new Map(),missing=new Set(),missingFaces=[],resolved=new Map(),animated=[];
+ const ids=new Set(),importedFaces=new Set(),cache=new Map(),decoded=new Map(),metaCache=new Map(),missing=new Set(),missingFaces=[],resolved=new Map(),animated=[];
  const timeline=window.MineWorldResourceAnimation;
  const bedrock=window.MineWorldBedrockFlipbooks;
  let bedrockEntries=new Map(),bedrockAnimatedFaces=0;
@@ -485,7 +485,7 @@ async function applyResources(zip,sourceName){
   const resolvedName=resolveName(name),key='meta:'+resolvedName;
   if(!resolvedName)return null;
   if(!zip.entries.has(key)){
-    const entry=bedrock.match(bedrockEntries,resolvedName);
+    const entry=bedrock?.match?.(bedrockEntries,resolvedName);
     if(!entry)return null;
     const geometry=bedrock.geometry(image,entry);
     if(geometry.count<=1)return null;
@@ -515,14 +515,29 @@ async function applyResources(zip,sourceName){
    return resolved.get(name);
  }
  async function sprite(name){
-   const key=resolveName(name);if(!key)return null;
-   if(!cache.has(key)){
-     cache.set(key,(async()=>{
-       try{return await imageFromPng(await zip.get(key));}
-       catch(e){console.warn('Skipping unsupported texture '+key,e);return null;}
+   if(!name)return null;
+   // An archive can contain a broken modern PNG alongside a valid historical
+   // sprite. Try modern first, then independently named legacy/Bedrock aliases.
+   // Cache both requests and decoded candidates to avoid decoding shared
+   // texture files repeatedly across the 507 block faces.
+   if(!cache.has(name)){
+     cache.set(name,(async()=>{
+       for(const key of new Set([name,...(aliases[name]||[])])){
+         if(!zip.entries.has(key))continue;
+         if(!decoded.has(key)){
+           decoded.set(key,(async()=>{
+             try{return await imageFromPng(await zip.get(key));}
+             catch(e){console.warn('Skipping unsupported texture '+key,e);return null;}
+           })());
+         }
+         const image=await decoded.get(key);
+         if(image){resolved.set(name,key);return image;}
+       }
+       resolved.set(name,null);
+       return null;
      })());
    }
-   return cache.get(key);
+   return cache.get(name);
  }
  for(let id=1;id<=169;id++){
    for(let face=0;face<3;face++){
