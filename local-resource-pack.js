@@ -210,22 +210,23 @@ function baseCanvas(){
  ctx.imageSmoothingEnabled=false;
  return [canvas,ctx];
 }
-async function loadFile(file){
- if(!file||typeof file.arrayBuffer!=='function')throw Error('Select a .zip resource pack or Java client.jar.');
- if(!/\.(zip|jar)$/i.test(file.name||''))throw Error('Please select a Java resource pack .zip or client.jar.');
- const zip=readArchive(await file.arrayBuffer());
- if(zip.entries.size===0)throw Error('No Java Edition block PNGs or sounds were found in this ZIP/JAR.');
+async function applyResources(zip,sourceName){
+ if(zip.entries.size===0)throw Error('No compatible block PNGs or sounds were found in the selected files.');
  window.MineWorldSound?.clearSamples();
  const original=await imageFromURL(META.baseURL);
  const [canvas,ctx]=baseCanvas();ctx.drawImage(original,0,0);
  let faces=0;
- const ids=new Set(),cache=new Map();
+ const ids=new Set(),cache=new Map(),missing=new Set(),resolved=new Map();
  for(let id=1;id<=169;id++){
    for(let face=0;face<3;face++){
      const name=textureName(id,face);
 
-     const candidate=[name,...(aliases[name]||[])].find(key=>zip.entries.has(key));
-     if(!candidate)continue;
+     let candidate=resolved.get(name);
+     if(candidate===undefined){
+       candidate=[name,...(aliases[name]||[])].find(key=>zip.entries.has(key))||null;
+       resolved.set(name,candidate);
+     }
+     if(!candidate){if(name)missing.add(name);continue;}
      if(!cache.has(candidate)){
        cache.set(candidate,(async()=>{
          try{return await imageFromPng(await zip.get(candidate));}
@@ -264,10 +265,41 @@ async function loadFile(file){
  }
  if(!faces&&!audio)throw Error('No compatible block PNGs or playable OGG sound files found.');
  if(faces)await writeAtlas(canvas);
- state.active=faces>0;state.sourceName=file.name||'local ZIP';
- state.lastResult={blocks:ids.size,faces,sounds:audio,available:zip.entries.size};
+ state.active=faces>0;state.sourceName=sourceName||'selected local assets';
+ state.lastResult={blocks:ids.size,faces,sounds:audio,available:zip.entries.size,
+    coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
+    unmapped:[...missing].filter(Boolean).slice(0,24)};
  window.MineWorldBridge?.refreshTextureUI?.();
  return state.lastResult;
+}
+async function loadFile(file){
+ if(!file||typeof file.arrayBuffer!=='function')throw Error('Choose a local .zip, .jar or PNG file.');
+ if(/\.(png|ogg)$/i.test(file.name||''))return loadFiles([file]);
+ if(!/\.(zip|jar)$/i.test(file.name||''))throw Error('Choose a Java resource-pack ZIP/JAR or PNG images.');
+ return applyResources(readArchive(await file.arrayBuffer()),file.name||'local ZIP');
+}
+async function loadFiles(fileList){
+ // A filename or webkitRelativePath is used only as a local texture lookup key.
+ const files=Array.from(fileList||[]);
+ if(!files.length||files.length>1500)throw Error('Choose between 1 and 1,500 image/sound files.');
+ const recognized=new Map();let total=0;
+ for(const file of files){
+   if(!file||typeof file.arrayBuffer!=='function')continue;
+   const name=String(file.webkitRelativePath||file.name||'').replace(/\\/g,'/').toLowerCase();
+   const leaf=name.split('/').pop()||'';
+   const png=leaf.match(/^([a-z0-9_]+)\.png$/),ogg=leaf.match(/^([a-z0-9_]+)\.ogg$/);
+   let key=png?.[1]||null;
+   if(ogg){const path=name.match(/(?:^|\/)sounds\/([a-z0-9_./-]+)\.ogg$/);if(path)key='sound:'+path[1];}
+   if(!key)continue;
+   if(Number.isFinite(file.size)&&file.size>6*1024*1024)continue;
+   total+=Number.isFinite(file.size)?file.size:0;
+   if(total>100*1024*1024)throw Error('Selected files exceed the 100 MB local limit.');
+   recognized.set(key,file);
+ }
+ const zip={entries:recognized,async get(key){
+   const source=recognized.get(key);return source?new Uint8Array(await source.arrayBuffer()):null;
+ }};
+ return applyResources(zip,files.length+' locally selected files');
 }
 async function clear(){
  const img=await imageFromURL(META.baseURL);
@@ -287,7 +319,7 @@ const exposed={
  get active(){return state.active;},
  get source(){return state.sourceName;},
  get lastResult(){return state.lastResult;},
- loadFile,clear,drawFace,textureName,
+ loadFile,loadFiles,clear,drawFace,textureName,
  inspectZip(buffer){return Array.from(readArchive(buffer).entries.keys());}
 };
 window.MineWorldLocalTextures=Object.freeze(exposed);
