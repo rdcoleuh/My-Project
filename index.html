@@ -3930,7 +3930,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
     duplicateWorld:(mode,id)=>{try{return worldLibrary.duplicate(mode,id)}catch(e){toast(e.message);return false}},
     getMode:()=>gameMode,
     getPlayer:()=>({x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly,mode:gameMode,dimension,riding:mount?.kind||''}),
-    getCombatProfile:()=>({mode:gameMode,equipped,weapon:equipped==='sword'?tools.sword:equipped==='pickaxe'?tools.pickaxe:'none'}),
+    getCombatProfile:()=>({mode:gameMode,equipped,weapon:tools[equipped]||'none'}),
     getMobs:mobSnapshot, setMobs:syncMobs, applyMobHit, grantLoot,
     applyDamage:(n,cause)=>{if(Number.isInteger(n)&&n>0&&n<=20)damage(n,String(cause||'Combat').slice(0,40))},
     getSnapshot:()=>({seed,version:7,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,dayClock,mobs:mobSnapshot(),hostDimension:dimension}),
