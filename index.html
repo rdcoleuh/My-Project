@@ -3420,7 +3420,9 @@ body.in-nether #game-wrap{background:#290f19}
       // A missed swing still plays and resets the melee recharge, as in Java.
       lastAttackAt=now;attackCooldown=.12;return;
     }
-    if(!window.MineWorldCombat.inReach(player,m)){
+    if(!window.MineWorldCombat.inReach(player,m)&&
+       entityHitboxes.distanceToBox([player.x,player.y+(isCrouching?1.27:1.62),player.z],
+         entityHitboxes.box(m))>window.MineWorldCombat.REACH+.35){
       // Out-of-range clicks still swing and consume attack recharge.
       lastAttackAt=now;attackCooldown=.12;return;
     }
