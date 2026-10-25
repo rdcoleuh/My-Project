@@ -60,8 +60,9 @@ test('live page wires gameplay events, 3D feedback, UI and offline cache',()=>{
  const worker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
  for(const marker of ['mineworld-selfhost-v1','MineWorldMovement.resolve','classic-interactions.js',
   'droppedItems:droppedItems.slice','classic.crackLines','classic.pickPlan','pickLookedAtBlock()',
-  'tickDroppedItems(dt)','drawDroppedItems();','debug-toggle','quick-pick','MineWorld 6.7'])
+  'tickDroppedItems(dt)','drawDroppedItems();','debug-toggle','quick-pick'])
    assert.ok(html.includes(marker),marker+' missing');
+ assert.match(html,/<title>MineWorld 6\\.\\d+[^<]*<\\/title>/,'display a current MineWorld version');
  assert.ok(worker.includes("'./classic-interactions.js'"));
  assert.ok(html.includes("survivalHotbar:[...survivalHotbar]"),'retain classic inventory save');
  assert.ok(html.includes("version:13"),'keep old save schema backwards compatible');
