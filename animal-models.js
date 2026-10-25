@@ -25,12 +25,23 @@ function draw(m,write,time=0){
  const body=spec.body,face=spec.face,leg=spec.leg;
  const pattern=(a,v)=>cool(a.map(n=>n*v));
  let boxes=0;
- function box(ox,oy,oz,w,h,d,color,part='body'){
+ function box(ox,oy,oz,w,h,d,color,part='body',hinge=null){
   // Render with a shared yaw transform. A cuboid remains solid six-sided.
   const rot=(px,pz)=>[x+(px*cy-pz*sy)*scale,z+(px*sy+pz*cy)*scale];
   const pts=[[ox,oy,oz],[ox+w,oy,oz],[ox+w,oy,oz+d],[ox,oy,oz+d],
              [ox,oy+h,oz],[ox+w,oy+h,oz],[ox+w,oy+h,oz+d],[ox,oy+h,oz+d]];
-  const p=pts.map(v=>{const out=rot(v[0],v[2]);return [out[0],y+v[1]*scale,out[1]]});
+  const p=pts.map(v=>{
+   let localY=v[1],localZ=v[2];
+   if(hinge){
+    // Rotate individual rigid parts around their shoulder/hip in model
+    // space before turning the whole creature toward its world heading.
+    const angle=Math.max(-.7,Math.min(.7,Number(hinge.angle)||0));
+    const dy=localY-hinge.y,dz=localZ-hinge.z;
+    localY=hinge.y+dy*Math.cos(angle)-dz*Math.sin(angle);
+    localZ=hinge.z+dy*Math.sin(angle)+dz*Math.cos(angle);
+   }
+   const out=rot(v[0],localZ);return [out[0],y+localY*scale,out[1]];
+  });
   // Vertex face directions are chosen to match the game's FACE shader shades.
   const faces=[[1,0,3,2],[4,5,6,7],[0,1,5,4],[3,2,6,7],[0,3,7,4],[2,1,5,6]];
   const shades=[.63,1,.78,.79,.85,.70];
@@ -41,12 +52,16 @@ function draw(m,write,time=0){
   }
   boxes++;
  }
- const gait=m.moving===false?0:Math.sin((m.gait||time*6)+(m.id||0))*.065;
+ const gait=m.moving===false?0:Math.sin((m.gait||time*6)+(m.id||0))*.28;
  function legs(w,d,h,color){
   for(const sx of [-1,1])for(const sz of [-1,1]){
-   const off=(sx===sz?gait:-gait),r=w*.17;
-   box(sx*w*.30-r/2,.03+Math.max(0,off),sz*d*.32-r/2,r,Math.max(.16,h-off),r,color,'leg');
-   box(sx*w*.30-r/2,.025+Math.max(0,off),sz*d*.32-r/2,r,.07,r,pattern(color,.78),'leg');
+   // Four diagonal legs swing around fixed hip joints. Hooves share the
+   // leg's hinge instead of hopping vertically and disconnecting from it.
+   const angle=sx===sz?gait:-gait,r=w*.17;
+   const hinge={y:.03+h,z:sz*d*.32,angle};
+   const legZ=sz*d*.32-r/2;
+   box(sx*w*.30-r/2,.03,legZ,r,Math.max(.16,h),r,color,'leg',hinge);
+   box(sx*w*.30-r/2,.025,legZ,r,.07,r,pattern(color,.78),'leg',hinge);
   }
  }
  if(m.kind==='chicken'){

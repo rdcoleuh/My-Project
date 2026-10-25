@@ -649,7 +649,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v6.44 · JAVA BLOCK SHAPES & SHARP PIXELS</div>
+  <div class="version">MINEWORLD v6.45 · JAVA SHAPES & CREATURE MOTION</div>
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./texture-refinement.js"></script>
@@ -678,6 +678,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./advancements.js"></script>
 <script src="./animal-behavior.js"></script>
 <script src="./animal-models.js"></script>
+<script src="./mob-motion.js"></script>
 <script src="./mob-expansion.js"></script>
 <script src="./entity-texture-maps.js"></script>
 <script src="./mob-pixel-art.js"></script>
@@ -3568,7 +3569,7 @@ body.in-nether #game-wrap{background:#290f19}
     const a=[];let mobKind='vehicle',hitFlash=0,recoilX=0,recoilZ=0;
     // Cuboids share a tiny 16x16 procedural pixel pattern per mob species.
     // 8 floats/vertex matches the existing textured shader; no Mojang assets.
-    function cube(x,y,z,w,h,d,c,part='body'){
+    function cube(x,y,z,w,h,d,c,part='body',hinge=null){
       for(const face of FACE)for(const i of [0,1,2,0,2,3]){
         const v=face.v[i],shade=face.shade;
         const dir=face.n[0]===1?'right':face.n[0]===-1?'left':
@@ -3579,7 +3580,12 @@ body.in-nether #game-wrap{background:#290f19}
           window.MineWorldMobPixels.uv(mobKind,i);
         const baseTint=mapped||window.MineWorldMobPixels.hasImported(mobKind)?[1,1,1]:c;
         const tint=hitFlash?[baseTint[0],baseTint[1]*(1-.66*hitFlash),baseTint[2]*(1-.66*hitFlash)]:baseTint;
-        a.push(x+v[0]*w+recoilX,y+v[1]*h,z+v[2]*d+recoilZ,tint[0]*shade,tint[1]*shade,tint[2]*shade,uv[0],uv[1]);
+        let vy=y+v[1]*h,vz=z+v[2]*d;
+        if(hinge){
+          const rotated=window.MineWorldMobMotion?.rotateYZ(vy,vz,hinge.y,hinge.z,hinge.angle);
+          if(rotated){vy=rotated.y;vz=rotated.z;}
+        }
+        a.push(x+v[0]*w+recoilX,vy,vz+recoilZ,tint[0]*shade,tint[1]*shade,tint[2]*shade,uv[0],uv[1]);
       }
     }
     for(const v of vehicles){if(v.dimension!==dimension||Math.hypot(v.x-player.x,v.z-player.z)>39)continue;const x=v.x,y=v.y,z=v.z;const boat=/boat|raft/i.test(v.kind);const c=boat?[.52,.31,.16]:[.45,.49,.55];
@@ -3657,12 +3663,28 @@ body.in-nether #game-wrap{background:#290f19}
         const spider=m.kind==='spider',creeper=m.kind==='creeper';
         cube(x-.32,y+(spider?.25:.65),z-.23,.64,spider?.45:creeper?1.17:.84,.46,type.body,'body');
         cube(x-.26,y+(spider?.43:creeper?1.8:1.48),z-.26,.52,spider?.35:.52,.52,type.head,'head');
+        const motion=window.MineWorldMobMotion?.pose(m,dayClock)||{
+          legL:0,legR:0,armL:0,armR:0,spiderStride:0
+        };
         if(creeper)for(const sx of [-1,1])for(const sz of [-1,1]){
-          cube(x+sx*.20-.11,y+.02,z+sz*.19-.10,.21,.61,.20,type.body,'leg');
+          const angle=sx===sz?motion.legL:motion.legR;
+          cube(x+sx*.20-.11,y+.02,z+sz*.19-.10,.21,.61,.20,type.body,'leg',
+            {y:y+.63,z:z+sz*.19,angle});
         }
-        if(!creeper)for(const side of [-1,1]){
-          cube(x+side*.18-.10,y+.04,z-.16,.20,spider?.26:.62,.32,type.body,'leg');
-          if(!spider)cube(x+side*.37-.11,y+.72,z-.14,.18,.65,.28,type.head,'arm');
+        else if(spider){
+          // Eight independently articulated legs in four paired positions.
+          for(const side of [-1,1])for(let i=0;i<4;i++){
+            const baseZ=z-.42+i*.24;
+            const angle=motion.spiderStride*(i%2===0?1:-1)*(side===-1?1:-1);
+            cube(x+side*.28-.08,y+.12,baseZ,.16,.26,.30,type.body,'leg',
+              {y:y+.34,z:baseZ+.15,angle});
+          }
+        }else for(const side of [-1,1]){
+          const left=side===-1;
+          cube(x+side*.18-.10,y+.04,z-.16,.20,.62,.32,type.body,'leg',
+            {y:y+.66,z:z,angle:left?motion.legL:motion.legR});
+          cube(x+side*.37-.11,y+.72,z-.14,.18,.65,.28,type.head,'arm',
+            {y:y+1.36,z:z,angle:left?motion.armL:motion.armR});
         }
         if(m.kind==='zombie')cube(x-.2,y+1.72,z-.273,.16,.11,.02,[.75,.16,.18]);
         if(m.kind==='creeper'){

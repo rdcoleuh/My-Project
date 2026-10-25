@@ -1,3 +1,9 @@
+# MineWorld 6.45 — Locomotion and creature animation
+
+The first independently authored articulated low-poly creature motion pass is now included. Common quadrupeds use diagonally alternating leg rotations about hip joints rather than detached up/down bobbing. Basic undead/skeleton bipeds use moving shoulder/hip angles, creepers articulate their feet, and spiders now have eight independently swaying legs instead of two simplified posts. Imported skin UVs stay assigned to the original face and part as those vertices rotate. This is a visual-only update: no save migrations, combat damage changes, player movement or network protocols.
+
+**Still to do:** dedicated animated rigs for every species, true Java multipart block geometry, more detailed Java combat state/AI, and physical-device confirmation. These visuals are an independent approximation, not copied Minecraft animation files.
+
 # MineWorld 6.44 — Java bounded-cuboid models and state safety
 
 - **Original Java block geometry import (bounded):** Player-selected Java Edition ZIP/JAR packs can now render a **single axis-aligned cuboid** such as an inset or half-height block when its model resolves all six owned PNGs and declares valid explicit UV rectangles for all six sides. Imported geometry is also used by collision and targeting, with a complete reset when the local pack is removed. Multi-element shapes (stairs, fences, doors), element rotations, or rotated non-cube blockstates still require a dedicated mesh renderer and retain the original fallback. No original Minecraft bitmaps are included.
