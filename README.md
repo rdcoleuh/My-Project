@@ -1,3 +1,19 @@
+# MineWorld 6.7 — Refined Voxel Textures + Smarter Java-Style Inventory
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+MineWorld 6.7 updates **the actual browser game** with a more distinctive final 16×16 procedural pixel-art pass. Dirt and grass edges, smooth stone, irregular cobblestone, board-grain planks, angular ore clusters, furnace faces, tree end-grain, carved crafting tables, chests, cactus, hay and stone/Nether/End masonry are more carefully defined. Existing painter layers still supply block categories not targeted by this pass.
+
+The inventory is improved beyond 6.6: a pixel character preview; visually cleaner armor/offhand/crafting layout; double-click matching-stack collection to 64; cursor stack spreading across multiple slots; clearer mouse and touch split/one-item controls; Shift-click armor equipping; Q/Ctrl+Q dropping while in inventory; and a categorized, paged Creative inventory with a visible selected hotbar position. **The 27 main slots, 9 hotbar slots, 64 stack caps, overflow pages, slot IDs, offline support and saved worlds remain supported.**
+
+**Local Java textures:** Use the inventory's `Import Java textures` option to select a compatible Java Edition ZIP or JAR **you provide**. Its block PNGs remain in memory locally. Neutral grayscale grass and leaf sprites now receive a plains/foliage color tint (as occurs in Java rendering), while custom already-colored files are preserved. Imported sprites preview in the inventory and hotbar. Unmapped or missing faces keep original MineWorld graphics.
+
+The built-in default art is independently illustrated, **not** a pixel-for-pixel copy of Minecraft; using a compatible local pack is still needed for the actual original game artwork. No copyrighted block texture bitmaps are bundled in the public repository.
+
+**Verification:** GitHub Actions runs the full Node regression suite, now including test coverage for 169 blocks, cropped transparency, deterministic texture faces, inventory item conservation, splitting/collection/distribution, older save migration and vanilla-style local sprite tinting.
+
+---
+
 # MineWorld 6.6 — Java-style Slot Inventory and Local Java Texture Packs
 
 **Play:** https://rdcoleuh.github.io/My-Project/
