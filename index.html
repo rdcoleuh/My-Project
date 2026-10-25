@@ -1559,6 +1559,27 @@ body.in-nether #game-wrap{background:#290f19}
   function mineTargetSame(a,b){
     return !!a&&!!b&&a.x===b.x&&a.y===b.y&&a.z===b.z&&a.b===b.b;
   }
+  function dropMinedResource(key,qty,x,y,z){
+    if(!Number.isInteger(qty)||qty<1||!validHotbarKey(key))return false;
+    // Shared world ownership still uses its established synchronized pickup;
+    // private Survival worlds produce persistent collectible entities.
+    if(window.MineWorldMultiplayer?.isShared()){
+      addResource(key,qty);
+      return true;
+    }
+    for(let left=qty;left>0;){
+      const n=Math.min(64,left);left-=n;
+      const scatter=(Math.sin(x*4.17+y*12.47+z*9.3+n)*43758.5453)%1;
+      if(droppedItems.length>=80)droppedItems.shift();
+      droppedItems.push({
+        key,count:n,x:x+.5,y:y+.32,z:z+.5,
+        vx:scatter*.35,vy:1.25,vz:-scatter*.35,
+        age:0,delay:.35,dimension
+      });
+    }
+    markSave();
+    return true;
+  }
   function breakBlockNow(target){
     if(!target||get(target.x,target.y,target.z)!==target.b)return false;
     if(target.b===168)craftBenchMemo.until=0;
@@ -1577,20 +1598,20 @@ body.in-nether #game-wrap{background:#290f19}
       if(ore){
         if(['Coal','Redstone','Lapis Lazuli','Diamond','Emerald','Quartz','Gold'].includes(ore.name))gainExperience(ore.name==='Diamond'||ore.name==='Emerald'?5:2);
         const kind=ore.name;
-        if(kind==='Coal')addResource('coal',1);
-        else if(kind==='Iron')addResource('rawIron',1);
-        else if(kind==='Copper')addResource('rawCopper',2+Math.floor(Math.random()*4));
-        else if(kind==='Gold')addResource('rawGold',1);
-        else if(kind==='Redstone')addResource('redstone',3+Math.floor(Math.random()*3));
-        else if(kind==='Lapis Lazuli')addResource('lapis',4+Math.floor(Math.random()*5));
-        else if(kind==='Diamond')addResource('diamond',1);
-        else if(kind==='Emerald')addResource('emerald',1);
-        else addResource('block:'+found,1);
+        if(kind==='Coal')dropMinedResource('coal',1,target.x,target.y,target.z);
+        else if(kind==='Iron')dropMinedResource('rawIron',1,target.x,target.y,target.z);
+        else if(kind==='Copper')dropMinedResource('rawCopper',2+Math.floor(Math.random()*4),target.x,target.y,target.z);
+        else if(kind==='Gold')dropMinedResource('rawGold',1,target.x,target.y,target.z);
+        else if(kind==='Redstone')dropMinedResource('redstone',3+Math.floor(Math.random()*3),target.x,target.y,target.z);
+        else if(kind==='Lapis Lazuli')dropMinedResource('lapis',4+Math.floor(Math.random()*5),target.x,target.y,target.z);
+        else if(kind==='Diamond')dropMinedResource('diamond',1,target.x,target.y,target.z);
+        else if(kind==='Emerald')dropMinedResource('emerald',1,target.x,target.y,target.z);
+        else dropMinedResource('block:'+found,1);
       }else if(found===91){
-        if(Math.random()<.25)addResource('flint',1);else addResource('block:91',1);
-      }else if(found===83){addResource('quartz',1);gainExperience(2);}
-      else if(found===84)addResource('gold',1);
-      else addResource('block:'+found,1);
+        if(Math.random()<.25)dropMinedResource('flint',1,target.x,target.y,target.z);else dropMinedResource('block:91',1,target.x,target.y,target.z);
+      }else if(found===83){dropMinedResource('quartz',1,target.x,target.y,target.z);gainExperience(2);}
+      else if(found===84)dropMinedResource('gold',1,target.x,target.y,target.z);
+      else dropMinedResource('block:'+found,1);
       updateHotbar();updateSurvivalHUD();markSave();
     }
     sound?.play('break',NAMES[target.b]);
