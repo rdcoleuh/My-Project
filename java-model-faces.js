@@ -37,9 +37,47 @@ function nameFor(id,label){
  if(typeof label!=='string')return null;
  return clean(label.toLowerCase().trim().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''));
 }
+// Read the blockstate's default unrotated cube model when a player supplies
+// blockstates/*.json. Never infer geometry from rotated or modded variants.
+const DEFAULT_STATE=Object.freeze({
+ axis:'y',facing:'north',half:'bottom',type:'bottom',snowy:'false',
+ waterlogged:'false',lit:'false',open:'false',powered:'false',
+ age:'0',level:'0',stage:'0',moisture:'0',layers:'1',
+ attachment:'floor',face:'floor',rotation:'0',hinge:'left',
+ occupied:'false',enabled:'true',shape:'straight'
+});
+function stateModel(data){
+ const variants=data?.variants;
+ if(!variants||typeof variants!=='object'||Array.isArray(variants))return null;
+ const choices=Object.entries(variants).filter(([key])=>
+  key===''||key.split(',').every(part=>/^[a-z_]+=[a-z0-9_]+$/.test(part)));
+ const score=key=>key===''?-1:key.split(',').reduce((sum,part)=>{
+  const [name,value]=part.split('=');
+  return sum+(DEFAULT_STATE[name]===value?0:DEFAULT_STATE[name]===undefined?2:5);
+ },0);
+ choices.sort((a,b)=>score(a[0])-score(b[0])||a[0].localeCompare(b[0]));
+ for(const [,variant] of choices){
+  const candidate=Array.isArray(variant)?variant[0]:variant;
+  if(!candidate||typeof candidate!=='object'||Array.isArray(candidate))continue;
+  if((candidate.x??0)!==0||(candidate.y??0)!==0)continue;
+  const path=modelPath(candidate.model);
+  if(path)return path;
+ }
+ return null;
+}
 async function resolve(zip,modelName){
- const start=clean(modelName);
- if(!start||!zip?.entries?.has('model:'+start)||typeof zip.get!=='function')return null;
+ let start=clean(modelName);
+ if(!start||!zip?.entries||typeof zip.get!=='function')return null;
+ if(zip.entries.has('state:'+start)){
+  try{
+   const bytes=await zip.get('state:'+start);
+   if(bytes&&bytes.length<=131072){
+    const preferred=stateModel(JSON.parse(new TextDecoder().decode(bytes)));
+    if(preferred&&zip.entries.has('model:'+preferred))start=preferred;
+   }
+  }catch(_){/* Malformed optional blockstates cannot break texture imports. */}
+ }
+ if(!zip.entries.has('model:'+start))return null;
  const visited=new Set();
  async function load(name,depth){
   if(!name||depth>12||visited.has(name)||!zip.entries.has('model:'+name))return null;
@@ -102,5 +140,5 @@ async function resolve(zip,modelName){
  const result={top:allowed(top),side:allowed(side),bottom:allowed(bottom)};
  return Object.values(result).some(Boolean)?result:null;
 }
-window.MineWorldJavaModelFaces=Object.freeze({nameFor,resolve,modelPath,texturePath});
+window.MineWorldJavaModelFaces=Object.freeze({nameFor,resolve,modelPath,texturePath,stateModel});
 })();
