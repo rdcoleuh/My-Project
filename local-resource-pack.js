@@ -249,15 +249,16 @@ function readArchive(buffer){
    // Mojang's official Bedrock Samples full ZIP contains a resource_pack/
    // directory, sometimes nested under a release folder. Parse its sprites
    // directly rather than forcing players to repackage copyrighted files.
-   const bedrock=path.match(/(?:^|\/)resource_pack\/((?:textures|sounds)\/.+)$/);
+   const bedrock=path.match(/(?:^|\/)resource_pack\/((?:textures|sounds|entity)\/.+)$/);
    const relative=namespace?namespace[1]:bedrock?bedrock[1]:
-     (/^(?:textures|sounds)\//.test(path)?path:null);
+     (/^(?:textures|sounds|entity)\//.test(path)?path:null);
    // Bedrock also stores valid block PNGs in folders such as deepslate/.
    // Keep the PNG's basename as the lookup key, with top-level art taking
    // precedence over nested variants when both exist.
    const match=relative?.match(/^textures\/(?:block|blocks)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png$/);
    const item=relative?.match(/^textures\/(?:item|items)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png$/);
    const entity=relative?.match(/^textures\/entity\/([a-z0-9_-]+(?:\/[a-z0-9_-]+)*)\.png$/);
+   const entityDefinition=relative?.match(/^entity\/([a-z0-9_-]+)\.entity\.json$/);
    const matchSound=relative?.match(/^sounds\/([a-z0-9_./-]+)\.ogg$/);
    const matchMeta=relative?.match(/^textures\/(?:block|blocks)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png\.mcmeta$/);
    const mapColor=relative?.match(/^textures\/colormap\/(grass|foliage)\.png$/);
@@ -272,6 +273,8 @@ function readArchive(buffer){
      keep('item:'+item[1],{method,size,expanded,local},priority);
    if(entity&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8))
      keep('entity:'+entity[1],{method,size,expanded,local},priority);
+   if(entityDefinition&&size<131072&&expanded<131072&&(method===0||method===8))
+     keep('entity-def:'+entityDefinition[1],{method,size,expanded,local},priority);
    if(matchMeta&&size<131072&&expanded<131072&&(method===0||method===8))
      keep('meta:'+matchMeta[1],{method,size,expanded,local},priority);
    if(bedrockFlipbook&&size<256*1024&&expanded<256*1024&&(method===0||method===8))
@@ -647,7 +650,19 @@ async function applyResources(zip,sourceName){
  const entityKeys=[...zip.entries.keys()].filter(k=>k.startsWith('entity:'));
  for(const kind of knownKinds){
   if(kind==='vehicle')continue;
-  const candidates=['entity:'+kind+'/'+kind,'entity:'+kind,
+  // Modern Bedrock versions change filenames (pig_v3, cow_v2). Read the
+  // pack's own client entity texture definition rather than guessing.
+  let defined=null;
+  if(zip.entries.has('entity-def:'+kind)){
+   try{
+    const text=new TextDecoder().decode(await zip.get('entity-def:'+kind));
+    const descriptor=JSON.parse(text)['minecraft:client_entity']?.description;
+    const location=descriptor?.textures?.default;
+    if(typeof location==='string'&&/^textures\/entity\/[a-z0-9_/-]+$/.test(location))
+      defined='entity:'+location.slice('textures/entity/'.length);
+   }catch(error){console.warn('Skipping invalid local Bedrock entity definition '+kind,error);}
+  }
+  const candidates=[defined,'entity:'+kind+'/'+kind,'entity:'+kind,
    'entity:'+kind.replace(/_/g,''),...(variants[kind]||[]).map(p=>'entity:'+p)];
   let key=candidates.find(k=>zip.entries.has(k));
   if(!key)key=entityKeys.find(k=>k.split('/').pop()===kind.replace(/_/g,''));
@@ -734,6 +749,7 @@ async function loadFiles(fileList){
    let key=png?.[1]||null;
    if(png&&/(?:^|\/)textures\/(?:item|items)\//.test(name))key='item:'+png[1];
    if(png){const path=name.match(/(?:^|\/)textures\/entity\/([a-z0-9_\/-]+)\.png$/);if(path)key='entity:'+path[1];}
+   if(leaf.endsWith('.entity.json')){const match=name.match(/(?:^|\/)entity\/([a-z0-9_-]+)\.entity\.json$/);if(match)key='entity-def:'+match[1];}
    if(ogg){const path=name.match(/(?:^|\/)sounds\/([a-z0-9_./-]+)\.ogg$/);if(path)key='sound:'+path[1];}
    if(png&&name.includes('/colormap/')&&['grass','foliage'].includes(png[1]))key='colormap:'+png[1];
    if(meta)key='meta:'+meta[1];
