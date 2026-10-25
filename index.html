@@ -695,7 +695,8 @@ body.in-nether #game-wrap{background:#290f19}
     20:{tile:0,name:'furnace_side'},156:{tile:1,name:'blast_furnace_side'},
     157:{tile:2,name:'smoker_side'},
     168:{tile:510,name:'crafting_table_side',sideAxis:'x'},
-    158:{tile:511,name:'cartography_table_side2',sideAxis:'x'},
+    158:{tile:511,name:'cartography_table_side2',sideAxis:'x',
+      extra:{tile:517,name:'cartography_table_side3'}},
     136:{tile:512,name:'smithing_table_side',sideAxis:'x'},
     161:{tile:513,name:'fletching_table_side',sideAxis:'x'},
     163:{tile:514,name:'lectern_sides',sideAxis:'x'},
@@ -883,14 +884,17 @@ body.in-nether #game-wrap{background:#290f19}
     // Keep fallback art for unused alternate slots identical to each block's
     // default side. A player-supplied pack can then replace only those slots.
     for(const [key,def] of Object.entries(alternateFaces)){
-      const block=Number(key),tx=(def.tile%COLUMNS)*SIZE,ty=Math.floor(def.tile/COLUMNS)*SIZE;
-      for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
-        const offset=((ty+y)*canvas.width+tx+x)*4;
-        const color=tileColor(block,1,x,y);
-        // Original fallback side-panel seams; imported Java art replaces this.
-        const delta=def.sideAxis==='x'&&(x===3||x===12||y===4||y===12)?-21:0;
-        for(let i=0;i<3;i++)img.data[offset+i]=clamp(color[i]+delta);
-        img.data[offset+3]=color[3];
+      const block=Number(key);
+      for(const variant of [def,def.extra].filter(Boolean)){
+        const tx=(variant.tile%COLUMNS)*SIZE,ty=Math.floor(variant.tile/COLUMNS)*SIZE;
+        for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
+          const offset=((ty+y)*canvas.width+tx+x)*4;
+          const color=tileColor(block,1,x,y);
+          // Original fallback panel seams; imported Java art replaces this.
+          const delta=(def.sideAxis==='x'||variant===def.extra)&&(x===3||x===12||y===4||y===12)?-21:0;
+          for(let i=0;i<3;i++)img.data[offset+i]=clamp(color[i]+delta);
+          img.data[offset+3]=color[3];
+        }
       }
     }
     ctx.putImageData(img,0,0);
@@ -905,7 +909,8 @@ body.in-nether #game-wrap{background:#290f19}
     return texture;
   }
   function uv(b,face,corner){
-    const tile=face===3&&alternateFaces[b]?alternateFaces[b].tile:b*3+(face===3?1:face);
+    const tile=face===4&&alternateFaces[b]?.extra?alternateFaces[b].extra.tile:
+      face===3&&alternateFaces[b]?alternateFaces[b].tile:b*3+(face>=3?1:face);
     const x=tile%COLUMNS,y=Math.floor(tile/COLUMNS);
     const corners=[[0,0],[0,1],[1,1],[1,0]];
     const [u,v]=corners[corner];
@@ -1341,7 +1346,13 @@ body.in-nether #game-wrap{background:#290f19}
     // their front. +Z is the forward-facing direction until orientation
     // metadata is added to world saves; worktables use X vs Z axis.
     const alt=window.MineWorldAtlas.alternateFaces[b];
-    const textureFace=face===1&&alt&&(alt.sideAxis==='x'?f.n[0]!==0:f.n[2]!==1)?3:face;
+    // Cartography tables use three distinct side textures in Java Edition:
+    // side1 south, side2 west, side3 north/east, independent of placement.
+    let textureFace=face;
+    if(face===1&&alt){
+      if(b===158)textureFace=f.n[0]===-1?3:(f.n[0]===1||f.n[2]===1?4:1);
+      else textureFace=(alt.sideAxis==='x'?f.n[0]!==0:f.n[2]!==1)?3:1;
+    }
     // Flat directional shading preserves recognisable source pixels instead of washing them with location noise.
     const shade=f.shade;
     const vs=f.v;
