@@ -41,9 +41,20 @@ function reactionAfterHit(m,x,z){
 function following(kind,held,meters){
  return edible(kind,held)&&Number.isFinite(meters)&&meters>1.5&&meters<=6;
 }
-function maximum(kind){
+// Check all occupied vertical voxels, rather than only an animal's feet.
+ // The callback receives integer world coordinates and returns true for
+ // blocks that physically obstruct the mob; no world or save dependency.
+ function canOccupy(x,y,z,height,blocked){
+  if(![x,y,z,height].every(Number.isFinite)||height<=0||height>4||y<0||typeof blocked!=='function')return false;
+  const X=Math.floor(x),Z=Math.floor(z);
+  for(let Y=Math.floor(y);Y<=Math.floor(y+height-.001);Y++){
+   if(blocked(X,Y,Z))return false;
+  }
+  return true;
+ }
+ function maximum(kind){
  const sizes={cow:1.4,pig:.9,sheep:1.3,chicken:.7,horse:1.6,donkey:1.6,mule:1.6,camel:2.375,llama:1.87,skeleton_horse:1.6,zombie_horse:1.6};
  return sizes[kind]||1;
 }
-window.MineWorldAnimalBehavior=Object.freeze({FOOD,NATURAL,habitat,pickNatural,edible,canBreed,reactionAfterHit,following,maximum});
+window.MineWorldAnimalBehavior=Object.freeze({FOOD,NATURAL,habitat,pickNatural,edible,canBreed,reactionAfterHit,following,maximum,canOccupy});
 })();
