@@ -44,6 +44,7 @@ test('furnaces use their front only on +Z, while worktables have distinct X-axis
     MineWorldVillages:{cropAt:()=>null},
     MineWorldBlockModels:{shape:()=>({left:0,right:1,bottom:0,top:1,front:0,back:1})}
   };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'..','block-face-uv.js'),'utf8'),{window,Array});
   const fn=vm.runInNewContext(match[0].replace(/\n  function buildChunkMesh$/,'')+'\npushFace',
     {window,dimension:'overworld'});
   const vertices=[[0,0,0],[0,1,0],[1,1,0],[1,0,0]];
