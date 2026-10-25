@@ -43,5 +43,14 @@ function knockback(yaw,power=1){
  const a=Number.isFinite(yaw)?yaw:0,k=clamp(Number(power)||0,0,3);
  return {x:Math.sin(a)*k,z:-Math.cos(a)*k};
 }
-window.MineWorldCombat=Object.freeze({stats,charge,strike,knockback});
+// Java-like sword sweeps affect nearby creatures at almost the same height
+// as the primary hit, not mobs a full block above/below or far behind walls.
+function sweepInRange(other,primary,attacker){
+ const valid=p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.z);
+ if(!valid(other)||!valid(primary)||!valid(attacker))return false;
+ return Math.hypot(other.x-primary.x,other.z-primary.z)<=1.05&&
+   Math.abs(other.y-primary.y)<=.35&&
+   Math.hypot(other.x-attacker.x,other.z-attacker.z)<=4.75;
+}
+window.MineWorldCombat=Object.freeze({stats,charge,strike,knockback,sweepInRange});
 })();
