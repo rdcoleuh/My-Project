@@ -5,7 +5,8 @@
 (()=>{
 'use strict';
 const DATABASE='mineworld-user-resource-pack-v1',STORE='packs',KEY='active';
-const LIMIT=160*1024*1024;
+// Official Mojang full Bedrock Samples can exceed 160 MiB.
+const LIMIT=240*1024*1024;
 function openDatabase(){
  if(typeof indexedDB==='undefined')return Promise.resolve(null);
  return new Promise(resolve=>{
