@@ -32,5 +32,29 @@ function offset(index,drop){
  return {x:(fract(hx)-.5)*.16,y:(fract(hx+hz)-.5)*.12,
   z:(fract(hz)-.5)*.16};
 }
-window.MineWorldDroppedVisuals=Object.freeze({copies,phase,pose,offset});
+function mergeNearby(items,limitFor){
+ if(!Array.isArray(items)||typeof limitFor!=='function')return 0;
+ let removed=0;
+ for(let i=0;i<items.length;i++){
+  const a=items[i];
+  if(!a||!Number.isInteger(a.count)||a.count<1)continue;
+  const capacity=Math.max(1,Math.min(64,Number(limitFor(a.key))||64));
+  for(let j=items.length-1;j>i;j--){
+   const b=items[j];
+   if(!b||a.key!==b.key||a.dimension!==b.dimension||
+      !Number.isInteger(b.count)||b.count<1||
+      Math.abs(a.x-b.x)>.6||Math.abs(a.y-b.y)>.5||
+      Math.abs(a.z-b.z)>.6)continue;
+   const count=Math.min(capacity-a.count,b.count);
+   if(count<=0)continue;
+   a.count+=count;b.count-=count;
+   // Java preserves the oldest remaining lifetime when stacks merge.
+   a.age=Math.min(a.age||0,b.age||0);
+   a.delay=Math.max(a.delay||0,b.delay||0);
+   if(b.count===0){items.splice(j,1);removed++;}
+  }
+ }
+ return removed;
+}
+window.MineWorldDroppedVisuals=Object.freeze({copies,phase,pose,offset,mergeNearby});
 })();
