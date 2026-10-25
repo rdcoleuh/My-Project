@@ -282,13 +282,21 @@ function utility(id,x,y,face){
  return null;
 }
 function crop(id,x,y,face){
- const c=CROP[id],base=id===142?[186,161,75]:id===146?[65,141,48]:
-   id===150?[85,145,69]:id===154?[154,78,91]:[69,141,57];
- const stage=c.stage,front=face===1;const n=rand(x>>1,y>>1,id*17);
- const row=15-y,stem=x%4===1||x%4===2;
- const grows=row<=3+stage*4&&stem,branch=grows&&n>.38&&(x+y)%3===0;
- if(grows||branch)return shade(branch?[126,182,56]:base,x,y,id*15,2,24);
- return shade([79,57,39],x,y,id*51,2,13);
+ const info=CROP[id],stage=info.stage,plant=info.kind,reach=[4,7,11,15][stage];
+ // True alpha cutouts: vegetation does not paint an opaque brown tile.
+ const root=15-y,stalk=(x+(plant%2))%5===1||(x+plant)%6===3;
+ const n=rand(x>>1,y>>1,id*17),spread=(x+2*y+plant)%5;
+ const growing=root<=reach&&root>=0;
+ const leaf=growing&&root>=2&&
+   (stalk||(spread<=1&&n>.34)||(stage>=2&&spread===3&&n>.67));
+ const berry=stage===3&&root>5&&plant!==0&&n>.75;
+ if(!leaf&&!berry)return [0,0,0,0];
+ const palette=plant===0?[[60,129,48],[84,153,53],[149,159,57],[214,182,81]]:
+               plant===1?[[46,124,46],[66,153,57],[85,169,58],[196,110,53]]:
+               plant===2?[[50,113,46],[73,143,59],[91,170,70],[161,143,71]]:
+                         [[64,117,49],[89,146,61],[101,158,76],[162,69,94]];
+ const color=berry?palette[3]:palette[stage===3&&root>=reach-4?3:Math.min(stage,2)];
+ return shade(color,x,y,id*15,2,23);
 }
 function paint(id,face,x,y){
  x&=15;y&=15;
