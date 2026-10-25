@@ -42,7 +42,7 @@ test('malformed or untrusted metadata is bounded and defaults safely',()=>{
 test('game loads timeline before importer, updates imported frames, and caches both',()=>{
  const html=read('index.html'),sw=read('sw.js'),pack=read('local-resource-pack.js');
  assert.ok(html.indexOf('src="./resource-animation.js"')<html.indexOf('src="./local-resource-pack.js"'));
- assert.ok(html.includes('window.MineWorldLocalTextures.updateAnimation(t,currentFPS,isTouch)'));
+ assert.ok(html.includes('if(localPack?.active)localPack.updateAnimation(t,currentFPS,isTouch)'));
  assert.ok(sw.includes("'./resource-animation.js'"));
  assert.ok(pack.includes("found.set('meta:'+matchMeta[1]"));
  assert.ok(pack.includes("if(meta)key='meta:'+meta[1]"));
