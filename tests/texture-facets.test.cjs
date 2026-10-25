@@ -66,7 +66,7 @@ test('renderer and service worker load layer once, last in artwork stack',()=>{
  assert.ok(html.indexOf('src="./core-pixel-art.js"')<html.indexOf('src="./texture-facets.js"'));
  assert.ok(html.indexOf('src="./texture-facets.js"')<html.indexOf('src="./texture-motion.js"'));
  assert.ok(sw.includes("'./texture-facets.js'"));
- assert.ok(sw.includes('mineworld-6-6-java-inventory-20261024-v46'));
+ assert.ok(sw.includes('mineworld-6-6-java-inventory-crafting-20261024-v47'));
  assert.ok(html.includes('MineWorld 6.6'));
  assert.ok(html.includes('mineworld-selfhost-v1'));
  assert.ok(!read('texture-facets.js').includes('fetch('));
