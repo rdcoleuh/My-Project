@@ -202,6 +202,7 @@ function readArchive(buffer){
    const namespace=path.match(/(?:^|\/)assets\/minecraft\/(.+)$/);
    const relative=namespace?namespace[1]:(/^(?:textures|sounds)\//.test(path)?path:null);
    const match=relative?.match(/^textures\/(?:block|blocks)\/([a-z0-9_]+)\.png$/);
+   const item=relative?.match(/^textures\/(?:item|items)\/([a-z0-9_]+)\.png$/);
    const matchSound=relative?.match(/^sounds\/([a-z0-9_./-]+)\.ogg$/);
    const matchMeta=relative?.match(/^textures\/(?:block|blocks)\/([a-z0-9_]+)\.png\.mcmeta$/);
    const mapColor=relative?.match(/^textures\/colormap\/(grass|foliage)\.png$/);
@@ -209,6 +210,8 @@ function readArchive(buffer){
    if(match&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8)){
      keep(match[1],{method,size,expanded,local},priority);
    }
+   if(item&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8))
+     keep('item:'+item[1],{method,size,expanded,local},priority);
    if(matchMeta&&size<131072&&expanded<131072&&(method===0||method===8))
      keep('meta:'+matchMeta[1],{method,size,expanded,local},priority);
    if(mapColor&&size<4*1024*1024&&expanded<4*1024*1024&&(method===0||method===8))
@@ -265,7 +268,8 @@ function imageFromURL(src){
 const DEFAULT_GRASS=[145,189,89],DEFAULT_FOLIAGE=[119,171,47];
 const state={active:false,canvas:null,sourceName:'',lastResult:null,
   tint:{grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()},
- animations:[],importedFaces:new Set(),animationStart:0,lastAnimationAt:-Infinity,animationDisabled:false,originalImage:null};
+ animations:[],importedFaces:new Set(),animationStart:0,lastAnimationAt:-Infinity,animationDisabled:false,originalImage:null,
+ itemArchive:null,itemCache:new Map(),itemGeneration:0};
 async function writeAtlas(canvas){
  const gl=META.gl;
  if(typeof gl.isContextLost==='function'&&gl.isContextLost())throw Error('The graphics context was lost.');
@@ -514,8 +518,10 @@ async function applyResources(zip,sourceName){
     if(!key)continue;
     try{if(await window.MineWorldSound?.loadSound(type,await zip.get('sound:'+key)))audio++}catch(e){console.warn('Unsupported optional sound '+type,e)}
  }
- if(!faces&&!directionalFaces&&!audio)throw Error('No compatible block PNGs or playable OGG sound files found.');
+ const items=[...zip.entries.keys()].filter(k=>k.startsWith('item:')).length;
+ if(!faces&&!directionalFaces&&!audio&&!items)throw Error('No compatible block, item or sound files found.');
  if(faces||directionalFaces||state.active)await writeAtlas(canvas);
+ state.itemArchive=zip;state.itemCache.clear();state.itemGeneration++;
  state.animations=animated;
  state.importedFaces=importedFaces;
  state.originalImage=original;
@@ -523,7 +529,7 @@ async function applyResources(zip,sourceName){
  state.lastAnimationAt=-Infinity;
  state.animationDisabled=false;
  state.active=faces+directionalFaces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={blocks:ids.size,faces,directionalFaces,overlaid,animatedFaces:animated.length,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
+ state.lastResult={blocks:ids.size,faces,directionalFaces,items,overlaid,animatedFaces:animated.length,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
@@ -550,6 +556,7 @@ async function loadFiles(fileList){
    const leaf=name.split('/').pop()||'';
    const png=leaf.match(/^([a-z0-9_]+)\.png$/),ogg=leaf.match(/^([a-z0-9_]+)\.ogg$/),meta=leaf.match(/^([a-z0-9_]+)\.png\.mcmeta$/);
    let key=png?.[1]||null;
+   if(png&&/(?:^|\/)textures\/(?:item|items)\//.test(name))key='item:'+png[1];
    if(ogg){const path=name.match(/(?:^|\/)sounds\/([a-z0-9_./-]+)\.ogg$/);if(path)key='sound:'+path[1];}
    if(png&&name.includes('/colormap/')&&['grass','foliage'].includes(png[1]))key='colormap:'+png[1];
    if(meta)key='meta:'+meta[1];
@@ -573,6 +580,7 @@ async function clear(){
  window.MineWorldSound?.clearSamples();window.MineWorldBridge?.refreshTextureUI?.();
  state.active=false;state.sourceName='';state.lastResult=null;
  state.animations=[];state.importedFaces=new Set();state.originalImage=null;state.lastAnimationAt=-Infinity;
+ state.itemArchive=null;state.itemCache.clear();state.itemGeneration++;
  state.tint={grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()};
  await packStorage?.clear?.();
 }
@@ -628,6 +636,44 @@ function updateAnimation(now,fps,touch){
  }
  return updated;
 }
+// Decode the exact original inventory sprite only when the player opens an item slot.
+const ITEM_ALIASES=Object.freeze({
+ raw:'beef',cooked:'cooked_beef',iron:'iron_ingot',gold:'gold_ingot',
+ copper:'copper_ingot',sticks:'stick',powder:'gunpowder',lapis:'lapis_lazuli',
+ cookedFish:'cooked_cod',fish:'cod',steak:'cooked_beef',
+ bookQuill:'writable_book',healingPotion:'potion',rawCopper:'raw_copper',
+ rawGold:'raw_gold',rawIron:'raw_iron',netheriteUpgrade:'netherite_upgrade_smithing_template',
+ netherWart:'nether_wart',stoneBricks:'stone_bricks',witherSkull:'wither_skeleton_skull',
+ eyeOfEnder:'ender_eye',flintSteel:'flint_and_steel',leatherCap:'leather_helmet',
+ leatherTunic:'leather_chestplate',leatherPants:'leather_leggings',
+ leatherBoots:'leather_boots',books:'book'
+});
+function itemName(key){
+ if(typeof key!=='string'||key.length>80||!/^[a-zA-Z0-9_]+$/.test(key))return null;
+ return ITEM_ALIASES[key]||key.replace(/([a-z0-9])([A-Z])/g,'$1_$2').toLowerCase();
+}
+function itemIcon(key){
+ const name=itemName(key),source=state.itemArchive;
+ if(!name||!source)return Promise.resolve(null);
+ const path='item:'+name;
+ if(!source.entries.has(path))return Promise.resolve(null);
+ if(state.itemCache.has(path))return state.itemCache.get(path);
+ const generation=state.itemGeneration;
+ const promise=(async()=>{
+   const image=await imageFromPng(await source.get(path));
+   if(generation!==state.itemGeneration)return null;
+   const canvas=document.createElement('canvas');canvas.width=canvas.height=16;
+   const ctx=canvas.getContext('2d',{alpha:true});
+   if(!ctx)return null;
+   ctx.imageSmoothingEnabled=false;
+   ctx.clearRect(0,0,16,16);
+   // Flat Java inventory artwork remains unmodified except 16px scaling.
+   ctx.drawImage(image,0,0,image.width,image.height,0,0,16,16);
+   return generation===state.itemGeneration?canvas.toDataURL('image/png'):null;
+ })().catch(error=>{console.warn('Skipping invalid local Java item '+name,error);return null;});
+ state.itemCache.set(path,promise);
+ return promise;
+}
 function drawFace(ctx,id,face){
  if(!state.active||!state.canvas)return false;
  const alt=window.MineWorldAtlas?.alternateFaces?.[id];
@@ -642,7 +688,8 @@ const exposed={
  get lastResult(){return state.lastResult;},
  get grassTint(){return [...state.tint.grass];},
  get foliageTint(){return [...state.tint.foliage];},
- loadFile,loadFiles,clear,drawFace,textureName,updateAnimation,
+ loadFile,loadFiles,clear,drawFace,textureName,updateAnimation,itemIcon,itemName,
+ get availableItemTextures(){return state.lastResult?.items||0;},
  hasImportedFace(id,face){return state.active&&Number.isInteger(id)&&Number.isInteger(face)&&face>=0&&face<3&&state.importedFaces.has(id*3+face);},
  get animatedFaces(){return state.animations.length;},
  inspectZip(buffer){return Array.from(readArchive(buffer).entries.keys());}
@@ -655,7 +702,7 @@ function addControls(root,title){
  pane.style.cssText='margin-top:12px;padding:12px;border:1px solid #9aba9e;background:#1c2d22;color:#f0ffe9;font:12px/1.5 system-ui;text-align:left;max-width:100%;';
  const heading=document.createElement('strong');heading.textContent=title||'Your exact local textures';
  const help=document.createElement('p');
- help.textContent='For original Java Edition artwork, choose your own ZIP/JAR or block PNG files. Nothing is uploaded or bundled. A ZIP/JAR is saved privately on this device only if you check Remember this ZIP/JAR. Eaglercraft .epk files require conversion to ZIP.';
+ help.textContent='For exact Java Edition block and inventory item pixels, choose your own ZIP/JAR or extracted PNGs. Nothing is uploaded or bundled. A ZIP/JAR is saved privately on this device only if you check Remember this ZIP/JAR. Original mob skins need additional model/UV mappings; they are not yet applied. Eaglercraft .epk files require conversion to ZIP.';
  help.style.margin='7px 0';
  const file=document.createElement('input');
  file.type='file';file.accept='.zip,.jar,application/zip,application/java-archive';
@@ -702,7 +749,7 @@ function addControls(root,title){
  function showCoverage(result){
    if(!result)return;
    status.textContent='Matched '+result.faces+' of '+result.totalFaces+' block faces ('+
-     result.coverage+'%) across '+result.blocks+' block types, '+(result.directionalFaces||0)+' dedicated directional side faces, '+result.animatedFaces+' animated faces and '+result.sounds+
+     result.coverage+'%) across '+result.blocks+' block types, '+(result.directionalFaces||0)+' dedicated directional side faces, '+(result.items||0)+' original item PNGs, '+result.animatedFaces+' animated faces and '+result.sounds+
      ' sound events. '+(result.overlaid?'Grass uses the Java side overlay. ':'')+'Unmatched block faces keep independent MineWorld art.';
    detail.textContent=result.unmapped.length?
      'Example unmatched sprite names: '+result.unmapped.slice(0,9).join(', ')+'.':'All mapped face names were present.';
