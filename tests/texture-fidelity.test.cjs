@@ -1,4 +1,4 @@
-/* MineWorld 6.2 — original, independently-authored classic-style texture quality.
+/* MineWorld 6.3 — original, independently-authored classic-style texture quality.
  * Sample every texel on all faces of all 169 block IDs, including old fallback art.
  */
 const {test}=require('node:test'),assert=require('node:assert/strict'),
@@ -9,7 +9,7 @@ function load(){
  vm.createContext(w);
  for(const p of ['pixel-materials.js','texture-refinement.js','texture-details.js',
   'texture-polish.js','texture-workshop.js','classic-materials.js',
-  'texture-clarity.js','readable-materials.js','texture-fidelity.js','utility-materials.js']){
+  'texture-clarity.js','readable-materials.js','texture-fidelity.js','utility-materials.js','core-pixel-art.js']){
   vm.runInContext(read(p),w,{filename:p,timeout:30000});
  }
  return w.window;
@@ -116,9 +116,12 @@ test('palette is stable across visits and original Minecraft texture files are n
  assert.ok(html.includes('src="./utility-materials.js"'));
  assert.ok(html.includes('src="./texture-fidelity.js"'));
  assert.ok(sw.includes("'./texture-fidelity.js'"));
+ assert.ok(sw.includes("'./core-pixel-art.js'"));
+ assert.ok(html.includes('src="./core-pixel-art.js"'));
+ assert.equal(w.MineWorldCorePixelArt.pixelSize,16);
  assert.ok(sw.includes("'./readable-materials.js'"));
  assert.ok(sw.includes("'./utility-materials.js'"));
- assert.ok(html.includes('MineWorld 6.2'));
+ assert.ok(html.includes('MineWorld 6.3'));
  const a=html.indexOf('src="./texture-clarity.js"'),b=html.indexOf('src="./readable-materials.js"');
  const c=html.indexOf('src="./texture-fidelity.js"'),d=html.indexOf('src="./utility-materials.js"');
  assert.ok(b<c&&c<d,'fidelity must enhance classic colors without replacing detailed workstation UI');
