@@ -1,3 +1,12 @@
+# MineWorld 6.22 — Bedrock Resource Packs from Your Phone
+
+MineWorld now accepts **Bedrock .mcpack** resources from a phone's Files picker, in addition to Java ZIP/JAR archives. Open Options → Custom resource pack or Inventory → Import textures and choose a .mcpack or .zip that you have in Files. Compatible packs may contain textures/blocks/*.png and textures/items/*.png; the importer matches existing block faces and item sprites, with common Bedrock filename aliases. Matched artwork uses the exact pixels from the player-selected PNG; unmatched graphics keep MineWorld's independent fallback. Optional Remember saves the chosen pack in this browser only.
+
+**iPhone limitation:** A Minecraft installation on the same phone cannot be read by this website. The installed game's built-in texture files are generally not exposed to the iPhone Files picker. You must have a separately accessible resource-pack file to select; an installed Minecraft app alone is not a transferable resource pack. MineWorld does not open Minecraft's app sandbox, its purchase data, or the app package (.ipa); similarly, it does not import Android .apk installation packages. No original Minecraft bitmaps are downloaded, bundled, or published in this repository.
+
+Bedrock naming and entity models differ from Java Edition. Some texture names will remain unmatched and mob skins need separate mesh/UV work before they can look identical. See Microsoft's resource-pack format guide: https://learn.microsoft.com/en-us/minecraft/creator/documents/comprehensivepackcontents?view=minecraft-bedrock-stable
+
+---
 # MineWorld 6.21 — Import Actual Java Edition Item and Block PNGs
 
 **Play:** https://rdcoleuh.github.io/My-Project/
