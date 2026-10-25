@@ -1384,7 +1384,7 @@ body.in-nether #game-wrap{background:#290f19}
             width=shape.right-shape.left,height=shape.top-shape.bottom,depth=shape.back-shape.front,
             spanU=crop?.72:f.n[0]?depth:f.n[1]?width:width,
             spanV=crop?(.22+crop.stage*.22):f.n[1]?depth:height,
-            uv=window.MineWorldAtlas.uv(b,textureFace,i,spanU,spanV);
+            uv=window.MineWorldAtlas.uv(b,textureFace,window.MineWorldFaceUV.corner(f.n,v),spanU,spanV);
       const px=crop?x+.14+v[0]*.72:x+shape.left+v[0]*(shape.right-shape.left),
             py=crop?y+v[1]*(.22+crop.stage*.22):y+shape.bottom+v[1]*(shape.top-shape.bottom),
             pz=crop?z+.14+v[2]*.72:z+shape.front+v[2]*(shape.back-shape.front);
@@ -4293,6 +4293,8 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
 <script src="./world-manager-ui.js"></script>
 <script src="./advancements-ui.js"></script>
 <script src="./resource-animation.js"></script>
+<script src="./bedrock-flipbook.js"></script>
+<script src="./block-face-uv.js"></script>
 <script src="./local-pack-storage.js"></script>
 <script src="./local-resource-pack.js"></script>
 </body>
