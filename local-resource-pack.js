@@ -653,7 +653,7 @@ async function loadFiles(fileList){
    if(ogg){const path=name.match(/(?:^|\/)sounds\/([a-z0-9_./-]+)\.ogg$/);if(path)key='sound:'+path[1];}
    if(png&&name.includes('/colormap/')&&['grass','foliage'].includes(png[1]))key='colormap:'+png[1];
    if(meta)key='meta:'+meta[1];
-   if(leaf==='flipbook_textures.json'&&/(?:^|\/)textures\/flipbook_textures\.json$/.test(name))key='bedrock:flipbook';
+   if(leaf==='flipbook_textures.json'&&(name===leaf||/(?:^|\/)textures\/flipbook_textures\.json$/.test(name)))key='bedrock:flipbook';
    if(!key)continue;
    if(Number.isFinite(file.size)&&file.size>6*1024*1024)continue;
    total+=Number.isFinite(file.size)?file.size:0;
