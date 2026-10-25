@@ -4,21 +4,23 @@
  */
 (()=>{
  'use strict';
- // v2 intentionally resets the old Smooth-by-default setting once; future manual selections persist.
- const KEY='mineworld-texture-smoothing-v2';
+ // v3 starts with pixel-accurate NEAREST filtering, even on devices that
+ // selected legacy Smooth mode. Explicit new choices are saved normally.
+ const KEY='mineworld-texture-smoothing-v3';
  let enabled=false,gl=null,texture=null,canvas=null;
  try{const saved=localStorage.getItem(KEY);if(saved==='smooth')enabled=true;}catch(_){}
  const listeners=new Set();
  function apply(g=gl,t=texture){
    if(!g||!t)return false;
    if(typeof g.isContextLost==='function'&&g.isContextLost())return false;
-   // Only change sampling of the world atlas. Skin/inventory textures are untouched.
+   // Only change sampling of the world atlas. Mob, skin and item textures
+   // are always nearest-filtered by their own renderers.
    g.activeTexture(g.TEXTURE0);
    g.bindTexture(g.TEXTURE_2D,t);
    const filter=enabled?g.LINEAR:g.NEAREST;
    g.texParameteri(g.TEXTURE_2D,g.TEXTURE_MIN_FILTER,filter);
    g.texParameteri(g.TEXTURE_2D,g.TEXTURE_MAG_FILTER,filter);
-   if(canvas)canvas.style.imageRendering=enabled?'auto':'pixelated';
+   if(canvas)canvas.style.imageRendering='pixelated';
    return true;
  }
  function set(next){
@@ -54,7 +56,7 @@
        checkbox.checked=enabled;
        words.textContent=enabled?'Smooth textures':'Classic sharp pixels';
        description.textContent=enabled?
-         'Gentler pixel transitions on blocks and smoother 3D canvas scaling. The 16×16 artwork stays unchanged.':
+         'Opt-in smooth block pixels. The game canvas remains pixelated; switch off for authentic sharp imported art.':
          'Crisp, unblended Minecraft-style pixels. Best for an exact view of imported Java artwork.';
      };
      checkbox.addEventListener('change',()=>set(checkbox.checked));
