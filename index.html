@@ -395,7 +395,7 @@ body.in-nether #game-wrap{background:#290f19}
 @media(pointer:coarse){.hot-item .hot-stack-number{display:block!important;font-size:12px!important}}
 </style>
 <link rel="stylesheet" href="./visual-polish.css">
-<title>MineWorld 6.37 — Visual Clarity and HUD Polish</title>
+<title>MineWorld 6.38 — Combat and Block Particles</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -649,7 +649,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v6.15 · JAVA TEXTURE PACKS</div>
+  <div class="version">MINEWORLD v6.38 · PARTICLES & JAVA TEXTURES</div>
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./texture-refinement.js"></script>
@@ -672,6 +672,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./avatar-animation.js"></script>
 <script src="./classic-interactions.js"></script>
 <script src="./dropped-item-visuals.js"></script>
+<script src="./impact-effects.js"></script>
 <script src="./block-placement.js"></script>
 <script src="./advancements.js"></script>
 <script src="./animal-behavior.js"></script>
@@ -1616,6 +1617,7 @@ body.in-nether #game-wrap{background:#290f19}
       else dropMinedResource('block:'+found,1,target.x,target.y,target.z);
       updateHotbar();updateSurvivalHUD();markSave();
     }
+    window.MineWorldImpactEffects?.dust(target.x,target.y,target.z,target.b,gameMode==='creative'?14:22,dimension);
     sound?.play('break',NAMES[target.b]);
     toast('Mined '+NAMES[target.b]);
     return true;
@@ -1649,6 +1651,7 @@ body.in-nether #game-wrap{background:#290f19}
       cancelMining();return;
     }
     mineJob.elapsed=Math.min(mineJob.total,mineJob.elapsed+dt);
+    window.MineWorldImpactEffects?.chip(mineJob.x,mineJob.y,mineJob.z,mineJob.b,dimension);
     const progress=Math.round(100*mineJob.elapsed/mineJob.total);
     $('mine-progress-fill').style.width=progress+'%';
     $('mine-progress').setAttribute('aria-valuenow',String(progress));
@@ -2207,6 +2210,7 @@ body.in-nether #game-wrap{background:#290f19}
       if(gameMode==='survival'&&classic.shouldCollect(next,{x:player.x,y:player.y,z:player.z,dimension})){
         const taken=addResource(next.key,next.count);
         if(taken>0){
+          window.MineWorldImpactEffects?.pickup(next.x,next.y,next.z,dimension);
           sound?.play('pickup');next.count-=taken;toast('Picked up '+taken+' '+itemLabel(next.key));
           updateHotbar();
           if(!next.count)droppedItems.splice(i,1);
@@ -2986,6 +2990,7 @@ body.in-nether #game-wrap{background:#290f19}
     const armorPoints=Object.values(armor).reduce((sum,k)=>sum+(!k?0:/netherite/i.test(k)?4:/diamond/i.test(k)?3:/iron/i.test(k)?2:/gold/i.test(k)?1.4:/leather/i.test(k)?.7:1),0);
     amount=Math.max(1,Math.ceil(amount*(1-Math.min(.72,armorPoints*.038))));
     health=clamp(health-amount,0,20);sound?.play('hurt');
+    window.MineWorldImpactEffects?.hurtPlayer(player.x,player.y,player.z,dimension);
     if(health<=0){experienceTotal=0;respawn();}else{updateSurvivalHUD();toast(cause+' −'+amount+' health')}
     markSave();
   }
@@ -3417,6 +3422,8 @@ body.in-nether #game-wrap{background:#290f19}
     const amount=clamp(Number(strength)||1,.2,20);
     if(m.kind==='ender_dragon'&&endCrystalCount()>0)return {hit:false};
     m.hp-=amount;
+    window.MineWorldImpactEffects?.hit(m.id,m.x,m.y+Math.min(1.1,entityHitboxes.dimensions(m.kind,!!m.baby).height*.7),m.z,
+      {dead:m.hp<=0,dimension});
     if(animals.FOOD[m.kind]&&m.hp>0){
       Object.assign(m,animals.reactionAfterHit(m,player.x,player.z));
       m.step=.5;
@@ -3523,6 +3530,8 @@ body.in-nether #game-wrap{background:#290f19}
     });
     const result=applyMobHit(m.id,hit.damage);
     if(!result.hit)return;
+    if(hit.critical)window.MineWorldImpactEffects?.hit(null,m.x,m.y+1,m.z,{critical:true,dimension});
+    if(hit.sweep)window.MineWorldImpactEffects?.sweep(player.x,player.y,player.z,player.yaw,dimension);
     lastAttackAt=now;
     if(!result.dead){
       const push=window.MineWorldCombat.knockback(player.yaw,hit.knockback);
@@ -3543,7 +3552,7 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function drawMobs(){
     if(!mobs.length&&!vehicles.some(v=>v.dimension===dimension))return;
-    const a=[];let mobKind='vehicle';
+    const a=[];let mobKind='vehicle',hitFlash=0;
     // Cuboids share a tiny 16x16 procedural pixel pattern per mob species.
     // 8 floats/vertex matches the existing textured shader; no Mojang assets.
     function cube(x,y,z,w,h,d,c,part='body'){
@@ -3555,7 +3564,8 @@ body.in-nether #game-wrap{background:#290f19}
         const mapped=window.MineWorldMobPixels.hasMapped(mobKind,part,dir);
         const uv=mapped?window.MineWorldMobPixels.uv(mobKind,window.MineWorldEntityTextureMaps.vertexCorner(dir,i),part,dir):
           window.MineWorldMobPixels.uv(mobKind,i);
-        const tint=mapped||window.MineWorldMobPixels.hasImported(mobKind)?[1,1,1]:c;
+        const baseTint=mapped||window.MineWorldMobPixels.hasImported(mobKind)?[1,1,1]:c;
+        const tint=hitFlash?[baseTint[0],baseTint[1]*(1-.66*hitFlash),baseTint[2]*(1-.66*hitFlash)]:baseTint;
         a.push(x+v[0]*w,y+v[1]*h,z+v[2]*d,tint[0]*shade,tint[1]*shade,tint[2]*shade,uv[0],uv[1]);
       }
     }
@@ -3563,7 +3573,7 @@ body.in-nether #game-wrap{background:#290f19}
       cube(x-.75,y+.03,z-.45,1.5,.24,.9,c);cube(x-.72,y+.25,z-.45,.14,.3,.9,c);cube(x+.58,y+.25,z-.45,.14,.3,.9,c);if(!boat)cube(x-.7,y+.25,z-.4,1.4,.1,.8,[.26,.29,.31]);}
     for(const m of mobs){
       if(Math.hypot(m.x-player.x,m.z-player.z)>39)continue;
-      mobKind=m.kind;
+      mobKind=m.kind;hitFlash=window.MineWorldImpactEffects?.flash(m.id)||0;
       const type=SPECIES[m.kind],x=m.x,z=m.z,y=m.y,hostile=type.kind==='hostile'||type.kind==='neutral'||type.kind==='boss';
       if(m.kind==='ender_dragon'){
         const wing=Math.sin(dayClock*3)*.7;
@@ -3621,6 +3631,7 @@ body.in-nether #game-wrap{background:#290f19}
           const mapped=window.MineWorldMobPixels.hasMapped(m.kind,part,face);
           const uv=mapped?window.MineWorldMobPixels.uv(m.kind,window.MineWorldEntityTextureMaps.vertexCorner(face,corner,'animal'),part,face):fallbackUV;
           if(mapped||window.MineWorldMobPixels.hasImported(m.kind)){r=1;g=1;b=1;}
+          if(hitFlash){g*=1-.66*hitFlash;b*=1-.66*hitFlash;}
           a.push(px,py,pz,r,g,b,uv[0],uv[1]);
         },dayClock);
         continue;
@@ -3804,6 +3815,21 @@ body.in-nether #game-wrap{background:#290f19}
     upload(fallback,atlasTexture,false);
     gl.bindTexture(gl.TEXTURE_2D,atlasTexture);
   }
+  function drawImpactEffects(eye){
+    const effects=window.MineWorldImpactEffects;
+    if(!effects)return;
+    const batch=effects.geometry({x:eye[0],y:eye[1],z:eye[2]},window.MineWorldAtlas.uv,dimension);
+    const draw=(vertices,textured)=>{
+      if(!vertices.length)return;
+      gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);
+      gl.bindBuffer(gl.ARRAY_BUFFER,avatarBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices),gl.DYNAMIC_DRAW);
+      setAttribs(textured);
+      gl.drawArrays(gl.TRIANGLES,0,vertices.length/(textured?8:6));
+    };
+    draw(batch.textured,true);
+    draw(batch.plain,false);
+  }
   function drawEntityHitboxes(){
     if(!showHitboxes)return;
     const out=[];
@@ -3856,6 +3882,7 @@ body.in-nether #game-wrap{background:#290f19}
       meter.firstElementChild.style.width=Math.round(power*100)+'%';
     }
     tuneFrameBudget(frameMs);
+    window.MineWorldImpactEffects?.tick(dt);
     dayClock+=dt;
     if(!worldWeather)worldWeather=survivalRules.newWeather(seed);
     const previousWeather=worldWeather.type;
@@ -3938,6 +3965,7 @@ body.in-nether #game-wrap{background:#290f19}
     drawMobs();
     drawVillagers();
     drawDroppedItems();
+    drawImpactEffects(eye);
     drawEntityHitboxes();
     drawHighlight(aimMob?null:aim);
     $('target-name').textContent=aimVillager?'💚 '+aimVillager.job.name+' · Tap Mine / V to Trade':aimMob?'⚔ '+SPECIES[aimMob.kind].name+' · ♥ '+Math.ceil(aimMob.hp):aimPlayer?'⚔ '+aimPlayer.name+' · PvP enabled':aim?'⛏ '+NAMES[aim.b]+'  ·  '+aim.x+', '+aim.y+', '+aim.z:'Aim at a block or creature';
@@ -4376,7 +4404,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
     '<button class="mw-pixel-btn" id="mw-multi" type="button">Multiplayer</button>'+
     '<button class="mw-pixel-btn" id="mw-creative" type="button">Creative World</button>'+
     '<div class="mw-2col"><button class="mw-pixel-btn" id="mw-options" type="button">Options…</button><button class="mw-pixel-btn" id="mw-return" type="button">World Atlas</button></div>'+
-    '</div><div class="mw-footer"><small>MineWorld 6.37 · Clearer Rendering · Clean HUD</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
+    '</div><div class="mw-footer"><small>MineWorld 6.38 · Impact Particles · Clean HUD</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
   welcome.appendChild(main);
   const worlds=document.createElement('div');
   worlds.id='mw-world-screen';worlds.className='mw-screen mw-screen--sub';

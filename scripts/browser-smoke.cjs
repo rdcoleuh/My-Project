@@ -177,6 +177,20 @@ async function go(browser,name,mobile){
   await play.click({timeout:20000});
   await page.waitForFunction(()=>document.querySelector('#welcome')?.classList.contains('hidden'),null,{timeout:25000});
   await page.waitForTimeout(600);
+  // Visual events are transient and never written into game saves.
+  assert.equal(await page.evaluate(()=>typeof window.MineWorldImpactEffects?.geometry),'function',
+    name+': the impact effect engine did not load');
+  const effectCheck=await page.evaluate(()=>{
+    const fx=window.MineWorldImpactEffects;
+    fx.dust(5,5,5,3,10,'overworld');
+    fx.hit(998,5,5,5,{critical:true,dimension:'overworld'});
+    const geom=fx.geometry({x:6,y:5,z:10},window.MineWorldAtlas.uv,'overworld');
+    return {draw:geom.textured.length>0&&geom.plain.length>0,
+      flash:fx.flash(998)>0,bounded:fx.stats().particles<=240};
+  });
+  assert.ok(effectCheck.draw&&effectCheck.flash&&effectCheck.bounded,
+    name+': block chips or damage particles failed to generate');
+  await page.evaluate(()=>window.MineWorldImpactEffects.reset());
   assert.ok(await page.locator('#world').evaluate(canvas=>
      canvas.width>=Math.floor(canvas.clientWidth)&&
      canvas.height>=Math.floor(canvas.clientHeight)&&
