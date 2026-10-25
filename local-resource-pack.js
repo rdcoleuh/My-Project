@@ -10,7 +10,7 @@ if(!META||!META.gl||!META.texture||!META.baseURL){
  console.warn('MineWorld local resource packs require an initialized WebGL atlas');
  return;
 }
-const atlasW=256,atlasH=512,tilePx=16;
+const atlasW=256,atlasH=1024,tilePx=16;
 const packStorage=window.MineWorldPackStorage;
 const coverageCallbacks=[];
 let manualImportStarted=false;
@@ -465,8 +465,8 @@ async function applyResources(zip,sourceName){
        overlayTimeline:overlayInfo?.timeline,overlayGeometry:overlayInfo?.geometry,lastKey:''});
    }
  }
- // Five spare atlas tiles hold separate side/back artwork (not the front).
- // Existing block IDs and the standard 507 face slots never move.
+ // Ten reserved atlas tiles hold distinct workstation sides/back faces.
+ // All 169 block IDs and the original 507 atlas face slots remain unchanged.
  let directionalFaces=0;
  for(const [block,extra] of Object.entries(window.MineWorldAtlas?.alternateFaces||{})){
    const image=await sprite(extra.name);
