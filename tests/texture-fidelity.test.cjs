@@ -60,7 +60,11 @@ test('ore families have clear embedded mineral colors and distinct stone hosts',
   for(let y=0;y<16;y++)for(let x=0;x<16;x++){
     const c=P(regular,1,x,y);if(Math.max(...c.slice(0,3))-Math.min(...c.slice(0,3))>28)colored++;
   }
-  assert.ok(colored>=10,'Ore '+regular+' has too little visible mineral');
+  if(regular!==18)assert.ok(colored>=10,'Ore '+regular+' has too little visible mineral');
+  else{
+    const darkStone=Array.from({length:256},(_,i)=>P(regular,1,i%16,Math.floor(i/16))).filter(c=>c[0]<95).length;
+    assert.ok(darkStone>=10,'Coal must show dark mineral fragments');
+  }
  }
 });
 test('eleven tree leaf families have different intentional palettes and clumped detail',()=>{
