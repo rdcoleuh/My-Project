@@ -7,7 +7,9 @@ MineWorld has original procedural block art and sound by default. A player can o
 1. Visit https://rdcoleuh.github.io/My-Project/ and open the **Import local textures and sounds** panel on the welcome screen, Pause menu, or Options.
 2. Select a ZIP/JAR containing `assets/minecraft/textures/block/*.png` (modern) or `assets/minecraft/textures/blocks/*.png` (legacy). You may also choose multiple extracted PNG files or a local folder.
 3. MineWorld matches imported sprite names to its 169 block IDs and their three atlas faces. Unmatched faces keep independently authored MineWorld artwork.
-4. The status reports replaced block faces, blocks, animated faces, and imported sounds. **Restore original art & sounds** returns to the default artwork.
+4. The status reports replaced block faces, blocks, animated faces, and imported sounds. Open **Inspect all unmatched block faces** to see the exact Java PNG filename needed for each missing top, side, or bottom face across all 169 MineWorld block IDs. **Restore original art & sounds** returns to the default artwork.
+
+A Java JAR may contain modded namespaces. MineWorld now restricts ZIP matching to `assets/minecraft/` (or a plain `textures/` ZIP root), so `assets/othermod/textures/block/stone.png` cannot override vanilla stone. Farmland uses dirt sides, deepslate uses its distinct top, and chiseled sandstone and grindstone now use more appropriate top/side/bottom sprites.
 
 For exact grass block layering, the importer draws `grass_block_side.png` first and composites the transparent `grass_block_side_overlay.png` with a biome tint. When supplied, `textures/colormap/grass.png` and `textures/colormap/foliage.png` determine the plains colors of neutral grass and foliage. Colored custom-pack sprites are not recolored.
 
