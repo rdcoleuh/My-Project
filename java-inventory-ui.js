@@ -20,6 +20,11 @@ function install(api){
   return el;
  }
  function blockImage(id,parent){
+  if(window.MineWorldLocalTextures?.active){
+   const canvas=node(parent,'canvas','mw-java-item');canvas.width=canvas.height=16;
+   const ctx=canvas.getContext('2d');if(ctx&&window.MineWorldLocalTextures.drawFace(ctx,id,0))return;
+   canvas.remove();
+  }
   const block=node(parent,'span','mw-java-item');
   const atlas=window.MineWorldAtlas?.dataURL;
   if(atlas){
@@ -59,6 +64,8 @@ function install(api){
   model.normalize();root.replaceChildren();
   const heading=node(root,'div','mw-java-head');
   node(heading,'strong','mw-java-title','Inventory · 27 + 9 slots');
+  const importButton=node(heading,'button','mw-java-pack-button','Import Java textures');
+  importButton.type='button';importButton.addEventListener('click',pickPack);
   const held=model.cursorStack();
   node(heading,'span','mw-java-held',held?'Holding '+api.label(held.key)+' ×'+held.qty:'');
   const top=node(root,'div','mw-java-top');
@@ -116,6 +123,7 @@ function install(api){
  const search=node(modal,'input');search.type='search';search.placeholder='Search all 169 blocks';
  search.setAttribute('aria-label','Search creative blocks');
  const status=node(modal,'p','mw-java-help','Click a block to assign it to your selected hotbar slot; keys 1–9 change selection.');
+ const packButton=node(modal,'button','mw-java-close','Import your own Java Edition texture pack (ZIP/JAR)');packButton.type='button';packButton.addEventListener('click',pickPack);
  const collection=node(modal,'div','mw-java-creative-grid');
  function renderCreative(){
   const query=search.value.trim().toLowerCase();
@@ -128,7 +136,8 @@ function install(api){
    b.setAttribute('aria-label','Add '+name+' to selected hotbar slot');
    const canvas=node(b,'canvas');canvas.width=canvas.height=16;
    const ctx=canvas.getContext('2d');
-   if(ctx&&window.MineWorldPixelMaterials){
+   const imported=ctx&&window.MineWorldLocalTextures?.active&&window.MineWorldLocalTextures.drawFace(ctx,id,0);
+   if(!imported&&ctx&&window.MineWorldPixelMaterials){
     const image=ctx.createImageData(16,16);
     for(let y=0;y<16;y++)for(let x=0;x<16;x++)
      image.data.set(window.MineWorldPixelMaterials.paint(id,0,x,y),(y*16+x)*4);
@@ -138,6 +147,17 @@ function install(api){
   }
   if(!results)node(collection,'div','','No blocks found');
  }
+ const packFile=node(modal,'input');packFile.type='file';packFile.accept='.zip,.jar,application/zip,application/java-archive';packFile.style.display='none';packFile.setAttribute('aria-label','Choose a local Java Edition resource pack');
+ function pickPack(){if(!window.MineWorldLocalTextures){status.textContent='Start a world to enable local resource pack textures.';return;}packFile.click();}
+ packFile.addEventListener('change',async()=>{
+   const file=packFile.files?.[0];if(!file)return;
+   status.textContent='Applying textures locally from '+file.name+'…';
+   try{const r=await window.MineWorldLocalTextures.loadFile(file);
+     status.textContent='Local pack active · matched '+r.faces+' of '+r.totalFaces+' block faces across '+r.blocks+' blocks. Unmatched faces retain MineWorld art.';
+     renderCreative();if(!panel.classList.contains('hidden'))render();api.refreshGame?.();
+   }catch(error){status.textContent='Could not import pack: '+error.message;}
+   finally{packFile.value='';}
+ });
  search.addEventListener('input',renderCreative);
  function openCreative(){creativeOpen=true;overlay.classList.add('mw-open');renderCreative();search.focus();}
  function closeCreative(){creativeOpen=false;overlay.classList.remove('mw-open');search.blur();api.onCreativeClose?.();}
