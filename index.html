@@ -2835,7 +2835,27 @@ body.in-nether #game-wrap{background:#290f19}
     root.replaceChildren();for(let i=0;i<craftSize*craftSize;i++){
       const slot=craftCells[i],btn=document.createElement('button');btn.className='craft-cell'+(slot?' occupied':'');btn.type='button';
       btn.setAttribute('aria-label','Craft slot '+(i+1)+(slot?' '+itemLabel(slot.key)+' × '+slot.qty:' empty'));
-      if(slot){const icon=document.createElement('span');icon.className='craft-icon';icon.textContent=stackIcon(slot.key);const caption=document.createElement('span');caption.textContent=itemLabel(slot.key).slice(0,12);btn.append(icon,caption);if(slot.qty>1){const qty=document.createElement('span');qty.className='craft-qty';qty.textContent=slot.qty;btn.append(qty)}}else btn.textContent='＋';
+      if(slot){
+        const icon=document.createElement('span');icon.className='craft-icon';
+        icon.textContent=stackIcon(slot.key);
+        const blockId=slot.key.startsWith('block:')?Number(slot.key.slice(6)):null;
+        if(Number.isInteger(blockId)){
+          const img=document.createElement('canvas');img.width=img.height=32;
+          img.style.cssText='width:32px;height:32px;image-rendering:pixelated';
+          if(window.MineWorldBlockItemIcons?.paint(img,blockId)){icon.replaceChildren(img);}
+        }else{
+          window.MineWorldLocalTextures?.itemIcon?.(slot.key).then(src=>{
+            if(!src||!icon.isConnected)return;
+            const img=document.createElement('img');
+            img.src=src;img.alt='';img.width=img.height=24;
+            img.style.cssText='width:24px;height:24px;image-rendering:pixelated;object-fit:contain';
+            icon.replaceChildren(img);
+          }).catch(()=>{});
+        }
+        const caption=document.createElement('span');caption.textContent=itemLabel(slot.key).slice(0,12);
+        btn.append(icon,caption);
+        if(slot.qty>1){const qty=document.createElement('span');qty.className='craft-qty';qty.textContent=slot.qty;btn.append(qty);}
+      }else btn.textContent='＋';
       btn.addEventListener('click',e=>{
         const current=craftCells[i];
         if(craftRemoveMode||e.shiftKey){
