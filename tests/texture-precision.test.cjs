@@ -77,5 +77,6 @@ test('load ordering, caching and existing save keys remain intact',()=>{
  assert.equal((html.match(/src="\.\/texture-precision\.js"/g)||[]).length,1);
  assert.ok(sw.includes("'./texture-precision.js'"));
  assert.match(sw,/const VERSION='mineworld-[^']+';/,'Offline cache must be versioned');
- for(const marker of ['MineWorld 6.7','mineworld-selfhost-v1','javaInventory:javaInventory.snapshot()','survivalHotbar:[...survivalHotbar]'])assert.ok(html.includes(marker),marker);
+ assert.match(html,/MineWorld 6\.\d+/,'A game version label must be visible');
+ for(const marker of ['mineworld-selfhost-v1','javaInventory:javaInventory.snapshot()','survivalHotbar:[...survivalHotbar]'])assert.ok(html.includes(marker),marker);
 });
