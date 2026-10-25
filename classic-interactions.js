@@ -46,7 +46,7 @@
    const compass=['North','Northeast','East','Southeast','South','Southwest','West','Northwest'];
    return compass[Math.round(a/(Math.PI/4))%8];
  }
- function crackLines(target,progress){
+ function crackLines(target,progress,shape=null){
    if(!target||progress<=0)return [];
    const stage=Math.min(10,Math.max(1,Math.floor(progress*10)+1));
    const lines=[];
@@ -64,7 +64,16 @@
      add([x+1+e,py,z+.12+column*.18],[x+1+e,py+.11,z+.21+column*.18]);
      if(i%2===0)add([px,y+1+e,z+.22+row*.32],[px+.13,y+1+e,z+.33+row*.32]);
    }
-   return lines;
+   // Block models are not always full cubes. Fit cracks to the actual rendered
+   // geometry so narrow stems, beds and farmland do not show floating lines.
+   const box=shape||{left:0,right:1,bottom:0,top:1,front:0,back:1};
+   const sx=box.right-box.left,sy=box.top-box.bottom,sz=box.back-box.front;
+   if(![sx,sy,sz].every(v=>Number.isFinite(v)&&v>0&&v<=1))return lines;
+   return lines.map(p=>[
+     x+box.left+(p[0]-x)*sx,
+     y+box.bottom+(p[1]-y)*sy,
+     z+box.front+(p[2]-z)*sz
+   ]);
  }
  const sanitizeDrop=(d,validKey,width,height)=>{
    if(!d||typeof d!=='object'||!validKey(d.key)||!Number.isFinite(d.x)||!Number.isFinite(d.y)||!Number.isFinite(d.z))return null;
