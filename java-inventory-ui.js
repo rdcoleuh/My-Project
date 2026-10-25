@@ -23,6 +23,12 @@ function install(api){
   return el;
  }
  function blockImage(id,parent){
+  // The same tiny 3D preview is used by the Java inventory and game hotbar.
+  const item=node(parent,'canvas','mw-java-item mw-block-item-3d');
+  item.width=item.height=32;
+  item.style.imageRendering='pixelated';
+  if(window.MineWorldBlockItemIcons?.paint(item,id))return;
+  item.remove();
   if(window.MineWorldLocalTextures?.active){
    const canvas=node(parent,'canvas','mw-java-item');canvas.width=canvas.height=16;
    const ctx=canvas.getContext('2d');if(ctx&&window.MineWorldLocalTextures.drawFace(ctx,id,0))return;
@@ -101,7 +107,7 @@ function install(api){
   if(craftWorkspace&&root.contains(craftWorkspace))panel.appendChild(craftWorkspace);
   model.normalize();root.replaceChildren();
   const heading=node(root,'div','mw-java-head');
-  node(heading,'strong','mw-java-title','Inventory · 27 + 9 slots');
+  node(heading,'strong','mw-java-title','Inventory · Survival');
   if(touchSplit)node(heading,'span','mw-java-held','Split / one-item tap mode');
   const importButton=node(heading,'button','mw-java-pack-button','Import Java textures');
   importButton.type='button';importButton.addEventListener('click',pickPack);
@@ -145,7 +151,7 @@ function install(api){
   if(craftWorkspace)dock.appendChild(craftWorkspace);
   else node(dock,'div','mw-java-top-label','Crafting grid unavailable');
   const nav=node(root,'div','mw-java-nav');
-  node(nav,'strong','mw-java-title','Inventory · 3 rows of 9');
+  node(nav,'strong','mw-java-title','Storage · 27 slots (3 × 9)');
   const controls=node(nav,'div','mw-java-nav');
   const previous=node(controls,'button','', '◀'),label=node(controls,'span','mw-java-title',(page+1)+' / '+model.pages()),next=node(controls,'button','','▶');
   previous.type=next.type='button';previous.disabled=page===0;next.disabled=page>=model.pages()-1;
@@ -221,15 +227,20 @@ function install(api){
    const name=api.blockName(id);
    const b=node(collection,'button');b.type='button';b.title=name;
    b.setAttribute('aria-label','Add '+name+' to selected hotbar slot');
-   const canvas=node(b,'canvas');canvas.width=canvas.height=16;
-   const ctx=canvas.getContext('2d');
-   const imported=ctx&&window.MineWorldLocalTextures?.active&&window.MineWorldLocalTextures.drawFace(ctx,id,0);
-   if(!imported&&ctx&&window.MineWorldPixelMaterials){
-    const image=ctx.createImageData(16,16);
-    for(let y=0;y<16;y++)for(let x=0;x<16;x++)
-     image.data.set(window.MineWorldPixelMaterials.paint(id,0,x,y),(y*16+x)*4);
-    ctx.putImageData(image,0,0);
-   }else if(!imported&&!ctx)b.textContent='▦';
+   const canvas=node(b,'canvas');canvas.width=canvas.height=32;
+   canvas.style.imageRendering='pixelated';
+   const iso=window.MineWorldBlockItemIcons?.paint(canvas,id);
+   if(!iso){
+    canvas.width=canvas.height=16;
+    const ctx=canvas.getContext('2d');if(ctx)ctx.imageSmoothingEnabled=false;
+    const imported=ctx&&window.MineWorldLocalTextures?.active&&window.MineWorldLocalTextures.drawFace(ctx,id,0);
+    if(!imported&&ctx&&window.MineWorldPixelMaterials){
+     const image=ctx.createImageData(16,16);
+     for(let y=0;y<16;y++)for(let x=0;x<16;x++)
+      image.data.set(window.MineWorldPixelMaterials.paint(id,0,x,y),(y*16+x)*4);
+     ctx.putImageData(image,0,0);
+    }else if(!imported&&!ctx)b.textContent='▦';
+   }
    b.addEventListener('click',()=>{api.assignCreative(id);status.textContent=name+' assigned. Select another block or close inventory.';renderCreative();});
   }
   if(!matches.length)node(collection,'div','','No blocks found');
