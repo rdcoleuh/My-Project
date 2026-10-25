@@ -93,3 +93,19 @@ test('actual animal and hostile renderers send face/part identity and preserve p
  assert.ok(sw.includes("'./entity-texture-maps.js'"));
  assert.ok(html.includes('mineworld-selfhost-v1'));
 });
+test('imported UV faces retain upright top-left and bottom-left corners',()=>{
+ const m=maps();
+ // MineWorld's hostile cube starts each vertical face at its bottom edge.
+ assert.equal(m.vertexCorner('front',0),1);
+ assert.equal(m.vertexCorner('front',1),0);
+ assert.equal(m.vertexCorner('front',2),3);
+ // Rotating animal cuboids use a different vertex ordering.
+ assert.equal(m.vertexCorner('front',0,'animal'),1);
+ assert.equal(m.vertexCorner('front',3,'animal'),0);
+ assert.equal(m.vertexCorner('top',0,'animal'),0);
+ assert.equal(m.vertexCorner('top',1,'animal'),3);
+ assert.equal(m.vertexCorner('back',0,'animal'),2);
+ const html=read('index.html');
+ assert.ok(html.includes('MineWorldEntityTextureMaps.vertexCorner(dir,i)'));
+ assert.ok(html.includes("MineWorldEntityTextureMaps.vertexCorner(face,corner,'animal')"));
+});
