@@ -2,6 +2,12 @@
 
 MineWorld has original procedural block art and sound by default. A player can optionally load **their own** Java Edition client JAR, compatible ZIP resource pack, or extracted PNG/OGG files. No Minecraft or Eaglercraft assets are bundled, downloaded by the game, uploaded, or saved in the repository.
 
+## 6.29 — resilient PNG aliases and model-specific side UVs
+
+When a modern Java texture filename exists in a selected ZIP/JAR or extracted folder but its PNG cannot decode, MineWorld now tries valid older Java/Bedrock filename aliases. If an alias is selected, its own `.png.mcmeta` drives the animation; modern decodable artwork always wins. This prevents a damaged preferred file from hiding an otherwise usable historical sprite. A missing optional Bedrock flipbook parser also no longer interrupts Java animation imports.
+
+Farmland side textures use Java's [0,1,16,16] vertical UV rectangle, while end portal frame sides use [0,3,16,16]. These crops use the lower 15 and 13 rows of the player's source texture, respectively, instead of incorrectly dropping the bottom rows. Other custom model geometry, arbitrary JSON face UVs, per-block rotations and full Java blockstates remain unsupported. All player-supplied bitmap data stays on the device.
+
 ## Importing
 
 1. Visit https://rdcoleuh.github.io/My-Project/ and open the **Import local textures and sounds** panel on the welcome screen, Pause menu, or Options.
