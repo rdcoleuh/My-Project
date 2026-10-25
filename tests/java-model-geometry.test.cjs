@@ -15,7 +15,8 @@ const model={textures:{a:'minecraft:block/stone'},elements:[{from:[0,0,0],to:[16
 test('player-provided slab resolves half-height geometry and owned UV faces',async()=>{
  const r=await api().resolve(zip({'model:stone':enc(model),'block:stone':Uint8Array.of(1)}),'stone');
  assert.equal(r.shape.top,.5);assert.equal(r.shape.bottom,0);
- assert.equal(r.shape.right,1);assert.equal(r.faceUV,undefined);
+ assert.equal(r.shape.right,1);assert.equal(r.faceUV.up.rotation,0);
+ assert.deepEqual(Array.from(r.faceUV.up.uv),[0,0,16,16]);
  assert.equal(r.top,'block:stone');assert.equal(r.bottom,'block:stone');
 });
 test('geometry importer rejects missing faces, missing sprites, and rotations',async()=>{
