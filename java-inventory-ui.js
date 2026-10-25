@@ -12,7 +12,8 @@ function install(api){
  shell.classList.add('mw-java-shell');
  const root=doc.createElement('div');root.className='mw-java-ui';shell.appendChild(root);
  const craftWorkspace=doc.getElementById('craft-workspace');
- let page=0,selected=null,focus=null,creativeOpen=false;
+ let page=0,selected=null,focus=null,creativeOpen=false,touchSplit=false;
+ let creativePage=0,creativeTab='all';
  function node(parent,tag,cls,text){
   const el=doc.createElement(tag);
   if(cls)el.className=cls;
@@ -46,7 +47,14 @@ function install(api){
   button.setAttribute('aria-label',button.title);
   if(s){itemView(s.key,button);if(s.qty>1)node(button,'small','mw-java-count',String(s.qty))}
   else if(hint==='Offhand')node(button,'span','mw-java-placeholder','🛡');
-  button.addEventListener('click',e=>{selected=pos;focus=pos;model.click(pos,false,e.shiftKey);render();});
+  button.addEventListener('click',e=>{
+   selected=pos;focus=pos;
+   const piece=s&&api.armorType(s.key);
+   if(e.shiftKey&&piece&&!api.armor(piece))api.equip(s.id);
+   else model.click(pos,touchSplit&&!e.shiftKey,e.shiftKey);
+   render();
+  });
+  button.addEventListener('dblclick',e=>{e.preventDefault();selected=pos;focus=pos;model.collect(pos);render();});
   button.addEventListener('contextmenu',e=>{e.preventDefault();selected=pos;focus=pos;model.click(pos,true,false);render();});
   button.draggable=!!s;
   button.addEventListener('dragstart',e=>{if(!s)return;e.dataTransfer?.setData('text/plain',String(pos));});
@@ -66,6 +74,7 @@ function install(api){
   model.normalize();root.replaceChildren();
   const heading=node(root,'div','mw-java-head');
   node(heading,'strong','mw-java-title','Inventory · 27 + 9 slots');
+  if(touchSplit)node(heading,'span','mw-java-held','Split / one-item tap mode');
   const importButton=node(heading,'button','mw-java-pack-button','Import Java textures');
   importButton.type='button';importButton.addEventListener('click',pickPack);
   const held=model.cursorStack();
@@ -111,11 +120,15 @@ function install(api){
   action('Equip',()=>{const s=model.stackAt(selected);if(s)api.equip(s.id)});
   action('Offhand (F)',()=>{if(selected!==null)model.moveOffhand(selected)});
   action('Use / Eat',()=>{const s=model.stackAt(selected);if(s)api.consume(s.id)});
+  action(touchSplit?'Tap mode: split/one ✓':'Tap mode: whole stack',()=>{touchSplit=!touchSplit});
   action('Split (right-click)',()=>{if(selected!==null)model.click(selected,true)});
+  action('Collect matching',()=>{if(selected!==null)model.collect(selected)});
   action('Shift-move',()=>{if(selected!==null)model.quickMove(selected)});
   action('Drop 1',()=>{const s=model.stackAt(selected);if(s)api.drop(s.id,false)});
   action('Drop stack',()=>{const s=model.stackAt(selected);if(s)api.drop(s.id,true)});
-  node(root,'div','mw-java-help','Left click picks up or places a stack; right click picks up half or places one. Shift+click transfers between main inventory and hotbar. Drag stacks to swap or merge. Hover a slot then press 1–9 to swap with hotbar, or F for offhand. E/Esc closes. Overflow pages preserve all older saved items.');
+  const details=model.stackAt(selected);
+  node(root,'div','mw-java-item-detail',details?api.label(details.key)+' · '+details.qty+'/'+(details.qty===1?'1':'64')+' · '+(selected==='offhand'?'Offhand':selected>=27&&selected<36?'Hotbar '+(selected-26):'Inventory'):'Select a slot to see its contents');
+  node(root,'div','mw-java-help','Left click/tap moves stacks. Right click or Split tap mode takes half or places one. Shift+click moves stacks and equips armor. Double-click collects matching stacks up to 64. Drag to swap/merge. Hover and press 1–9 to swap hotbar positions, or F for offhand. E/Esc closes. Overflow pages retain older world inventories.');
  }
  const overlay=node(doc.getElementById('game-wrap')||doc.body,'div');
  overlay.id='mw-java-creative';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
@@ -146,7 +159,7 @@ function install(api){
     for(let y=0;y<16;y++)for(let x=0;x<16;x++)
      image.data.set(window.MineWorldPixelMaterials.paint(id,0,x,y),(y*16+x)*4);
     ctx.putImageData(image,0,0);
-   }else b.textContent='▦';
+   }else if(!imported&&!ctx)b.textContent='▦';
    b.addEventListener('click',()=>{api.assignCreative(id);status.textContent=name+' assigned. Select another block or close inventory.';});
   }
   if(!results)node(collection,'div','','No blocks found');
