@@ -72,12 +72,12 @@ test('importer retains 507 ordinary faces and imports up to ten extra workstatio
   assert.match(pack,/Object\.entries\(window\.MineWorldAtlas\?\.alternateFaces\|\|\{\}\)/);
   assert.match(pack,/const image=await sprite\(variant\.name\)/);
   assert.match(pack,/for\(const \[variantIndex,variant\] of \[extra,extra\.extra\]\.entries\(\)\)/);
-  assert.match(pack,/if\(faces\|\|directionalFaces\|\|state\.active\)await writeAtlas\(canvas\)/);
+  assert.match(pack,/if\(faces\|\|directionalFaces\|\|modelDirectionalFaces\|\|state\.active\)await writeAtlas\(canvas\)/);
   assert.match(pack,/totalFaces:169\*3/);
   assert.match(pack,/atlasH=1024/);
   assert.equal(atlasTestBottom(pack,158,2),'dark_oak_planks');
   assert.equal(atlasTestBottom(pack,161,2),'birch_planks');
-  assert.match(pack,/state\.active=faces\+directionalFaces>0/);
+  assert.match(pack,/state\.active=faces\+directionalFaces\+modelDirectionalFaces>0/);
 });
 function atlasTestBottom(source,id,face){
   const m=source.match(new RegExp('bind\\('+id+",'[^']+','[^']+','([^']+)'\\)"));
