@@ -1,4 +1,4 @@
-/* MineWorld 6.1 — original, independently-authored classic-style texture quality.
+/* MineWorld 6.2 — original, independently-authored classic-style texture quality.
  * Sample every texel on all faces of all 169 block IDs, including old fallback art.
  */
 const {test}=require('node:test'),assert=require('node:assert/strict'),
@@ -114,7 +114,7 @@ test('palette is stable across visits and original Minecraft texture files are n
  assert.ok(html.includes('src="./utility-materials.js"'));
  assert.ok(sw.includes("'./readable-materials.js'"));
  assert.ok(sw.includes("'./utility-materials.js'"));
- assert.ok(html.includes('MineWorld 6.1'));
+ assert.ok(html.includes('MineWorld 6.2'));
  const a=html.indexOf('src="./texture-clarity.js"'),b=html.indexOf('src="./readable-materials.js"');
  assert.ok(a>=0&&a<b,'new source should override previous paint stack');
 });
