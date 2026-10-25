@@ -73,6 +73,8 @@ for(const [id,stem,leaf] of [
 bind(28,'podzol_top','podzol_side','dirt');
 bind(20,'furnace_top','furnace_front','furnace_top');
 bind(24,'sandstone_top','sandstone','sandstone_bottom');
+bind(54,'sandstone_top','chiseled_sandstone','sandstone_bottom');
+bind(58,'deepslate_top','deepslate','deepslate_top');
 bind(44,'cactus_top','cactus_side','cactus_bottom');
 bind(56,'copper_block','copper_block','copper_block');
 bind(60,'hay_block_top','hay_block_side','hay_block_top');
@@ -85,6 +87,8 @@ bind(118,'barrel_top','barrel_side','barrel_bottom');
 bind(125,'end_portal_frame_top','end_portal_frame_side','end_stone');
 bind(132,'purpur_pillar_top','purpur_pillar','purpur_pillar_top');
 bind(136,'smithing_table_top','smithing_table_front','smithing_table_bottom');
+bind(137,'farmland','dirt','dirt');
+bind(138,'farmland_moist','dirt','dirt');
 bind(155,'composter_top','composter_side','composter_bottom');
 bind(156,'blast_furnace_top','blast_furnace_front','blast_furnace_top');
 bind(157,'smoker_top','smoker_front','smoker_bottom');
@@ -96,6 +100,7 @@ bind(163,'lectern_top','lectern_front','oak_planks');
 bind(164,'stonecutter_top','stonecutter_side','stonecutter_bottom');
 bind(165,'loom_top','loom_front','loom_bottom');
 bind(166,'smithing_table_top','smithing_table_front','smithing_table_bottom');
+bind(167,'grindstone_round','grindstone_side','grindstone_pivot');
 bind(168,'crafting_table_top','crafting_table_front','oak_planks');
 bind(169,'red_wool','red_wool','red_wool');
 
@@ -136,10 +141,16 @@ function readArchive(buffer){
    const end=p+46+nlen+extra+comment;
    if(end>len)throw Error('Truncated ZIP entry.');
    const path=decoder.decode(new Uint8Array(buffer,p+46,nlen)).replace(/\\/g,'/').toLowerCase();
-   const match=path.match(/(?:^|\/)(?:assets\/minecraft\/)?textures\/(?:block|blocks)\/([a-z0-9_]+)\.png$/);
-   const matchSound=path.match(/(?:^|\/)assets\/minecraft\/sounds\/([a-z0-9_./-]+)\.ogg$/);
-   const matchMeta=path.match(/(?:^|\/)(?:assets\/minecraft\/)?textures\/(?:block|blocks)\/([a-z0-9_]+)\.png\.mcmeta$/);
-   const mapColor=path.match(/(?:^|\/)(?:assets\/minecraft\/)?textures\/colormap\/(grass|foliage)\.png$/);
+   // Only import Minecraft's own namespace. Modded jars can contain
+   // assets/othermod/textures/block/stone.png; matching its trailing
+   // filename would silently replace the real vanilla stone texture.
+   // Plain textures/ ZIP roots remain supported for hand-made packs.
+   const namespace=path.match(/(?:^|\/)assets\/minecraft\/(.+)$/);
+   const relative=namespace?namespace[1]:(/^(?:textures|sounds)\//.test(path)?path:null);
+   const match=relative?.match(/^textures\/(?:block|blocks)\/([a-z0-9_]+)\.png$/);
+   const matchSound=relative?.match(/^sounds\/([a-z0-9_./-]+)\.ogg$/);
+   const matchMeta=relative?.match(/^textures\/(?:block|blocks)\/([a-z0-9_]+)\.png\.mcmeta$/);
+   const mapColor=relative?.match(/^textures\/colormap\/(grass|foliage)\.png$/);
    if(match&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8)){
      found.set(match[1],{method,size,expanded,local});
    }
