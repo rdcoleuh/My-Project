@@ -1,5 +1,11 @@
 # MineWorld — Player-supplied Java resource packs and animation
 
+## 6.32 — use local Java block-model texture references (October 25, 2026)
+
+A selected Java client JAR or resource ZIP can now supply `assets/minecraft/models/block/*.json` alongside its PNGs. For simple full-cube models, MineWorld follows local `parent` inheritance and `#texture` variables to choose the pack's referenced top, side, and bottom images, including nested paths such as `textures/block/custom/stone_alt.png`. This allows a pack's model to remap a familiar block to custom player-owned art rather than requiring the filename of the vanilla PNG. Extracted folders containing matching model JSON and PNG files are supported too. Original texture bitmaps are still not bundled or transmitted.
+
+The model resolver intentionally ignores other namespaces, missing or invalid files, unsafe paths, cyclic parent references and non-full-cube geometry. Directional models with different north/south/east/west images do not collapse those four textures into one side tile; MineWorld's existing fixed workstation directions remain in use. This is **texture-reference support**, not a complete Java model/blockstate renderer: arbitrary geometry, blockstate variants, UV rotations and placed-block orientation remain unimplemented. A model reference only overrides a face when its referenced PNG is actually available; otherwise the earlier per-block mapping remains. The import report counts faces successfully resolved through local model JSON. The atlas, existing world-save keys and mobile controls remain unchanged.
+
 MineWorld has original procedural block art and sound by default. A player can optionally load **their own** Java Edition client JAR, compatible ZIP resource pack, or extracted PNG/OGG files. No Minecraft or Eaglercraft assets are bundled, downloaded by the game, uploaded, or saved in the repository.
 
 ## 6.29 — resilient PNG aliases and model-specific side UVs
