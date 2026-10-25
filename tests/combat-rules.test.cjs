@@ -63,3 +63,24 @@ test('sword sweep only reaches nearby creatures at a similar elevation',()=>{
  assert.ok(html.includes('MineWorldCombat.sweepInRange(nearby,m,player)'),
   'Live combat must apply tested sweep geometry');
 });
+
+test('melee arm swing animates once over 420ms and returns to neutral',()=>{
+ const c=combat();
+ assert.equal(c.swing(-1),0);
+ assert.equal(c.swing(Infinity),0);
+ assert.equal(c.swing(0),0);
+ assert.ok(c.swing(105)>.5);
+ assert.ok(c.swing(210)>.99);
+ assert.ok(c.swing(315)>.5);
+ assert.equal(c.swing(420),0);
+ assert.equal(c.swing(900),0);
+});
+test('third-person attack rotates arm at shoulder; missed hits animate and reset recharge',()=>{
+ const html=read('index.html');
+ assert.ok(html.includes('MineWorldCombat.swing(performance.now()-lastAttackAt)'));
+ assert.ok(html.includes("if(name==='armR'&&swing>0)"));
+ assert.ok(html.includes('py=shoulderY+dy*Math.cos(angle)-dz*Math.sin(angle)'));
+ assert.ok(html.includes('pz=shoulderZ+dy*Math.sin(angle)+dz*Math.cos(angle)'));
+ assert.ok(html.includes('A missed swing still plays and resets the melee recharge'));
+ assert.ok(html.includes('lastAttackAt=now;attackCooldown=.12;return;'));
+});
