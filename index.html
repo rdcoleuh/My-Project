@@ -675,6 +675,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./animal-behavior.js"></script>
 <script src="./animal-models.js"></script>
 <script src="./mob-expansion.js"></script>
+<script src="./entity-texture-maps.js"></script>
 <script src="./mob-pixel-art.js"></script>
 <script src="./mob-ai-rules.js"></script>
 <script src="./perspective.js"></script>
@@ -3490,10 +3491,16 @@ body.in-nether #game-wrap{background:#290f19}
     const a=[];let mobKind='vehicle';
     // Cuboids share a tiny 16x16 procedural pixel pattern per mob species.
     // 8 floats/vertex matches the existing textured shader; no Mojang assets.
-    function cube(x,y,z,w,h,d,c){
+    function cube(x,y,z,w,h,d,c,part='body'){
       for(const face of FACE)for(const i of [0,1,2,0,2,3]){
-        const v=face.v[i],shade=face.shade,uv=window.MineWorldMobPixels.uv(mobKind,i);
-        const tint=window.MineWorldMobPixels.hasImported(mobKind)?[1,1,1]:c;
+        const v=face.v[i],shade=face.shade;
+        const dir=face.n[0]===1?'right':face.n[0]===-1?'left':
+          face.n[1]===1?'top':face.n[1]===-1?'bottom':
+          face.n[2]===1?'back':'front';
+        const mapped=window.MineWorldMobPixels.hasMapped(mobKind,part,dir);
+        const uv=mapped?window.MineWorldMobPixels.uv(mobKind,i,part,dir):
+          window.MineWorldMobPixels.uv(mobKind,i);
+        const tint=mapped||window.MineWorldMobPixels.hasImported(mobKind)?[1,1,1]:c;
         a.push(x+v[0]*w,y+v[1]*h,z+v[2]*d,tint[0]*shade,tint[1]*shade,tint[2]*shade,uv[0],uv[1]);
       }
     }
@@ -3554,9 +3561,11 @@ body.in-nether #game-wrap{background:#290f19}
       if(animalModels.MODELS[m.kind]){
         let index=0;
         const order=[0,1,2,0,2,3];
-        animalModels.draw(m,(px,py,pz,r,g,b)=>{
-          const uv=window.MineWorldMobPixels.uv(m.kind,order[index++%6]);
-          if(window.MineWorldMobPixels.hasImported(m.kind)){r=1;g=1;b=1;}
+        animalModels.draw(m,(px,py,pz,r,g,b,part,face,corner)=>{
+          const fallbackUV=window.MineWorldMobPixels.uv(m.kind,order[index++%6]);
+          const mapped=window.MineWorldMobPixels.hasMapped(m.kind,part,face);
+          const uv=mapped?window.MineWorldMobPixels.uv(m.kind,corner,part,face):fallbackUV;
+          if(mapped||window.MineWorldMobPixels.hasImported(m.kind)){r=1;g=1;b=1;}
           a.push(px,py,pz,r,g,b,uv[0],uv[1]);
         },dayClock);
         continue;
@@ -3564,11 +3573,11 @@ body.in-nether #game-wrap{background:#290f19}
       if(extraMobs?.draw(m,(px,py,pz,w,h,d,color)=>cube(px,py,pz,w,h,d,color),dayClock))continue;
       if(hostile){
         const spider=m.kind==='spider',creeper=m.kind==='creeper';
-        cube(x-.32,y+(spider?.25:.65),z-.23,.64,spider?.45:creeper?1.17:.84,.46,type.body);
-        cube(x-.26,y+(spider?.43:creeper?1.8:1.48),z-.26,.52,spider?.35:.52,.52,type.head);
+        cube(x-.32,y+(spider?.25:.65),z-.23,.64,spider?.45:creeper?1.17:.84,.46,type.body,'body');
+        cube(x-.26,y+(spider?.43:creeper?1.8:1.48),z-.26,.52,spider?.35:.52,.52,type.head,'head');
         if(!creeper)for(const side of [-1,1]){
-          cube(x+side*.18-.10,y+.04,z-.16,.20,spider?.26:.62,.32,type.body);
-          if(!spider)cube(x+side*.37-.11,y+.72,z-.14,.18,.65,.28,type.head);
+          cube(x+side*.18-.10,y+.04,z-.16,.20,spider?.26:.62,.32,type.body,'leg');
+          if(!spider)cube(x+side*.37-.11,y+.72,z-.14,.18,.65,.28,type.head,'arm');
         }
         if(m.kind==='zombie')cube(x-.2,y+1.72,z-.273,.16,.11,.02,[.75,.16,.18]);
         if(m.kind==='creeper'){
