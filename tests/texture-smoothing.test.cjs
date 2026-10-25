@@ -6,7 +6,7 @@ const base=path.resolve(__dirname,'..');
 const read=name=>fs.readFileSync(path.join(base,name),'utf8');
 const source=read('texture-smoothing.js'),html=read('index.html');
 function boot(saved){
-  const calls=[],store=new Map(saved?[['mineworld-texture-smoothing-v1',saved]]:[]);
+  const calls=[],store=new Map(saved?[['mineworld-texture-smoothing-v2',saved]]:[]);
   const panels=[{children:[]},{children:[]}];
   class Element{
     constructor(tag){this.tag=tag;this.children=[];this.handlers={};this.style={};this.checked=false;this.attrs={};}
@@ -31,12 +31,12 @@ function boot(saved){
   vm.runInNewContext(source,context,{filename:'texture-smoothing.js'});
   return {api:context.window.MineWorldTextureSmoothing,gl,canvas,calls,store,panels};
 }
-test('Smooth texture sampling is the default and can be switched back to sharp nearest pixels',()=>{
+test('Classic sharp pixel sampling is the default; Smooth stays an optional setting',()=>{
   const x=boot(); const tex={};
-  assert.equal(x.api.enabled,true);
+  assert.equal(x.api.enabled,false);
   assert.equal(x.api.attach(x.gl,tex,x.canvas),true);
-  assert.equal(x.canvas.style.imageRendering,'auto');
-  assert.ok(x.calls.some(v=>v[0]==='filter'&&v[2]===x.gl.TEXTURE_MIN_FILTER&&v[3]===x.gl.LINEAR));
+  assert.equal(x.canvas.style.imageRendering,'pixelated');
+  assert.ok(x.calls.some(v=>v[0]==='filter'&&v[2]===x.gl.TEXTURE_MIN_FILTER&&v[3]===x.gl.NEAREST));
   x.api.set(false);
   assert.equal(x.store.get(x.api.storageKey),'classic');
   assert.equal(x.canvas.style.imageRendering,'pixelated');
@@ -44,6 +44,7 @@ test('Smooth texture sampling is the default and can be switched back to sharp n
   x.api.set(true);
   assert.equal(x.store.get(x.api.storageKey),'smooth');
   assert.equal(x.canvas.style.imageRendering,'auto');
+  assert.ok(x.calls.some(v=>v[0]==='filter'&&v[2]===x.gl.TEXTURE_MIN_FILTER&&v[3]===x.gl.LINEAR));
   assert.equal(x.api.apply(x.gl,tex),true,'resource packs can restore filter without changing worlds');
 });
 test('existing preference survives page reload; matching controls update in pause and Options',()=>{
@@ -71,4 +72,14 @@ test('rendering wiring preserves original world saves, resource-pack pixels and 
   assert.ok(read('local-resource-pack.js').includes('MineWorldTextureSmoothing?.apply(gl,META.texture)'));
   assert.ok(read('sw.js').includes("'./texture-smoothing.js'"),'offline cache must include smoothing script');
   assert.ok(!source.includes('texImage2D'),'filters must not alter player-supplied artwork');
+});
+
+test('old v1 smooth preference does not override new classic-default release',()=>{
+  const x=boot();
+  assert.equal(x.api.enabled,false);
+  assert.equal(x.api.storageKey,'mineworld-texture-smoothing-v2');
+  x.api.set(true);
+  assert.equal(x.store.get(x.api.storageKey),'smooth');
+  const restored=boot('smooth');
+  assert.equal(restored.api.enabled,true);
 });
