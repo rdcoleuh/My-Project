@@ -60,7 +60,8 @@ function create(store,hotbar,changed=()=>{}){
  }
  function click(pos,right=false,shift=false){
   normalize();
-  if(pos!=='offhand'&&(!Number.isInteger(pos)||pos<0||pos>=slots.length))return false;
+  if(pos!=='offhand'&&(!Number.isInteger(pos)||pos<0||pos>=8192))return false;
+  if(pos!=='offhand')while(slots.length<=pos)slots.push(null);
   if(shift)return quickMove(pos);
   const target=at(pos),held=cursor;
   if(!held){
@@ -103,8 +104,10 @@ function create(store,hotbar,changed=()=>{}){
  }
  function swap(from,to){
   normalize();
-  if(from!=='offhand'&&(!Number.isInteger(from)||from<0||from>=slots.length))return false;
-  if(to!=='offhand'&&(!Number.isInteger(to)||to<0||to>=slots.length))return false;
+  if(from!=='offhand'&&(!Number.isInteger(from)||from<0||from>=8192))return false;
+  if(to!=='offhand'&&(!Number.isInteger(to)||to<0||to>=8192))return false;
+  if(from!=='offhand')while(slots.length<=from)slots.push(null);
+  if(to!=='offhand')while(slots.length<=to)slots.push(null);
   if(from===to)return false;
   const a=at(from),b=at(to);if(!a&&!b)return false;
   assign(from,b);assign(to,a);change();return true;
