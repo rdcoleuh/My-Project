@@ -2197,6 +2197,9 @@ body.in-nether #game-wrap{background:#290f19}
       const old=droppedItems[i];
       if(old.age>=300||old.y<-.5){droppedItems.splice(i,1);markSave();continue;}
       if(old.dimension!==dimension)continue;
+      // The Java item timer advances in simulated chunks, not across every
+      // distant unloaded region. Avoid advancing off-screen entities forever.
+      if(Math.hypot(old.x-player.x,old.z-player.z)>96)continue;
       const next=classic.advanceDrop(old,dt,(x,y,z)=>
         x>1&&x<W-1&&z>1&&z<D-1&&y>=0&&y<H&&solid(get(Math.floor(x),Math.floor(y),Math.floor(z))));
       droppedItems[i]=next;
@@ -2210,6 +2213,7 @@ body.in-nether #game-wrap{background:#290f19}
         }
       }
     }
+    if(window.MineWorldDroppedVisuals.mergeNearby(droppedItems,stackLimit))markSave();
   }
   function updateDebugView(){
     if(!showDebug)return;
