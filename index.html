@@ -687,6 +687,13 @@ body.in-nether #game-wrap{background:#290f19}
 (() => {
   'use strict';
   const SIZE=16, COLUMNS=16, ROWS=32;
+  // Five atlas tiles unused by the 169 * 3 standard faces are reserved for
+  // player-supplied Java side art. No Minecraft assets are bundled here.
+  const alternateFaces=Object.freeze({
+    20:{tile:0,name:'furnace_side'},156:{tile:1,name:'blast_furnace_side'},
+    157:{tile:2,name:'smoker_side'},168:{tile:510,name:'crafting_table_side'},
+    158:{tile:511,name:'cartography_table_side2'}
+  });
   const clamp=(n)=>Math.max(0,Math.min(255,Math.round(n)));
   function hash(a,b,c){let x=(Math.imul(a+17,374761393)^Math.imul(b+29,668265263)^Math.imul(c+73,1442695041))|0;x=Math.imul(x^(x>>>13),1274126177);return ((x^(x>>>16))>>>0)/4294967295}
   function tileColor(b,face,x,y){
@@ -865,6 +872,15 @@ body.in-nether #game-wrap{background:#290f19}
         const c=tileColor(b,f,x,y);for(let k=0;k<4;k++)img.data[i+k]=c[k];
       }
     }
+    // Keep fallback art for unused alternate slots identical to each block's
+    // default side. A player-supplied pack can then replace only those slots.
+    for(const [key,def] of Object.entries(alternateFaces)){
+      const block=Number(key),tx=(def.tile%COLUMNS)*SIZE,ty=Math.floor(def.tile/COLUMNS)*SIZE;
+      for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
+        const offset=((ty+y)*canvas.width+tx+x)*4,color=tileColor(block,1,x,y);
+        for(let i=0;i<4;i++)img.data[offset+i]=color[i];
+      }
+    }
     ctx.putImageData(img,0,0);
     window.MineWorldAtlas.dataURL=canvas.toDataURL('image/png');
     const texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);
@@ -877,7 +893,7 @@ body.in-nether #game-wrap{background:#290f19}
     return texture;
   }
   function uv(b,face,corner){
-    const tile=b*3+face;
+    const tile=face===3&&alternateFaces[b]?alternateFaces[b].tile:b*3+Math.min(face,2);
     const x=tile%COLUMNS,y=Math.floor(tile/COLUMNS);
     const corners=[[0,0],[0,1],[1,1],[1,0]];
     const [u,v]=corners[corner];
@@ -888,7 +904,7 @@ body.in-nether #game-wrap{background:#290f19}
     const pxV=Math.max(1,Math.min(SIZE,Math.round((arguments[4]??1)*SIZE)));
     return [(x*SIZE+.5+u*(pxU-1))/(SIZE*COLUMNS),(y*SIZE+.5+v*(pxV-1))/(SIZE*ROWS)];
   }
-  window.MineWorldAtlas={create,uv,tileColor};
+  window.MineWorldAtlas={create,uv,tileColor,alternateFaces};
 })();
 
 </script>
@@ -1309,6 +1325,11 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function pushFace(a,x,y,z,b,f,biomeName=''){
     const face=f.n[1]===1?0:(f.n[1]===-1?2:1);
+    // Java utility blocks use a different graphic for the side/back than
+    // their front. +Z is the forward-facing direction until orientation
+    // metadata is added to world saves; worktables use X vs Z axis.
+    const alt=window.MineWorldAtlas.alternateFaces[b];
+    const textureFace=face===1&&alt&&((b===168||b===158)?f.n[0]!==0:f.n[2]!==1)?3:face;
     // Flat directional shading preserves recognisable source pixels instead of washing them with location noise.
     const shade=f.shade;
     const vs=f.v;
@@ -1330,7 +1351,7 @@ body.in-nether #game-wrap{background:#290f19}
             width=shape.right-shape.left,height=shape.top-shape.bottom,depth=shape.back-shape.front,
             spanU=crop?.72:f.n[0]?depth:f.n[1]?width:width,
             spanV=crop?(.22+crop.stage*.22):f.n[1]?depth:height,
-            uv=window.MineWorldAtlas.uv(b,face,i,spanU,spanV);
+            uv=window.MineWorldAtlas.uv(b,textureFace,i,spanU,spanV);
       const px=crop?x+.14+v[0]*.72:x+shape.left+v[0]*(shape.right-shape.left),
             py=crop?y+v[1]*(.22+crop.stage*.22):y+shape.bottom+v[1]*(shape.top-shape.bottom),
             pz=crop?z+.14+v[2]*.72:z+shape.front+v[2]*(shape.back-shape.front);
