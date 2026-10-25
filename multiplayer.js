@@ -194,27 +194,34 @@
   }
   function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z)}
   function allowAttack(attacker,now){
-    if(!attacker)return false;
-    const last=attackTimes.get(attacker.id)||0;
-    if(now-last<420)return false;
+    if(!attacker||!Number.isFinite(now))return false;
+    const last=attackTimes.get(attacker.id);
+    // No phantom cooldown for the first attack immediately after entering a world.
+    if(last!==undefined&&now-last<420)return false;
     attackTimes.set(attacker.id,now);return true;
   }
-  function playerProfile(data){
-    if(!data)return {mode:'creative',damage:0};
-    if(data.mode==='creative')return {mode:'creative',damage:20};
-    const kind=['sword','pickaxe'].includes(data.equipped)?data.equipped:'none';
-    const level={none:0,wood:1,stone:2,iron:3}[data.weapon]||0;
-    return {mode:'survival',damage:Math.max(1,kind==='sword'?2+level*3:kind==='pickaxe'?1+level:1.5)};
+  // Damage is computed by the host from the host's elapsed attack timer.
+  // The client only reports its equipped tool category/tier, never damage or charge.
+  // This is still peer-hosted multiplayer, not a hardened inventory-authoritative server.
+  function serverStrike(profile,mode,now,attackerId){
+    const elapsed=attackTimes.has(attackerId)?Math.max(0,now-attackTimes.get(attackerId)):Infinity;
+    const equipped=['sword','axe','pickaxe','shovel','hoe'].includes(profile?.equipped)?profile.equipped:'fist';
+    const tier=['wood','stone','iron','diamond','netherite'].includes(profile?.weapon)?profile.weapon:'none';
+    return window.MineWorldCombat.strike({
+      weapon:equipped,tier,elapsedMs:elapsed,creative:mode==='creative'
+    });
   }
   // A host verifies proximity, rate limits, and authoritative mob IDs.
   // This is basic validation, not a hardened anti-cheat system.
   function processMobAttack(from,message){
     if(role!=='host')return false;
     const attacker=peers.get(from),conn=sockets.get(from),now=performance.now();
-    if(!attacker||!conn||!allowAttack({...attacker,id:from},now))return false;
+    if(!attacker||!conn||!Number.isInteger(message.id))return false;
     const m=bridge.getMobs().find(m=>m.id===message.id);
     if(!m||distance(attacker,m)>5.3||(attacker.dimension||'overworld')!==(m.dimension||'overworld'))return false;
-    const damage=Math.min(20,playerProfile({...message.profile,mode:attacker.mode}).damage);
+    const hit=serverStrike(message.profile,attacker.mode,now,from);
+    if(!allowAttack({...attacker,id:from},now))return false;
+    const damage=Math.min(20,hit.damage);
     const result=bridge.applyMobHit(m.id,damage,from);
     if(!result.hit)return false;
     if(result.dead&&result.drop)send(conn,{t:'loot',drop:result.drop,count:result.count});
@@ -222,8 +229,8 @@
   }
   function damagePlayer(targetId,amount,cause){
     if(role!=='host'||!Number.isInteger(amount)||amount<1||amount>20)return false;
-    const now=performance.now(),last=hitTimes.get(targetId)||0;
-    if(now-last<550)return false;
+    const now=performance.now(),last=hitTimes.get(targetId);
+    if(last!==undefined&&now-last<550)return false;
     hitTimes.set(targetId,now);
     if(targetId===peer.id||targetId===null){bridge.applyDamage(amount,cause);return true}
     const target=sockets.get(targetId);
@@ -234,9 +241,11 @@
     if(role!=='host'||!pvp)return false;
     const attacker=peers.get(from),target=message.target===peer.id?{...bridge.getPlayer(),mode:bridge.getMode()}:peers.get(message.target);
     const now=performance.now();
-    if(!attacker||!target||target.mode!=='survival'||!allowAttack({...attacker,id:from},now))return false;
+    if(!attacker||!target||target.mode!=='survival')return false;
     if(distance(attacker,target)>5.2||(attacker.dimension||'overworld')!==(target.dimension||'overworld'))return false;
-    const damage=Math.min(11,Math.ceil(playerProfile({...message.profile,mode:attacker.mode}).damage));
+    const hit=serverStrike(message.profile,attacker.mode,now,from);
+    if(!allowAttack({...attacker,id:from},now))return false;
+    const damage=Math.min(11,Math.ceil(hit.damage));
     return damagePlayer(message.target,damage,'PvP sword strike');
   }
   function attackMob(id){
@@ -248,8 +257,10 @@
     if(role==='guest'){send(host,{t:'attack-player',target:id,profile:bridge.getCombatProfile()});return true}
     const target=peers.get(id),local=bridge.getPlayer();
     if(!target||target.mode!=='survival'||bridge.getMode()!=='survival'||distance(local,target)>5.2||(target.dimension||'overworld')!==(local.dimension||'overworld'))return false;
-    const now=performance.now();if(!allowAttack({...local,id:peer.id},now))return false;
-    return damagePlayer(id,Math.min(11,Math.ceil(playerProfile(bridge.getCombatProfile()).damage)),'PvP sword strike');
+    const now=performance.now();
+    const hit=serverStrike(bridge.getCombatProfile(),bridge.getMode(),now,peer.id);
+    if(!allowAttack({...local,id:peer.id},now))return false;
+    return damagePlayer(id,Math.min(11,Math.ceil(hit.damage)),'PvP sword strike');
   }
   function flushMobs(){if(role==='host')broadcast({t:'mobs',mobs:bridge.getMobs()})}
   function onGuest(conn) {
