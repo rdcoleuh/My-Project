@@ -110,6 +110,13 @@ bind(169,'red_bed_top','red_bed_side','red_bed_bottom');
 function normalize(s){return String(s||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');}
 const names=window.MineWorldBlockGuide?.names||[];
 const aliases={
+ // Bedrock texture packs (including .mcpack) often use legacy names.
+ // Only map existing player-supplied PNGs; do not download or bundle any.
+ cherry_log:['cherry_log_side'],cherry_log_top:['cherry_log_top'],
+ mangrove_log:['mangrove_log_side'],mangrove_log_top:['mangrove_log_top'],
+ pale_oak_log:['pale_oak_log_side'],
+ grass_block_top:['grass_top','grass'],grass_block_side:['grass_side'],
+
  grass_block_top:['grass_top'],grass_block_side:['grass_side'],grass_block_side_overlay:['grass_side_overlay'],
  red_bed_top:['bed_top'],red_bed_side:['bed_side'],red_bed_bottom:['bed_bottom'],
  oak_log:['log_oak','log'],oak_log_top:['log_oak_top','log_top'],oak_planks:['planks_oak','planks'],oak_leaves:['leaves_oak','leaves'],
@@ -125,6 +132,14 @@ const aliases={
 // Modern names always win because resolveName() tries the canonical key first.
 Object.assign(aliases,{
  furnace_front:['furnace_front_off'],
+ blast_furnace_front:['blast_furnace_front_off'],
+ smoker_front:['smoker_front_off'],
+ water_still:['water_still_grey'],
+ lava_still:['lava_still'],
+ stone_bricks:['stonebrick'],
+ chiseled_nether_bricks:['chiseled_nether_brick'],
+ bone_block_top:['bone_block_top'],
+ hay_block_top:['hay_block_top'],
  crafting_table_top:['workbench_top'],
  crafting_table_front:['workbench_front'],
  crafting_table_side:['workbench_side'],
@@ -539,7 +554,7 @@ async function applyResources(zip,sourceName){
 async function loadFile(file){
  if(!file||typeof file.arrayBuffer!=='function')throw Error('Choose a local .zip, .jar or PNG file.');
  if(/\.(png|ogg)$/i.test(file.name||''))return loadFiles([file]);
- if(!/\.(zip|jar)$/i.test(file.name||''))throw Error('Choose a Java resource-pack ZIP/JAR or PNG images.');
+ if(!/\.(zip|jar|mcpack)$/i.test(file.name||''))throw Error('Choose a Java ZIP/JAR, Bedrock .mcpack, or PNG images.');
  return applyResources(readArchive(await file.arrayBuffer()),file.name||'local ZIP');
 }
 async function loadFiles(fileList){
@@ -702,10 +717,10 @@ function addControls(root,title){
  pane.style.cssText='margin-top:12px;padding:12px;border:1px solid #9aba9e;background:#1c2d22;color:#f0ffe9;font:12px/1.5 system-ui;text-align:left;max-width:100%;';
  const heading=document.createElement('strong');heading.textContent=title||'Your exact local textures';
  const help=document.createElement('p');
- help.textContent='For exact Java Edition block and inventory item pixels, choose your own ZIP/JAR or extracted PNGs. Nothing is uploaded or bundled. A ZIP/JAR is saved privately on this device only if you check Remember this ZIP/JAR. Original mob skins need additional model/UV mappings; they are not yet applied. Eaglercraft .epk files require conversion to ZIP.';
+ help.textContent='Choose your own Java Edition .jar/.zip or Bedrock .mcpack in your phone Files app. Original block/item PNGs are read privately and not uploaded. The installed Minecraft app itself is not accessible from this browser. Remember this pack is optional; original entity skins need their matching models/UVs.';
  help.style.margin='7px 0';
  const file=document.createElement('input');
- file.type='file';file.accept='.zip,.jar,application/zip,application/java-archive';
+ file.type='file';file.accept='.zip,.jar,.mcpack,application/zip,application/java-archive';
  file.setAttribute('aria-label','Select local Java Edition resource pack or client jar');
  file.style.cssText='display:block;width:100%;max-width:100%;color:white;font-size:13px;margin:8px 0;';
  const loose=document.createElement('input');
