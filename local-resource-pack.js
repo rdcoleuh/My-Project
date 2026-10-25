@@ -1,7 +1,7 @@
-/* MineWorld 5.7 — local-only optional original resource ZIP importer.
- * Accepts a Java Edition .jar or resource-pack .zip supplied by the player.
- * Reads PNG files IN MEMORY, without uploading, persisting or redistributing them.
- * The public gh-pages game remains unchanged. No Mojang images are in this file.
+/* MineWorld — player-supplied Java Edition resource ZIP/JAR importer.
+ * Reads PNG files locally without uploading or redistributing them.
+ * An explicit opt-in may store the chosen ZIP/JAR in private browser IndexedDB.
+ * No Minecraft bitmaps or third-party assets are bundled in this repository.
  */
 (()=>{
 'use strict';
@@ -645,7 +645,7 @@ function addControls(root,title){
  pane.style.cssText='margin-top:12px;padding:12px;border:1px solid #9aba9e;background:#1c2d22;color:#f0ffe9;font:12px/1.5 system-ui;text-align:left;max-width:100%;';
  const heading=document.createElement('strong');heading.textContent=title||'Your exact local textures';
  const help=document.createElement('p');
- help.textContent='For original Minecraft-style pixels, choose your own Java Edition ZIP/JAR or individual block PNG textures. Matching pixels are used only inside this browser; nothing is uploaded, bundled or saved. Eaglercraft .epk files must first be converted to a compatible ZIP.';
+ help.textContent='For original Java Edition artwork, choose your own ZIP/JAR or block PNG files. Nothing is uploaded or bundled. A ZIP/JAR is saved privately on this device only if you check Remember this ZIP/JAR. Eaglercraft .epk files require conversion to ZIP.';
  help.style.margin='7px 0';
  const file=document.createElement('input');
  file.type='file';file.accept='.zip,.jar,application/zip,application/java-archive';
