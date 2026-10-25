@@ -95,9 +95,9 @@ bind(138,'farmland_moist','dirt','dirt');
 bind(155,'composter_top','composter_side','composter_bottom');
 bind(156,'blast_furnace_top','blast_furnace_front','blast_furnace_top');
 bind(157,'smoker_top','smoker_front','smoker_bottom');
-bind(158,'cartography_table_top','cartography_table_side1','cartography_table_side2');
+bind(158,'cartography_table_top','cartography_table_side1','dark_oak_planks');
 bind(160,'barrel_top','barrel_side','barrel_bottom');
-bind(161,'fletching_table_top','fletching_table_front','fletching_table_side');
+bind(161,'fletching_table_top','fletching_table_front','birch_planks');
 bind(162,'cauldron_top','cauldron_side','cauldron_bottom');
 bind(163,'lectern_top','lectern_front','oak_planks');
 bind(164,'stonecutter_top','stonecutter_side','stonecutter_bottom');
@@ -465,22 +465,25 @@ async function applyResources(zip,sourceName){
        overlayTimeline:overlayInfo?.timeline,overlayGeometry:overlayInfo?.geometry,lastKey:''});
    }
  }
- // Ten reserved atlas tiles hold distinct workstation sides/back faces.
- // All 169 block IDs and the original 507 atlas face slots remain unchanged.
+ // Eleven reserved atlas tiles can display distinct Java workstation faces.
+ // Existing block IDs and the original 507 atlas face slots stay unchanged.
  let directionalFaces=0;
  for(const [block,extra] of Object.entries(window.MineWorldAtlas?.alternateFaces||{})){
-   const image=await sprite(extra.name);
-   if(!image)continue;
-   const id=Number(block),px=(extra.tile%16)*16,py=Math.floor(extra.tile/16)*16;
-   const info=await spriteTimeline(extra.name,image);
-   ctx.clearRect(px,py,16,16);
-   if(info)drawPackFrame(ctx,image,info.geometry,0,1,px,py);
-   else ctx.drawImage(image,0,0,Math.min(image.width,image.height),
-     Math.min(image.width,image.height),px,py,16,16);
-   directionalFaces++;ids.add(id);
-   if(info)animated.push({id,face:3,px,py,image,overlay:null,
-     baseTimeline:info.timeline,baseGeometry:info.geometry,
-     overlayTimeline:null,overlayGeometry:null,lastKey:''});
+   for(const [variantIndex,variant] of [extra,extra.extra].entries()){
+     if(!variant)continue;
+     const image=await sprite(variant.name);
+     if(!image)continue;
+     const id=Number(block),px=(variant.tile%16)*16,py=Math.floor(variant.tile/16)*16;
+     const info=await spriteTimeline(variant.name,image);
+     ctx.clearRect(px,py,16,16);
+     if(info)drawPackFrame(ctx,image,info.geometry,0,1,px,py);
+     else ctx.drawImage(image,0,0,Math.min(image.width,image.height),
+       Math.min(image.width,image.height),px,py,16,16);
+     directionalFaces++;ids.add(id);
+     if(info)animated.push({id,face:variantIndex===0?3:4,px,py,image,overlay:null,
+       baseTimeline:info.timeline,baseGeometry:info.geometry,
+       overlayTimeline:null,overlayGeometry:null,lastKey:''});
+   }
  }
  const sounds={
     break:['block/stone/break1','dig/stone1','dig/grass1'],
@@ -617,7 +620,8 @@ function updateAnimation(now,fps,touch){
 }
 function drawFace(ctx,id,face){
  if(!state.active||!state.canvas)return false;
- const tile=face===3&&window.MineWorldAtlas?.alternateFaces?.[id]?window.MineWorldAtlas.alternateFaces[id].tile:id*3+face;
+ const alt=window.MineWorldAtlas?.alternateFaces?.[id];
+ const tile=face===4&&alt?.extra?alt.extra.tile:face===3&&alt?alt.tile:id*3+face;
  ctx.clearRect(0,0,16,16);
  ctx.drawImage(state.canvas,(tile%16)*16,Math.floor(tile/16)*16,16,16,0,0,16,16);
  return true;
