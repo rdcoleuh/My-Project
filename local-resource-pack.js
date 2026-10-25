@@ -127,7 +127,7 @@ function readArchive(buffer){
  if(eocd<0)throw Error('Not a ZIP or Java JAR archive.');
  const number=u16(eocd+10),offset=u32(eocd+16);
  if(number===65535||offset===0xffffffff)throw Error('ZIP64 not supported for this experiment.');
- if(number>12000)throw Error('This pack has too many ZIP entries for the browser importer.');
+ if(number>55000)throw Error('This ZIP has more than 55,000 entries. Select only a resource-pack or client JAR.');
  let p=offset;
  const found=new Map(),decoder=new TextDecoder();
  for(let i=0;i<number;i++){
@@ -342,6 +342,13 @@ function addControls(root,title){
  loose.style.cssText='display:block;width:100%;max-width:100%;color:white;font-size:13px;margin:8px 0;';
  const looseLabel=document.createElement('small');
  looseLabel.textContent='Or choose several block PNG files at once (example: grass_block_top.png and dirt.png). The filename is used as the mapping.';
+ const folderLabel=document.createElement('small');
+ folderLabel.textContent='On desktop, you can also select an extracted textures/block folder. All files stay on your device.';
+ const folder=document.createElement('input');
+ folder.type='file';folder.multiple=true;folder.webkitdirectory=true;
+ folder.accept='.png,image/png,.ogg,audio/ogg';
+ folder.setAttribute('aria-label','Choose extracted Java block textures folder');
+ folder.style.cssText='display:block;width:100%;max-width:100%;color:white;font-size:13px;margin:8px 0;';
  const reset=document.createElement('button');reset.type='button';reset.textContent='Restore original art & sounds';reset.className='ui-button';
  reset.style.cssText='min-height:38px;margin:4px 0;';
  const status=document.createElement('p');status.setAttribute('role','status');
@@ -374,19 +381,27 @@ function addControls(root,title){
  }
  file.addEventListener('change',async()=>{
    const selected=file.files?.[0];if(!selected)return;
-   file.disabled=true;loose.disabled=true;reset.disabled=true;status.textContent='Applying your selected local ZIP texture files…';
+   file.disabled=true;loose.disabled=true;folder.disabled=true;reset.disabled=true;status.textContent='Applying your selected local ZIP texture files…';
    try{showCoverage(await loadFile(selected));}
    catch(e){status.textContent='Could not apply pack: '+e.message;}
-   finally{file.disabled=false;loose.disabled=false;reset.disabled=false;file.value='';}
+   finally{file.disabled=false;loose.disabled=false;folder.disabled=false;reset.disabled=false;file.value='';}
  });
  loose.addEventListener('change',async()=>{
    const files=loose.files;
    if(!files?.length)return;
-   loose.disabled=true;file.disabled=true;reset.disabled=true;
+   loose.disabled=true;file.disabled=true;folder.disabled=true;reset.disabled=true;
    status.textContent='Matching selected PNG sprites directly by their filenames…';
    try{showCoverage(await loadFiles(files));}
    catch(e){status.textContent='Could not apply selected images: '+e.message;}
-   finally{loose.disabled=false;file.disabled=false;reset.disabled=false;loose.value='';}
+   finally{loose.disabled=false;file.disabled=false;folder.disabled=false;reset.disabled=false;loose.value='';}
+ });
+ folder.addEventListener('change',async()=>{
+   if(!folder.files?.length)return;
+   file.disabled=true;loose.disabled=true;folder.disabled=true;reset.disabled=true;
+   status.textContent='Reading your own extracted PNG textures locally…';
+   try{showCoverage(await loadFiles(folder.files));}
+   catch(e){status.textContent='Folder import failed: '+e.message;}
+   finally{file.disabled=false;loose.disabled=false;folder.disabled=false;reset.disabled=false;folder.value='';}
  });
  reset.addEventListener('click',async()=>{
    reset.disabled=true;
@@ -394,7 +409,7 @@ function addControls(root,title){
    catch(e){status.textContent='Restore failed: '+e.message;}
    finally{reset.disabled=false;}
  });
- pane.append(heading,help,file,looseLabel,loose,reset,status,detail,preview);root.appendChild(pane);
+ pane.append(heading,help,file,looseLabel,loose,folderLabel,folder,reset,status,detail,preview);root.appendChild(pane);
 }
 addControls(document.querySelector('#pause .mw-render-panel')?.parentNode,'🎨 Local resource pack ZIP: textures + sounds');
 addControls(document.querySelector('#mw-options-screen .mw-settings'),'🎨 Custom Java resource pack (your own texture pixels)');
