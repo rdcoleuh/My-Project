@@ -460,6 +460,23 @@ async function applyResources(zip,sourceName){
        overlayTimeline:overlayInfo?.timeline,overlayGeometry:overlayInfo?.geometry,lastKey:''});
    }
  }
+ // Five spare atlas tiles hold separate side/back artwork (not the front).
+ // Existing block IDs and the standard 507 face slots never move.
+ let directionalFaces=0;
+ for(const [block,extra] of Object.entries(window.MineWorldAtlas?.alternateFaces||{})){
+   const image=await sprite(extra.name);
+   if(!image)continue;
+   const id=Number(block),px=(extra.tile%16)*16,py=Math.floor(extra.tile/16)*16;
+   const info=await spriteTimeline(extra.name,image);
+   ctx.clearRect(px,py,16,16);
+   if(info)drawPackFrame(ctx,image,info.geometry,0,1,px,py);
+   else ctx.drawImage(image,0,0,Math.min(image.width,image.height),
+     Math.min(image.width,image.height),px,py,16,16);
+   directionalFaces++;ids.add(id);
+   if(info)animated.push({id,face:3,px,py,image,overlay:null,
+     baseTimeline:info.timeline,baseGeometry:info.geometry,
+     overlayTimeline:null,overlayGeometry:null,lastKey:''});
+ }
  const sounds={
     break:['block/stone/break1','dig/stone1','dig/grass1'],
     place:['block/wood/place1','dig/wood1'],
@@ -481,16 +498,16 @@ async function applyResources(zip,sourceName){
     if(!key)continue;
     try{if(await window.MineWorldSound?.loadSound(type,await zip.get('sound:'+key)))audio++}catch(e){console.warn('Unsupported optional sound '+type,e)}
  }
- if(!faces&&!audio)throw Error('No compatible block PNGs or playable OGG sound files found.');
- if(faces||state.active)await writeAtlas(canvas);
+ if(!faces&&!directionalFaces&&!audio)throw Error('No compatible block PNGs or playable OGG sound files found.');
+ if(faces||directionalFaces||state.active)await writeAtlas(canvas);
  state.animations=animated;
  state.importedFaces=importedFaces;
  state.originalImage=original;
  state.animationStart=typeof performance!=='undefined'&&performance.now?performance.now():0;
  state.lastAnimationAt=-Infinity;
  state.animationDisabled=false;
- state.active=faces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={blocks:ids.size,faces,overlaid,animatedFaces:animated.length,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
+ state.active=faces+directionalFaces>0;state.sourceName=sourceName||'selected local assets';
+ state.lastResult={blocks:ids.size,faces,directionalFaces,overlaid,animatedFaces:animated.length,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
@@ -594,7 +611,7 @@ function updateAnimation(now,fps,touch){
 }
 function drawFace(ctx,id,face){
  if(!state.active||!state.canvas)return false;
- const tile=id*3+face;
+ const tile=face===3&&window.MineWorldAtlas?.alternateFaces?.[id]?window.MineWorldAtlas.alternateFaces[id].tile:id*3+face;
  ctx.clearRect(0,0,16,16);
  ctx.drawImage(state.canvas,(tile%16)*16,Math.floor(tile/16)*16,16,16,0,0,16,16);
  return true;
@@ -656,7 +673,7 @@ function addControls(root,title){
  function showCoverage(result){
    if(!result)return;
    status.textContent='Matched '+result.faces+' of '+result.totalFaces+' block faces ('+
-     result.coverage+'%) across '+result.blocks+' block types, '+result.animatedFaces+' animated faces and '+result.sounds+
+     result.coverage+'%) across '+result.blocks+' block types, '+(result.directionalFaces||0)+' dedicated directional side faces, '+result.animatedFaces+' animated faces and '+result.sounds+
      ' sound events. '+(result.overlaid?'Grass uses the Java side overlay. ':'')+'Unmatched block faces keep independent MineWorld art.';
    detail.textContent=result.unmapped.length?
      'Example unmatched sprite names: '+result.unmapped.slice(0,9).join(', ')+'.':'All mapped face names were present.';
