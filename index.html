@@ -925,7 +925,12 @@ body.in-nether #game-wrap{background:#290f19}
     // spanU and spanV are in world-block units; never stretch 16 pixels over a half-block.
     const pxU=Math.max(1,Math.min(SIZE,Math.round((arguments[3]??1)*SIZE)));
     const pxV=Math.max(1,Math.min(SIZE,Math.round((arguments[4]??1)*SIZE)));
-    return [(x*SIZE+.5+u*(pxU-1))/(SIZE*COLUMNS),(y*SIZE+.5+v*(pxV-1))/(SIZE*ROWS)];
+    // Java model UV rectangles can begin below the top row. Farmland and
+    // end-portal-frame sides use the bottom rows of their source PNGs.
+    const offsetU=Math.max(0,Math.min(SIZE-pxU,Math.round((arguments[5]??0)*SIZE)));
+    const offsetV=Math.max(0,Math.min(SIZE-pxV,Math.round((arguments[6]??0)*SIZE)));
+    return [(x*SIZE+offsetU+.5+u*(pxU-1))/(SIZE*COLUMNS),
+            (y*SIZE+offsetV+.5+v*(pxV-1))/(SIZE*ROWS)];
   }
   window.MineWorldAtlas={create,uv,tileColor,alternateFaces};
 })();
@@ -1387,7 +1392,11 @@ body.in-nether #game-wrap{background:#290f19}
             width=shape.right-shape.left,height=shape.top-shape.bottom,depth=shape.back-shape.front,
             spanU=crop?.72:f.n[0]?depth:f.n[1]?width:width,
             spanV=crop?(.22+crop.stage*.22):f.n[1]?depth:height,
-            uv=window.MineWorldAtlas.uv(b,textureFace,window.MineWorldFaceUV.corner(f.n,v),spanU,spanV);
+            // Java's farmland template uses side UV [0,1,16,16], and its
+            // end portal frame uses [0,3,16,16]. Bottom-align those 13/15px
+            // side strips rather than cropping the source's bottom pixels.
+            offsetV=f.n[1]===0&&[125,137,138].includes(b)?1-height:0,
+            uv=window.MineWorldAtlas.uv(b,textureFace,window.MineWorldFaceUV.corner(f.n,v),spanU,spanV,0,offsetV);
       const px=crop?x+.14+v[0]*.72:x+shape.left+v[0]*(shape.right-shape.left),
             py=crop?y+v[1]*(.22+crop.stage*.22):y+shape.bottom+v[1]*(shape.top-shape.bottom),
             pz=crop?z+.14+v[2]*.72:z+shape.front+v[2]*(shape.back-shape.front);
