@@ -14,6 +14,7 @@ function install(api){
  const craftWorkspace=doc.getElementById('craft-workspace');
  let page=0,selected=null,focus=null,creativeOpen=false,touchSplit=false;
  let creativePage=0,creativeTab='all';
+ let lastSlotClick=null,draggedCursor=null,suppressClickUntil=0;
  function node(parent,tag,cls,text){
   const el=doc.createElement(tag);
   if(cls)el.className=cls;
@@ -48,15 +49,27 @@ function install(api){
   if(s){itemView(s.key,button);if(s.qty>1)node(button,'small','mw-java-count',String(s.qty))}
   else if(hint==='Offhand')node(button,'span','mw-java-placeholder','🛡');
   button.addEventListener('click',e=>{
+   if(Date.now()<suppressClickUntil)return;
+   const second=lastSlotClick?.pos===pos&&Date.now()-lastSlotClick.time<340;
+   lastSlotClick={pos,time:Date.now()};
    selected=pos;focus=pos;
    const piece=s&&api.armorType(s.key);
    if(e.shiftKey&&piece&&!api.armor(piece))api.equip(s.id);
-   else model.click(pos,touchSplit&&!e.shiftKey,e.shiftKey);
+   else if(second&&!touchSplit&&!e.shiftKey&&model.cursorStack()){
+    model.collect(pos);lastSlotClick=null;
+   }else model.click(pos,touchSplit&&!e.shiftKey,e.shiftKey);
    render();
   });
   button.addEventListener('dblclick',e=>{e.preventDefault();selected=pos;focus=pos;model.collect(pos);render();});
-  button.addEventListener('contextmenu',e=>{e.preventDefault();selected=pos;focus=pos;model.click(pos,true,false);render();});
-  button.draggable=!!s;
+  button.addEventListener('contextmenu',e=>{e.preventDefault();if(Date.now()<suppressClickUntil)return;selected=pos;focus=pos;model.click(pos,true,false);render();});
+  button.draggable=!!s&&!model.cursorStack();
+  button.addEventListener('pointerdown',e=>{
+   if(e.pointerType==='mouse'&&model.cursorStack()&&(e.button===0||e.button===2))
+    draggedCursor={positions:[pos],right:e.button===2};
+  });
+  button.addEventListener('pointerenter',e=>{
+   if(draggedCursor&&e.buttons){draggedCursor.positions.push(pos);button.classList.add('mw-spread-over');}
+  });
   button.addEventListener('dragstart',e=>{if(!s)return;e.dataTransfer?.setData('text/plain',String(pos));});
   button.addEventListener('dragover',e=>e.preventDefault());
   button.addEventListener('drop',e=>{
@@ -141,7 +154,7 @@ function install(api){
   action('Drop stack',()=>{const s=model.stackAt(selected);if(s)api.drop(s.id,true)});
   const details=model.stackAt(selected);
   node(root,'div','mw-java-item-detail',details?api.label(details.key)+' · '+details.qty+'/'+(details.qty===1?'1':'64')+' · '+(selected==='offhand'?'Offhand':selected>=27&&selected<36?'Hotbar '+(selected-26):'Inventory'):'Select a slot to see its contents');
-  node(root,'div','mw-java-help','Left click/tap moves stacks. Right click or Split tap mode takes half or places one. Shift+click moves stacks and equips armor. Double-click collects matching stacks up to 64. Drag to swap/merge. Hover and press 1–9 to swap hotbar positions, or F for offhand. E/Esc closes. Overflow pages retain older world inventories.');
+  node(root,'div','mw-java-help','Left click/tap moves stacks. Right click or Split tap mode takes half or places one. Shift+click moves stacks and equips armor. Double-click collects matching stacks up to 64. Drag a held cursor stack across slots to spread items; drag a stack to swap/merge. Hover and press 1–9 to swap hotbar positions, or F for offhand. E/Esc closes. Overflow pages retain older world inventories.');
  }
  const overlay=node(doc.getElementById('game-wrap')||doc.body,'div');
  overlay.id='mw-java-creative';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
@@ -180,8 +193,8 @@ function install(api){
    const name=api.blockName(id);
    if(query&&!name.toLowerCase().includes(query))continue;
    const ore=[18,19,83,84].includes(id)||id>=95&&id<=108;
-   const type=id>=139?'stations':id>=121&&id<=135?'end':id>=50&&id<=94?'nether':
-      ore?'ores':id>=5&&id<=7||id>=12&&id<=17||id>=21&&id<=49||id===1?'nature':'building';
+   const type=ore?'ores':id>=139?'stations':id>=121&&id<=135?'end':id>=50&&id<=94?'nether':
+      id>=5&&id<=7||id>=12&&id<=17||id>=21&&id<=49||id===1?'nature':'building';
    if(creativeTab!=='all'&&creativeTab!==type)continue;
    matches.push(id);
   }
@@ -250,6 +263,14 @@ function install(api){
   }
  }
  doc.addEventListener('keydown',keydown,true);
+ doc.addEventListener('pointerup',e=>{
+  if(draggedCursor&&draggedCursor.positions.length>1){
+   if(model.distribute(draggedCursor.positions,draggedCursor.right)){
+    suppressClickUntil=Date.now()+140;lastSlotClick=null;render();
+   }
+  }
+  draggedCursor=null;
+ },true);
  return {render,openCreative,closeCreative,isCreativeOpen:()=>creativeOpen,putAway:()=>model.putAway(),model};
 }
 window.MineWorldJavaInventoryUI=Object.freeze({install});
