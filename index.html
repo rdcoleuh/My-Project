@@ -649,7 +649,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v6.45 · JAVA SHAPES & CREATURE MOTION</div>
+  <div class="version">MINEWORLD v6.46 · CREATURE MOTION & COMBAT</div>
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./texture-refinement.js"></script>
@@ -3435,7 +3435,17 @@ body.in-nether #game-wrap{background:#290f19}
     if(!m)return {hit:false};
     const amount=clamp(Number(strength)||1,.2,20);
     if(m.kind==='ender_dragon'&&endCrystalCount()>0)return {hit:false};
-    m.hp-=amount;
+    const now=performance.now();
+    const recent=window.MineWorldCombat.hurtWindow({
+      damage:amount,
+      elapsedMs:m.lastHitAt===undefined?Infinity:now-m.lastHitAt,
+      previousDamage:m.lastHitDamage||0
+    });
+    // Preserve Java-like brief hurt resistance even against very rapid
+    // clicking. An exceptionally strong second hit still applies its excess.
+    if(recent.applied<=0)return {hit:false};
+    m.lastHitAt=now;m.lastHitDamage=recent.stored;
+    m.hp-=recent.applied;
     window.MineWorldImpactEffects?.hit(m.id,m.x,m.y+Math.min(1.1,entityHitboxes.dimensions(m.kind,!!m.baby).height*.7),m.z,
       {dead:m.hp<=0,dimension});
     if(animals.FOOD[m.kind]&&m.hp>0){
@@ -3543,7 +3553,7 @@ body.in-nether #game-wrap{background:#290f19}
       sprinting:isSprinting,creative:gameMode==='creative'
     });
     const result=applyMobHit(m.id,hit.damage);
-    if(!result.hit)return;
+    if(!result.hit){lastAttackAt=now;attackCooldown=.12;return;}
     if(hit.critical)window.MineWorldImpactEffects?.hit(null,m.x,m.y+1,m.z,{critical:true,dimension});
     if(hit.sweep)window.MineWorldImpactEffects?.sweep(player.x,player.y,player.z,player.yaw,dimension);
     lastAttackAt=now;
