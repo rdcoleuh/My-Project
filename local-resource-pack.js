@@ -325,20 +325,26 @@ function tintOverlayPixels(data,tint){
  }
  return true;
 }
-function composeGrassSideOverlay(ctx,overlay,x,y,frameIndex=0,nextIndex=frameIndex,blend=0){
+// Draw a frame from a vertical strip or row-major Java .mcmeta spritesheet.
+// The decoded texture stays local and is reduced to one 16x16 atlas tile.
+function drawPackFrame(ctx,image,geometry,index,alpha=1,dx=0,dy=0){
+ if(!image)return;
+ const rect=window.MineWorldResourceAnimation?.frameRect(image,index,geometry)||
+   {x:0,y:0,width:Math.min(image.width,image.height),height:Math.min(image.width,image.height)};
+ if(alpha!==1)ctx.globalAlpha=alpha;
+ ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,dx,dy,16,16);
+ if(alpha!==1)ctx.globalAlpha=1;
+}
+function composeGrassSideOverlay(ctx,overlay,x,y,frameIndex=0,nextIndex=frameIndex,blend=0,geometry=null){
  if(!overlay||!ctx)return false;
  const layer=document.createElement('canvas');layer.width=16;layer.height=16;
  const layerCtx=layer.getContext('2d',{alpha:true});
  if(!layerCtx)return false;
  layerCtx.imageSmoothingEnabled=false;
- const frame=Math.min(overlay.width,overlay.height);
  layerCtx.clearRect(0,0,16,16);
- layerCtx.drawImage(overlay,0,Math.max(0,frameIndex)*frame,frame,frame,0,0,16,16);
- if(blend>0&&nextIndex!==frameIndex){
-  layerCtx.globalAlpha=blend;
-  layerCtx.drawImage(overlay,0,Math.max(0,nextIndex)*frame,frame,frame,0,0,16,16);
-  layerCtx.globalAlpha=1;
- }
+ drawPackFrame(layerCtx,overlay,geometry,frameIndex);
+ if(blend>0&&nextIndex!==frameIndex)
+  drawPackFrame(layerCtx,overlay,geometry,nextIndex,blend);
  if(typeof layerCtx.getImageData==='function'&&typeof layerCtx.putImageData==='function'){
   try{
    const png=layerCtx.getImageData(0,0,16,16);
@@ -391,7 +397,7 @@ async function applyResources(zip,sourceName){
  const ids=new Set(),cache=new Map(),metaCache=new Map(),missing=new Set(),missingFaces=[],resolved=new Map(),animated=[];
  const timeline=window.MineWorldResourceAnimation;
  async function spriteTimeline(name,image){
-  if(!timeline||!image||timeline.frameDimensions(image).count<=1)return null;
+  if(!timeline||!image)return null;
   const resolvedName=resolveName(name),key='meta:'+resolvedName;
   if(!resolvedName||!zip.entries.has(key))return null;
   if(!metaCache.has(key)){
@@ -399,11 +405,15 @@ async function applyResources(zip,sourceName){
     try{
      const bytes=await zip.get(key);
      if(!bytes||bytes.length>131072)return null;
-     return timeline.parse(new TextDecoder().decode(bytes),timeline.frameDimensions(image).count);
+     return new TextDecoder().decode(bytes);
     }catch(e){console.warn('Skipping invalid sprite timeline '+key,e);return null;}
    })());
   }
-  return metaCache.get(key);
+  const text=await metaCache.get(key);
+  if(!text)return null;
+  const geometry=timeline.frameDimensions(image,text);
+  if(geometry.count<=1)return null;
+  return {timeline:timeline.parse(text,geometry.count),geometry};
  }
  function resolveName(name){
    if(!name)return null;
@@ -425,26 +435,29 @@ async function applyResources(zip,sourceName){
      const name=textureName(id,face);
 
      const image=await sprite(name);
+     const baseInfo=await spriteTimeline(name,image);
      const column=(id*3+face)%16,row=Math.floor((id*3+face)/16);
      const px=column*16,py=row*16;
      if(image){
        // For animated PNG strips, draw frame zero. Standard 16px files remain pixel-exact.
        const frame=Math.min(image.width,image.height);
        ctx.clearRect(px,py,16,16); // Transparent Java sprites must not inherit procedural pixels.
-       ctx.drawImage(image,0,0,frame,frame,px,py,16,16);
+       if(baseInfo)drawPackFrame(ctx,image,baseInfo.geometry,0,1,px,py);
+       else ctx.drawImage(image,0,0,frame,frame,px,py,16,16);
        tintNeutralSprite(ctx,px,py,id,face);
      }else if(name)missing.add(name);
      // Java's side overlay is not itself a block face: it is tinted and
      // blended on top of the untouched grass_block_side.png base.
      const grassSide=id===1&&face===1;
      const overlay=grassSide?await sprite('grass_block_side_overlay'):null;
-     if(overlay&&composeGrassSideOverlay(ctx,overlay,px,py))overlaid++;
+     const overlayInfo=grassSide?await spriteTimeline('grass_block_side_overlay',overlay):null;
+     if(overlay&&composeGrassSideOverlay(ctx,overlay,px,py,0,0,0,overlayInfo?.geometry))overlaid++;
      if(image||overlay){faces++;ids.add(id);}
      else missingFaces.push({id,face,name:name||'(unmapped)'});
-     const baseTimeline=await spriteTimeline(name,image);
-     const overlayTimeline=grassSide?await spriteTimeline('grass_block_side_overlay',overlay):null;
-     if(baseTimeline||overlayTimeline)
-      animated.push({id,face,px,py,image,overlay,baseTimeline,overlayTimeline,lastKey:''});
+     if(baseInfo||overlayInfo)
+      animated.push({id,face,px,py,image,overlay,
+       baseTimeline:baseInfo?.timeline,baseGeometry:baseInfo?.geometry,
+       overlayTimeline:overlayInfo?.timeline,overlayGeometry:overlayInfo?.geometry,lastKey:''});
    }
  }
  const sounds={
@@ -557,19 +570,15 @@ function updateAnimation(now,fps,touch){
    if(entry.lastKey===key)continue;
    ctx.clearRect(0,0,16,16);
    if(entry.image){
-    const frame=Math.min(entry.image.width,entry.image.height);
-    ctx.drawImage(entry.image,0,base.index*frame,frame,frame,0,0,16,16);
-    if(base.blend>0&&base.index!==base.nextIndex){
-     ctx.globalAlpha=base.blend;
-     ctx.drawImage(entry.image,0,base.nextIndex*frame,frame,frame,0,0,16,16);
-     ctx.globalAlpha=1;
-    }
+    drawPackFrame(ctx,entry.image,entry.baseGeometry,base.index);
+    if(base.blend>0&&base.index!==base.nextIndex)
+     drawPackFrame(ctx,entry.image,entry.baseGeometry,base.nextIndex,base.blend);
     tintNeutralSprite(ctx,0,0,entry.id,entry.face);
    }else if(state.originalImage){
     ctx.drawImage(state.originalImage,entry.px,entry.py,16,16,0,0,16,16);
    }
    if(entry.overlay)
-    composeGrassSideOverlay(ctx,entry.overlay,0,0,over.index,over.nextIndex,over.blend);
+    composeGrassSideOverlay(ctx,entry.overlay,0,0,over.index,over.nextIndex,over.blend,entry.overlayGeometry);
    atlasCtx.clearRect(entry.px,entry.py,16,16);
    atlasCtx.drawImage(tile,entry.px,entry.py);
    gl.texSubImage2D(gl.TEXTURE_2D,0,entry.px,entry.py,gl.RGBA,gl.UNSIGNED_BYTE,tile);
