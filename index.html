@@ -1934,6 +1934,17 @@ body.in-nether #game-wrap{background:#290f19}
         const icon=document.createElement('div');icon.className='hot-item-icon';
         icon.textContent=key?stackIcon(key):'';
         if(survival&&count>0)icon.appendChild(qty);
+        // Hotbar uses the same player-owned PNGs as Java-style inventory.
+        if(key&&!key.startsWith('block:')){
+          window.MineWorldLocalTextures?.itemIcon?.(key).then(src=>{
+            if(!src||!icon.isConnected)return;
+            const art=document.createElement('img');
+            art.src=src;art.alt='';art.width=art.height=30;
+            art.style.cssText='width:30px;height:30px;object-fit:contain;image-rendering:pixelated;';
+            icon.replaceChildren(art);
+            if(survival&&count>0)icon.appendChild(qty);
+          }).catch(()=>{});
+        }
         button.appendChild(icon);
       }
       const name=document.createElement('span');name.textContent=key?label:'—';button.appendChild(name);
@@ -3482,7 +3493,8 @@ body.in-nether #game-wrap{background:#290f19}
     function cube(x,y,z,w,h,d,c){
       for(const face of FACE)for(const i of [0,1,2,0,2,3]){
         const v=face.v[i],shade=face.shade,uv=window.MineWorldMobPixels.uv(mobKind,i);
-        a.push(x+v[0]*w,y+v[1]*h,z+v[2]*d,c[0]*shade,c[1]*shade,c[2]*shade,uv[0],uv[1]);
+        const tint=window.MineWorldMobPixels.hasImported(mobKind)?[1,1,1]:c;
+        a.push(x+v[0]*w,y+v[1]*h,z+v[2]*d,tint[0]*shade,tint[1]*shade,tint[2]*shade,uv[0],uv[1]);
       }
     }
     for(const v of vehicles){if(v.dimension!==dimension||Math.hypot(v.x-player.x,v.z-player.z)>39)continue;const x=v.x,y=v.y,z=v.z;const boat=/boat|raft/i.test(v.kind);const c=boat?[.52,.31,.16]:[.45,.49,.55];
@@ -3544,6 +3556,7 @@ body.in-nether #game-wrap{background:#290f19}
         const order=[0,1,2,0,2,3];
         animalModels.draw(m,(px,py,pz,r,g,b)=>{
           const uv=window.MineWorldMobPixels.uv(m.kind,order[index++%6]);
+          if(window.MineWorldMobPixels.hasImported(m.kind)){r=1;g=1;b=1;}
           a.push(px,py,pz,r,g,b,uv[0],uv[1]);
         },dayClock);
         continue;
