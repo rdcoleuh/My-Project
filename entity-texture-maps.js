@@ -37,5 +37,21 @@ function rect(kind,part,face,image){
  if(x<0||y<0||width<=0||height<=0||x+width>image.width+.001||y+height>image.height+.001)return null;
  return {x,y,width,height};
 }
-window.MineWorldEntityTextureMaps=Object.freeze({defs,faces,rect});
+// Vertex emission order differs between MineWorld's axis-aligned hostile
+// cuboids and its rotating animal cuboids. Rectangles use top-left image UVs:
+// 0 top-left, 1 bottom-left, 2 bottom-right, 3 top-right.
+function vertexCorner(face,index,renderer='cube'){
+ const k=index&3;
+ const table=renderer==='animal'?{
+  front:[1,2,3,0],back:[2,1,0,3],
+  left:[2,1,0,3],right:[1,2,3,0],
+  top:[0,3,2,1],bottom:[1,0,3,2]
+ }:{
+  front:[1,0,3,2],back:[1,0,3,2],
+  left:[1,0,3,2],right:[1,0,3,2],
+  top:[0,1,2,3],bottom:[0,1,2,3]
+ };
+ return (table[face]||[0,1,2,3])[k];
+}
+window.MineWorldEntityTextureMaps=Object.freeze({defs,faces,rect,vertexCorner});
 })();
