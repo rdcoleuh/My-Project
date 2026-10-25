@@ -1450,7 +1450,7 @@ body.in-nether #game-wrap{background:#290f19}
   function buildMesh(){for(const c of visibleChunks)c.dirty=true;}
   const vs=`attribute vec3 aPos;attribute vec3 aColor;attribute vec2 aUV;uniform mat4 uVP;varying vec3 vColor;varying vec3 vPos;varying vec2 vUV;void main(){vColor=aColor;vPos=aPos;vUV=aUV;gl_Position=uVP*vec4(aPos,1.0);}`;
   const fs=`precision mediump float;varying vec3 vColor;varying vec3 vPos;varying vec2 vUV;uniform vec3 uEye;uniform vec3 uSky;uniform sampler2D uAtlas;uniform float uTextured;uniform float uFogEnd;void main(){
-    float d=distance(vPos,uEye);float fog=smoothstep(uFogEnd*.42,uFogEnd,d);
+    float d=distance(vPos,uEye);float fog=smoothstep(uFogEnd*.80,uFogEnd,d);
     vec4 tex=texture2D(uAtlas,vUV);
     if(uTextured>0.5 && tex.a<0.12)discard;
     vec3 blockColor=tex.rgb*vColor;
