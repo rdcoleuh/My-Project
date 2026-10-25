@@ -43,6 +43,19 @@ function knockback(yaw,power=1){
  const a=Number.isFinite(yaw)?yaw:0,k=clamp(Number(power)||0,0,3);
  return {x:Math.sin(a)*k,z:-Math.cos(a)*k};
 }
+// Java Edition melee reaches approximately three blocks from the player's
+// eyes. Entity centers/feet are imperfect stand-ins for hitboxes, so allow a
+// small horizontal margin and a one-block vertical overlap. Invalid remote
+// positions never pass the check. This helper is shared by solo and PvP.
+const REACH=3;
+function inReach(attacker,target,margin=.35){
+ const valid=p=>p&&[p.x,p.y,p.z].every(Number.isFinite);
+ if(!valid(attacker)||!valid(target))return false;
+ const allowance=clamp(Number.isFinite(margin)?margin:0,0,.75);
+ const dx=attacker.x-target.x,dz=attacker.z-target.z;
+ const dy=Math.max(0,Math.abs(attacker.y-target.y)-1.1);
+ return Math.hypot(dx,dy,dz)<=REACH+allowance;
+}
 // Java-like sword sweeps affect nearby creatures at almost the same height
 // as the primary hit, not mobs a full block above/below or far behind walls.
 function sweepInRange(other,primary,attacker){
@@ -58,5 +71,5 @@ function swing(elapsedMs){
  const phase=elapsedMs/420;
  return Math.sin(Math.PI*phase);
 }
-window.MineWorldCombat=Object.freeze({stats,charge,strike,knockback,sweepInRange,swing});
+window.MineWorldCombat=Object.freeze({stats,charge,strike,knockback,sweepInRange,swing,inReach,REACH});
 })();

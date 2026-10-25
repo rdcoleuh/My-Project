@@ -85,3 +85,21 @@ test('third-person attack rotates arm at shoulder; missed hits animate and reset
  assert.ok(html.includes('A missed swing still plays and resets the melee recharge'));
  assert.ok(html.includes('lastAttackAt=now;attackCooldown=.12;return;'));
 });
+
+test('solo and multiplayer melee share three-block range with finite position checks',()=>{
+ const c=combat();
+ assert.equal(c.REACH,3);
+ const a={x:0,y:65,z:0};
+ assert.equal(c.inReach(a,{x:3.2,y:65,z:0}),true);
+ assert.equal(c.inReach(a,{x:3.6,y:65,z:0}),false);
+ assert.equal(c.inReach(a,{x:0,y:66,z:3.2}),true,'small elevation change overlaps hitbox');
+ assert.equal(c.inReach(a,{x:0,y:70,z:0}),false,'far above the player cannot be struck');
+ assert.equal(c.inReach(a,{x:NaN,y:65,z:0}),false);
+ assert.equal(c.inReach(null,{x:0,y:65,z:0}),false);
+ const html=read('index.html');
+ assert.ok(html.includes('window.MineWorldCombat.REACH+.35'),'aim ray has bounded melee reach');
+ assert.ok(html.includes('window.MineWorldCombat.inReach(player,m)'),'solo hit validates reach');
+ assert.ok(html.includes('Out-of-range clicks still swing and consume attack recharge'));
+ assert.ok(html.includes("id=\"mw-attack-meter\""),'attack meter present');
+ assert.ok(html.includes('MineWorldCombat.charge(t-lastAttackAt,speed)'),'meter matches damage charge');
+});

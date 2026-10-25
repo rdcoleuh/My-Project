@@ -25,6 +25,8 @@
 .top-buttons{display:flex;gap:8px;align-items:center}.ui-button{border:1px solid #b6e2ba7d;border-radius:9px;background:#142c20e6;box-shadow:0 4px 12px #10231850;color:#f7fff0;font-weight:750;padding:13px 17px;pointer-events:auto}.ui-button:hover{background:#2a4c36}.ui-button.small{font-size:13px;padding:11px 14px}
 .status{color:#ddf5ce;font-size:11px;padding:11px 12px;background:#183524b3;border:1px solid #a3d3b74f;border-radius:10px;backdrop-filter:blur(6px)}
 #crosshair{pointer-events:none;position:absolute;z-index:3;left:50%;top:50%;transform:translate(-50%,-50%);width:23px;height:23px;filter:drop-shadow(0px 1px 2px #000b)}#crosshair:before,#crosshair:after{content:'';position:absolute;background:#fff;border-radius:2px}#crosshair:before{width:18px;height:3px;left:2.5px;top:10px}#crosshair:after{width:3px;height:18px;left:10px;top:2.5px}
+#mw-attack-meter{pointer-events:none;position:absolute;z-index:4;left:50%;top:calc(50% + 21px);transform:translateX(-50%);width:34px;height:6px;border:1px solid #26352b;background:#18241fc9;opacity:0;box-sizing:border-box}
+#mw-attack-meter-fill{width:100%;height:100%;background:#e4f5e4;transition:none}
 #target-name{position:absolute;z-index:3;left:50%;top:calc(50% + 23px);transform:translateX(-50%);font-size:11px;padding:4px 8px;background:#1227189c;border-radius:5px;text-align:center;white-space:nowrap;opacity:.9;pointer-events:none}
 #hotbar-row{display:flex;align-items:center;gap:7px;max-width:calc(100vw - 10px);pointer-events:auto}
 #quick-inventory{flex:0 0 49px;width:49px;height:63px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:#89928be8;border:3px solid #292f29;box-shadow:inset 2px 2px #e2e8de,inset -3px -3px #424b42,0 3px #141b14;color:#fff;text-shadow:1px 1px #293429;border-radius:3px;font-size:23px;touch-action:manipulation}
@@ -392,7 +394,7 @@ body.in-nether #game-wrap{background:#290f19}
 .hot-item .hot-stack-number{display:block!important;position:absolute!important;top:auto!important;right:-5px!important;bottom:-5px!important;z-index:2;min-width:12px;text-align:center;font:900 12px/1.05 monospace!important;letter-spacing:-.5px;color:#fff!important;background:#0b1609ce;border-radius:3px;padding:1px 2px;text-shadow:1px 1px #000,-1px -1px #000;pointer-events:none}
 @media(pointer:coarse){.hot-item .hot-stack-number{display:block!important;font-size:12px!important}}
 </style>
-<title>MineWorld 6.25 — Bedrock Animated Textures and Upright Block Faces</title>
+<title>MineWorld 6.26 — Melee Reach and Attack Recharge Indicator</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -405,6 +407,7 @@ body.in-nether #game-wrap{background:#290f19}
   </div>
   <div id="weather-status" class="hidden" aria-live="polite">☔ Rain</div>
   <div id="crosshair" aria-hidden="true"></div>
+  <div id="mw-attack-meter" aria-hidden="true"><div id="mw-attack-meter-fill"></div></div>
   <div id="online-hud" class="hidden">👥 Offline</div>
   <div id="dimension-indicator" class="hidden">🔥 THE NETHER</div>
   <div id="target-name">Aim at a block to mine</div>
@@ -3379,7 +3382,7 @@ body.in-nether #game-wrap{background:#290f19}
     for(const m of mobs){
       const to=[m.x-eye[0],m.y+1.08-eye[1],m.z-eye[2]];
       const t=to[0]*forward[0]+to[1]*forward[1]+to[2]*forward[2];
-      if(t<0||t>4.75||t>=bestT)continue;
+      if(t<0||t>window.MineWorldCombat.REACH+.35||t>=bestT)continue;
       const side=Math.hypot(to[0]-forward[0]*t,to[1]-forward[1]*t,to[2]-forward[2]*t);
       if(side<.72){
         const blockDistance=block?Math.hypot(block.x+.5-eye[0],block.y+.5-eye[1],block.z+.5-eye[2]):Infinity;
@@ -3400,8 +3403,10 @@ body.in-nether #game-wrap{background:#290f19}
       // A missed swing still plays and resets the melee recharge, as in Java.
       lastAttackAt=now;attackCooldown=.12;return;
     }
-    const d=Math.hypot(m.x-player.x,m.z-player.z);
-    if(d>4.7)return;
+    if(!window.MineWorldCombat.inReach(player,m)){
+      // Out-of-range clicks still swing and consume attack recharge.
+      lastAttackAt=now;attackCooldown=.12;return;
+    }
     if(window.MineWorldMultiplayer?.isGuest()){
       if(window.MineWorldMultiplayer.attackMob(m.id,combatStrength())){
         lastAttackAt=now;attackCooldown=.48;toast('⚔ Hit '+SPECIES[m.kind].name);
@@ -3658,6 +3663,15 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function render(t){requestAnimationFrame(render);const frameMs=t-lastTime;let dt=clamp(frameMs/1000,0,.05);lastTime=t;
     if(paused)return;
+    // Java-style cooldown feedback beside the crosshair. Uses the same
+    // weapon speed and timestamp as damage; no changes to save data.
+    const meter=document.getElementById('mw-attack-meter');
+    if(meter){
+      const speed=window.MineWorldCombat.stats(equipped,tools[equipped]||'none').speed;
+      const power=window.MineWorldCombat.charge(t-lastAttackAt,speed);
+      meter.style.opacity=power<.995?'1':'0';
+      meter.firstElementChild.style.width=Math.round(power*100)+'%';
+    }
     tuneFrameBudget(frameMs);
     dayClock+=dt;
     if(!worldWeather)worldWeather=survivalRules.newWeather(seed);

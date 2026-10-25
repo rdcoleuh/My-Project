@@ -44,6 +44,15 @@ test('live guest mob and PvP routes use host strike and validate range before sp
  assert.ok(net.includes('Math.min(20,hit.damage)'));
  assert.ok(net.includes('Math.min(11,Math.ceil(hit.damage))'));
  assert.ok(!net.includes('playerProfile('));
- assert.ok(net.indexOf('if(!m||distance(attacker,m)>5.3')<net.indexOf('const hit=serverStrike(message.profile'));
+ assert.ok(net.indexOf('if(!m||!window.MineWorldCombat.inReach(attacker,m)')<net.indexOf('const hit=serverStrike(message.profile'));
  assert.ok(html.includes("getCombatProfile:()=>({mode:gameMode,equipped,weapon:tools[equipped]||'none'})"));
+});
+
+test('host validates three-block melee range for guests and PvP',()=>{
+ const reach='window.MineWorldCombat.inReach';
+ assert.ok(net.includes('!'+reach+'(attacker,m)'));
+ assert.ok(net.includes('!'+reach+'(attacker,target)'));
+ assert.ok(net.includes('!'+reach+'(local,target)'));
+ assert.ok(!net.includes('distance(attacker,m)>5.3'));
+ assert.ok(!net.includes('distance(attacker,target)>5.2'));
 });

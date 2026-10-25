@@ -218,7 +218,7 @@
     const attacker=peers.get(from),conn=sockets.get(from),now=performance.now();
     if(!attacker||!conn||!Number.isInteger(message.id))return false;
     const m=bridge.getMobs().find(m=>m.id===message.id);
-    if(!m||distance(attacker,m)>5.3||(attacker.dimension||'overworld')!==(m.dimension||'overworld'))return false;
+    if(!m||!window.MineWorldCombat.inReach(attacker,m)||(attacker.dimension||'overworld')!==(m.dimension||'overworld'))return false;
     const hit=serverStrike(message.profile,attacker.mode,now,from);
     if(!allowAttack({...attacker,id:from},now))return false;
     const damage=Math.min(20,hit.damage);
@@ -242,7 +242,7 @@
     const attacker=peers.get(from),target=message.target===peer.id?{...bridge.getPlayer(),mode:bridge.getMode()}:peers.get(message.target);
     const now=performance.now();
     if(!attacker||!target||target.mode!=='survival')return false;
-    if(distance(attacker,target)>5.2||(attacker.dimension||'overworld')!==(target.dimension||'overworld'))return false;
+    if(!window.MineWorldCombat.inReach(attacker,target)||(attacker.dimension||'overworld')!==(target.dimension||'overworld'))return false;
     const hit=serverStrike(message.profile,attacker.mode,now,from);
     if(!allowAttack({...attacker,id:from},now))return false;
     const damage=Math.min(11,Math.ceil(hit.damage));
@@ -256,7 +256,7 @@
     if(!pvp||!id||role==='offline'||!ready)return false;
     if(role==='guest'){send(host,{t:'attack-player',target:id,profile:bridge.getCombatProfile()});return true}
     const target=peers.get(id),local=bridge.getPlayer();
-    if(!target||target.mode!=='survival'||bridge.getMode()!=='survival'||distance(local,target)>5.2||(target.dimension||'overworld')!==(local.dimension||'overworld'))return false;
+    if(!target||target.mode!=='survival'||bridge.getMode()!=='survival'||!window.MineWorldCombat.inReach(local,target)||(target.dimension||'overworld')!==(local.dimension||'overworld'))return false;
     const now=performance.now();
     const hit=serverStrike(bridge.getCombatProfile(),bridge.getMode(),now,peer.id);
     if(!allowAttack({...local,id:peer.id},now))return false;
