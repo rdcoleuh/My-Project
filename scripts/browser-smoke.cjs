@@ -48,6 +48,8 @@ function generatedPng(height,channel){
 function makeTestArchive(){
  const files=[
    ['resource_pack/textures/blocks/stone.png',generatedPng(16,80)],
+   ['resource_pack/textures/entity/cow/cow.png',generatedPng(16,180)],
+   ['resource_pack/textures/items/diamond.png',generatedPng(16,225)],
    ['resource_pack/textures/blocks/water_still_grey.png',generatedPng(64,35)],
    ['resource_pack/textures/flipbook_textures.json',Buffer.from(JSON.stringify([
     {flipbook_texture:'textures/blocks/water_still_grey',atlas_tile:'still_water_grey',
@@ -102,6 +104,10 @@ async function go(browser,name,mobile){
   await page.waitForFunction(()=>
     document.querySelector('#mw-bedrock-default-status')?.textContent.includes('Saved as default'),
     null,{timeout:30000});
+  assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.entities>=1&&
+    window.MineWorldMobPixels?.hasImported('cow')&&
+    window.MineWorldMobPixels?.hasImported('item:diamond')),
+    name+': Bedrock mob and item PNGs did not reach GPU atlas');
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.faces>=3),
     name+': synthetic stone was not imported');
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.bedrockAnimatedFaces>=3),
@@ -114,6 +120,9 @@ async function go(browser,name,mobile){
   await page.waitForFunction(()=>window.MineWorldLocalTextures?.lastResult?.faces>=3,null,{timeout:30000});
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.bedrockAnimatedFaces>=3),
     name+': stored Bedrock animation was lost after reload');
+  assert.ok(await page.evaluate(()=>window.MineWorldMobPixels?.hasImported('cow')&&
+     window.MineWorldMobPixels?.hasImported('item:diamond')),
+    name+': remembered mob/item skins did not restore after reload');
   await page.locator('#mw-options').click();
   assert.equal(await page.locator('#mw-options-screen').evaluate(el=>el.classList.contains('active')),true,name+': Options failed');
   assert.ok(await page.locator('#mw-options-screen .mw-local-experiment').count(),
