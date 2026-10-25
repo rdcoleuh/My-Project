@@ -4184,12 +4184,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
     '<p>Creative and Survival are separate saves. Minecraft-inspired art is generated independently; official Minecraft files are not included.</p></div>'+
     '<button type="button" class="mw-pixel-secondary mw-back" id="mw-back-options">← Back to Main Menu</button></div>';
   welcome.appendChild(options);
-  // The pack importer loads before these title/Options nodes exist. Now that
-  // they do, expose the player-selected Bedrock-default setup on both screens.
-  try{
-    window.MineWorldLocalTextures?.mountDefaultUI?.(main);
-    window.MineWorldLocalTextures?.mountOptionsUI?.();
-  }catch(error){console.warn('MineWorld resource-pack setup unavailable:',error);}
+  // The resource-pack importer mounts its controls after this title screen is built.
   // Optional Settings/Mob extensions may fail independently, but must never
   // prevent the primary menu buttons from receiving their click handlers.
   for(const [name,feature] of [
