@@ -177,6 +177,39 @@ Object.assign(aliases,{
  beetroots_stage2:['beetroots_stage_2'],
  beetroots_stage3:['beetroots_stage_3']
 });
+// Bedrock Samples uses several different filenames from Java Edition.
+// These are verified against Mojang/bedrock-samples' public resource_pack
+// filename index. Java canonical names and existing legacy aliases win.
+// Do not include, embed, fetch, or redistribute any actual texture bytes.
+const bedrockSampleAliases={
+ oak_leaves:['leaves_oak_opaque'],
+ spruce_leaves:['leaves_spruce_opaque'],
+ birch_leaves:['leaves_birch_opaque'],
+ acacia_leaves:['leaves_acacia_opaque'],
+ jungle_leaves:['leaves_jungle_opaque'],
+ mangrove_leaves:['mangrove_leaves_opaque'],
+ pale_oak_leaves:['pale_oak_leaves_opaque'],
+ rose_bush_top:['double_plant_rose_top'],
+ grass_block_side:['grass_side_carried'],
+ bamboo_stalk:['bamboo_stem'],
+ pointed_dripstone:['pointed_dripstone_down_tip'],
+ crimson_nylium:['crimson_nylium_top'],
+ warped_nylium:['warped_nylium_top'],
+ crimson_stem:['crimson_log_side'],
+ crimson_stem_top:['crimson_log_top'],
+ twisting_vines:['twisting_vines_base'],
+ end_portal_frame_side:['endframe_side'],
+ end_portal_frame_top:['endframe_top'],
+ shulker_box:['shulker_top_undyed'],
+ fletching_table_front:['fletcher_table_side1'],
+ fletching_table_top:['fletcher_table_top'],
+ red_bed_top:['bed_head_top'],
+ red_bed_side:['bed_head_side'],
+ red_bed_bottom:['bed_head_end']
+};
+for(const [key,variants] of Object.entries(bedrockSampleAliases)){
+ aliases[key]=[...new Set([...(aliases[key]||[]),...variants])];
+}
 function textureName(id,face){
  const def=mappings.get(id);
  return def?def[face]:(normalize(names[id])||null);
