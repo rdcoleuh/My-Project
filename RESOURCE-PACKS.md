@@ -36,3 +36,7 @@ GitHub Actions regression tests cover resource-pack parsing, animation timing, l
 ### Partial resource packs and original animations
 
 Importing a small Java Edition texture pack no longer freezes MineWorld's original water, lava, portal, or luminous block animations. The renderer now tracks which of the 507 atlas faces were actually replaced. Imported faces retain the player-supplied pixels and their Java `.png.mcmeta` timing; unmatched faces keep MineWorld's independent procedural motion. This also works when only one face of a block is provided. Resetting the pack returns all original procedural animations. These improvements do not bundle any original Minecraft image files.
+
+### Direction-specific Java Edition workstation faces
+
+The renderer now supports five *additional* local-only Java sprite faces in unused atlas slots: `furnace_side.png`, `blast_furnace_side.png`, `smoker_side.png`, `crafting_table_side.png`, and `cartography_table_side2.png`. After a player imports a pack containing them, furnaces and smokers show front art only on their +Z front; crafting and cartography tables use distinct X-axis side artwork. Top and bottom mappings stay intact, and all 169 existing block IDs and world saves remain unchanged. This is a first step toward more complete six-directional block mapping; placed block rotation/orientation is not yet represented in saved block metadata. The five alternative sprites are **not** bundled in MineWorld and will still use independent default artwork until the player imports them.
