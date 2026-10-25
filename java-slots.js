@@ -1,4 +1,4 @@
-/* MineWorld 6.6 - persistent Java-style slot mechanics. Original code.
+/* MineWorld 6.7 - persistent Java-style slot mechanics. Original code.
  * 27 inventory slots, nine hotbar slots, safe overflow, cursor and offhand.
  * StackStore remains the single authoritative count and save backend.
  */
@@ -122,6 +122,62 @@ function create(store,hotbar,changed=()=>{}){
   }
   return swap(from,to);
  }
+
+ // Java Edition-style double click: pull matching stacks into the cursor
+ // without exceeding the item's own stack cap.
+ function collect(pos){
+  normalize();
+  if(pos!=='offhand'&&(!Number.isInteger(pos)||pos<0||pos>=slots.length))return false;
+  if(!cursor){
+   const initial=at(pos);
+   if(!initial)return false;
+   cursor=initial;assign(pos,null);
+  }
+  const held=store.byId(cursor);
+  if(!held)return false;
+  let changedAny=false;
+  for(const p of [...Array(slots.length).keys(),'offhand']){
+   const source=at(p);
+   if(!source||source===cursor||store.byId(source)?.key!==held.key)continue;
+   if(held.qty>=store.limit(held.key))break;
+   const moved=merge(source,cursor,store.limit(held.key)-held.qty);
+   if(moved){
+    if(!store.byId(source))assign(p,null);
+    changedAny=true;
+   }
+  }
+  change();return changedAny||!!held;
+ }
+ // Mouse drag distribution: one item per destination on right drag,
+ // equal whole-number shares on left drag. All leftovers stay on cursor.
+ function distribute(positions,right=false){
+  normalize();
+  const held=store.byId(cursor);
+  if(!held||!Array.isArray(positions))return false;
+  const unique=[...new Set(positions)].filter(p=>
+    (p==='offhand'||Number.isInteger(p)&&p>=0&&p<slots.length)&&
+    at(p)!==cursor&&(!at(p)||store.byId(at(p))?.key===held.key&&store.byId(at(p)).qty<store.limit(held.key))
+  );
+  if(!unique.length)return false;
+  const share=right?1:Math.floor(held.qty/unique.length);
+  if(share<1)return false;
+  let moved=false;
+  for(const p of unique){
+   if(!cursor||!store.byId(cursor))break;
+   const target=at(p);
+   if(target){
+    if(merge(cursor,target,share)){moved=true;if(!store.byId(cursor))cursor=null;}
+   }else{
+    const s=store.byId(cursor);
+    const n=Math.min(share,s.qty);
+    const newId=n===s.qty?cursor:split(cursor,n);
+    assign(p,newId);if(newId===cursor)cursor=null;
+    moved=true;
+   }
+  }
+  if(moved)change();
+  return moved;
+ }
  function putAway(){
   normalize();if(!cursor)return;
   let i=slots.findIndex((v,k)=>k<MAIN&&v===null);
@@ -143,7 +199,7 @@ function create(store,hotbar,changed=()=>{}){
  function snapshot(){normalize();return {slots:slots.slice(),offhand,cursor}}
  function reset(){slots=Array(LENGTH).fill(null);offhand=null;cursor=null}
  function inspect(){normalize();return {slots:slots.slice(),offhand,cursor,stacks:store.snapshot()}}
- return {normalize,inspect,click,quickMove,swap,drag,putAway,restore,snapshot,reset,
+ return {normalize,inspect,click,quickMove,swap,drag,collect,distribute,putAway,restore,snapshot,reset,
   hotkey:(from,i)=>swap(from,MAIN+i),moveOffhand:from=>swap(from,'offhand'),
   stackAt:p=>{normalize();return store.byId(at(p))},
   cursorStack:()=>store.byId(cursor),
