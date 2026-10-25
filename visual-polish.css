@@ -1,8 +1,7 @@
 /* MineWorld 6.37: visual clarity and responsive HUD polish.
    This file changes presentation only; item textures, saves, controls and shaders
    retain their original logic. Source textures remain nearest-neighbor filtered. */
-#world{image-rendering:auto}
-html.mw-retro-screen #world{image-rendering:pixelated}
+#world{image-rendering:pixelated}
 :root{--mw-border:#9eae97;--mw-ink:#f5fff1;--mw-panel:#12251fe8;--mw-focus:#f4e68f}
 #top-ui{gap:6px;max-width:100%;align-items:center}
 #top-ui>.ui-button{min-height:42px;white-space:nowrap;border:1px solid #a3baac80;

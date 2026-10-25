@@ -395,7 +395,7 @@ body.in-nether #game-wrap{background:#290f19}
 @media(pointer:coarse){.hot-item .hot-stack-number{display:block!important;font-size:12px!important}}
 </style>
 <link rel="stylesheet" href="./visual-polish.css">
-<title>MineWorld 6.38 — Combat and Block Particles</title>
+<title>MineWorld 6.39 — Razor-Sharp Pixel Rendering</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -649,7 +649,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="trade-offers" class="trade-offers"></div><button id="close-trade" class="main-button">Finish Trading</button>
 </section></div>
 <div id="toast" aria-live="polite"></div>
-  <div class="version">MINEWORLD v6.38 · PARTICLES & JAVA TEXTURES</div>
+  <div class="version">MINEWORLD v6.39 · SHARP PIXELS & JAVA TEXTURES</div>
 </div>
 <script src="./pixel-materials.js"></script>
 <script src="./texture-refinement.js"></script>
@@ -667,6 +667,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./texture-precision.js"></script>
 <script src="./texture-motion.js"></script>
 <script src="./texture-smoothing.js"></script>
+<script src="./render-clarity.js"></script>
 <script src="./sound-engine.js"></script>
 <script src="./combat-rules.js"></script>
 <script src="./avatar-animation.js"></script>
@@ -1122,8 +1123,8 @@ body.in-nether #game-wrap{background:#290f19}
   // framebuffer makes textures and thin mob pixels appear muddy.
   // Mobile starts above 1x for sharpness; the adaptive renderer can
   // reduce geometry/chunks when under load without sub-1x texture blur.
-  let dynamicResolution=isTouch?1.48:1.6;
-  const minResolution=1,maxResolution=isTouch?1.6:1.68;
+  let dynamicResolution=isTouch?2.2:2.35;
+  const minResolution=1,maxResolution=isTouch?2.55:2.8;
   let sky=[.57,.78,.91],cameraFov=72;
   const idx=(x,y,z)=>(x*D+z)*H+y;
   const inside=(x,y,z)=>Number.isInteger(x)&&Number.isInteger(y)&&Number.isInteger(z)&&x>=0&&x<W&&z>=0&&z<D&&y>=0&&y<H;
@@ -1310,7 +1311,7 @@ body.in-nether #game-wrap{background:#290f19}
       if(fps<(isTouch?27:37))dynamicResolution=Math.max(minResolution,dynamicResolution-.09);
       else if(fps>(isTouch?52:56))dynamicResolution=Math.min(maxResolution,dynamicResolution+.045);
     }else{
-      dynamicResolution=Math.min(maxResolution,isTouch?1.48:1.6);
+      dynamicResolution=Math.min(maxResolution,isTouch?2.2:2.35);
     }
     updateRenderSettingsUI();
   }
@@ -1453,7 +1454,7 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function buildMesh(){for(const c of visibleChunks)c.dirty=true;}
   const vs=`attribute vec3 aPos;attribute vec3 aColor;attribute vec2 aUV;uniform mat4 uVP;varying vec3 vColor;varying vec3 vPos;varying vec2 vUV;void main(){vColor=aColor;vPos=aPos;vUV=aUV;gl_Position=uVP*vec4(aPos,1.0);}`;
-  const fs=`precision mediump float;varying vec3 vColor;varying vec3 vPos;varying vec2 vUV;uniform vec3 uEye;uniform vec3 uSky;uniform sampler2D uAtlas;uniform float uTextured;uniform float uFogEnd;void main(){
+  const fs=`precision highp float;varying vec3 vColor;varying vec3 vPos;varying vec2 vUV;uniform vec3 uEye;uniform vec3 uSky;uniform sampler2D uAtlas;uniform float uTextured;uniform float uFogEnd;void main(){
     float d=distance(vPos,uEye);float fog=smoothstep(uFogEnd*.80,uFogEnd,d);
     vec4 tex=texture2D(uAtlas,vUV);
     if(uTextured>0.5 && tex.a<0.12)discard;
@@ -3918,10 +3919,9 @@ body.in-nether #game-wrap{background:#290f19}
     window.MineWorldMultiplayer?.tick(t);
     if(touchHold.place&&timers.place<=0){performPlace();timers.place=.25}
     timers.mine-=dt;timers.place-=dt;
-    let w=canvas.clientWidth,h=canvas.clientHeight;
-    const dpr=Math.max(1,Math.min(window.devicePixelRatio||1,dynamicResolution));
-    let dw=Math.max(1,Math.min(Math.round(w*dpr),2100));
-    let dh=Math.max(1,Math.min(Math.round(h*dpr),1300));
+    const {width:dw,height:dh}=window.MineWorldRenderClarity.framebuffer(
+      canvas.clientWidth,canvas.clientHeight,window.devicePixelRatio||1,
+      dynamicResolution,isTouch,window.MineWorldVisualPolish?.get().cleanScaling!==false);
     if(canvas.width!==dw||canvas.height!==dh){canvas.width=dw;canvas.height=dh;gl.viewport(0,0,dw,dh)}
     const {vp,eye,forward,aimEye}=vpMatrix(dw,dh);
     // Target from the character's real eyes, not the trailing third-person camera.
@@ -4412,7 +4412,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
     '<button class="mw-pixel-btn" id="mw-multi" type="button">Multiplayer</button>'+
     '<button class="mw-pixel-btn" id="mw-creative" type="button">Creative World</button>'+
     '<div class="mw-2col"><button class="mw-pixel-btn" id="mw-options" type="button">Options…</button><button class="mw-pixel-btn" id="mw-return" type="button">World Atlas</button></div>'+
-    '</div><div class="mw-footer"><small>MineWorld 6.38 · Impact Particles · Clean HUD</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
+    '</div><div class="mw-footer"><small>MineWorld 6.39 · Razor-Sharp Pixels · Effects</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
   welcome.appendChild(main);
   const worlds=document.createElement('div');
   worlds.id='mw-world-screen';worlds.className='mw-screen mw-screen--sub';
