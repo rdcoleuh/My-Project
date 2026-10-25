@@ -1,3 +1,13 @@
+# MineWorld 6.12 — Java resource-pack animation grids
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+Player-supplied Java Edition resource packs now support animated PNG sprite sheets with explicit `animation.width` and `animation.height` in matching `.png.mcmeta` files. Frames can be arranged horizontally or across multiple rows, in addition to traditional vertical strips. MineWorld selects frames in row-major order, respects the existing 20-tick-per-second timing, custom frame sequences and interpolation flags, and uploads only changed 16×16 atlas tiles. Missing original sprites still fall back to independently authored MineWorld artwork. No Mojang bitmaps or source code are included.
+
+Regression tests cover the actual importer and GPU upload path for a 4-column by 2-row animated sheet, older vertical strips, the untouched save keys, and mobile/offline loading. The full suite runs on GitHub Actions; physical-device visual verification remains outstanding.
+
+---
+
 # MineWorld 6.7 — Refined Voxel Textures + Smarter Java-Style Inventory
 
 **Play:** https://rdcoleuh.github.io/My-Project/
