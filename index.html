@@ -4185,7 +4185,8 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
     '<button type="button" class="mw-pixel-secondary mw-back" id="mw-back-options">← Back to Main Menu</button></div>';
   welcome.appendChild(options);
   window.MineWorldTextureSmoothing?.mountUI();
-  extraMobs?.mountUI();
+  // The title screen runs in a separate closure from gameplay.
+  window.MineWorldMobExpansion?.mountUI();
   function show(which){
     for(const screen of [main,worlds,options])screen.classList.toggle('active',screen===which);
     if(which!==main)welcome.scrollTop=0;
