@@ -1,3 +1,11 @@
+# MineWorld 6.27 — Safer Resource-Pack Replacement and Cleaner Options Menu
+
+MineWorld now **keeps the previously working local texture atlas, biome palette and imported sounds when a replacement pack contains no usable block, item or sound assets**. Earlier builds could clear sounds before validating a new resource pack. A successful replacement now retains newly decoded sound types and removes stale imported samples without wiping the new ones. The Options menu no longer shows duplicate resource-pack import panels; this is especially useful on small mobile screens. Existing worlds, block IDs, inventories, and player-owned asset files are unchanged. Added a regression test covering invalid import recovery, preserved sounds/texture state, and the Options panel count; prior biome-tint tests now verify that candidate palettes are used before committing the new pack.
+
+**Verification:** The GitHub Actions Node regression suite and desktop/mobile browser smoke workflow passed on the pre-release fixes. The updated release/cache labels have been pushed for a fresh deployment. Actual Java Edition JARs, original entity skins, many orientation-dependent block states, and real-device rendering are not yet exhaustively verified. This update is not feature completion or a claim of 1:1 Minecraft fidelity.
+
+---
+
 # MineWorld 6.25 — Bedrock Animated Tiles and Fixed Face Orientation
 
 The game now recognizes **Bedrock flipbook animation metadata** from a player-selected Mojang resource pack, including the official full `bedrock-samples` ZIP. It reads `resource_pack/textures/flipbook_textures.json` (or `textures/flipbook_textures.json` in extracted or smaller packs), matches available PNGs to MineWorld's existing block atlas, and plays supported animations using Bedrock's 20-ticks-per-second timing, frame order, and per-texture blend choice. Supported imported animated faces are drawn frame-by-frame into the existing local 16×16 GPU atlas; unaffected faces keep their original procedural motion. The diagnostic importer now reports how many Bedrock animations it actually matched. Java's `.png.mcmeta` animations remain supported and take precedence when both formats are present.
