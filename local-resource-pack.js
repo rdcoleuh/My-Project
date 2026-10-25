@@ -255,7 +255,7 @@ function imageFromURL(src){
 const DEFAULT_GRASS=[145,189,89],DEFAULT_FOLIAGE=[119,171,47];
 const state={active:false,canvas:null,sourceName:'',lastResult:null,
   tint:{grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()},
- animations:[],animationStart:0,lastAnimationAt:-Infinity,animationDisabled:false,originalImage:null};
+ animations:[],importedFaces:new Set(),animationStart:0,lastAnimationAt:-Infinity,animationDisabled:false,originalImage:null};
 async function writeAtlas(canvas){
  const gl=META.gl;
  if(typeof gl.isContextLost==='function'&&gl.isContextLost())throw Error('The graphics context was lost.');
@@ -394,7 +394,7 @@ async function applyResources(zip,sourceName){
  state.tint=importedTints.palette;
  const [canvas,ctx]=baseCanvas();ctx.drawImage(original,0,0);
  let faces=0,overlaid=0;
- const ids=new Set(),cache=new Map(),metaCache=new Map(),missing=new Set(),missingFaces=[],resolved=new Map(),animated=[];
+ const ids=new Set(),importedFaces=new Set(),cache=new Map(),metaCache=new Map(),missing=new Set(),missingFaces=[],resolved=new Map(),animated=[];
  const timeline=window.MineWorldResourceAnimation;
  async function spriteTimeline(name,image){
   if(!timeline||!image)return null;
@@ -452,7 +452,7 @@ async function applyResources(zip,sourceName){
      const overlay=grassSide?await sprite('grass_block_side_overlay'):null;
      const overlayInfo=grassSide?await spriteTimeline('grass_block_side_overlay',overlay):null;
      if(overlay&&composeGrassSideOverlay(ctx,overlay,px,py,0,0,0,overlayInfo?.geometry))overlaid++;
-     if(image||overlay){faces++;ids.add(id);}
+     if(image||overlay){faces++;ids.add(id);importedFaces.add(id*3+face);}
      else missingFaces.push({id,face,name:name||'(unmapped)'});
      if(baseInfo||overlayInfo)
       animated.push({id,face,px,py,image,overlay,
@@ -484,6 +484,7 @@ async function applyResources(zip,sourceName){
  if(!faces&&!audio)throw Error('No compatible block PNGs or playable OGG sound files found.');
  if(faces||state.active)await writeAtlas(canvas);
  state.animations=animated;
+ state.importedFaces=importedFaces;
  state.originalImage=original;
  state.animationStart=typeof performance!=='undefined'&&performance.now?performance.now():0;
  state.lastAnimationAt=-Infinity;
@@ -536,7 +537,7 @@ async function clear(){
  await writeAtlas(canvas);
  window.MineWorldSound?.clearSamples();window.MineWorldBridge?.refreshTextureUI?.();
  state.active=false;state.sourceName='';state.lastResult=null;
- state.animations=[];state.originalImage=null;state.lastAnimationAt=-Infinity;
+ state.animations=[];state.importedFaces=new Set();state.originalImage=null;state.lastAnimationAt=-Infinity;
  state.tint={grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()};
 }
 // Upload only changed 16×16 tiles. Animated Java PNGs remain on the user's
@@ -605,6 +606,7 @@ const exposed={
  get grassTint(){return [...state.tint.grass];},
  get foliageTint(){return [...state.tint.foliage];},
  loadFile,loadFiles,clear,drawFace,textureName,updateAnimation,
+ hasImportedFace(id,face){return state.active&&Number.isInteger(id)&&Number.isInteger(face)&&face>=0&&face<3&&state.importedFaces.has(id*3+face);},
  get animatedFaces(){return state.animations.length;},
  inspectZip(buffer){return Array.from(readArchive(buffer).entries.keys());}
 };
