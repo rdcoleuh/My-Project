@@ -115,6 +115,20 @@ test('user-selected ZIP imports only matching PNG tiles and compatible OGG sound
  assert.equal(uploads.length,2);
  assert.equal(pane.children.length,1);
  assert.equal(welcome.children.length,1);
+ const direct=[
+   ['grass_block_top.png',png],['grass_block_side.png',png],['dirt.png',png],
+   ['oak_log.png',png],['oak_log_top.png',png],['diamond_ore.png',png]
+ ].map(([name,bytes])=>({name,size:bytes.length,arrayBuffer:async()=>Uint8Array.from(bytes).buffer}));
+ const loaded=await api.loadFiles(direct);
+ assert.ok(loaded.faces>=10,'Extracted PNG files must map onto multiple common blocks');
+ assert.equal(loaded.totalFaces,507);
+ assert.ok(loaded.coverage>0&&loaded.coverage<100);
+ assert.ok(loaded.unmapped.includes('stone'));
+ assert.equal(api.lastResult,loaded);
+ assert.equal(api.active,true);
+ await api.clear();
+ assert.equal(api.active,false);
+ assert.equal(uploads.length,4,'Direct sprite import is uploaded once and can be reversed');
 });
 test('game wires sound events, imported texture atlas, original save keys and offline cached modules',()=>{
  const html=read('index.html'),sw=read('sw.js'),readme=read('README.md');
