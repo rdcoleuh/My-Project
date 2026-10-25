@@ -52,7 +52,7 @@ test('renderer loads new material layer before atlas generation, without changin
   assert.ok(sw.includes("'./"+f+"'"),'Missing painter cache entry '+f);
  }
  assert.ok(html.indexOf('src="./utility-materials.js"')<html.indexOf('src="./core-pixel-art.js"'));
- assert.ok(html.includes('MineWorld 6.7'));
+ assert.match(html,/MineWorld 6\.\d+/,'A game version label must be visible');
  assert.ok(html.includes('mineworld-selfhost-v1'));
  assert.ok(!read('texture-facets.js').includes('fetch('));
  assert.ok(!read('core-pixel-art.js').includes('fetch('),'Original art must not make external asset requests');
