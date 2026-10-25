@@ -41,6 +41,16 @@ test('neutral leaf assets tint and stone/dirt resource pack art does not',()=>{
  const soil=pixelContext([180,180,180]);
  assert.equal(tint(soil.ctx,0,0,2,0),false);
 });
+test('neutral vanilla water sprites receive plains water color without recoloring custom water',()=>{
+ const neutral=pixelContext([180,180,180],205);
+ assert.equal(tint(neutral.ctx,0,0,7,0),true);
+ assert.ok(neutral.state.written[2]>neutral.state.written[1]);
+ assert.ok(neutral.state.written[1]>neutral.state.written[0]);
+ assert.equal(neutral.state.written[3],205);
+ const colored=pixelContext([21,97,206]);
+ assert.equal(tint(colored.ctx,0,0,7,1),false);
+ assert.equal(colored.state.written,null);
+});
 test('optional tint safely skips low-feature browser canvases',()=>{
  assert.equal(tint({drawImage(){}},0,0,1,0),false);
 });
