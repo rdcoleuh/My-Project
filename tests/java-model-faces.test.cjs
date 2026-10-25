@@ -96,3 +96,43 @@ test('folder import applies model-selected nested block PNGs without changing wo
  assert.equal(window.MineWorldLocalTextures.active,true);
  assert.ok(draws.length>=4,'three imported block faces plus original atlas copy');
 });
+
+test('four cardinal Java cube faces retain distinct user-provided PNG references',async()=>{
+ const model={textures:{top:'minecraft:block/top',north:'minecraft:block/front',
+  south:'minecraft:block/back',east:'minecraft:block/right',west:'minecraft:block/left'},
+  elements:[{from:[0,0,0],to:[16,16,16],faces:{
+   up:{texture:'#top'},down:{texture:'#top'},
+   north:{texture:'#north'},south:{texture:'#south'},
+   east:{texture:'#east'},west:{texture:'#west'}}}]};
+ const pack=zip(Object.fromEntries([
+  ['model:furnace',enc(model)],...['top','front','back','right','left'].map(
+   name=>['block:'+name,Uint8Array.from([1])])]));
+ const refs=await resolver().resolve(pack,'furnace');
+ assert.equal(refs.side,null);
+ assert.equal(refs.sides.north,'block:front');
+ assert.equal(refs.sides.south,'block:back');
+ assert.equal(refs.sides.east,'block:right');
+ assert.equal(refs.sides.west,'block:left');
+ const ctx={window:{}};vm.runInNewContext(read('java-directional-faces.js'),ctx);
+ const api=ctx.window.MineWorldJavaDirectionalFaces;
+ const plan=api.plan(new Map([[20,refs]]));
+ assert.equal(plan.used,4);
+ api.commit(plan.tiles);
+ assert.notEqual(api.tile(20,[0,0,-1]),api.tile(20,[0,0,1]));
+ assert.notEqual(api.tile(20,[1,0,0]),api.tile(20,[-1,0,0]));
+ assert.equal(api.tile(20,[0,1,0]),null);
+ api.commit(new Map());
+ assert.equal(api.tile(20,[0,0,-1]),null);
+});
+test('directional Java model atlas slots cannot overrun the fixed texture atlas',()=>{
+ const ctx={window:{}};vm.runInNewContext(read('java-directional-faces.js'),ctx);
+ const api=ctx.window.MineWorldJavaDirectionalFaces,models=new Map();
+ for(let id=1;id<=169;id++)models.set(id,{sides:{
+  north:'block:a'+id,south:'block:b'+id,east:'block:c'+id,west:'block:d'+id}});
+ models.set(999,{sides:{north:'block:invalid',south:'block:invalid2'}});
+ const plan=api.plan(models);
+ assert.ok(plan.used<=506);
+ api.commit(plan.tiles);
+ assert.ok(api.stats().faces<=506);
+ assert.equal(api.tile(999,[0,0,-1]),null);
+});

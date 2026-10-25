@@ -753,7 +753,7 @@ async function applyResources(zip,sourceName){
  state.animationStart=typeof performance!=='undefined'&&performance.now?performance.now():0;
  state.lastAnimationAt=-Infinity;
  state.animationDisabled=false;
- state.active=faces+directionalFaces>0;state.sourceName=sourceName||'selected local assets';
+ state.active=faces+directionalFaces+modelDirectionalFaces>0;state.sourceName=sourceName||'selected local assets';
  state.lastResult={blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,

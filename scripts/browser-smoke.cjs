@@ -51,6 +51,17 @@ function makeTestArchive(){
    ['resource_pack/textures/entity/cow/cow.png',generatedPng(32,180,64)],
    ['resource_pack/textures/items/diamond.png',generatedPng(16,225)],
    ['resource_pack/textures/blocks/water_still_grey.png',generatedPng(64,35)],
+   ['assets/minecraft/models/block/furnace.json',Buffer.from(JSON.stringify({
+     textures:{top:'minecraft:block/furnace_top',front:'minecraft:block/furnace_front',
+       back:'minecraft:block/furnace_back',east:'minecraft:block/furnace_side',
+       west:'minecraft:block/furnace_west'},
+     elements:[{from:[0,0,0],to:[16,16,16],faces:{
+       up:{texture:'#top'},down:{texture:'#top'},
+       north:{texture:'#front'},south:{texture:'#back'},
+       east:{texture:'#east'},west:{texture:'#west'}}}]
+   }))],
+   ...['furnace_top','furnace_front','furnace_back','furnace_side','furnace_west'].map(
+     (name,i)=>['assets/minecraft/textures/block/'+name+'.png',generatedPng(16,35+i*22)]),
    ['resource_pack/textures/flipbook_textures.json',Buffer.from(JSON.stringify([
     {flipbook_texture:'textures/blocks/water_still_grey',atlas_tile:'still_water_grey',
      frames:[3,1,0,2],ticks_per_frame:1,blend_frames:false}
@@ -132,6 +143,12 @@ async function go(browser,name,mobile){
     name+': synthetic stone was not imported');
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.bedrockAnimatedFaces>=3),
     name+': Bedrock water animation did not load from flipbook_textures.json');
+  assert.ok(await page.evaluate(()=>{
+    const api=window.MineWorldJavaDirectionalFaces;
+    return window.MineWorldLocalTextures?.lastResult?.modelDirectionalFaces>=4&&
+      api?.tile(20,[0,0,-1])!==api?.tile(20,[0,0,1])&&
+      api?.tile(20,[1,0,0])!==api?.tile(20,[-1,0,0]);
+  }),name+': Java furnace cardinal texture mapping is incorrect');
   assert.ok(await page.evaluate(()=>
     window.MineWorldLocalTextures.updateAnimation(performance.now()+1000,60,false)>=3),
     name+': imported water animation did not update GPU atlas');
@@ -140,6 +157,8 @@ async function go(browser,name,mobile){
   await page.waitForFunction(()=>window.MineWorldLocalTextures?.lastResult?.faces>=3,null,{timeout:30000});
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.bedrockAnimatedFaces>=3),
     name+': stored Bedrock animation was lost after reload');
+  assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.modelDirectionalFaces>=4),
+    name+': Java directional model textures did not persist after reload');
   assert.ok(await page.evaluate(()=>window.MineWorldMobPixels?.hasImported('cow')&&
      window.MineWorldMobPixels?.hasMapped('cow','head','front')&&
      window.MineWorldMobPixels?.hasImported('item:diamond')),
