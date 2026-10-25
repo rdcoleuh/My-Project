@@ -1,3 +1,13 @@
+# MineWorld 6.30 — Java-Style Entity Hitboxes and Collision
+
+The player hitbox is now 0.6 blocks wide by 1.8 standing or 1.5 crouching, with full-width collision checks against existing block geometry. A new independent entity hitbox module defines widths/heights for over 75 named animal and monster species using published Java Edition dimensions, plus baby sizes and selected variable-size states. Mob spawn/walk checks cover their entire width and height, rather than only the central voxel. Aiming at animals, villagers and PvP players now uses ray-versus-box intersection and checks which block face actually blocks the hit. Properly aimed large animals can be struck when the edge of their box is within reach.
+
+F3+B on desktop shows entity hitboxes; a Pause-panel toggle makes this available on mobile. These changes don't change world-save keys, block IDs, or locally imported art. No Minecraft assets or code are bundled.
+
+**Remaining limitations:** This does not recreate every Java block collision voxel shape, multipart Ender Dragon hitboxes, all pose transitions, advanced entity collisions, or custom-model shapes. Some MineWorld-original mobs use fallback hitboxes; real-device testing and more precise Java comparisons are still needed. Dimensions reference https://minecraft.wiki/w/Hitbox.
+
+---
+
 # MineWorld 6.29 — Java Texture Import Recovery and Partial-Block UV Fidelity
 
 **Import resilience:** If a preferred modern Java block PNG is present but corrupt or undecodable, the importer now tries independently named legacy/Bedrock aliases in priority order. The selected decoded sprite's own `.png.mcmeta` animation metadata is used, instead of pairing a fallback with the corrupt preferred file's metadata. Shared PNGs are decoded only once per import. A missing Bedrock flipbook helper no longer prevents otherwise valid Java `.png.mcmeta` imports. Invalid packs still fail without replacing the last working atlas. Player-provided assets remain local; no original Minecraft bitmaps were added.
