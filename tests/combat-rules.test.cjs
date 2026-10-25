@@ -50,3 +50,16 @@ test('new combat module is loaded before gameplay and preserves existing world s
  for(const token of ["worldLibrary.key(mode,'original')","mineworld-selfhost-v1"])
   assert.ok(html.includes(token),'Save key changed '+token);
 });
+
+
+test('sword sweep only reaches nearby creatures at a similar elevation',()=>{
+ const c=combat(),attacker={x:0,y:1,z:0},primary={x:2,y:1,z:0};
+ assert.equal(c.sweepInRange({x:2.7,y:1.1,z:.3},primary,attacker),true);
+ assert.equal(c.sweepInRange({x:3.3,y:1,z:0},primary,attacker),false);
+ assert.equal(c.sweepInRange({x:2.2,y:2,z:0},primary,attacker),false);
+ assert.equal(c.sweepInRange({x:5,y:1,z:0},{x:4.3,y:1,z:0},attacker),false);
+ assert.equal(c.sweepInRange({x:NaN,y:1,z:0},primary,attacker),false);
+ const html=read('index.html');
+ assert.ok(html.includes('MineWorldCombat.sweepInRange(nearby,m,player)'),
+  'Live combat must apply tested sweep geometry');
+});
