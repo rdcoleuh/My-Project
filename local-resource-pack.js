@@ -182,7 +182,13 @@ function readArchive(buffer){
  if(number===65535||offset===0xffffffff)throw Error('ZIP64 not supported for this experiment.');
  if(number>55000)throw Error('This ZIP has more than 55,000 entries. Select only a resource-pack or client JAR.');
  let p=offset;
- const found=new Map(),decoder=new TextDecoder();
+ const found=new Map(),ranked=new Map(),decoder=new TextDecoder();
+ // Prefer vanilla namespace and modern block/ over legacy blocks/ regardless
+ // of archive entry order. Equal-priority duplicates keep the first entry.
+ const keep=(key,entry,priority)=>{
+   if((ranked.get(key)??-1)>=priority)return;
+   found.set(key,entry);ranked.set(key,priority);
+ };
  for(let i=0;i<number;i++){
    if(p+46>len||u32(p)!==0x02014b50)throw Error('Invalid ZIP central directory.');
    const method=u16(p+10),size=u32(p+20),expanded=u32(p+24),nlen=u16(p+28),extra=u16(p+30),comment=u16(p+32),local=u32(p+42);
@@ -199,15 +205,16 @@ function readArchive(buffer){
    const matchSound=relative?.match(/^sounds\/([a-z0-9_./-]+)\.ogg$/);
    const matchMeta=relative?.match(/^textures\/(?:block|blocks)\/([a-z0-9_]+)\.png\.mcmeta$/);
    const mapColor=relative?.match(/^textures\/colormap\/(grass|foliage)\.png$/);
+   const priority=(namespace?4:0)+(relative?.startsWith('textures/block/')?2:0);
    if(match&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8)){
-     found.set(match[1],{method,size,expanded,local});
+     keep(match[1],{method,size,expanded,local},priority);
    }
    if(matchMeta&&size<131072&&expanded<131072&&(method===0||method===8))
-     found.set('meta:'+matchMeta[1],{method,size,expanded,local});
+     keep('meta:'+matchMeta[1],{method,size,expanded,local},priority);
    if(mapColor&&size<4*1024*1024&&expanded<4*1024*1024&&(method===0||method===8))
-     found.set('colormap:'+mapColor[1],{method,size,expanded,local});
+     keep('colormap:'+mapColor[1],{method,size,expanded,local},priority);
    if(matchSound&&size<4*1024*1024&&expanded<4*1024*1024&&(method===0||method===8))
-     found.set('sound:'+matchSound[1],{method,size,expanded,local});
+     keep('sound:'+matchSound[1],{method,size,expanded,local},priority);
    p=end;
  }
  return {
@@ -401,6 +408,7 @@ async function applyResources(zip,sourceName){
  let faces=0,overlaid=0;
  const ids=new Set(),importedFaces=new Set(),cache=new Map(),metaCache=new Map(),missing=new Set(),missingFaces=[],resolved=new Map(),animated=[];
  const timeline=window.MineWorldResourceAnimation;
+ const firstFrame=info=>info?.timeline?.frames?.[0]?.index??0;
  async function spriteTimeline(name,image){
   if(!timeline||!image)return null;
   const resolvedName=resolveName(name),key='meta:'+resolvedName;
@@ -447,7 +455,7 @@ async function applyResources(zip,sourceName){
        // For animated PNG strips, draw frame zero. Standard 16px files remain pixel-exact.
        const frame=Math.min(image.width,image.height);
        ctx.clearRect(px,py,16,16); // Transparent Java sprites must not inherit procedural pixels.
-       if(baseInfo)drawPackFrame(ctx,image,baseInfo.geometry,0,1,px,py);
+       if(baseInfo)drawPackFrame(ctx,image,baseInfo.geometry,firstFrame(baseInfo),1,px,py);
        else ctx.drawImage(image,0,0,frame,frame,px,py,16,16);
        tintNeutralSprite(ctx,px,py,id,face);
      }else if(name)missing.add(name);
@@ -456,7 +464,7 @@ async function applyResources(zip,sourceName){
      const grassSide=id===1&&face===1;
      const overlay=grassSide?await sprite('grass_block_side_overlay'):null;
      const overlayInfo=grassSide?await spriteTimeline('grass_block_side_overlay',overlay):null;
-     if(overlay&&composeGrassSideOverlay(ctx,overlay,px,py,0,0,0,overlayInfo?.geometry))overlaid++;
+     if(overlay&&composeGrassSideOverlay(ctx,overlay,px,py,firstFrame(overlayInfo),firstFrame(overlayInfo),0,overlayInfo?.geometry))overlaid++;
      if(image||overlay){faces++;ids.add(id);importedFaces.add(id*3+face);}
      else missingFaces.push({id,face,name:name||'(unmapped)'});
      if(baseInfo||overlayInfo)
@@ -476,7 +484,7 @@ async function applyResources(zip,sourceName){
      const id=Number(block),px=(variant.tile%16)*16,py=Math.floor(variant.tile/16)*16;
      const info=await spriteTimeline(variant.name,image);
      ctx.clearRect(px,py,16,16);
-     if(info)drawPackFrame(ctx,image,info.geometry,0,1,px,py);
+     if(info)drawPackFrame(ctx,image,info.geometry,firstFrame(info),1,px,py);
      else ctx.drawImage(image,0,0,Math.min(image.width,image.height),
        Math.min(image.width,image.height),px,py,16,16);
      directionalFaces++;ids.add(id);
@@ -532,7 +540,7 @@ async function loadFiles(fileList){
  // A filename or webkitRelativePath is used only as a local texture lookup key.
  const files=Array.from(fileList||[]);
  if(!files.length||files.length>1500)throw Error('Choose between 1 and 1,500 image/sound files.');
- const recognized=new Map();let total=0;
+ const recognized=new Map(),ranked=new Map();let total=0;
  for(const file of files){
    if(!file||typeof file.arrayBuffer!=='function')continue;
    const name=String(file.webkitRelativePath||file.name||'').replace(/\\/g,'/').toLowerCase();
@@ -549,7 +557,9 @@ async function loadFiles(fileList){
    if(Number.isFinite(file.size)&&file.size>6*1024*1024)continue;
    total+=Number.isFinite(file.size)?file.size:0;
    if(total>100*1024*1024)throw Error('Selected files exceed the 100 MB local limit.');
-   recognized.set(key,file);
+   const priority=(/(?:^|\/)assets\/minecraft\//.test(name)?4:0)+
+      (/(?:^|\/)textures\/block\//.test(name)?2:0);
+    if((ranked.get(key)??-1)<priority){recognized.set(key,file);ranked.set(key,priority);}
  }
  const zip={entries:recognized,async get(key){
    const source=recognized.get(key);return source?new Uint8Array(await source.arrayBuffer()):null;
