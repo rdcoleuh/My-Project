@@ -4184,9 +4184,16 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
     '<p>Creative and Survival are separate saves. Minecraft-inspired art is generated independently; official Minecraft files are not included.</p></div>'+
     '<button type="button" class="mw-pixel-secondary mw-back" id="mw-back-options">← Back to Main Menu</button></div>';
   welcome.appendChild(options);
-  window.MineWorldTextureSmoothing?.mountUI();
-  // The title screen runs in a separate closure from gameplay.
-  window.MineWorldMobExpansion?.mountUI();
+  // Optional Settings/Mob extensions may fail independently, but must never
+  // prevent the primary menu buttons from receiving their click handlers.
+  for(const [name,feature] of [
+    ['texture settings',window.MineWorldTextureSmoothing],
+    ['mob catalog',window.MineWorldMobExpansion]
+  ]){
+    try{feature?.mountUI?.();}catch(error){
+      console.warn('MineWorld optional '+name+' panel could not initialize:',error);
+    }
+  }
   function show(which){
     for(const screen of [main,worlds,options])screen.classList.toggle('active',screen===which);
     if(which!==main)welcome.scrollTop=0;
