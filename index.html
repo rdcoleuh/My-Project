@@ -1606,12 +1606,12 @@ body.in-nether #game-wrap{background:#290f19}
         else if(kind==='Lapis Lazuli')dropMinedResource('lapis',4+Math.floor(Math.random()*5),target.x,target.y,target.z);
         else if(kind==='Diamond')dropMinedResource('diamond',1,target.x,target.y,target.z);
         else if(kind==='Emerald')dropMinedResource('emerald',1,target.x,target.y,target.z);
-        else dropMinedResource('block:'+found,1);
+        else dropMinedResource('block:'+found,1,target.x,target.y,target.z);
       }else if(found===91){
         if(Math.random()<.25)dropMinedResource('flint',1,target.x,target.y,target.z);else dropMinedResource('block:91',1,target.x,target.y,target.z);
       }else if(found===83){dropMinedResource('quartz',1,target.x,target.y,target.z);gainExperience(2);}
       else if(found===84)dropMinedResource('gold',1,target.x,target.y,target.z);
-      else dropMinedResource('block:'+found,1);
+      else dropMinedResource('block:'+found,1,target.x,target.y,target.z);
       updateHotbar();updateSurvivalHUD();markSave();
     }
     sound?.play('break',NAMES[target.b]);
