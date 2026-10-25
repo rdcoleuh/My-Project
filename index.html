@@ -3689,61 +3689,65 @@ body.in-nether #game-wrap{background:#290f19}
   function drawDroppedItems(){
     if(!droppedItems.length)return;
     const blocks=[],itemSprites=[],fallback=[];
-    let count=0;
-    const pixelCorners=[[0,0],[0,1],[1,1],[1,0]];
+    const visuals=window.MineWorldDroppedVisuals;
     const emit=(out,x,y,z,c,uv)=>out.push(x,y,z,c[0],c[1],c[2],uv[0],uv[1]);
+    let visible=0;
     for(const drop of droppedItems){
-      if(drop.dimension!==dimension||count>=48||
+      if(drop.dimension!==dimension||visible>=48||
          Math.abs(drop.x-player.x)>28||Math.abs(drop.z-player.z)>28)continue;
-      count++;
+      visible++;
       const b=drop.key.startsWith('block:')?Number(drop.key.slice(6)):0;
-      const pixel=b?window.MineWorldPixelMaterials.paint(b,1,5,7):null;
+      const isBlock=Number.isInteger(b)&&b>0&&b<=169;
+      const pixel=isBlock?window.MineWorldPixelMaterials.paint(b,1,5,7):null;
       const tint=pixel?pixel.slice(0,3).map(channel=>channel/255):[.79,.67,.34];
-      const size=.25,y=drop.y+.10+Math.sin(dayClock*3+count)*.075;
-      const angle=dayClock*1.7+count*.31,cs=Math.cos(angle),sn=Math.sin(angle);
-      const itemName=!b?window.MineWorldLocalTextures?.itemName?.(drop.key):null;
+      const model=visuals.pose(drop,dayClock),close=Math.hypot(drop.x-player.x,drop.z-player.z)<20;
+      const copies=close?model.count:1;
+      const cs=Math.cos(model.angle),sn=Math.sin(model.angle);
+      const itemName=!isBlock?window.MineWorldLocalTextures?.itemName?.(drop.key):null;
       const iconKey=itemName?'item:'+itemName:null;
-      const isImported=!!iconKey&&window.MineWorldMobPixels.hasImported(iconKey);
-      if(isImported){
-        // Independent crossed sprite planes show the player's own Bedrock item
-        // PNG in the 3D world while retaining the original pickup physics.
-        for(const orientation of [angle,angle+Math.PI/2]){
-          const ca=Math.cos(orientation),sa=Math.sin(orientation);
-          const quad=[[-size,0],[ -size,size*2],[size,size*2],[size,0]];
-          for(const index of [0,1,2,0,2,3,2,1,0,3,2,0]){
-            const [u,v]=quad[index],uv=window.MineWorldMobPixels.uv(iconKey,index);
-            emit(itemSprites,drop.x+u*ca,y+v,drop.z+u*sa,[1,1,1],uv);
+      const isImported=!!iconKey&&window.MineWorldMobPixels?.hasImported(iconKey);
+      for(let copy=0;copy<copies;copy++){
+        const drift=visuals.offset(copy,drop);
+        const x=drop.x+drift.x,z=drop.z+drift.z,y=drop.y+model.bob+drift.y;
+        if(isBlock){
+          const size=.25; // Java's miniature 3D inventory-block appearance
+          for(const face of FACE){
+            const faceIndex=face.n[1]===1?0:face.n[1]===-1?2:1;
+            for(const i of [0,1,2,0,2,3]){
+              const v=face.v[i],px=(v[0]-.5)*size,pz=(v[2]-.5)*size;
+              const corner=window.MineWorldFaceUV.corner(face.n,v);
+              const uv=window.MineWorldAtlas.uv(b,faceIndex,corner);
+              emit(blocks,x+px*cs-pz*sn,y+v[1]*size,
+                z+px*sn+pz*cs,[face.shade,face.shade,face.shade],uv);
+            }
           }
-        }
-      }else if(Number.isInteger(b)&&b>0&&b<170){
-        // Voxel drops use the exact top/side/bottom tiles from the active
-        // block atlas. Previously they were always untextured solid cubes.
-        for(const face of FACE){
-          const faceIndex=face.n[1]===1?0:face.n[1]===-1?2:1;
-          const tile=b*3+faceIndex,col=tile%16,row=Math.floor(tile/16);
-          for(const i of [0,1,2,0,2,3]){
+        }else if(isImported){
+          // Two-sided rotating flat item, instead of the old intersecting
+          // planes that made PNG icons look like fuzzy crossed textures.
+          const size=.27;
+          const quad=[[-size,0],[-size,size*2],[size,size*2],[size,0]];
+          for(const i of [0,1,2,0,2,3,2,1,0,3,2,0]){
+            const [u,v]=quad[i],uv=window.MineWorldMobPixels.uv(iconKey,i);
+            emit(itemSprites,x+u*cs,y+v,z+u*sn,[1,1,1],uv);
+          }
+        }else{
+          // Safe fallback for items whose local packs have no PNG.
+          const size=.24;
+          for(const face of FACE)for(const i of [0,1,2,0,2,3]){
             const v=face.v[i],px=(v[0]-.5)*size,pz=(v[2]-.5)*size;
-            const uv=[(col*16+.5+pixelCorners[i][0]*15)/256,
-              (row*16+.5+pixelCorners[i][1]*15)/1024];
-            emit(blocks,drop.x+px*cs-pz*sn,y+v[1]*size,
-              drop.z+px*sn+pz*cs,[face.shade,face.shade,face.shade],uv);
+            fallback.push(x+px*cs-pz*sn,y+v[1]*size,
+              z+px*sn+pz*cs,tint[0]*face.shade,tint[1]*face.shade,tint[2]*face.shade);
           }
-        }
-      }else{
-        for(const face of FACE)for(const k of [0,1,2,0,2,3]){
-          const v=face.v[k],px=(v[0]-.5)*size,pz=(v[2]-.5)*size;
-          fallback.push(drop.x+px*cs-pz*sn,y+v[1]*size,
-            drop.z+px*sn+pz*cs,tint[0]*face.shade,tint[1]*face.shade,tint[2]*face.shade);
         }
       }
     }
-    const upload=(values,texture,textured)=>{
-      if(!values.length)return;
+    const upload=(vertices,texture,textured)=>{
+      if(!vertices.length)return;
       gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);
       gl.bindBuffer(gl.ARRAY_BUFFER,avatarBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(values),gl.DYNAMIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices),gl.DYNAMIC_DRAW);
       setAttribs(textured);
-      gl.drawArrays(gl.TRIANGLES,0,values.length/(textured?8:6));
+      gl.drawArrays(gl.TRIANGLES,0,vertices.length/(textured?8:6));
     };
     upload(blocks,atlasTexture,true);
     upload(itemSprites,mobPixelTexture||atlasTexture,true);
