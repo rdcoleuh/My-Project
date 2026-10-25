@@ -1,17 +1,22 @@
-/* MineWorld 6.8 — independent 20-tick-per-second Java-style sprite timeline.
- * Interprets .png.mcmeta from player-supplied resource packs. No art bundled.
+/* MineWorld 6.12 — independent Java-style 20 TPS animated resource sprites.
+ * Supports vertical strips and .png.mcmeta width/height sprite sheets.
+ * All pixels come from player-supplied packs; none are bundled.
  */
 (()=>{
 'use strict';
 const TICK_MS=50;
 const finite=n=>Number.isInteger(n)&&n>=0;
+function metadata(source){
+ if(source&&typeof source==='object')return source.animation&&typeof source.animation==='object'?source.animation:null;
+ if(typeof source!=='string'||source.length>131072)return null;
+ try{
+  const parsed=JSON.parse(source);
+  return parsed&&parsed.animation&&typeof parsed.animation==='object'&&!Array.isArray(parsed.animation)?parsed.animation:null;
+ }catch(_){return null;}
+}
 function parse(text,frameCount){
  const count=Math.max(1,Math.min(4096,Math.floor(Number(frameCount)||1)));
- let animation=null;
- try{
-  const source=typeof text==='string'&&text.length<=131072?JSON.parse(text):null;
-  animation=source&&typeof source.animation==='object'&&!Array.isArray(source.animation)?source.animation:null;
- }catch(_){}
+ const animation=metadata(text);
  const speed=animation&&finite(animation.frametime)?Math.max(1,Math.min(1200,animation.frametime)):1;
  const frames=[];
  const input=Array.isArray(animation?.frames)?animation.frames:null;
@@ -46,11 +51,26 @@ function sampleAt(def,elapsed){
  return {index:def.frames[0].index,nextIndex:def.frames[0].index,blend:0};
 }
 function indexAt(def,elapsed){return sampleAt(def,elapsed).index;}
-function frameDimensions(image){
+function frameDimensions(image,mcmeta){
  if(!image||!Number.isFinite(image.width)||!Number.isFinite(image.height)||image.width<=0||image.height<=0)
-  return {size:16,count:1};
- const size=Math.min(image.width,image.height);
- return {size,count:Math.max(1,Math.min(4096,Math.floor(image.height/size)))};
+  return {size:16,width:16,height:16,columns:1,rows:1,count:1};
+ const iw=Math.floor(image.width),ih=Math.floor(image.height);
+ const animation=metadata(mcmeta);
+ const fallback=Math.min(iw,ih);
+ const valid=(n,max)=>Number.isInteger(n)&&n>0&&n<=max&&n<=4096;
+ const fw=valid(animation?.width,iw)?animation.width:fallback;
+ const fh=valid(animation?.height,ih)?animation.height:
+          valid(animation?.width,iw)?animation.width:fallback;
+ const columns=Math.max(1,Math.floor(iw/fw)),rows=Math.max(1,Math.floor(ih/fh));
+ return {size:fw,width:fw,height:fh,columns,rows,count:Math.min(4096,columns*rows)};
 }
-window.MineWorldResourceAnimation=Object.freeze({parse,indexAt,sampleAt,frameDimensions,TICK_MS});
+function frameRect(image,index,geometry){
+ const g=geometry||frameDimensions(image);
+ const n=Number.isInteger(index)?Math.max(0,Math.min(g.count-1,index)):0;
+ return {x:(n%g.columns)*g.width,y:Math.floor(n/g.columns)*g.height,
+         width:g.width,height:g.height};
+}
+window.MineWorldResourceAnimation=Object.freeze({
+ parse,indexAt,sampleAt,frameDimensions,frameRect,TICK_MS
+});
 })();
