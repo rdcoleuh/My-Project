@@ -412,7 +412,7 @@ body.in-nether #game-wrap{background:#290f19}
   <div id="hud-bottom">
     <div id="survival-hud" class="hidden" aria-live="polite"><span id="health-text">♥ 20/20</span><span id="hunger-text">🍖 20/20</span><span id="weapon-readout" title="Equipped gear">✊ Fists</span><button id="eat-btn" type="button" aria-label="Eat available food">Eat 🍄 0</button></div>
     <div id="xp-display" class="hidden" title="Experience points"><span id="xp-level">0</span><span id="xp-track"><span id="xp-fill"></span></span><span id="xp-label">0 / 7 XP</span></div>
-    <div id="hotbar-row"><div id="hotbar" role="toolbar" aria-label="Nine inventory-backed hotbar slots"></div><button id="quick-inventory" type="button" aria-label="Open inventory" title="Open backpack (E)">🎒<small>INV</small></button></div>
+    <div id="hotbar-row"><div id="hotbar" role="toolbar" aria-label="Nine inventory-backed hotbar slots"></div><button id="offhand-hud" type="button" title="Swap selected hotbar slot with offhand (F)" aria-label="Offhand item, click to swap">🛡<small>F</small></button><button id="quick-inventory" type="button" aria-label="Open inventory" title="Open backpack (E)">🎒<small>INV</small></button></div>
     <div id="hints">WASD · Ctrl sprint · Shift sneak · E bag · Space jump · 1–9 items · B stack · T chat · Middle click pick · Q drop · H eat · F3 debug · F5 view</div>
   </div>
   <div id="movement-indicator" class="hidden" role="status" aria-live="polite"></div>
@@ -1846,6 +1846,7 @@ body.in-nether #game-wrap{background:#290f19}
       button.addEventListener('click',()=>{selectHotbarSlot(i);if(key)toast(label)});
       root.appendChild(button);
     }
+    const offhandHud=$('offhand-hud');if(offhandHud){offhandHud.style.display=survival?'flex':'none';const item=survival?javaInventory.stackAt('offhand'):null;offhandHud.firstChild.textContent=item?stackIcon(item.key):'🛡';offhandHud.title=item?'Offhand: '+itemLabel(item.key)+' ×'+item.qty+' (F)':'Offhand empty · press F to swap';}
     hotbarSignature=survival?stackSignature():'creative:'+hotbarPage;
   }
   function toast(s){let x=$('toast');x.textContent=s;x.classList.add('show');notifications++;const n=notifications;setTimeout(()=>{if(n===notifications)x.classList.remove('show')},1250)}
@@ -3690,6 +3691,7 @@ body.in-nether #game-wrap{background:#290f19}
   });
   $('inventory-toggle').addEventListener('click',toggleInventory);
   $('quick-inventory').addEventListener('click',toggleInventory);
+  $('offhand-hud').addEventListener('click',()=>{if(gameMode==='survival'){javaInventory.swap(27+selection,'offhand');updateHotbar();}});
   let seedLabel='85721';
   function updateSeedLabel(){
     $('seed-current').textContent='Current seed: '+seedLabel+' · terrain ID '+seed;
@@ -3801,7 +3803,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(e.code==='KeyE'&&!e.repeat)toggleInventory();
     if(e.code==='KeyG'&&!e.repeat)toggleMovementMode('sprint');
     if(e.code==='KeyX'&&!e.repeat)toggleMovementMode('crouch');
-    if(e.code==='KeyF'&&!e.repeat){if(gameMode==='survival'){toast('Flying is Creative only');}else{player.fly=!player.fly;player.vy=0;updateFlyButton();toast(player.fly?'Fly mode on':'Fly mode off')}}
+    if(e.code==='KeyF'&&!e.repeat){if(gameMode==='survival'){javaInventory.swap(27+selection,'offhand');updateHotbar();toast('Offhand swapped');}else{player.fly=!player.fly;player.vy=0;updateFlyButton();toast(player.fly?'Fly mode on':'Fly mode off')}}
     if(e.code==='KeyL'&&!e.repeat){e.preventDefault();window.MineWorldAdvancementsUI?.open();return;}
     if(e.code==='F3'&&!e.repeat){e.preventDefault();toggleDebug();}
     if(e.code==='F5'&&!e.repeat){e.preventDefault();cyclePerspective();}
