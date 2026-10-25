@@ -1,3 +1,15 @@
+# MineWorld 6.21 — Import Actual Java Edition Item and Block PNGs
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+This release expands **direct player-owned asset import**: select your own Minecraft Java Edition resource ZIP or version/client JAR using the game's **Options → Custom Java resource pack** or **Import Java textures** controls. The ZIP/JAR must include `assets/minecraft/textures/block/*.png` and/or `assets/minecraft/textures/item/*.png`. MineWorld now reads **both** kinds of real PNG sprites. Block art is drawn onto the corresponding atlas faces, and item icons are loaded lazily from the exact `textures/item` PNGs into the Java-style inventory instead of fallback emoji. Missing images retain MineWorld's independently drawn originals. Modern vanilla paths take precedence over old duplicates; non-`minecraft` namespaces cannot overwrite vanilla icons.
+
+On Windows, the client JAR is normally in `%APPDATA%\\.minecraft\\versions\\<version>\\<version>.jar`; on macOS, `~/Library/Application Support/minecraft/versions/<version>/<version>.jar`; on Linux, `~/.minecraft/versions/<version>/<version>.jar`. You may also select a compatible ZIP or extracted texture folder. **No original Mojang bitmap is embedded in, downloaded by, or committed to this public GitHub Pages repository.** Selected files remain on the player's device, and "Remember this ZIP/JAR" is optional. Reset releases imported item icons, sounds, block art, and any privately remembered ZIP.
+
+The Creative/Survival inventories also fix block sprite atlas alignment after the atlas grew from 32 to 64 rows, so existing imported block previews no longer look displaced. **Limitation:** Exact entity skins require per-part Java model geometry and UV mapping, which are not implemented; the current procedural mob materials are still independent approximations. Original inventory item art may also depend on item state, tint, model layers, and version-specific components that MineWorld does not yet reproduce. This is direct PNG use, **not** a claim of complete Java gameplay or rendering parity.
+
+---
+
 # MineWorld 6.15 — Keep Your Java Textures Between Visits
 
 **Play:** https://rdcoleuh.github.io/My-Project/
