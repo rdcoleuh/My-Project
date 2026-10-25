@@ -1025,7 +1025,7 @@ body.in-nether #game-wrap{background:#290f19}
   ];
   const classic=window.MineWorldClassicInteractions;
   if(!classic)throw Error("Missing classic interaction helpers");
-  const droppedItems=[];let showDebug=false,cameraMode=0,currentCameraMode=0;
+  const droppedItems=[];let showDebug=false,showHitboxes=false,cameraMode=0,currentCameraMode=0;
   const perspective=window.MineWorldPerspective;
   if(!perspective)throw Error('Missing original camera helpers');
   const player={x:SPAWN+.5,y:18,z:SPAWN+.5,vy:0,yaw:.4,pitch:-.12,ground:false,fly:false};
@@ -2246,13 +2246,13 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function targetVillager(eye,dir,block){
     if(dimension!=='overworld')return null;
-    let best=null,bestD=4.9;const wall=block?Math.hypot(block.x+.5-eye[0],block.y+.5-eye[1],block.z+.5-eye[2]):Infinity;
+    let best=null,bestD=4.9;
+    const wall=targetBlockDistance(eye,dir,block);
     for(const v of nearbyVillagers){
       const vx=v.x+.4*Math.sin(dayClock*.38+v.j),vz=v.z+.4*Math.cos(dayClock*.27+v.j);
-      const delta=[vx-eye[0],v.y+1.22-eye[1],vz-eye[2]];
-      const d=delta[0]*dir[0]+delta[1]*dir[1]+delta[2]*dir[2];
-      if(d<0||d>bestD||d>wall+.2)continue;
-      if(Math.hypot(delta[0]-dir[0]*d,delta[1]-dir[1]*d,delta[2]-dir[2]*d)<.64){best=v;bestD=d}
+      const t=entityHitboxes.rayDistance(eye,dir,
+        entityHitboxes.box({x:vx,y:v.y,z:vz,kind:'villager'}),4.9);
+      if(t!==null&&t<bestD&&t<wall-.001){best=v;bestD=t;}
     }
     return best;
   }
@@ -3139,8 +3139,9 @@ body.in-nether #game-wrap{background:#290f19}
   // Sample the voxel grid between eyes, so caves, walls and hills block aggro.
   function mobHasLineOfSight(m,p){
     if(!m||!p||(p.dimension||'overworld')!==dimension)return false;
-    const mx=m.x,my=m.y+(m.kind==='enderman'?2.15:1.22),mz=m.z;
-    const tx=p.x,ty=p.y+(p.id===null&&isCrouching?1.05:1.30),tz=p.z;
+    const dims=entityHitboxes.dimensions(m.kind,!!m.baby,m.hitboxState||'');
+    const mx=m.x,my=m.y+Math.min(dims.height*.85,dims.height-.05),mz=m.z;
+    const tx=p.x,ty=p.y+(p.id===null&&isCrouching?1.27:1.62),tz=p.z;
     const dx=tx-mx,dy=ty-my,dz=tz-mz;
     const distance=Math.hypot(dx,dy,dz);
     const detection=p.id===null&&isCrouching?15:25;
@@ -3659,6 +3660,24 @@ body.in-nether #game-wrap{background:#290f19}
       setAttribs(false);gl.drawArrays(gl.TRIANGLES,0,out.length/6);
     }
   }
+  function drawEntityHitboxes(){
+    if(!showHitboxes)return;
+    const out=[];
+    const append=(entity,color)=>{
+      const lines=entityHitboxes.wireframe(entityHitboxes.box(entity));
+      for(const point of lines)out.push(...point,...color);
+    };
+    for(const m of mobs){
+      if((m.dimension||dimension)!==dimension||Math.hypot(m.x-player.x,m.z-player.z)>35)continue;
+      append(m,[.93,.93,.93]);
+    }
+    if(currentCameraMode!==0)append({...player,kind:'player',pose:isCrouching?'crouching':''},[.35,.9,.45]);
+    if(!out.length)return;
+    gl.bindBuffer(gl.ARRAY_BUFFER,aimBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(out),gl.DYNAMIC_DRAW);
+    setAttribs();
+    gl.drawArrays(gl.LINES,0,out.length/6);
+  }
   function drawHighlight(target){if(!target)return;const {x,y,z}=target;const a=[],e=.004;
     const shape=window.MineWorldBlockModels.shape(target.b);
     const x0=x+shape.left-e,x1=x+shape.right+e;
@@ -3774,6 +3793,7 @@ body.in-nether #game-wrap{background:#290f19}
     drawMobs();
     drawVillagers();
     drawDroppedItems();
+    drawEntityHitboxes();
     drawHighlight(aimMob?null:aim);
     $('target-name').textContent=aimVillager?'💚 '+aimVillager.job.name+' · Tap Mine / V to Trade':aimMob?'⚔ '+SPECIES[aimMob.kind].name+' · ♥ '+Math.ceil(aimMob.hp):aimPlayer?'⚔ '+aimPlayer.name+' · PvP enabled':aim?'⛏ '+NAMES[aim.b]+'  ·  '+aim.x+', '+aim.y+', '+aim.z:'Aim at a block or creature';
     if((frameCount++%18)===0){updateDebugView();if(frameCount%90===1)tickAdvancements();if(gameMode==='survival'){const changed=syncSurvivalHotbar(),signature=stackSignature();if(changed||signature!==hotbarSignature)updateHotbar();}$('coord-readout').textContent=(dimension==='end'?'✦ '+window.MineWorldEnd.biomeAt(player.x,player.z).name:dimension==='nether'?'🔥 '+window.MineWorldNether.biomeAt(player.x,player.z).name:'🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name)+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
@@ -4041,7 +4061,11 @@ body.in-nether #game-wrap{background:#290f19}
     if(e.code==='F5'&&!e.repeat){e.preventDefault();cyclePerspective();}
     if(e.code==='KeyP'&&!e.repeat)pickLookedAtBlock();
     if(e.code==='KeyH'&&!e.repeat)eatFood();
-    if(e.code==='KeyB'&&!e.repeat){e.preventDefault();performPlace(true);}
+    if(e.code==='KeyB'&&!e.repeat){
+      e.preventDefault();
+      if(keys.has('F3')){showHitboxes=!showHitboxes;toast('Entity hitboxes '+(showHitboxes?'visible':'hidden'));}
+      else performPlace(true);
+    }
     if((e.code==='KeyT'||e.code==='Enter')&&!e.repeat&&window.MineWorldMultiplayer?.getMode?.()!=='offline'){
       e.preventDefault();keys.delete(e.code);window.MineWorldMultiplayer?.openChat?.();return;
     }
@@ -4073,6 +4097,19 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
   $('perspective-toggle').addEventListener('click',cyclePerspective);
   updatePerspectiveButtons();
   $('debug-toggle').addEventListener('click',toggleDebug);
+  // Mobile/desktop Pause menu accessibility: show the same boxes as F3+B.
+  const hitboxHost=document.querySelector('#pause .mw-render-panel');
+  if(hitboxHost&&!document.querySelector('#mw-hitbox-toggle')){
+    const btn=document.createElement('button');
+    btn.id='mw-hitbox-toggle';btn.type='button';btn.className='ui-button';
+    btn.textContent='Entity hitboxes: Off';
+    btn.style.cssText='margin:6px 0;min-height:40px';
+    btn.addEventListener('click',()=>{
+      showHitboxes=!showHitboxes;
+      btn.textContent='Entity hitboxes: '+(showHitboxes?'On':'Off');
+    });
+    hitboxHost.appendChild(btn);
+  }
   canvas.addEventListener('auxclick',e=>{if(e.button===1)e.preventDefault();});
   canvas.addEventListener('wheel',e=>{if(paused)return;e.preventDefault();selectHotbarSlot((selection+(e.deltaY>0?1:-1)+9)%9)},{passive:false});
   let lookPointer=null,lastLook=null;
