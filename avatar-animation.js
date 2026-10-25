@@ -19,6 +19,16 @@ function pose({time=0,moving=false,sprinting=false,crouching=false,grounded=true
   bob:moving&&grounded?Math.abs(Math.cos(phase))*(sprinting?.035:.018):0
  });
 }
+// Repeated third-person tool strokes while mining a block. The swing
+// follows the mining progress clock, never alters block damage or saves.
+// After an instant creative-mode break, play one short stroke and settle.
+function miningSwing(elapsedMs,active=false){
+ if(!Number.isFinite(elapsedMs)||elapsedMs<0)return 0;
+ const period=340;
+ if(!active&&elapsedMs>=period)return 0;
+ const phase=(elapsedMs%period)/period;
+ return Math.max(0,Math.sin(Math.PI*phase));
+}
 function rotateLimb(name,py,pz,oy,oz,w,h,d,angles){
  if(!angles||!['legL','legR','armL','armR'].includes(name))return {y:py,z:pz};
  const angle=clamp(Number(angles[name])||0,-1.3,1.3);
@@ -27,5 +37,5 @@ function rotateLimb(name,py,pz,oy,oz,w,h,d,angles){
  return {y:pivotY+dy*Math.cos(angle)-dz*Math.sin(angle),
          z:pivotZ+dy*Math.sin(angle)+dz*Math.cos(angle)};
 }
-window.MineWorldAvatarAnimation=Object.freeze({pose,rotateLimb});
+window.MineWorldAvatarAnimation=Object.freeze({pose,rotateLimb,miningSwing});
 })();
