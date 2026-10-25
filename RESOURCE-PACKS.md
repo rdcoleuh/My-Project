@@ -27,6 +27,6 @@ The metadata can specify `animation.frametime`, a custom `animation.frames` orde
 
 ## Gameplay and verification
 
-MineWorld also has independent sound synthesis and an original Java-style melee model with weapon attack speeds, partial-charge damage, falling critical hits, grounded sword sweeps, and knockback against locally simulated mobs. Multiplayer damage remains host-validated and can differ from single-player rules.
+MineWorld also has independent sound synthesis and an original Java-style melee model with weapon attack speeds, partial-charge damage, falling critical hits, grounded sword sweeps, and knockback against locally simulated mobs. Sweeps now only reach nearby targets at a similar height, instead of striking creatures more than a block above or below the primary target. Multiplayer damage remains host-validated and can differ from single-player rules.
 
 GitHub Actions regression tests cover resource-pack parsing, animation timing, local GPU tile updates, grass overlay tinting, combat formulas, save-key integrity, and script/offline-cache wiring. These checks do not prove that every browser, device, or gameplay scenario is bug-free.
