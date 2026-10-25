@@ -328,36 +328,73 @@ function addControls(root,title){
  const pane=document.createElement('section');
  pane.className='mw-local-experiment';
  pane.style.cssText='margin-top:12px;padding:12px;border:1px solid #9aba9e;background:#1c2d22;color:#f0ffe9;font:12px/1.5 system-ui;text-align:left;max-width:100%;';
- const heading=document.createElement('strong');heading.textContent=title||'Local texture experiment';
+ const heading=document.createElement('strong');heading.textContent=title||'Your exact local textures';
  const help=document.createElement('p');
- help.textContent='Import a local Java-style resource-pack ZIP containing block PNGs and optional OGG sound files (or a Java client JAR). Only selected local files are read: no uploads. Eaglercraft EPK files require converting into a standard compatible ZIP first.';
+ help.textContent='For original Minecraft-style pixels, choose your own Java Edition ZIP/JAR or individual block PNG textures. Matching pixels are used only inside this browser; nothing is uploaded, bundled or saved. Eaglercraft .epk files must first be converted to a compatible ZIP.';
  help.style.margin='7px 0';
  const file=document.createElement('input');
  file.type='file';file.accept='.zip,.jar,application/zip,application/java-archive';
  file.setAttribute('aria-label','Select local Java Edition resource pack or client jar');
  file.style.cssText='display:block;width:100%;max-width:100%;color:white;font-size:13px;margin:8px 0;';
+ const loose=document.createElement('input');
+ loose.type='file';loose.multiple=true;loose.accept='.png,image/png,.ogg,audio/ogg';
+ loose.setAttribute('aria-label','Select multiple individually extracted Java block texture PNG files');
+ loose.style.cssText='display:block;width:100%;max-width:100%;color:white;font-size:13px;margin:8px 0;';
+ const looseLabel=document.createElement('small');
+ looseLabel.textContent='Or choose several block PNG files at once (example: grass_block_top.png and dirt.png). The filename is used as the mapping.';
  const reset=document.createElement('button');reset.type='button';reset.textContent='Restore original art & sounds';reset.className='ui-button';
  reset.style.cssText='min-height:38px;margin:4px 0;';
  const status=document.createElement('p');status.setAttribute('role','status');
  status.style.cssText='margin:6px 0;color:#e8efc6;overflow-wrap:anywhere;';
- status.textContent='Not loaded. Select a ZIP/JAR above. The original game remains unchanged.';
+ status.textContent='Original MineWorld artwork active. Select a ZIP/JAR or individual PNGs.';
+ const preview=document.createElement('div');
+ preview.style.cssText='display:flex;flex-wrap:wrap;gap:9px;margin:7px 0;align-items:flex-start;';
+ preview.setAttribute('aria-label','Selected local texture comparison');
+ const detail=document.createElement('small');
+ detail.style.cssText='display:block;overflow-wrap:anywhere;color:#cce2c1;margin:4px 0 8px;';
+ function showCoverage(result){
+   if(!result)return;
+   status.textContent='Matched '+result.faces+' of '+result.totalFaces+' block faces ('+
+     result.coverage+'%) across '+result.blocks+' block types and '+result.sounds+
+     ' sound events. Unmatched block faces keep independent MineWorld art.';
+   detail.textContent=result.unmapped.length?
+     'Example unmatched sprite names: '+result.unmapped.slice(0,9).join(', ')+'.':'All mapped face names were present.';
+   preview.replaceChildren();
+   for(const [id,name] of [[1,'Grass'],[3,'Stone'],[5,'Log'],[6,'Leaves'],[11,'Planks'],
+                           [19,'Iron'],[61,'Cobble'],[99,'Diamond'],[121,'End stone'],[168,'Craft']]){
+     const tile=document.createElement('canvas');tile.width=16;tile.height=16;
+     tile.style.cssText='width:40px;height:40px;image-rendering:pixelated;border:1px solid #95ad90;background:#284232;';
+     const ctx=tile.getContext('2d',{alpha:true});if(!ctx)continue;
+     ctx.imageSmoothingEnabled=false;
+     if(!drawFace(ctx,id,0))continue;
+     tile.setAttribute('aria-label',name+' texture preview');
+     tile.title=name;
+     preview.appendChild(tile);
+   }
+ }
  file.addEventListener('change',async()=>{
    const selected=file.files?.[0];if(!selected)return;
-   file.disabled=true;reset.disabled=true;status.textContent='Reading your selected ZIP locally, applying matching textures and decoding compatible sounds…';
-   try{
-     const result=await loadFile(selected);
-     status.textContent='Applied '+result.faces+' block faces on '+result.blocks+' block types and '+result.sounds+
-       ' sound events from '+state.sourceName+'. Unmatched materials use original MineWorld art/sounds.';
-   }catch(e){status.textContent='Could not apply pack: '+e.message;}
-   finally{file.disabled=false;reset.disabled=false;file.value='';}
+   file.disabled=true;loose.disabled=true;reset.disabled=true;status.textContent='Applying your selected local ZIP texture files…';
+   try{showCoverage(await loadFile(selected));}
+   catch(e){status.textContent='Could not apply pack: '+e.message;}
+   finally{file.disabled=false;loose.disabled=false;reset.disabled=false;file.value='';}
+ });
+ loose.addEventListener('change',async()=>{
+   const files=loose.files;
+   if(!files?.length)return;
+   loose.disabled=true;file.disabled=true;reset.disabled=true;
+   status.textContent='Matching selected PNG sprites directly by their filenames…';
+   try{showCoverage(await loadFiles(files));}
+   catch(e){status.textContent='Could not apply selected images: '+e.message;}
+   finally{loose.disabled=false;file.disabled=false;reset.disabled=false;loose.value='';}
  });
  reset.addEventListener('click',async()=>{
    reset.disabled=true;
-   try{await clear();status.textContent='Original MineWorld textures and sounds restored; imported files were not saved.';}
+   try{await clear();status.textContent='Original MineWorld textures and sounds restored; imported files were not saved.';preview.replaceChildren();detail.textContent='';}
    catch(e){status.textContent='Restore failed: '+e.message;}
    finally{reset.disabled=false;}
  });
- pane.append(heading,help,file,reset,status);root.appendChild(pane);
+ pane.append(heading,help,file,looseLabel,loose,reset,status,detail,preview);root.appendChild(pane);
 }
 addControls(document.querySelector('#pause .mw-render-panel')?.parentNode,'🎨 Local resource pack ZIP: textures + sounds');
 addControls(document.querySelector('#mw-options-screen .mw-settings'),'🎨 Custom Java resource pack (your own texture pixels)');
