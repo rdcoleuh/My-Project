@@ -120,6 +120,14 @@ async function go(browser,name,mobile){
       gl.getTexParameter(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER)===gl.NEAREST&&
       gl.getContextAttributes()?.antialias===false;
   }),name+': imported atlas is blurred or antialiasing has been reenabled');
+  assert.ok(await page.evaluate(()=>{
+    const icon=document.createElement('canvas');
+    if(!window.MineWorldBlockItemIcons?.paint(icon,3))return false;
+    const pixels=icon.getContext('2d').getImageData(0,0,32,32).data;
+    let visible=0;
+    for(let i=3;i<pixels.length;i+=4)if(pixels[i])visible++;
+    return visible>100&&window.MineWorldDroppedVisuals?.copies(64)===5;
+  }),name+': crisp 3-face imported block icons or multi-copy ground drops unavailable');
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.faces>=3),
     name+': synthetic stone was not imported');
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.bedrockAnimatedFaces>=3),
