@@ -3059,8 +3059,9 @@ body.in-nether #game-wrap{background:#290f19}
     }
     if(dimension==='nether'&&get(Math.floor(x),y-1,Math.floor(z))===66&&kind!=='strider')return null;
     if(['ghast','happy_ghast','ghastling','blaze','wither'].includes(kind))y=Math.min(H-8,y+4);
-    if(y>H-4||(get(Math.floor(x),y,Math.floor(z))&&!extraMobs?.isAquatic(kind))||
-      (get(Math.floor(x),y+1,Math.floor(z))&&get(Math.floor(x),y+1,Math.floor(z))!==7))return null;
+    if(y>H-4||(!extraMobs?.isAquatic(kind)&&get(Math.floor(x),y,Math.floor(z))!==0)||
+      !animals.canOccupy(x,y,z,animalModels.MODELS[kind]?.height||1.8,
+        (X,Y,Z)=>solid(get(X,Y,Z))))return null;
     let m={id:++mobSerial,kind,x,y,z,hp:SPECIES[kind].hp,heading:Math.random()*6.28,step:.8+Math.random()*2.5,attack:1.5,anger:0,windup:0};
     m.dimension=dimension;mobs.push(m);return m;
   }
@@ -3278,7 +3279,9 @@ body.in-nether #game-wrap{background:#290f19}
       if(extraMobs?.isAquatic(m.kind)){
         const level=Math.floor(m.y),canSwim=get(Math.floor(nx),level,Math.floor(nz))===7;
         if(canSwim){m.x=nx;m.z=nz;m.y=Math.max(1,level+.2+Math.sin(dayClock*1.5+m.id)*.12);}
-      }else if(Math.abs(ground-m.y)<1.25&&get(Math.floor(nx),ground,Math.floor(nz))===0){m.x=nx;m.z=nz;m.y=ground}else if(['ghast','blaze','happy_ghast','ghastling','wither'].includes(m.kind)){m.x=nx;m.z=nz;m.y=Math.max(ground+3,Math.min(H-6,m.y+Math.sin(dayClock+m.id)*dt*.4));}
+      }else if(Math.abs(ground-m.y)<1.25&&get(Math.floor(nx),ground,Math.floor(nz))===0&&
+        animals.canOccupy(nx,ground,nz,animalModels.MODELS[m.kind]?.height||1.8,
+          (X,Y,Z)=>solid(get(X,Y,Z)))){m.x=nx;m.z=nz;m.y=ground}else if(['ghast','blaze','happy_ghast','ghastling','wither'].includes(m.kind)){m.x=nx;m.z=nz;m.y=Math.max(ground+3,Math.min(H-6,m.y+Math.sin(dayClock+m.id)*dt*.4));}
       m.moving=Math.hypot(m.x-beforeX,m.z-beforeZ)>.001;
       if(m.moving&&animals.FOOD[m.kind])m.gait=(m.gait||0)+dt*(m.following?8.1:m.fleeTime>0?10:3.7);
       if(m.kind==='creeper'){
@@ -4079,7 +4082,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
     b.addEventListener('pointerdown',e=>{if(paused)return;touchHold[verb]=true;if(verb==='mine')performMine();else performPlace();b.setPointerCapture(e.pointerId);e.preventDefault()});
     b.addEventListener('pointerup',()=>{touchHold[verb]=false;if(verb==='mine')cancelMining();});
     b.addEventListener('pointercancel',()=>{touchHold[verb]=false;if(verb==='mine')cancelMining();});
-    b.addEventListener('lostpointercapture',()=>touchHold[verb]=false);
+    b.addEventListener('lostpointercapture',()=>{touchHold[verb]=false;if(verb==='mine')cancelMining();});
   }
   migrateLegacySave();const activeSlot=(()=>{try{return localStorage.getItem(LAST_SLOT)==='survival'?'survival':'creative'}catch(_){return 'creative'}})();gameMode=activeSlot;updateModeButton();updateSurvivalHUD();
   if(!load(activeSlot)){generate();setGameMode(activeSlot);}else $('status').textContent='● '+(activeSlot==='survival'?'Survival':'Creative')+' world restored';setDifficulty(difficulty);updatePortalUI();updateSeedLabel();updateVillagers();
