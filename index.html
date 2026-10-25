@@ -3289,7 +3289,10 @@ body.in-nether #game-wrap{background:#290f19}
         lastAttackAt=now;attackCooldown=.5;toast('⚔ Attacking '+(aimPlayer.name||'player'));
       }return;
     }
-    if(!m||!mobs.includes(m))return;
+    if(!m||!mobs.includes(m)){
+      // A missed swing still plays and resets the melee recharge, as in Java.
+      lastAttackAt=now;attackCooldown=.12;return;
+    }
     const d=Math.hypot(m.x-player.x,m.z-player.z);
     if(d>4.7)return;
     if(window.MineWorldMultiplayer?.isGuest()){
@@ -3436,13 +3439,22 @@ body.in-nether #game-wrap{background:#290f19}
     if(!currentCameraMode)return;
     const a=[],x=player.x,y=player.y,z=player.z;
     const cy=Math.cos(player.yaw),sy=Math.sin(player.yaw);
+    const swing=window.MineWorldCombat.swing(performance.now()-lastAttackAt);
     const box=(name,ox,oy,oz,w,h,d)=>{
       for(let side=0;side<FACE.length;side++){
         const f=FACE[side];
         for(const i of [0,1,2,0,2,3]){
-          const v=f.v[i],shade=f.shade,px=ox+v[0]*w,pz=oz+v[2]*d;
+          const v=f.v[i],shade=f.shade,px=ox+v[0]*w;
+          let py=oy+v[1]*h,pz=oz+v[2]*d;
+          if(name==='armR'&&swing>0){
+            // Rotate around the shoulder rather than sliding the entire arm.
+            const shoulderY=oy+h,shoulderZ=oz+d*.5,angle=swing*1.25;
+            const dy=py-shoulderY,dz=pz-shoulderZ;
+            py=shoulderY+dy*Math.cos(angle)-dz*Math.sin(angle);
+            pz=shoulderZ+dy*Math.sin(angle)+dz*Math.cos(angle);
+          }
           const uv=window.MineWorldSkin.uv(name,side,i);
-          a.push(x+px*cy-pz*sy,y+oy+v[1]*h,z+px*sy+pz*cy,shade,shade,shade,uv[0],uv[1]);
+          a.push(x+px*cy-pz*sy,y+py,z+px*sy+pz*cy,shade,shade,shade,uv[0],uv[1]);
         }
       }
     };
