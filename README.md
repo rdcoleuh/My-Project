@@ -1,3 +1,9 @@
+# MineWorld 6.47 — Preserve higher-resolution local resource pack textures
+
+Player-selected Java/Bedrock ZIP/JAR block PNGs now retain **up to 32×32 actual pixels per face in 3D** rather than always shrinking to 16×16. When any imported block frame exceeds 16px, MineWorld builds a nearest-neighbor 512×2048 local atlas, redraws original source frames and grass overlays at 32px, and updates Java UV crop texel centers and animated face uploads accordingly. A pack containing only 16px blocks continues using the smaller 256×1024 atlas. The mobile-friendly 32px cap means 64px-and-higher source files still downsample to 32px. Inventory previews and directional textures share the active source-size mapping.
+
+No Minecraft original PNGs were committed. World saves, block IDs, physics, and touch controls are unchanged. Test physical-phone quality with your own resource pack; this is a real detail increase for higher-resolution source art, not a claim that MineWorld's independent fallback textures are pixel-identical to Java.
+
 # MineWorld 6.46 — Creature hurt resistance
 
 Creature melee now has a short, independently implemented Java-inspired damage-resistance window: repeated weaker hits inside the window do not stack additional damage; a stronger hit can apply only the difference. Misses and resisted strikes still expend the player's local melee recharge, avoiding rapid-fire swing bypass. The host's creature simulation uses the same guard through the existing shared damage entrypoint. Existing saved worlds, mobile inputs and imported resource packs remain untouched.

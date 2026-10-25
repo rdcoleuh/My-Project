@@ -346,7 +346,7 @@ function imageFromURL(src){
 const DEFAULT_GRASS=[145,189,89],DEFAULT_FOLIAGE=[119,171,47];
 const state={active:false,canvas:null,sourceName:'',lastResult:null,
   tint:{grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()},
- animations:[],importedFaces:new Set(),animationStart:0,lastAnimationAt:-Infinity,animationDisabled:false,originalImage:null,
+ animations:[],importedFaces:new Set(),animationStart:0,lastAnimationAt:-Infinity,animationDisabled:false,originalImage:null,tilePixels:16,
  itemArchive:null,itemCache:new Map(),itemGeneration:0};
 async function writeAtlas(canvas){
  const gl=META.gl;
@@ -357,6 +357,12 @@ async function writeAtlas(canvas){
  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,canvas);
  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+ // Change UV centers only after the atlas upload was accepted by the GPU.
+ const tileSize=canvas.width/16;
+ if(tileSize===16||tileSize===32){
+   window.MineWorldAtlas?.setTilePixels?.(tileSize);
+   state.tilePixels=tileSize;
+ }
  // Preserve Smooth/Classic preference after importing, restoring or reloading a pack.
  window.MineWorldTextureSmoothing?.apply(gl,META.texture);
  window.MineWorldAtlas.dataURL=canvas.toDataURL('image/png');
@@ -372,13 +378,13 @@ function baseCanvas(){
 // Vanilla Java grass/selected leaf sprites ship as greyscale masks. The
 // game colors them at render time; apply a neutral plains tint to locally
 // imported neutral sprites, but never recolor already-colored custom artwork.
-function tintNeutralSprite(ctx,x,y,id,face,palette=state.tint){
+function tintNeutralSprite(ctx,x,y,id,face,palette=state.tint,size=16){
  if(typeof ctx.getImageData!=='function'||typeof ctx.putImageData!=='function')return false;
  const foliage={6:palette.foliage,31:[97,153,97],33:[128,167,85],35:palette.foliage,37:palette.foliage,39:palette.foliage};
  const tint=id===1?palette.grass:id===7?[63,118,228]:foliage[id];
  if(!tint||(id===1&&face!==0))return false;
- const height=id===1&&face===1?5:16;
- const data=ctx.getImageData(x,y,16,height);
+ const height=id===1&&face===1?Math.round(size*5/16):size;
+ const data=ctx.getImageData(x,y,size,height);
  let grey=0,visible=0;
  for(let i=0;i<data.data.length;i+=4){
   const a=data.data[i+3];if(!a)continue;visible++;
@@ -421,27 +427,27 @@ function tintOverlayPixels(data,tint){
 }
 // Draw a frame from a vertical strip or row-major Java .mcmeta spritesheet.
 // The decoded texture stays local and is reduced to one 16x16 atlas tile.
-function drawPackFrame(ctx,image,geometry,index,alpha=1,dx=0,dy=0){
+function drawPackFrame(ctx,image,geometry,index,alpha=1,dx=0,dy=0,size=16){
  if(!image)return;
  const rect=(typeof window!=='undefined'&&window.MineWorldResourceAnimation?.frameRect(image,index,geometry))||
    {x:0,y:0,width:Math.min(image.width,image.height),height:Math.min(image.width,image.height)};
  if(alpha!==1)ctx.globalAlpha=alpha;
- ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,dx,dy,16,16);
+ ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,dx,dy,size,size);
  if(alpha!==1)ctx.globalAlpha=1;
 }
-function composeGrassSideOverlay(ctx,overlay,x,y,frameIndex=0,nextIndex=frameIndex,blend=0,geometry=null,palette=state.tint){
+function composeGrassSideOverlay(ctx,overlay,x,y,frameIndex=0,nextIndex=frameIndex,blend=0,geometry=null,palette=state.tint,size=16){
  if(!overlay||!ctx)return false;
- const layer=document.createElement('canvas');layer.width=16;layer.height=16;
+ const layer=document.createElement('canvas');layer.width=size;layer.height=size;
  const layerCtx=layer.getContext('2d',{alpha:true});
  if(!layerCtx)return false;
  layerCtx.imageSmoothingEnabled=false;
- layerCtx.clearRect(0,0,16,16);
- drawPackFrame(layerCtx,overlay,geometry,frameIndex);
+ layerCtx.clearRect(0,0,size,size);
+ drawPackFrame(layerCtx,overlay,geometry,frameIndex,1,0,0,size);
  if(blend>0&&nextIndex!==frameIndex)
-  drawPackFrame(layerCtx,overlay,geometry,nextIndex,blend);
+  drawPackFrame(layerCtx,overlay,geometry,nextIndex,blend,0,0,size);
  if(typeof layerCtx.getImageData==='function'&&typeof layerCtx.putImageData==='function'){
   try{
-   const png=layerCtx.getImageData(0,0,16,16);
+   const png=layerCtx.getImageData(0,0,size,size);
    if(tintOverlayPixels(png.data,palette.grass))layerCtx.putImageData(png,0,0);
   }catch(_){/* Locked-down browsers still render the untinted original sprite. */}
  }
@@ -491,6 +497,7 @@ async function applyResources(zip,sourceName){
  const timeline=window.MineWorldResourceAnimation;
  const modelResolver=window.MineWorldJavaModelFaces;
  const modelFaces=new Map(),modelTransforms=new Map(),modelShapes=new Map();let modelMappedFaces=0;
+ const nativeTiles=[]; // Own pack sprites; never checked in or sent away.
  function markTransform(id,dir){
   const data=modelFaces.get(id)?.faceUV?.[dir];
   if(!data||(window.MineWorldBlockModels?.isPartial?.(id)&&!modelFaces.get(id)?.shape))return;
@@ -604,7 +611,12 @@ async function applyResources(zip,sourceName){
      const overlay=grassSide?await sprite('grass_block_side_overlay'):null;
      const overlayInfo=grassSide?await spriteTimeline('grass_block_side_overlay',overlay):null;
      if(overlay&&composeGrassSideOverlay(ctx,overlay,px,py,firstFrame(overlayInfo),firstFrame(overlayInfo),0,overlayInfo?.geometry,importedTints.palette))overlaid++;
-     if(image||overlay){faces++;ids.add(id);importedFaces.add(id*3+face);}
+     if(image||overlay){
+       faces++;ids.add(id);importedFaces.add(id*3+face);
+       nativeTiles.push({id,face,px,py,image,overlay,
+         baseGeometry:baseInfo?.geometry,overlayGeometry:overlayInfo?.geometry,
+         baseIndex:firstFrame(baseInfo),overlayIndex:firstFrame(overlayInfo)});
+     }
      else missingFaces.push({id,face,name:name||'(unmapped)'});
      if(baseInfo||overlayInfo)
       animated.push({id,face,px,py,image,overlay,
@@ -628,6 +640,8 @@ async function applyResources(zip,sourceName){
    else ctx.drawImage(image,0,0,Math.min(image.width,image.height),
      Math.min(image.width,image.height),px,py,16,16);
    row[dir]={tile:entry.tile};modelDirectionalFaces++;
+   nativeTiles.push({id,face:5,px,py,image,overlay:null,
+     baseGeometry:info?.geometry,baseIndex:firstFrame(info)});
    markTransform(id,dir);
    if(info)animated.push({id,face:5,px,py,image,overlay:null,
      baseTimeline:info.timeline,baseGeometry:info.geometry,
@@ -650,6 +664,8 @@ async function applyResources(zip,sourceName){
      else ctx.drawImage(image,0,0,Math.min(image.width,image.height),
        Math.min(image.width,image.height),px,py,16,16);
      directionalFaces++;ids.add(id);
+     nativeTiles.push({id,face:variantIndex===0?3:4,px,py,image,overlay:null,
+       baseGeometry:info?.geometry,baseIndex:firstFrame(info)});
      if(info)animated.push({id,face:variantIndex===0?3:4,px,py,image,overlay:null,
        baseTimeline:info.timeline,baseGeometry:info.geometry,
        overlayTimeline:null,overlayGeometry:null,lastKey:''});
@@ -750,7 +766,34 @@ async function applyResources(zip,sourceName){
  }
  if(!faces&&!directionalFaces&&!audio&&!items&&!mobArt.size)
   throw Error('No compatible block, item or sound files found.');
- if(faces||directionalFaces||modelDirectionalFaces||state.active)await writeAtlas(canvas);
+ // A 32px atlas is 512x2048 RGBA (~4MiB); 16px packs keep their 1MiB atlas.
+ const sourceSize=(image,geometry)=>image?Math.min(
+   geometry?.width||image.width,geometry?.height||image.height):0;
+ const native32=nativeTiles.some(t=>Math.max(
+   sourceSize(t.image,t.baseGeometry),sourceSize(t.overlay,t.overlayGeometry))>16);
+ let finalCanvas=canvas;
+ if(native32){
+   const high=document.createElement('canvas');high.width=atlasW*2;high.height=atlasH*2;
+   const hctx=high.getContext('2d',{alpha:true});
+   if(hctx){
+     hctx.imageSmoothingEnabled=false;
+     hctx.drawImage(canvas,0,0,atlasW,atlasH,0,0,high.width,high.height);
+     for(const t of nativeTiles){
+       const px=t.px*2,py=t.py*2;
+       hctx.clearRect(px,py,32,32);
+       if(t.image){
+         drawPackFrame(hctx,t.image,t.baseGeometry,t.baseIndex,1,px,py,32);
+         if(t.face<=2)tintNeutralSprite(hctx,px,py,t.id,t.face,importedTints.palette,32);
+       }else{
+         hctx.drawImage(original,t.px,t.py,16,16,px,py,32,32);
+       }
+       if(t.overlay)composeGrassSideOverlay(hctx,t.overlay,px,py,
+         t.overlayIndex,t.overlayIndex,0,t.overlayGeometry,importedTints.palette,32);
+     }
+     finalCanvas=high;
+   }
+ }
+ if(faces||directionalFaces||modelDirectionalFaces||state.active)await writeAtlas(finalCanvas);
  sideAllocator?.commit(mappedSides);
  window.MineWorldBlockModels?.commitImported?.(modelShapes);
  window.MineWorldJavaFaceTransforms?.commit(modelTransforms);
@@ -769,7 +812,7 @@ async function applyResources(zip,sourceName){
  state.lastAnimationAt=-Infinity;
  state.animationDisabled=false;
  state.active=faces+directionalFaces+modelDirectionalFaces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,modelGeometryBlocks:modelShapes.size,modelUVFaces:window.MineWorldJavaFaceTransforms?.stats().faces||0,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
+ state.lastResult={blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,atlasTilePixels:state.tilePixels,modelGeometryBlocks:modelShapes.size,modelUVFaces:window.MineWorldJavaFaceTransforms?.stats().faces||0,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
@@ -868,7 +911,8 @@ function updateAnimation(now,fps,touch){
  if(!timeline||!state.canvas)return 0;
  if(typeof gl.isContextLost==='function'&&gl.isContextLost())return 0;
  const elapsed=Math.max(0,now-state.animationStart);
- const tile=document.createElement('canvas');tile.width=16;tile.height=16;
+ const size=state.tilePixels,scale=size/16;
+ const tile=document.createElement('canvas');tile.width=size;tile.height=size;
  const ctx=tile.getContext('2d',{alpha:true});
  const atlasCtx=state.canvas.getContext('2d',{alpha:true});
  if(!ctx||!atlasCtx)return 0;
@@ -886,20 +930,21 @@ function updateAnimation(now,fps,touch){
    over.blend=Math.round(over.blend*16)/16;
    const key=[base.index,base.nextIndex,base.blend,over.index,over.nextIndex,over.blend].join(':');
    if(entry.lastKey===key)continue;
-   ctx.clearRect(0,0,16,16);
+   ctx.clearRect(0,0,size,size);
    if(entry.image){
-    drawPackFrame(ctx,entry.image,entry.baseGeometry,base.index);
+    drawPackFrame(ctx,entry.image,entry.baseGeometry,base.index,1,0,0,size);
     if(base.blend>0&&base.index!==base.nextIndex)
-     drawPackFrame(ctx,entry.image,entry.baseGeometry,base.nextIndex,base.blend);
-    tintNeutralSprite(ctx,0,0,entry.id,entry.face);
+     drawPackFrame(ctx,entry.image,entry.baseGeometry,base.nextIndex,base.blend,0,0,size);
+    if(entry.face<=2)tintNeutralSprite(ctx,0,0,entry.id,entry.face,state.tint,size);
    }else if(state.originalImage){
-    ctx.drawImage(state.originalImage,entry.px,entry.py,16,16,0,0,16,16);
+    ctx.drawImage(state.originalImage,entry.px,entry.py,16,16,0,0,size,size);
    }
    if(entry.overlay)
-    composeGrassSideOverlay(ctx,entry.overlay,0,0,over.index,over.nextIndex,over.blend,entry.overlayGeometry);
-   atlasCtx.clearRect(entry.px,entry.py,16,16);
-   atlasCtx.drawImage(tile,entry.px,entry.py);
-   gl.texSubImage2D(gl.TEXTURE_2D,0,entry.px,entry.py,gl.RGBA,gl.UNSIGNED_BYTE,tile);
+    composeGrassSideOverlay(ctx,entry.overlay,0,0,over.index,over.nextIndex,over.blend,entry.overlayGeometry,state.tint,size);
+   const x=entry.px*scale,y=entry.py*scale;
+   atlasCtx.clearRect(x,y,size,size);
+   atlasCtx.drawImage(tile,x,y);
+   gl.texSubImage2D(gl.TEXTURE_2D,0,x,y,gl.RGBA,gl.UNSIGNED_BYTE,tile);
    entry.lastKey=key;
    updated++;
   }
@@ -952,7 +997,9 @@ function drawFace(ctx,id,face){
  const alt=window.MineWorldAtlas?.alternateFaces?.[id];
  const tile=face===4&&alt?.extra?alt.extra.tile:face===3&&alt?alt.tile:id*3+face;
  ctx.clearRect(0,0,16,16);
- ctx.drawImage(state.canvas,(tile%16)*16,Math.floor(tile/16)*16,16,16,0,0,16,16);
+ const size=state.tilePixels;
+ if('imageSmoothingEnabled' in ctx)ctx.imageSmoothingEnabled=false;
+ ctx.drawImage(state.canvas,(tile%16)*size,Math.floor(tile/16)*size,size,size,0,0,16,16);
  return true;
 }
 const exposed={
@@ -1072,7 +1119,7 @@ function addControls(root,title){
  function showCoverage(result){
    if(!result)return;
    status.textContent='Matched '+result.faces+' of '+result.totalFaces+' block faces ('+
-     result.coverage+'%) across '+result.blocks+' block types, '+(result.directionalFaces||0)+' dedicated directional side faces, '+(result.items||0)+' item PNGs, '+(result.entities||0)+' mob skins, '+(result.worldItemSprites||0)+' 3D item sprites, '+result.animatedFaces+' animated faces ('+(result.bedrockAnimatedFaces||0)+' from Bedrock flipbooks) and '+result.sounds+
+     result.coverage+'%) across '+result.blocks+' block types, '+(result.atlasTilePixels||16)+'px atlas faces, '+(result.directionalFaces||0)+' dedicated directional side faces, '+(result.items||0)+' item PNGs, '+(result.entities||0)+' mob skins, '+(result.worldItemSprites||0)+' 3D item sprites, '+result.animatedFaces+' animated faces ('+(result.bedrockAnimatedFaces||0)+' from Bedrock flipbooks) and '+result.sounds+
      ' sound events, '+(result.modelMappedFaces||0)+' model-resolved faces. '+(result.overlaid?'Grass uses the Java side overlay. ':'')+'Unmatched block faces keep independent MineWorld art.';
    detail.textContent=result.unmapped.length?
      'Example unmatched sprite names: '+result.unmapped.slice(0,9).join(', ')+'.':'All mapped face names were present.';

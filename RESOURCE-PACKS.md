@@ -1,3 +1,7 @@
+## 6.47 — Higher-resolution source textures
+
+MineWorld's private player-selected resource importer retains up to 32x32 per-block-face source pixels in the 3D world. A 32px+ local PNG triggers a bounded 512x2048 GPU atlas (~4MiB RGBA) with nearest-neighbor processing, including animated frames and directional faces. Default 16px vanilla PNGs continue to use 16x16 unchanged, and high-resolution packs larger than 32px are still capped to 32px for mobile GPU compatibility. Imported bitmaps stay in the user's browser.
+
 ## 6.43 — safe Java multipart default cube selection (October 25, 2026)
 
 Player-supplied Java Edition blockstates with a `multipart` array can now select a **single matching full-cube model** when the known default state unambiguously matches one part. Conditions support `AND`, `OR`, and pipe-separated alternatives such as `facing=north|west`; quarter-turn Y rotations, `uvlock`, inherited texture variables, distinct cardinal faces, and face UVs continue through the existing local-only renderer. Unknown properties, unsupported rotations, multiple matching parts (such as fences or panes), and non-cube geometry safely retain MineWorld's fallback textures. No original game bitmaps are shipped, and saves, block IDs, and mobile controls are unchanged.
