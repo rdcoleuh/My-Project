@@ -95,7 +95,7 @@ test('crop and foliage transparency, render script order, offline cache and save
  assert.ok(html.indexOf('src="./texture-classic-forms.js"')<html.indexOf('src="./texture-motion.js"'));
  assert.equal((html.match(/src="\.\/texture-classic-forms\.js"/g)||[]).length,1);
  assert.ok(sw.includes("'./texture-classic-forms.js'"));
- assert.ok(sw.includes('mineworld-6-6-java-inventory-20261024-v46'));
+ assert.ok(sw.includes('mineworld-6-6-java-inventory-crafting-20261024-v47'));
  assert.ok(html.includes('mineworld-selfhost-v1'));
  assert.ok(html.includes('MineWorld 6.6'));
  assert.ok(!read('texture-classic-forms.js').includes('fetch('));
