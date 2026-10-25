@@ -944,6 +944,9 @@ addControls(document.querySelector('#pause .mw-render-panel')?.parentNode,'🎨 
 mountDefaultUI(document.querySelector('#mw-menu-root'));
 mountOptionsUI();
 addControls(document.querySelector('#welcome .seed-panel')?.parentNode,'🎨 Import local textures and sounds');
+// This module loads AFTER the menu-building script, so these panels now exist.
+mountDefaultUI(document.querySelector('#mw-menu-root'));
+mountOptionsUI();
 // Restore only packs the player explicitly opted to remember. Everything
 // stays in this browser's IndexedDB; no network request is made.
 if(packStorage?.supported)restoreTask=packStorage.load().then(async stored=>{
