@@ -33,7 +33,7 @@ function install(api){
   if(atlas){
    const tile=id*3;
    block.style.backgroundImage='url('+atlas+')';
-   block.style.backgroundPosition=((tile%16)/15*100).toFixed(2)+'% '+(Math.floor(tile/16)/31*100).toFixed(2)+'%';
+   block.style.backgroundPosition=((tile%16)/15*100).toFixed(2)+'% '+(Math.floor(tile/16)/63*100).toFixed(2)+'%';
   }else block.textContent='▦';
  }
  function itemView(key,where){
