@@ -1,3 +1,13 @@
+# MineWorld 6.29 — Java Texture Import Recovery and Partial-Block UV Fidelity
+
+**Import resilience:** If a preferred modern Java block PNG is present but corrupt or undecodable, the importer now tries independently named legacy/Bedrock aliases in priority order. The selected decoded sprite's own `.png.mcmeta` animation metadata is used, instead of pairing a fallback with the corrupt preferred file's metadata. Shared PNGs are decoded only once per import. A missing Bedrock flipbook helper no longer prevents otherwise valid Java `.png.mcmeta` imports. Invalid packs still fail without replacing the last working atlas. Player-provided assets remain local; no original Minecraft bitmaps were added.
+
+**Java model UVs:** Farmland (dry/wet) and the end portal frame now sample the *bottom* 15 or 13 rows of their imported side PNGs, respectively, matching the Java model's [0,1,16,16] and [0,3,16,16] side UV rectangles. Full-width top and bottom textures, other block UVs, world IDs and save data are unchanged. This is targeted UV fidelity, not full Java model JSON/blockstate support.
+
+**Tests:** New regression cases cover corrupt modern PNG fallback, canonical precedence, matching alias animation metadata, invalid-pack rejection, and UV rectangles. The CI suite includes browser smoke testing on desktop and emulated mobile Chrome. Physical devices and every third-party resource pack are not exhaustively tested.
+
+---
+
 # MineWorld 6.28 — Mining and Animal Movement Repairs
 
 **Mining:** The block-breaking job now cancels immediately when desktop mouse input ends or mobile Mine-button touch input ends, is canceled, or loses pointer capture. It no longer continues destroying a block after the user releases the control. The block selection outline and independent fracture lines now follow the actual shape of partial blocks (such as lanterns, farmland, beds, and thin stems) instead of appearing around a floating full-size cube when imported Java/Bedrock textures are active.
