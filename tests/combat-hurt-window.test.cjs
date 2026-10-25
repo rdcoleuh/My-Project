@@ -26,6 +26,6 @@ test('live creature hits use hurt resistance, consume swing on resisted hits, an
  assert.match(html,/MineWorldCombat\.hurtWindow/);
  assert.match(html,/m\.lastHitAt=now;m\.lastHitDamage=recent\.stored/);
  assert.match(html,/if\(!result\.hit\)\{lastAttackAt=now;attackCooldown=\.12;return;\}/);
- assert.match(sw,/mineworld-6-46-hurt-resistance/);
+ assert.match(sw,/'\.\/combat-rules\.js'/);
  assert.doesNotMatch(read('combat-rules.js'),/localStorage|\.jar/);
 });

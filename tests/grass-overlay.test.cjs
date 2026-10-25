@@ -54,6 +54,6 @@ test('importer searches actual vanilla side overlay independent of base and neve
  assert.ok(src.includes("ctx.drawImage(image,0,0,frame,frame,px,py,16,16)"));
  assert.ok(src.includes("composeGrassSideOverlay(ctx,overlay,px,py,firstFrame(overlayInfo),firstFrame(overlayInfo),0,overlayInfo?.geometry,importedTints.palette)"),
   'Java grass overlay must be composited with animation frame geometry');
- assert.ok(src.includes('if(image||overlay){faces++;ids.add(id);importedFaces.add(id*3+face);}'));
+ assert.ok(src.includes('if(image||overlay){')&&src.includes('faces++;ids.add(id);importedFaces.add(id*3+face);'));
  assert.ok(src.includes('readArchive(await file.arrayBuffer())'));
 });

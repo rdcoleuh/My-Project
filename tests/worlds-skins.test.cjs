@@ -121,7 +121,7 @@ test('worlds and skin UI files are loaded, full-size block texel density is pres
  assert.ok(html.includes('worldLibrary.key(mode)'));
  assert.ok(html.includes('worldLibrary.current'));
  assert.ok(html.includes('window.MineWorldSkin.uv'));
- assert.ok(html.includes('pxU=Math.max(1,Math.min(SIZE,Math.round((arguments[3]??1)*SIZE)))'));
+ assert.ok(html.includes('pxU=Math.max(1,Math.min(size,Math.round((arguments[3]??1)*size)))'));
  assert.ok(html.includes('sourceCorner=window.MineWorldFaceUV.corner(f.n,v)') &&
      html.includes('originalUV=window.MineWorldAtlas.uv(b,textureFace,sourceCorner,spanU,spanV,0,offsetV,sourceTile)') &&
      html.includes('MineWorldJavaFaceTransforms?.sample('));

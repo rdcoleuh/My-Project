@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..'),src=fs.readFileSync(path.join(root,'local-resource-pack.js'),'utf8');
-const body=src.match(/function tintNeutralSprite\(ctx,x,y,id,face,palette=state\.tint\)[\s\S]*?(?=\nasync function applyResources)/)?.[0];
+const body=src.match(/function tintNeutralSprite\(ctx,x,y,id,face,palette=state\.tint,size=16\)[\s\S]*?(?=\nasync function applyResources)/)?.[0];
 if(!body)throw Error('Import tint function missing');
 const tint=vm.runInNewContext("const state={tint:{grass:[145,189,89],foliage:[119,171,47]}};\n"+body+'\ntintNeutralSprite');
 function pixelContext(rgb,alpha=255){

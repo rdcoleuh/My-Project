@@ -45,5 +45,5 @@ test('partial resource-pack integration tracks imported faces and clears on rese
  assert.ok(pack.includes('state.importedFaces=importedFaces'));
  assert.ok(pack.includes('state.importedFaces=new Set()'));
  assert.ok(pack.includes('hasImportedFace(id,face)'));
- assert.ok(pack.includes('if(image||overlay){faces++;ids.add(id);importedFaces.add(id*3+face);}'));
+ assert.ok(pack.includes('if(image||overlay){')&&pack.includes('faces++;ids.add(id);importedFaces.add(id*3+face);'));
 });

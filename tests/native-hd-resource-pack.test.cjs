@@ -37,7 +37,7 @@ function start(size,height=size){
  window.MineWorldAtlas.dataURL='data:image/png;base64,synthetic';
  vm.runInNewContext(read('resource-animation.js'),env);
  vm.runInNewContext(read('local-resource-pack.js'),env);
- const png=Uint8Array.from([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82]);
+ const png=Uint8Array.from([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,16,0,0,0,16]);
  const file=(name,bytes=png)=>({name,size:bytes.length,async arrayBuffer(){return Uint8Array.from(bytes).buffer;}});
  return {window,uploads,subUploads,draws,file};
 }
