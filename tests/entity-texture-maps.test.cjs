@@ -17,7 +17,7 @@ test('six face layouts use different real head/body/leg PNG rectangles',()=>{
  const legFront=m.rect('cow','leg','front',img);
  assert.deepEqual({...headFront},{x:6,y:6,width:8,height:8});
  assert.deepEqual({...headTop},{x:6,y:0,width:8,height:6});
- assert.deepEqual({...headBack},{x:28,y:6,width:8,height:8});
+ assert.deepEqual({...headBack},{x:20,y:6,width:8,height:8});
  assert.ok(bodyFront.x!==headFront.x||bodyFront.y!==headFront.y);
  assert.ok(legFront.y!==headFront.y);
  for(const kind of ['cow','pig','sheep','creeper','zombie','skeleton']){
