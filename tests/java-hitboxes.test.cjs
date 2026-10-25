@@ -46,7 +46,7 @@ test('width-aware occupancy checks both sides and head against partial-block sha
  assert.equal(fits({kind:'player',x:9.9,y:1,z:5}),false,'world edges reject unsafe movement');
  assert.equal(fits({kind:'player',x:2.5,y:1,z:5}),true);
  assert.equal(h.canOccupy({kind:'cow',x:4.6,y:1,z:5.5},
-   (x,y,z)=>x===5&&y===1&&z===5?12:0,shape,id=>id!==0),true,'half slab below feet');
+   (x,y,z)=>x===5&&y===0&&z===5?12:0,shape,id=>id!==0),true,'half slab below feet');
 });
 test('world integration uses shared boxes for movement, placement and three-block combat',()=>{
  const html=read('index.html'),sw=read('sw.js');
