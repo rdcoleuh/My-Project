@@ -125,7 +125,7 @@ test('renderer uses pack art for world drop blocks, mob skins and hotbar icons',
  assert.ok(html.includes("MineWorldMobPixels.hasImported(mobKind)"));
  assert.ok(html.includes("MineWorldMobPixels.hasImported(m.kind)"));
  assert.ok(html.includes("window.MineWorldLocalTextures?.itemIcon?.(key)"));
- assert.ok(html.includes("MineWorldMobPixels.hasImported(iconKey)"));
+ assert.ok(html.includes("window.MineWorldMobPixels?.hasImported(iconKey)"));
  assert.ok(html.includes("upload(blocks,atlasTexture,true)"));
  assert.ok(html.includes("upload(itemSprites,mobPixelTexture||atlasTexture,true)"));
  assert.ok(html.includes("window.MineWorldBridge.getPlayer()")===false,'no accidental test code in game');
