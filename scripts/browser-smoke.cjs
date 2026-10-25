@@ -34,27 +34,42 @@ function pngChunk(name,data){
  size.writeUInt32BE(data.length);crc.writeUInt32BE(crc32(Buffer.concat([typ,data])));
  return Buffer.concat([size,typ,data,crc]);
 }
-function makeTestArchive(){
- const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(16,0);ihdr.writeUInt32BE(16,4);
- ihdr[8]=8;ihdr[9]=6; // 8-bit RGBA
- const rows=Buffer.alloc(16*(1+16*4));
- for(let y=0;y<16;y++)for(let x=0;x<16;x++){
-  const pos=y*(1+16*4)+1+x*4;rows[pos]=110;rows[pos+1]=130;rows[pos+2]=140;rows[pos+3]=255;
+function generatedPng(height,channel){
+ const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(16,0);ihdr.writeUInt32BE(height,4);
+ ihdr[8]=8;ihdr[9]=6;
+ const rows=Buffer.alloc(height*(1+16*4));
+ for(let y=0;y<height;y++)for(let x=0;x<16;x++){
+  const pos=y*(1+16*4)+1+x*4;
+  rows[pos]=110;rows[pos+1]=(channel+y*8)%255;rows[pos+2]=140;rows[pos+3]=255;
  }
- const png=Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),
+ return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),
   pngChunk('IHDR',ihdr),pngChunk('IDAT',deflateSync(rows)),pngChunk('IEND',Buffer.alloc(0))]);
- const name=Buffer.from('resource_pack/textures/blocks/stone.png');
- const head=Buffer.alloc(30+name.length),dir=Buffer.alloc(46+name.length);
- head.writeUInt32LE(0x04034b50,0);head.writeUInt16LE(20,4);
- head.writeUInt32LE(crc32(png),14);head.writeUInt32LE(png.length,18);
- head.writeUInt32LE(png.length,22);head.writeUInt16LE(name.length,26);name.copy(head,30);
- dir.writeUInt32LE(0x02014b50,0);dir.writeUInt16LE(20,4);dir.writeUInt16LE(20,6);
- dir.writeUInt32LE(crc32(png),16);dir.writeUInt32LE(png.length,20);dir.writeUInt32LE(png.length,24);
- dir.writeUInt16LE(name.length,28);name.copy(dir,46);
+}
+function makeTestArchive(){
+ const files=[
+   ['resource_pack/textures/blocks/stone.png',generatedPng(16,80)],
+   ['resource_pack/textures/blocks/water_still_grey.png',generatedPng(64,35)],
+   ['resource_pack/textures/flipbook_textures.json',Buffer.from(JSON.stringify([
+    {flipbook_texture:'textures/blocks/water_still_grey',atlas_tile:'still_water_grey',
+     frames:[3,1,0,2],ticks_per_frame:1,blend_frames:false}
+   ]))]
+ ];
+ const local=[],central=[];let offset=0;
+ for(const [filename,data] of files){
+   const name=Buffer.from(filename),head=Buffer.alloc(30+name.length),dir=Buffer.alloc(46+name.length);
+   head.writeUInt32LE(0x04034b50,0);head.writeUInt16LE(20,4);
+   head.writeUInt32LE(crc32(data),14);head.writeUInt32LE(data.length,18);
+   head.writeUInt32LE(data.length,22);head.writeUInt16LE(name.length,26);name.copy(head,30);
+   dir.writeUInt32LE(0x02014b50,0);dir.writeUInt16LE(20,4);dir.writeUInt16LE(20,6);
+   dir.writeUInt32LE(crc32(data),16);dir.writeUInt32LE(data.length,20);dir.writeUInt32LE(data.length,24);
+   dir.writeUInt16LE(name.length,28);dir.writeUInt32LE(offset,42);name.copy(dir,46);
+   local.push(head,data);central.push(dir);offset+=head.length+data.length;
+ }
  const eocd=Buffer.alloc(22);eocd.writeUInt32LE(0x06054b50,0);
- eocd.writeUInt16LE(1,8);eocd.writeUInt16LE(1,10);
- eocd.writeUInt32LE(dir.length,12);eocd.writeUInt32LE(head.length+png.length,16);
- return Buffer.concat([head,png,dir,eocd]);
+ eocd.writeUInt16LE(files.length,8);eocd.writeUInt16LE(files.length,10);
+ eocd.writeUInt32LE(central.reduce((t,part)=>t+part.length,0),12);
+ eocd.writeUInt32LE(offset,16);
+ return Buffer.concat([...local,...central,eocd]);
 }
 async function go(browser,name,mobile){
  const context=await browser.newContext(mobile?{
@@ -89,9 +104,16 @@ async function go(browser,name,mobile){
     null,{timeout:30000});
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.faces>=3),
     name+': synthetic stone was not imported');
+  assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.bedrockAnimatedFaces>=3),
+    name+': Bedrock water animation did not load from flipbook_textures.json');
+  assert.ok(await page.evaluate(()=>
+    window.MineWorldLocalTextures.updateAnimation(performance.now()+1000,60,false)>=3),
+    name+': imported water animation did not update GPU atlas');
   await page.reload({waitUntil:'domcontentloaded',timeout:60000});
   await page.locator('#mw-menu-root.active').waitFor({state:'visible',timeout:25000});
   await page.waitForFunction(()=>window.MineWorldLocalTextures?.lastResult?.faces>=3,null,{timeout:30000});
+  assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.bedrockAnimatedFaces>=3),
+    name+': stored Bedrock animation was lost after reload');
   await page.locator('#mw-options').click();
   assert.equal(await page.locator('#mw-options-screen').evaluate(el=>el.classList.contains('active')),true,name+': Options failed');
   assert.ok(await page.locator('#mw-options-screen .mw-local-experiment').count(),
