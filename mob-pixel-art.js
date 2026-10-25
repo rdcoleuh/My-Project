@@ -6,7 +6,8 @@
  'use strict';
  const SIZE=16,COLS=16;
  const corners=[[0,0],[0,1],[1,1],[1,0]];
- let positions=new Map(),rows=1;
+ let positions=new Map(),rows=1,baseKinds=[],canvas=null,ctx=null,gpu=null,texture=null;
+ let imported=new Set();
  function stableHash(s){
    let h=2166136261;
    for(const c of String(s)){h=Math.imul(h^c.charCodeAt(0),16777619);}
@@ -25,10 +26,11 @@
  function create(gl,species){
    if(!gl||!species)return null;
    const names=[...new Set([...Object.keys(species),'vehicle'])].sort();
+   baseKinds=names.slice();
    positions=new Map(names.map((kind,i)=>[kind,i]));
    rows=Math.max(1,Math.ceil(names.length/COLS));
-   const canvas=document.createElement('canvas');canvas.width=COLS*SIZE;canvas.height=rows*SIZE;
-   const ctx=canvas.getContext('2d',{alpha:true});
+   canvas=document.createElement('canvas');canvas.width=COLS*SIZE;canvas.height=rows*SIZE;
+   ctx=canvas.getContext('2d',{alpha:true});
    if(!ctx)return null;
    const pixels=ctx.createImageData(canvas.width,canvas.height);
    for(let i=0;i<names.length;i++){
@@ -39,14 +41,56 @@
      }
    }
    ctx.putImageData(pixels,0,0);
-   const texture=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);
+   texture=gl.createTexture();gpu=gl;gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);
    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,canvas);
    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
-   return texture;
+   imported.clear();
+  return texture;
+ }
+ // Import a player-owned entity skin or item PNG by scaling a meaningful
+ // part of the artwork into MineWorld's original cuboid material layout.
+ // This is not a 1:1 Bedrock model UV mapping; those geometries differ.
+ function applyImported(artworks){
+   if(!gpu||!canvas||!ctx||!(artworks instanceof Map))return 0;
+   const entries=[...artworks].filter(([name,img])=>typeof name==='string'&&img&&
+     Number.isFinite(img.width)&&Number.isFinite(img.height)&&img.width>0&&img.height>0&&
+     img.width<=2048&&img.height<=2048);
+   const keys=[...baseKinds,...entries.map(([name])=>name).filter(name=>!baseKinds.includes(name))];
+   positions=new Map(keys.map((key,i)=>[key,i]));
+   rows=Math.max(1,Math.ceil(keys.length/COLS));
+   canvas.width=COLS*SIZE;canvas.height=rows*SIZE;
+   const pixels=ctx.createImageData(canvas.width,canvas.height);
+   for(let i=0;i<keys.length;i++){
+     const kind=keys[i],col=i%COLS,row=Math.floor(i/COLS);
+     for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
+       const tone=shade(kind,x,y),j=((row*SIZE+y)*canvas.width+col*SIZE+x)*4;
+       pixels.data[j]=tone;pixels.data[j+1]=tone;pixels.data[j+2]=tone;pixels.data[j+3]=255;
+     }
+   }
+   ctx.putImageData(pixels,0,0);
+   imported=new Set();
+   for(const [key,img] of entries){
+     const index=positions.get(key),dx=(index%COLS)*SIZE,dy=Math.floor(index/COLS)*SIZE;
+     let sx=0,sy=0,sw=img.width,sh=img.height;
+     if(!key.startsWith('item:')&&img.width>=64&&img.height>=32){
+       // Head front texture is an 8x8 region of the classic 64-wide skin.
+       const scale=img.width/64;
+       sx=8*scale;sy=8*scale;sw=8*scale;sh=8*scale;
+       if(sy+sh>img.height){sx=0;sy=0;sw=img.width;sh=img.height;}
+     }
+     // Preserve original pixel edges and transparent pixels.
+     ctx.imageSmoothingEnabled=false;
+     ctx.drawImage(img,sx,sy,sw,sh,dx,dy,SIZE,SIZE);
+     imported.add(key);
+   }
+   gpu.activeTexture(gpu.TEXTURE0);gpu.bindTexture(gpu.TEXTURE_2D,texture);
+   gpu.pixelStorei(gpu.UNPACK_FLIP_Y_WEBGL,false);
+   gpu.texImage2D(gpu.TEXTURE_2D,0,gpu.RGBA,gpu.RGBA,gpu.UNSIGNED_BYTE,canvas);
+   return imported.size;
  }
  function uv(kind,corner){
    const index=positions.get(kind)??positions.get('vehicle')??0;
@@ -54,5 +98,7 @@
    return [(col*SIZE+.5+point[0]*(SIZE-1))/(SIZE*COLS),
     (row*SIZE+.5+point[1]*(SIZE-1))/(SIZE*rows)];
  }
- window.MineWorldMobPixels=Object.freeze({create,uv,shade,get count(){return positions.size;},size:SIZE});
+ window.MineWorldMobPixels=Object.freeze({create,uv,shade,applyImported,
+  hasImported:key=>imported.has(key),get kinds(){return baseKinds.slice();},
+  get importedCount(){return imported.size;},get count(){return positions.size;},size:SIZE});
 })();
