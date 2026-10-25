@@ -1,4 +1,4 @@
-/* MineWorld: optional, local-only persistence for player-selected Java packs.
+/* MineWorld: optional, local-only persistence for player-selected Java and Bedrock packs.
  * Nothing is uploaded, downloaded automatically, or included in the game build.
  * IndexedDB is used only after the player explicitly chooses "Remember".
  */
@@ -45,7 +45,7 @@ async function transaction(mode,method,value){
 }
 async function save(file){
  if(!file||typeof file.arrayBuffer!=='function')return false;
- if(!/\.(zip|jar)$/i.test(file.name||''))return false;
+ if(!/\.(zip|jar|mcpack)$/i.test(file.name||''))return false;
  if(Number.isFinite(file.size)&&file.size>LIMIT)return false;
  try{
   const bytes=await file.arrayBuffer();
@@ -56,7 +56,7 @@ async function save(file){
 }
 async function load(){
  const saved=await transaction('readonly','get');
- if(!saved||!/\.(zip|jar)$/i.test(saved.name||'')||
+ if(!saved||!/\.(zip|jar|mcpack)$/i.test(saved.name||'')||
     !saved.blob||saved.blob.size>LIMIT)return null;
  return {name:saved.name,size:saved.blob.size,arrayBuffer:()=>saved.blob.arrayBuffer()};
 }
