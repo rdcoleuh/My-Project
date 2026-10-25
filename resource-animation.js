@@ -58,9 +58,11 @@ function frameDimensions(image,mcmeta){
  const animation=metadata(mcmeta);
  const fallback=Math.min(iw,ih);
  const valid=(n,max)=>Number.isInteger(n)&&n>0&&n<=max&&n<=4096;
- const fw=valid(animation?.width,iw)?animation.width:fallback;
- const fh=valid(animation?.height,ih)?animation.height:
-          valid(animation?.width,iw)?animation.width:fallback;
+ const hasWidth=valid(animation?.width,iw),hasHeight=valid(animation?.height,ih);
+ // Without an explicit sprite grid, wide PNGs are static images. Only
+ // vertical strips have the implicit Java animation layout.
+ const fw=hasWidth?animation.width:(!hasHeight&&iw>ih?iw:fallback);
+ const fh=hasHeight?animation.height:hasWidth?animation.width:(!hasHeight&&iw>ih?ih:fallback);
  const columns=Math.max(1,Math.floor(iw/fw)),rows=Math.max(1,Math.floor(ih/fh));
  return {size:fw,width:fw,height:fh,columns,rows,count:Math.min(4096,columns*rows)};
 }
