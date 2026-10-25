@@ -140,7 +140,7 @@ function install(api){
  }
  search.addEventListener('input',renderCreative);
  function openCreative(){creativeOpen=true;overlay.classList.add('mw-open');renderCreative();search.focus();}
- function closeCreative(){creativeOpen=false;overlay.classList.remove('mw-open');search.blur();}
+ function closeCreative(){creativeOpen=false;overlay.classList.remove('mw-open');search.blur();api.onCreativeClose?.();}
  function keydown(e){
   if(creativeOpen){
    if(e.code==='Escape'||e.code==='KeyE'&&e.target!==search){
