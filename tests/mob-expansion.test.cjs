@@ -59,7 +59,7 @@ test('creatures integrate with real game rendering, sampling, safe spawns and ol
  assert.ok(html.includes('src="./mob-expansion.js"'));
  assert.ok(sw.includes("'./mob-expansion.js'"));
  for(const fragment of ['Object.assign(SPECIES,extraMobs.catalog)','extraMobs?.draw(m,',
-   'extraMobs?.mountUI()','extraMobs.pickBiome(biome',
+   'window.MineWorldMobExpansion','extraMobs.pickBiome(biome',
    'extraMobs?.isAquatic(kind)','window.MineWorldMobBridge=Object.freeze',
    'mineworld-selfhost-v1']){
   assert.ok(html.includes(fragment),'missing integration: '+fragment);
