@@ -392,7 +392,7 @@ body.in-nether #game-wrap{background:#290f19}
 .hot-item .hot-stack-number{display:block!important;position:absolute!important;top:auto!important;right:-5px!important;bottom:-5px!important;z-index:2;min-width:12px;text-align:center;font:900 12px/1.05 monospace!important;letter-spacing:-.5px;color:#fff!important;background:#0b1609ce;border-radius:3px;padding:1px 2px;text-shadow:1px 1px #000,-1px -1px #000;pointer-events:none}
 @media(pointer:coarse){.hot-item .hot-stack-number{display:block!important;font-size:12px!important}}
 </style>
-<title>MineWorld 6.15 — Remember Your Java Texture Pack</title>
+<title>MineWorld 6.16 — Smooth & Classic Textures</title>
 </head>
 <body>
 <div id="game-wrap">
@@ -662,6 +662,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./texture-classic-forms.js"></script>
 <script src="./texture-precision.js"></script>
 <script src="./texture-motion.js"></script>
+<script src="./texture-smoothing.js"></script>
 <script src="./sound-engine.js"></script>
 <script src="./combat-rules.js"></script>
 <script src="./avatar-animation.js"></script>
@@ -1395,6 +1396,7 @@ body.in-nether #game-wrap{background:#290f19}
   if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
   const aPos=gl.getAttribLocation(program,'aPos'),aColor=gl.getAttribLocation(program,'aColor'),aUV=gl.getAttribLocation(program,'aUV'),uVP=gl.getUniformLocation(program,'uVP'),uEye=gl.getUniformLocation(program,'uEye'),uSky=gl.getUniformLocation(program,'uSky'),uAtlas=gl.getUniformLocation(program,'uAtlas'),uTextured=gl.getUniformLocation(program,'uTextured'),uFogEnd=gl.getUniformLocation(program,'uFogEnd');
   const atlasTexture=window.MineWorldAtlas.create(gl);
+  window.MineWorldTextureSmoothing?.attach(gl,atlasTexture,canvas);
   window.MineWorldResourcePackContext={gl,texture:atlasTexture,baseURL:window.MineWorldAtlas.dataURL};
   const skinTexture=window.MineWorldSkin.makeTexture(gl);
   gl.bindTexture(gl.TEXTURE_2D,atlasTexture);
@@ -4054,7 +4056,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
     '<button class="mw-pixel-btn" id="mw-multi" type="button">Multiplayer</button>'+
     '<button class="mw-pixel-btn" id="mw-creative" type="button">Creative World</button>'+
     '<div class="mw-2col"><button class="mw-pixel-btn" id="mw-options" type="button">Options…</button><button class="mw-pixel-btn" id="mw-return" type="button">World Atlas</button></div>'+
-    '</div><div class="mw-footer"><small>MineWorld 6.15 · Private Java texture pack memory</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
+    '</div><div class="mw-footer"><small>MineWorld 6.16 · Smooth & Classic texture display</small><small>Original fan-made game · Not affiliated with Mojang or Microsoft</small></div>';
   welcome.appendChild(main);
   const worlds=document.createElement('div');
   worlds.id='mw-world-screen';worlds.className='mw-screen mw-screen--sub';
@@ -4078,6 +4080,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
     '<p>Creative and Survival are separate saves. Minecraft-inspired art is generated independently; official Minecraft files are not included.</p></div>'+
     '<button type="button" class="mw-pixel-secondary mw-back" id="mw-back-options">← Back to Main Menu</button></div>';
   welcome.appendChild(options);
+  window.MineWorldTextureSmoothing?.mountUI();
   function show(which){
     for(const screen of [main,worlds,options])screen.classList.toggle('active',screen===which);
     if(which!==main)welcome.scrollTop=0;
