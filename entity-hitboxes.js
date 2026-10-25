@@ -122,7 +122,7 @@ function canOccupy(entity,blockAt,blockShape,collidable,worldBounds){
   typeof collidable!=='function')return false;
  const epsilon=1e-7;
  if(worldBounds&&(bounds.minX<0||bounds.minZ<0||bounds.minY<0||
-   bounds.maxX>worldBounds.width||bounds.maxZ>worldBounds.depth||bounds.maxY>worldBounds.height))return false;
+   bounds.maxX>worldBounds.width||bounds.maxZ>worldBounds.depth))return false;
  for(let x=Math.floor(bounds.minX);x<=Math.floor(bounds.maxX-epsilon);x++)
   for(let z=Math.floor(bounds.minZ);z<=Math.floor(bounds.maxZ-epsilon);z++)
    for(let y=Math.floor(bounds.minY);y<=Math.floor(bounds.maxY-epsilon);y++){
