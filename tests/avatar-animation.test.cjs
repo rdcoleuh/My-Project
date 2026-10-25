@@ -52,3 +52,21 @@ test('offline cache includes avatar animation for mobile',()=>{
  const sw=read('sw.js');
  assert.ok(sw.includes("'./avatar-animation.js'"));
 });
+
+test('mining swing repeats while digging, ends on release, and is independent of combat',()=>{
+ const a=animation();
+ assert.equal(a.miningSwing(0,true),0);
+ assert.ok(a.miningSwing(85,true)>.6);
+ assert.ok(a.miningSwing(170,true)>.99);
+ assert.ok(a.miningSwing(425,true)>.6,'repeated stroke during a long dig');
+ assert.equal(a.miningSwing(340,false),0,'instant break stroke settles');
+ assert.equal(a.miningSwing(1000,false),0);
+ assert.equal(a.miningSwing(-1,true),0);
+ assert.equal(a.miningSwing(Infinity,true),0);
+ const html=read('index.html');
+ assert.ok(html.includes('MineWorldAvatarAnimation.miningSwing('));
+ assert.ok(html.includes('mineJob?mineJob.elapsed*1000:now-lastMineTapAt,!!mineJob'));
+ assert.ok(html.includes('lastMineTapAt=performance.now();breakBlockNow(aim);return;'));
+ assert.ok(html.includes('const swing=Math.max(attackSwing,toolSwing)'));
+ assert.ok(html.includes('const hit=window.MineWorldCombat.strike({'));
+});
