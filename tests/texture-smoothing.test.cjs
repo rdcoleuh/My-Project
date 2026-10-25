@@ -6,7 +6,7 @@ const base=path.resolve(__dirname,'..');
 const read=name=>fs.readFileSync(path.join(base,name),'utf8');
 const source=read('texture-smoothing.js'),html=read('index.html');
 function boot(saved){
-  const calls=[],store=new Map(saved?[['mineworld-texture-smoothing-v2',saved]]:[]);
+  const calls=[],store=new Map(saved?[['mineworld-texture-smoothing-v3',saved]]:[]);
   const panels=[{children:[]},{children:[]}];
   class Element{
     constructor(tag){this.tag=tag;this.children=[];this.handlers={};this.style={};this.checked=false;this.attrs={};}
@@ -43,7 +43,7 @@ test('Classic sharp pixel sampling is the default; Smooth stays an optional sett
   assert.ok(x.calls.some(v=>v[0]==='filter'&&v[2]===x.gl.TEXTURE_MAG_FILTER&&v[3]===x.gl.NEAREST));
   x.api.set(true);
   assert.equal(x.store.get(x.api.storageKey),'smooth');
-  assert.equal(x.canvas.style.imageRendering,'auto');
+  assert.equal(x.canvas.style.imageRendering,'pixelated');
   assert.ok(x.calls.some(v=>v[0]==='filter'&&v[2]===x.gl.TEXTURE_MIN_FILTER&&v[3]===x.gl.LINEAR));
   assert.equal(x.api.apply(x.gl,tex),true,'resource packs can restore filter without changing worlds');
 });
@@ -59,7 +59,7 @@ test('existing preference survives page reload; matching controls update in paus
   assert.equal(first.checked,false);
   first.checked=true;first.handlers.change();
   assert.equal(other.checked,true);
-  assert.equal(x.canvas.style.imageRendering,'auto');
+  assert.equal(x.canvas.style.imageRendering,'pixelated');
   x.api.mountUI();
   assert.equal(x.panels[0].children.length,2,'mounting again does not duplicate the option');
 });
@@ -77,9 +77,29 @@ test('rendering wiring preserves original world saves, resource-pack pixels and 
 test('old v1 smooth preference does not override new classic-default release',()=>{
   const x=boot();
   assert.equal(x.api.enabled,false);
-  assert.equal(x.api.storageKey,'mineworld-texture-smoothing-v2');
+  assert.equal(x.api.storageKey,'mineworld-texture-smoothing-v3');
   x.api.set(true);
   assert.equal(x.store.get(x.api.storageKey),'smooth');
   const restored=boot('smooth');
   assert.equal(restored.api.enabled,true);
+});
+
+test('old v2 smooth settings do not reenable blur in a fresh v3 session',()=>{
+ const calls=[],storage=new Map([['mineworld-texture-smoothing-v2','smooth']]);
+ const context={window:{},localStorage:{
+  getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)
+ },console};
+ vm.runInNewContext(source,context);
+ assert.equal(context.window.MineWorldTextureSmoothing.enabled,false);
+ assert.equal(storage.has('mineworld-texture-smoothing-v3'),false);
+});
+test('the main renderer uses crisp MSAA-free output with a >=1x framebuffer',()=>{
+ assert.ok(html.includes("canvas.getContext('webgl', { antialias: false"));
+ assert.ok(html.includes('const minResolution=1,maxResolution='));
+ assert.ok(html.includes('const dpr=Math.max(1,Math.min(window.devicePixelRatio||1,dynamicResolution));'));
+ assert.ok(html.includes('let dynamicResolution=isTouch?1.48:1.6;'));
+ assert.ok(html.includes('Math.round(w*dpr)'));
+ assert.ok(html.includes('Math.round(h*dpr)'));
+ assert.ok(read('local-resource-pack.js').includes('ctx.imageSmoothingEnabled=false'));
+ assert.ok(read('mob-pixel-art.js').includes('ctx.imageSmoothingEnabled=false'));
 });
