@@ -95,6 +95,14 @@ function rayDistance(origin,direction,bounds,maxDistance=Infinity){
  }
  return entry<=maxDistance?entry:null;
 }
+function distanceToBox(point,bounds){
+ if(!Array.isArray(point)||!point.every(finite)||!bounds)return Infinity;
+ const axis=(v,lo,hi)=>v<lo?lo-v:v>hi?v-hi:0;
+ return Math.hypot(
+  axis(point[0],bounds.minX,bounds.maxX),
+  axis(point[1],bounds.minY,bounds.maxY),
+  axis(point[2],bounds.minZ,bounds.maxZ));
+}
 function wireframe(bounds){
  if(!bounds)return [];
  const corners=[
@@ -129,5 +137,5 @@ function canOccupy(entity,blockAt,blockShape,collidable,worldBounds){
    }
  return true;
 }
-window.MineWorldEntityHitboxes=Object.freeze({DATA,dimensions,box,intersects,rayDistance,wireframe,canOccupy});
+window.MineWorldEntityHitboxes=Object.freeze({DATA,dimensions,box,intersects,rayDistance,distanceToBox,wireframe,canOccupy});
 })();
