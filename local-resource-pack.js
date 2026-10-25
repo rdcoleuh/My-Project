@@ -257,6 +257,7 @@ function readArchive(buffer){
    // precedence over nested variants when both exist.
    const match=relative?.match(/^textures\/(?:block|blocks)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png$/);
    const item=relative?.match(/^textures\/(?:item|items)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png$/);
+   const entity=relative?.match(/^textures\/entity\/([a-z0-9_-]+(?:\/[a-z0-9_-]+)*)\.png$/);
    const matchSound=relative?.match(/^sounds\/([a-z0-9_./-]+)\.ogg$/);
    const matchMeta=relative?.match(/^textures\/(?:block|blocks)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png\.mcmeta$/);
    const mapColor=relative?.match(/^textures\/colormap\/(grass|foliage)\.png$/);
@@ -269,6 +270,8 @@ function readArchive(buffer){
    }
    if(item&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8))
      keep('item:'+item[1],{method,size,expanded,local},priority);
+   if(entity&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8))
+     keep('entity:'+entity[1],{method,size,expanded,local},priority);
    if(matchMeta&&size<131072&&expanded<131072&&(method===0||method===8))
      keep('meta:'+matchMeta[1],{method,size,expanded,local},priority);
    if(bedrockFlipbook&&size<256*1024&&expanded<256*1024&&(method===0||method===8))
@@ -669,6 +672,7 @@ async function loadFiles(fileList){
    const png=leaf.match(/^([a-z0-9_]+)\.png$/),ogg=leaf.match(/^([a-z0-9_]+)\.ogg$/),meta=leaf.match(/^([a-z0-9_]+)\.png\.mcmeta$/);
    let key=png?.[1]||null;
    if(png&&/(?:^|\/)textures\/(?:item|items)\//.test(name))key='item:'+png[1];
+   if(png){const path=name.match(/(?:^|\/)textures\/entity\/([a-z0-9_\/-]+)\.png$/);if(path)key='entity:'+path[1];}
    if(ogg){const path=name.match(/(?:^|\/)sounds\/([a-z0-9_./-]+)\.ogg$/);if(path)key='sound:'+path[1];}
    if(png&&name.includes('/colormap/')&&['grass','foliage'].includes(png[1]))key='colormap:'+png[1];
    if(meta)key='meta:'+meta[1];
