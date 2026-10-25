@@ -672,6 +672,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./animal-behavior.js"></script>
 <script src="./animal-models.js"></script>
 <script src="./mob-expansion.js"></script>
+<script src="./mob-pixel-art.js"></script>
 <script src="./perspective.js"></script>
 <script src="./world-library.js"></script>
 <script src="./skin-editor.js"></script>
@@ -1425,6 +1426,7 @@ body.in-nether #game-wrap{background:#290f19}
   if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
   const aPos=gl.getAttribLocation(program,'aPos'),aColor=gl.getAttribLocation(program,'aColor'),aUV=gl.getAttribLocation(program,'aUV'),uVP=gl.getUniformLocation(program,'uVP'),uEye=gl.getUniformLocation(program,'uEye'),uSky=gl.getUniformLocation(program,'uSky'),uAtlas=gl.getUniformLocation(program,'uAtlas'),uTextured=gl.getUniformLocation(program,'uTextured'),uFogEnd=gl.getUniformLocation(program,'uFogEnd');
   const atlasTexture=window.MineWorldAtlas.create(gl);
+  const mobPixelTexture=window.MineWorldMobPixels?.create(gl,SPECIES);
   window.MineWorldTextureSmoothing?.attach(gl,atlasTexture,canvas);
   window.MineWorldResourcePackContext={gl,texture:atlasTexture,baseURL:window.MineWorldAtlas.dataURL};
   const skinTexture=window.MineWorldSkin.makeTexture(gl);
@@ -3415,12 +3417,20 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function drawMobs(){
     if(!mobs.length&&!vehicles.some(v=>v.dimension===dimension))return;
-    const a=[];
-    function cube(x,y,z,w,h,d,c){for(const face of FACE){for(const i of [0,1,2,0,2,3]){const v=face.v[i],shade=face.shade;a.push(x+v[0]*w,y+v[1]*h,z+v[2]*d,c[0]*shade,c[1]*shade,c[2]*shade)}}}
+    const a=[];let mobKind='vehicle';
+    // Cuboids share a tiny 16x16 procedural pixel pattern per mob species.
+    // 8 floats/vertex matches the existing textured shader; no Mojang assets.
+    function cube(x,y,z,w,h,d,c){
+      for(const face of FACE)for(const i of [0,1,2,0,2,3]){
+        const v=face.v[i],shade=face.shade,uv=window.MineWorldMobPixels.uv(mobKind,i);
+        a.push(x+v[0]*w,y+v[1]*h,z+v[2]*d,c[0]*shade,c[1]*shade,c[2]*shade,uv[0],uv[1]);
+      }
+    }
     for(const v of vehicles){if(v.dimension!==dimension||Math.hypot(v.x-player.x,v.z-player.z)>39)continue;const x=v.x,y=v.y,z=v.z;const boat=/boat|raft/i.test(v.kind);const c=boat?[.52,.31,.16]:[.45,.49,.55];
       cube(x-.75,y+.03,z-.45,1.5,.24,.9,c);cube(x-.72,y+.25,z-.45,.14,.3,.9,c);cube(x+.58,y+.25,z-.45,.14,.3,.9,c);if(!boat)cube(x-.7,y+.25,z-.4,1.4,.1,.8,[.26,.29,.31]);}
     for(const m of mobs){
       if(Math.hypot(m.x-player.x,m.z-player.z)>39)continue;
+      mobKind=m.kind;
       const type=SPECIES[m.kind],x=m.x,z=m.z,y=m.y,hostile=type.kind==='hostile'||type.kind==='neutral'||type.kind==='boss';
       if(m.kind==='ender_dragon'){
         const wing=Math.sin(dayClock*3)*.7;
@@ -3471,7 +3481,12 @@ body.in-nether #game-wrap{background:#290f19}
         continue;
       }
       if(animalModels.MODELS[m.kind]){
-        animalModels.draw(m,(px,py,pz,r,g,b)=>a.push(px,py,pz,r,g,b),dayClock);
+        let index=0;
+        const order=[0,1,2,0,2,3];
+        animalModels.draw(m,(px,py,pz,r,g,b)=>{
+          const uv=window.MineWorldMobPixels.uv(m.kind,order[index++%6]);
+          a.push(px,py,pz,r,g,b,uv[0],uv[1]);
+        },dayClock);
         continue;
       }
       if(extraMobs?.draw(m,(px,py,pz,w,h,d,color)=>cube(px,py,pz,w,h,d,color),dayClock))continue;
@@ -3495,7 +3510,11 @@ body.in-nether #game-wrap{background:#290f19}
       }
     }
     if(!a.length)return;
-    gl.bindBuffer(gl.ARRAY_BUFFER,avatarBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.DYNAMIC_DRAW);setAttribs(false);gl.drawArrays(gl.TRIANGLES,0,a.length/6);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D,mobPixelTexture||atlasTexture);
+    gl.bindBuffer(gl.ARRAY_BUFFER,avatarBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.DYNAMIC_DRAW);
+    setAttribs(true);gl.drawArrays(gl.TRIANGLES,0,a.length/8);
+    gl.bindTexture(gl.TEXTURE_2D,atlasTexture);
   }
   function drawRemotePlayers(){
     const others=window.MineWorldMultiplayer?.getRemotes()||[];
