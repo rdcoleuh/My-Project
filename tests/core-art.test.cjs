@@ -1,10 +1,10 @@
-/* MineWorld 6.3 — pixel-art visual invariants for independently authored core blocks. */
+/* MineWorld 6.4 — pixel-art visual invariants for independently authored core blocks. */
 const {test}=require('node:test'),assert=require('node:assert/strict'),
  fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..'),read=file=>fs.readFileSync(path.join(root,file),'utf8');
 const scripts=['pixel-materials.js','texture-refinement.js','texture-details.js','texture-polish.js',
  'texture-workshop.js','classic-materials.js','texture-clarity.js','readable-materials.js',
- 'texture-fidelity.js','utility-materials.js','core-pixel-art.js'];
+ 'texture-fidelity.js','utility-materials.js','core-pixel-art.js','texture-facets.js'];
 const ctx={window:{},console};vm.createContext(ctx);
 for(const f of scripts)vm.runInContext(read(f),ctx,{filename:f,timeout:30000});
 const paint=ctx.window.MineWorldPixelMaterials.paint;
@@ -52,7 +52,8 @@ test('renderer loads new material layer before atlas generation, without changin
   assert.ok(sw.includes("'./"+f+"'"),'Missing painter cache entry '+f);
  }
  assert.ok(html.indexOf('src="./utility-materials.js"')<html.indexOf('src="./core-pixel-art.js"'));
- assert.ok(html.includes('MineWorld 6.3'));
+ assert.ok(html.includes('MineWorld 6.4'));
  assert.ok(html.includes('mineworld-selfhost-v1'));
+ assert.ok(!read('texture-facets.js').includes('fetch('));
  assert.ok(!read('core-pixel-art.js').includes('fetch('),'Original art must not make external asset requests');
 });
