@@ -25,7 +25,7 @@ function draw(m,write,time=0){
  const body=spec.body,face=spec.face,leg=spec.leg;
  const pattern=(a,v)=>cool(a.map(n=>n*v));
  let boxes=0;
- function box(ox,oy,oz,w,h,d,color){
+ function box(ox,oy,oz,w,h,d,color,part='body'){
   // Render with a shared yaw transform. A cuboid remains solid six-sided.
   const rot=(px,pz)=>[x+(px*cy-pz*sy)*scale,z+(px*sy+pz*cy)*scale];
   const pts=[[ox,oy,oz],[ox+w,oy,oz],[ox+w,oy,oz+d],[ox,oy,oz+d],
@@ -34,9 +34,10 @@ function draw(m,write,time=0){
   // Vertex face directions are chosen to match the game's FACE shader shades.
   const faces=[[1,0,3,2],[4,5,6,7],[0,1,5,4],[3,2,6,7],[0,3,7,4],[2,1,5,6]];
   const shades=[.63,1,.78,.79,.85,.70];
+  const faceNames=['bottom','top','front','back','left','right'];
   for(let f=0;f<faces.length;f++)for(const k of [0,1,2,0,2,3]){
    const point=p[faces[f][k]],shade=shades[f];
-   write(point[0],point[1],point[2],color[0]*shade,color[1]*shade,color[2]*shade);
+   write(point[0],point[1],point[2],color[0]*shade,color[1]*shade,color[2]*shade,part,faceNames[f],k);
   }
   boxes++;
  }
@@ -44,8 +45,8 @@ function draw(m,write,time=0){
  function legs(w,d,h,color){
   for(const sx of [-1,1])for(const sz of [-1,1]){
    const off=(sx===sz?gait:-gait),r=w*.17;
-   box(sx*w*.30-r/2,.03+Math.max(0,off),sz*d*.32-r/2,r,Math.max(.16,h-off),r,color);
-   box(sx*w*.30-r/2,.025+Math.max(0,off),sz*d*.32-r/2,r,.07,r,pattern(color,.78));
+   box(sx*w*.30-r/2,.03+Math.max(0,off),sz*d*.32-r/2,r,Math.max(.16,h-off),r,color,'leg');
+   box(sx*w*.30-r/2,.025+Math.max(0,off),sz*d*.32-r/2,r,.07,r,pattern(color,.78),'leg');
   }
  }
  if(m.kind==='chicken'){
@@ -64,8 +65,8 @@ function draw(m,write,time=0){
  }else if(m.kind==='pig'){
   legs(.78,.78,.30,leg);
   box(-.43,.29,-.44,.86,.56,.89,body);
-  box(-.34,.43,-.63,.68,.44,.39,face);
-  box(-.24,.45,-.72,.48,.27,.14,[.87,.48,.56]);
+  box(-.34,.43,-.63,.68,.44,.39,face,'head');
+  box(-.24,.45,-.72,.48,.27,.14,[.87,.48,.56],'head');
   for(const sx of [-1,1]){
    box(sx*.23-.045,.74,-.47,.09,.14,.1,body);
    box(sx*.18-.02,.68,-.656,.05,.055,.035,[.23,.18,.20]);
@@ -81,12 +82,12 @@ function draw(m,write,time=0){
    if(!m.sheared)for(const sx of [-1,0,1])for(const sz of [-1,0,1]){
     box(sx*.27-.15,1.15,sz*.29-.16,.29,.12,.29,pattern(body,1.02+(sx+sz)*.01));
    }
-   box(-.31,.83,-.72,.62,.40,.36,face);
-   box(-.30,.92,-.83,.60,.40,.25,body);
-   box(-.20,.87,-.87,.40,.16,.1,face);
+   box(-.31,.83,-.72,.62,.40,.36,face,'head');
+   box(-.30,.92,-.83,.60,.40,.25,body,'head');
+   box(-.20,.87,-.87,.40,.16,.1,face,'head');
   }else{
-   box(-.33,.77,-.74,.66,.51,.42,face);
-   box(-.22,.80,-.87,.44,.23,.15,[.72,.54,.50]);
+   box(-.33,.77,-.74,.66,.51,.42,face,'head');
+   box(-.22,.80,-.87,.44,.23,.15,[.72,.54,.50],'head');
    for(const sx of [-1,1]){
     box(sx*.30-.06,1.23,-.69,.13,.15,.13,[.78,.69,.56]);
     box(sx*.21-.015,.94,-.873,.06,.07,.022,[.16,.16,.17]);
