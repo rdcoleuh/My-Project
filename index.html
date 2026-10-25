@@ -3575,6 +3575,9 @@ body.in-nether #game-wrap{background:#290f19}
         const spider=m.kind==='spider',creeper=m.kind==='creeper';
         cube(x-.32,y+(spider?.25:.65),z-.23,.64,spider?.45:creeper?1.17:.84,.46,type.body,'body');
         cube(x-.26,y+(spider?.43:creeper?1.8:1.48),z-.26,.52,spider?.35:.52,.52,type.head,'head');
+        if(creeper)for(const sx of [-1,1])for(const sz of [-1,1]){
+          cube(x+sx*.20-.11,y+.02,z+sz*.19-.10,.21,.61,.20,type.body,'leg');
+        }
         if(!creeper)for(const side of [-1,1]){
           cube(x+side*.18-.10,y+.04,z-.16,.20,spider?.26:.62,.32,type.body,'leg');
           if(!spider)cube(x+side*.37-.11,y+.72,z-.14,.18,.65,.28,type.head,'arm');
