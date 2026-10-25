@@ -615,11 +615,72 @@ async function applyResources(zip,sourceName){
     try{if(await window.MineWorldSound?.loadSound(type,await zip.get('sound:'+key))){audio++;importedSoundTypes.push(type)}}catch(e){console.warn('Unsupported optional sound '+type,e)}
  }
  const items=[...zip.entries.keys()].filter(k=>k.startsWith('item:')).length;
- if(!faces&&!directionalFaces&&!audio&&!items)throw Error('No compatible block, item or sound files found.');
+ // Local Bedrock entity skin files have no remote fetching or save-data dependency.
+ // Match concrete species paths; generic MineWorld cuboids still aren't exact
+ // Bedrock entity geometry/UV models.
+ const mobArt=new Map(),itemArt=new Map();
+ const knownKinds=window.MineWorldMobPixels?.kinds||[];
+ const variants={
+  cow:['cow/cow'],sheep:['sheep/sheep'],pig:['pig/pig'],chicken:['chicken'],
+  horse:['horse/horse_white','horse/horse_brown'],donkey:['horse/donkey'],
+  mule:['horse/mule'],camel:['camel/camel'],llama:['llama/llama_creamy'],
+  mooshroom:['cow/mooshroom'],creeper:['creeper/creeper'],zombie:['zombie/zombie'],
+  husk:['zombie/husk'],drowned:['zombie/drowned'],skeleton:['skeleton/skeleton'],
+  stray:['skeleton/stray'],spider:['spider/spider'],cave_spider:['spider/cave_spider'],
+  enderman:['enderman/enderman'],endermite:['endermite'],wolf:['wolf/wolf'],
+  cat:['cat/tabby'],ocelot:['cat/ocelot'],bee:['bee/bee'],fox:['fox/fox'],
+  goat:['goat/goat'],rabbit:['rabbit/brown'],iron_golem:['iron_golem/iron_golem'],
+  snow_golem:['snow_golem'],villager:['villager/villager'],witch:['witch'],
+  slime:['slime/slime'],magma_cube:['slime/magmacube'],wither:['wither/wither'],
+  ghast:['ghast/ghast'],blaze:['blaze'],piglin:['piglin/piglin'],
+  hoglin:['hoglin/hoglin'],zoglin:['hoglin/zoglin'],guardian:['guardian'],
+  elder_guardian:['guardian_elder'],shulker:['shulker/shulker'],
+  axolotl:['axolotl/axolotl_lucy'],turtle:['turtle/big_sea_turtle'],
+  cod:['fish/cod'],salmon:['fish/salmon'],pufferfish:['fish/pufferfish'],
+  tropical_fish:['fish/tropical_a'],squid:['squid'],glow_squid:['glow_squid'],
+  bat:['bat'],frog:['frog/temperate_frog'],sniffer:['sniffer/sniffer'],
+  warden:['warden/warden'],allay:['allay/allay'],ravager:['illager/ravager'],
+  pillager:['illager/pillager'],vindicator:['illager/vindicator'],
+  evoker:['illager/evoker'],parrot:['parrot/parrot_red_blue'],
+  panda:['panda/panda'],polar_bear:['bear/polarbear']
+ };
+ const entityKeys=[...zip.entries.keys()].filter(k=>k.startsWith('entity:'));
+ for(const kind of knownKinds){
+  if(kind==='vehicle')continue;
+  const candidates=['entity:'+kind+'/'+kind,'entity:'+kind,
+   'entity:'+kind.replace(/_/g,''),...(variants[kind]||[]).map(p=>'entity:'+p)];
+  let key=candidates.find(k=>zip.entries.has(k));
+  if(!key)key=entityKeys.find(k=>k.split('/').pop()===kind.replace(/_/g,''));
+  if(!key)continue;
+  try{
+   const image=await imageFromPng(await zip.get(key));
+   if(image.width<=2048&&image.height<=2048)mobArt.set(kind,image);
+  }catch(error){console.warn('Skipping unsupported local mob PNG '+key,error);}
+ }
+ // World drops use a small GPU atlas; every other inventory item PNG is still
+ // available through lazy, on-demand decoding.
+ const preferredItems=['diamond','emerald','iron_ingot','gold_ingot','beef',
+  'cooked_beef','leather','feather','bone','stick','string','coal','charcoal',
+  'diamond_sword','iron_sword','wooden_pickaxe','stone_pickaxe','iron_pickaxe',
+  'diamond_pickaxe','netherite_pickaxe','ender_pearl','carrot','potato',
+  'wheat','wheat_seeds','apple','bread','bow','arrow','torch','potion'];
+ const allItems=[...zip.entries.keys()].filter(k=>k.startsWith('item:'));
+ const itemKeys=[...new Set([...preferredItems.map(k=>'item:'+k),...allItems.sort()])]
+  .filter(k=>zip.entries.has(k)).slice(0,192);
+ for(const key of itemKeys){
+  try{
+   const image=await imageFromPng(await zip.get(key));
+   if(image.width<=1024&&image.height<=1024)itemArt.set(key,image);
+  }catch(error){console.warn('Skipping unsupported local item PNG '+key,error);}
+ }
+ if(!faces&&!directionalFaces&&!audio&&!items&&!mobArt.size)
+  throw Error('No compatible block, item, mob or sound files found.');
  if(faces||directionalFaces||state.active)await writeAtlas(canvas);
  // Do not erase a working pack when an invalid replacement is rejected.
  // Newly decoded sound types stay in place; old missing types are discarded.
  window.MineWorldSound?.clearSamples(importedSoundTypes);
+ try{window.MineWorldMobPixels?.applyImported?.(new Map([...mobArt,...itemArt]));}
+ catch(error){console.warn('Local mob sprites unavailable:',error);}
  state.tint=importedTints.palette;
  state.itemArchive=zip;state.itemCache.clear();state.itemGeneration++;
  state.animations=animated;
@@ -629,7 +690,7 @@ async function applyResources(zip,sourceName){
  state.lastAnimationAt=-Infinity;
  state.animationDisabled=false;
  state.active=faces+directionalFaces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={blocks:ids.size,faces,directionalFaces,items,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
+ state.lastResult={blocks:ids.size,faces,directionalFaces,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
@@ -694,7 +755,7 @@ async function clear(){
  const img=await imageFromURL(META.baseURL);
  const [canvas,ctx]=baseCanvas();ctx.drawImage(img,0,0);
  await writeAtlas(canvas);
- window.MineWorldSound?.clearSamples();window.MineWorldBridge?.refreshTextureUI?.();
+ window.MineWorldSound?.clearSamples();window.MineWorldMobPixels?.applyImported?.(new Map());window.MineWorldBridge?.refreshTextureUI?.();
  state.active=false;state.sourceName='';state.lastResult=null;
  state.animations=[];state.importedFaces=new Set();state.originalImage=null;state.lastAnimationAt=-Infinity;
  state.itemArchive=null;state.itemCache.clear();state.itemGeneration++;
