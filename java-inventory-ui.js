@@ -60,7 +60,7 @@ function install(api){
   return button;
  }
  function render(){
-  if(panel.classList.contains('hidden'))return;
+  // Build the slots before openGear removes .hidden, so the first opening is populated.
   model.normalize();root.replaceChildren();
   const heading=node(root,'div','mw-java-head');
   node(heading,'strong','mw-java-title','Inventory · 27 + 9 slots');
