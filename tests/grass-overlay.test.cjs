@@ -20,7 +20,8 @@ function setup(pixel){
  const scratchCanvas={width:0,height:0,getContext:()=>scratch};
  const doc={createElement:()=>scratchCanvas};
  const context={document:doc,Uint8ClampedArray};
- const {tintOverlayPixels,composeGrassSideOverlay}=vm.runInNewContext(region+
+ const {tintOverlayPixels,composeGrassSideOverlay}=vm.runInNewContext(
+  'const state={tint:{grass:[145,189,89],foliage:[119,171,47]}};\n'+region+
   '\n({tintOverlayPixels,composeGrassSideOverlay})',context);
  const destination={drawImage(...args){record.calls.push(['overlay',...args])}};
  return {record,image,context,destination,tintOverlayPixels,composeGrassSideOverlay};
