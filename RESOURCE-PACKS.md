@@ -1,33 +1,30 @@
-# MineWorld 5.7 — Sounds and local resource packs
+# MineWorld — Player-supplied Java resource packs and animation
 
-## What changed
+MineWorld has original procedural block art and sound by default. A player can optionally load **their own** Java Edition client JAR, compatible ZIP resource pack, or extracted PNG/OGG files. No Minecraft or Eaglercraft assets are bundled, downloaded by the game, uploaded, or saved in the repository.
 
-MineWorld now includes **independently synthesized** digging, placing, footsteps, jumping, attacking, taking damage, eating, picking up items, opening chests, and other interaction sounds. They do not use Minecraft or Eaglercraft audio files. Open **Pause → Original sound effects** to mute, adjust volume, or test audio.
+## Importing
 
-MineWorld also supports **optional local resource ZIP imports**, allowing compatible block PNG textures and OGG sounds from a file you select yourself. The importer does not fetch or download proprietary assets, store ZIP bytes, upload anything, or add anyone else's art/sounds to this GitHub repository.
+1. Visit https://rdcoleuh.github.io/My-Project/ and open the **Import local textures and sounds** panel on the welcome screen, Pause menu, or Options.
+2. Select a ZIP/JAR containing `assets/minecraft/textures/block/*.png` (modern) or `assets/minecraft/textures/blocks/*.png` (legacy). You may also choose multiple extracted PNG files or a local folder.
+3. MineWorld matches imported sprite names to its 169 block IDs and their three atlas faces. Unmatched faces keep independently authored MineWorld artwork.
+4. The status reports replaced block faces, blocks, animated faces, and imported sounds. **Restore original art & sounds** returns to the default artwork.
 
-### Importing a local pack
+For exact grass block layering, the importer draws `grass_block_side.png` first and composites the transparent `grass_block_side_overlay.png` with a biome tint. When supplied, `textures/colormap/grass.png` and `textures/colormap/foliage.png` determine the plains colors of neutral grass and foliage. Colored custom-pack sprites are not recolored.
 
-1. Open https://rdcoleuh.github.io/My-Project/ and refresh if you see an older cached version.
-2. On the main screen, scroll down to **Import local textures and sounds**. Or enter a world, open **Pause**, and find **Local resource pack ZIP: textures + sounds**.
-3. Choose a **Java-style resource pack ZIP** containing textures and/or audio under paths such as:
-   - `assets/minecraft/textures/block/stone.png` (modern packs)
-   - `assets/minecraft/textures/blocks/stone.png` (older packs)
-   - `assets/minecraft/sounds/random/pop.ogg` (sound replacement)
-4. Import succeeds if the ZIP has one or more matching usable textures or playable sound effects. The status shows how many block faces and sound events were replaced.
-5. Select **Restore original art & sounds** or reload the page to restore MineWorld's independently made textures and procedural effects.
+## Java-style animated PNGs
 
-Some blocks in MineWorld have different names, geometry or IDs. Not every PNG will map, and not all audio clips will play (decoding support depends on the browser). The ZIP importer intentionally displays the **first frame** of animated sprites and resamples high-resolution sprites to MineWorld's original 16×16 block texel grid.
+The importer now supports sprite strips with accompanying animation metadata, such as:
 
-**Limitations:** Direct Eaglercraft `.epk` bundles, Eaglercraft client binaries, Minecraft resource registries, and entire Minecraft Java installations are not supported. The importer supports only the ZIP/JAR resource layout described above. The app doesn't redistribute imported artwork or sounds. You are responsible for only using assets as allowed by their licenses and rights holders. User-supplied packs aren't stored across reloads.
+- `assets/minecraft/textures/block/water_still.png`
+- `assets/minecraft/textures/block/water_still.png.mcmeta`
+- `assets/minecraft/textures/block/lava_still.png` and its matching `.png.mcmeta`
 
-## Bug fixes and checks
+The metadata can specify `animation.frametime`, a custom `animation.frames` order with per-frame `time`, and `animation.interpolate`. Frames advance at Java's 20-tick-per-second timing, uploading only changed 16×16 GPU tiles. On slow devices updates are throttled, but the timeline still advances. Transparent imported PNGs no longer show underlying procedural pixels.
 
-- Fixed legacy world migration to always write to **Original Creative** or **Original Survival** rather than an unrelated selected multiworld slot.
-- Imported textures now update block-guide previews and inventory swatches; animations stop modifying imported texture sprites until the original textures are restored.
-- The importer rejects overly large archives and protects against ZIP records that lie about their decompressed size.
-- A fresh offline cache includes the sound engine and importer.
-- Automated tests now cover ZIP archive parsing, local texture/audio replacements, sound synthesis and muting, old-world-save keys, and static syntax/integrity checks for **all game JavaScript modules** and directly referenced interface IDs.
+**Limitations:** The imported artwork is resampled to MineWorld's 16×16 atlas tiles. Java resource-pack model JSON, arbitrary block-state variants, custom renderers, emissive overlays, and all special-case animation behaviors are not yet reproduced. Interpolation uses canvas blending rather than a byte-for-byte copy of Minecraft's renderer. Some MineWorld blocks do not have a matching Java block. Player-supplied assets are not persisted across reloads. No native Eaglercraft `.epk` support. Only use files you have the right to use.
 
-The tests do not prove that every in-game scenario or device is free of bugs. Continue reporting specific issues so they can be reproduced and fixed.
+## Gameplay and verification
 
+MineWorld also has independent sound synthesis and an original Java-style melee model with weapon attack speeds, partial-charge damage, falling critical hits, grounded sword sweeps, and knockback against locally simulated mobs. Multiplayer damage remains host-validated and can differ from single-player rules.
+
+GitHub Actions regression tests cover resource-pack parsing, animation timing, local GPU tile updates, grass overlay tinting, combat formulas, save-key integrity, and script/offline-cache wiring. These checks do not prove that every browser, device, or gameplay scenario is bug-free.
