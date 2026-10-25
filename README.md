@@ -1,3 +1,17 @@
+# MineWorld 6.1 — Much More Recognizable 16×16 Block Artwork
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+This update specifically targets texture resemblance and readability. All tiles retain their **16×16 source-pixel scale** and sharp nearest-neighbor sampling. The work replaces random-looking color noise with original, hand-authored material motifs: logs now have vertical bark and distinct ringed ends, birch bark shows dark horizontal flecks, cherry wood and leaves are pink, spruce is dark and needle-like, and each other tree species has its own palette. Coal, iron, copper, gold, redstone, lapis, diamond and emerald ores have recognizable angular embedded clusters, including eight deepslate versions with darker hosts.
+
+Other refreshed families include cobblestone, stone, deepslate, Nether basalt and blackstone, staggered stone and Nether masonry, mineral storage blocks, colored End materials, nylium, magma and glowstone. I also redrew directional panels for chests, furnaces, smokers, blast furnaces, crafting tables, barrels, cartography/loom/fletching/smithing workstations, lecterns, stonecutters, grindstones, brewing stands, cauldrons and composters. Materials not explicitly repainted continue to use the earlier MineWorld art; **all 169 block IDs still render**.
+
+None of these images are copied, downloaded, or extracted from Minecraft or Eaglercraft. The style is informed by familiar 16px voxel-art conventions, but the pixel arrangements remain independent. To view original Minecraft textures pixel-for-pixel in a private browser session, MineWorld separately supports player-selected, compatible local Java resource-pack ZIPs in the home and Pause menus. You must supply a pack you're authorized to use; imports are not included in the public repository and do not persist after refresh.
+
+**Regression tests:** samples every pixel on every face of all 169 blocks, validates RGBA/texture uniqueness, and checks distinct log endgrain, mineral contrast, foliage, utility fronts and offline caching. Existing worlds, inventories, player skins, advancements and multiplayer are unchanged.
+
+---
+
 # MineWorld 6.0 — Animal Models, Natural Textures & Gameplay Fixes
 
 **Play:** https://rdcoleuh.github.io/My-Project/
