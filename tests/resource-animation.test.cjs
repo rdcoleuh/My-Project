@@ -44,7 +44,7 @@ test('game loads timeline before importer, updates imported frames, and caches b
  assert.ok(html.indexOf('src="./resource-animation.js"')<html.indexOf('src="./local-resource-pack.js"'));
  assert.ok(html.includes('if(localPack?.active)localPack.updateAnimation(t,currentFPS,isTouch)'));
  assert.ok(sw.includes("'./resource-animation.js'"));
- assert.ok(pack.includes("found.set('meta:'+matchMeta[1]"));
+ assert.ok(pack.includes("keep('meta:'+matchMeta[1]"));
  assert.ok(pack.includes("if(meta)key='meta:'+meta[1]"));
  assert.ok(pack.includes('gl.texSubImage2D('));
  assert.ok(pack.includes('ctx.clearRect(px,py,16,16)'));
