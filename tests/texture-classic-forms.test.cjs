@@ -1,4 +1,4 @@
-/* MineWorld 6.6 — connected silhouettes and compatibility checks. */
+/* MineWorld 6.7 — connected silhouettes and compatibility checks. */
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
@@ -95,8 +95,8 @@ test('crop and foliage transparency, render script order, offline cache and save
  assert.ok(html.indexOf('src="./texture-classic-forms.js"')<html.indexOf('src="./texture-motion.js"'));
  assert.equal((html.match(/src="\.\/texture-classic-forms\.js"/g)||[]).length,1);
  assert.ok(sw.includes("'./texture-classic-forms.js'"));
- assert.ok(sw.includes('mineworld-6-6-java-inventory-crafting-20261024-v47'));
+ assert.ok(sw.includes('mineworld-6-7-inventory-texture-20261025-v48'));
  assert.ok(html.includes('mineworld-selfhost-v1'));
- assert.ok(html.includes('MineWorld 6.6'));
+ assert.ok(html.includes('MineWorld 6.7'));
  assert.ok(!read('texture-classic-forms.js').includes('fetch('));
 });
