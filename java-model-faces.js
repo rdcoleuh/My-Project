@@ -46,28 +46,52 @@ const DEFAULT_STATE=Object.freeze({
  attachment:'floor',face:'floor',rotation:'0',hinge:'left',
  occupied:'false',enabled:'true',shape:'straight'
 });
+function variantModel(candidate){
+ const item=Array.isArray(candidate)?candidate[0]:candidate;
+ if(!item||typeof item!=='object'||Array.isArray(item))return null;
+ const y=item.y??0;
+ // Only Y quarter-turns preserve the current full-cube renderer.
+ if((item.x??0)!==0||(item.z??0)!==0||
+   !Number.isInteger(y)||![0,90,180,270].includes(y))return null;
+ const name=modelPath(item.model);
+ return name?{name,y,uvlock:item.uvlock===true}:null;
+}
+// Match Java multipart predicates against known default states only.
+// Ambiguous multipart geometry must keep the existing fallback art.
+function matchesDefault(when,depth=0){
+ if(when===undefined)return true;
+ if(!when||typeof when!=='object'||Array.isArray(when)||depth>5)return false;
+ return Object.entries(when).every(([key,value])=>{
+  if(key==='OR'||key==='AND'){
+   if(!Array.isArray(value)||!value.length||value.length>32)return false;
+   return key==='OR'?value.some(v=>matchesDefault(v,depth+1)):
+     value.every(v=>matchesDefault(v,depth+1));
+  }
+  if(!Object.hasOwn(DEFAULT_STATE,key)||typeof value!=='string')return false;
+  return value.split('|').some(v=>v===DEFAULT_STATE[key]);
+ });
+}
 function stateVariant(data){
- const variants=data?.variants;
- if(!variants||typeof variants!=='object'||Array.isArray(variants))return null;
- const choices=Object.entries(variants).filter(([key])=>
-  key===''||key.split(',').every(part=>/^[a-z_]+=[a-z0-9_]+$/.test(part)));
- const score=key=>key===''?-1:key.split(',').reduce((sum,part)=>{
-  const [name,value]=part.split('=');
-  return sum+(DEFAULT_STATE[name]===value?0:DEFAULT_STATE[name]===undefined?2:5);
- },0);
- choices.sort((a,b)=>score(a[0])-score(b[0])||a[0].localeCompare(b[0]));
- for(const [,variant] of choices){
-  const candidate=Array.isArray(variant)?variant[0]:variant;
-  if(!candidate||typeof candidate!=='object'||Array.isArray(candidate))continue;
-  const y=candidate.y??0;
-  // Only Y-axis quarter turns preserve a full cube without changing its
-  // collision bounds. X/Z-rotated and multipart models still fall back.
-  if((candidate.x??0)!==0||(candidate.z??0)!==0||
-      !Number.isInteger(y)||![0,90,180,270].includes(y))continue;
-  const name=modelPath(candidate.model);
-  if(name)return {name,y,uvlock:candidate.uvlock===true};
+ if(!data||typeof data!=='object'||Array.isArray(data))return null;
+ const variants=data.variants;
+ if(variants&&typeof variants==='object'&&!Array.isArray(variants)){
+  const choices=Object.entries(variants).filter(([key])=>
+   key===''||key.split(',').every(part=>/^[a-z_]+=[a-z0-9_]+$/.test(part)));
+  const score=key=>key===''?-1:key.split(',').reduce((sum,part)=>{
+   const [name,value]=part.split('=');
+   return sum+(DEFAULT_STATE[name]===value?0:DEFAULT_STATE[name]===undefined?2:5);
+  },0);
+  choices.sort((a,b)=>score(a[0])-score(b[0])||a[0].localeCompare(b[0]));
+  for(const [,candidate] of choices){
+   const chosen=variantModel(candidate);
+   if(chosen)return chosen;
+  }
  }
- return null;
+ if(!Array.isArray(data.multipart)||!data.multipart.length||data.multipart.length>128)return null;
+ const matching=data.multipart.filter(part=>part&&typeof part==='object'&&
+  !Array.isArray(part)&&matchesDefault(part.when));
+ if(matching.length!==1)return null;
+ return variantModel(matching[0].apply);
 }
 function stateModel(data){return stateVariant(data)?.name||null;}
 async function resolve(zip,modelName){
