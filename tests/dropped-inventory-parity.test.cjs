@@ -88,3 +88,28 @@ test('world mining emits collectible items, not automatic pickup; UI uses authen
  assert.ok(visuals.includes('function mergeNearby'));
  assert.ok(html.includes('mineworld-selfhost-v1'));
 });
+
+test('mining drop function produces persistent collectible entities without duplicating inventory',()=>{
+ const html=read('index.html');
+ const source=html.match(/  function dropMinedResource\(key,qty,x,y,z\)\{[\s\S]*?(?=\n  function breakBlockNow\(target\))/)?.[0];
+ assert.ok(source,'drop factory must remain independent of block rendering');
+ const ground=[],inventory=[],saves=[];
+ const scope={droppedItems:ground,dimension:'overworld',
+  window:{MineWorldMultiplayer:{isShared:()=>false}},
+  validHotbarKey:key=>typeof key==='string'&&key.length>0,
+  addResource:(...args)=>inventory.push(args),markSave:()=>saves.push('save'),
+  Number,Math};
+ vm.createContext(scope);
+ vm.runInContext(source,scope);
+ assert.equal(vm.runInContext("dropMinedResource('block:3',65,10,22,30)",scope),true);
+ assert.equal(ground.length,2);
+ assert.equal(ground[0].count,64);assert.equal(ground[1].count,1);
+ assert.equal(ground[0].x,10.5);assert.equal(ground[0].dimension,'overworld');
+ assert.ok(ground.every(d=>d.age===0&&d.delay>0&&d.vy>0));
+ assert.equal(inventory.length,0,'mining must not auto-grant collectible blocks');
+ assert.ok(saves.length>0);
+ scope.window.MineWorldMultiplayer.isShared=()=>true;
+ assert.equal(vm.runInContext("dropMinedResource('coal',1,12,22,30)",scope),true);
+ assert.equal(inventory.length,1,'shared mode uses existing synchronized inventory');
+ assert.equal(ground.length,2,'no double drops in multiplayer');
+});
