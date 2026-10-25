@@ -77,7 +77,8 @@ test('melee arm swing animates once over 420ms and returns to neutral',()=>{
 });
 test('third-person attack rotates arm at shoulder; missed hits animate and reset recharge',()=>{
  const html=read('index.html');
- assert.ok(html.includes('MineWorldCombat.swing(performance.now()-lastAttackAt)'));
+ assert.ok(html.includes('MineWorldCombat.swing(now-lastAttackAt)'),
+  'Combat arm animation must still use the original attack timestamp');
  assert.ok(html.includes("if(name==='armR'&&swing>0)"));
  assert.ok(html.includes('py=shoulderY+dy*Math.cos(angle)-dz*Math.sin(angle)'));
  assert.ok(html.includes('pz=shoulderZ+dy*Math.sin(angle)+dz*Math.cos(angle)'));
