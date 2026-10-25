@@ -27,6 +27,13 @@ test('hit flashes and critical-hit star particles expire without modifying saved
  assert.equal(fx.flash(42),0);
  assert.equal(fx.stats().particles,0);
 });
+test('dropping blocks produce a short textured landing puff',()=>{
+ const fx=boot();
+ assert.equal(fx.landing(4,1,4,3,'overworld'),5);
+ const g=fx.geometry({x:5,y:1,z:5},(b,f,c)=>c===0?[.1,.1]:[.2,.2]);
+ assert.equal(g.textured.length,5*6*8);
+ assert.equal(fx.landing(4,1,4,-1),0);
+});
 test('sweeps and pickup sparkles are local ephemeral geometry',()=>{
  const fx=boot();
  assert.equal(fx.sweep(0,1,0,Math.PI),10);

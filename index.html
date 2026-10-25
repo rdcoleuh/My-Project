@@ -2207,6 +2207,11 @@ body.in-nether #game-wrap{background:#290f19}
       const next=classic.advanceDrop(old,dt,(x,y,z)=>
         x>1&&x<W-1&&z>1&&z<D-1&&y>=0&&y<H&&solid(get(Math.floor(x),Math.floor(y),Math.floor(z))));
       droppedItems[i]=next;
+      // One short textured landing puff when an airborne block stack settles.
+      if((old.vy||0)<-.45&&next.vy===0&&next.key?.startsWith('block:')){
+        const block=Number(next.key.slice(6));
+        window.MineWorldImpactEffects?.landing(next.x,next.y,next.z,block,dimension);
+      }
       if(gameMode==='survival'&&classic.shouldCollect(next,{x:player.x,y:player.y,z:player.z,dimension})){
         const taken=addResource(next.key,next.count);
         if(taken>0){
@@ -3552,7 +3557,7 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function drawMobs(){
     if(!mobs.length&&!vehicles.some(v=>v.dimension===dimension))return;
-    const a=[];let mobKind='vehicle',hitFlash=0;
+    const a=[];let mobKind='vehicle',hitFlash=0,recoilX=0,recoilZ=0;
     // Cuboids share a tiny 16x16 procedural pixel pattern per mob species.
     // 8 floats/vertex matches the existing textured shader; no Mojang assets.
     function cube(x,y,z,w,h,d,c,part='body'){
@@ -3566,7 +3571,7 @@ body.in-nether #game-wrap{background:#290f19}
           window.MineWorldMobPixels.uv(mobKind,i);
         const baseTint=mapped||window.MineWorldMobPixels.hasImported(mobKind)?[1,1,1]:c;
         const tint=hitFlash?[baseTint[0],baseTint[1]*(1-.66*hitFlash),baseTint[2]*(1-.66*hitFlash)]:baseTint;
-        a.push(x+v[0]*w,y+v[1]*h,z+v[2]*d,tint[0]*shade,tint[1]*shade,tint[2]*shade,uv[0],uv[1]);
+        a.push(x+v[0]*w+recoilX,y+v[1]*h,z+v[2]*d+recoilZ,tint[0]*shade,tint[1]*shade,tint[2]*shade,uv[0],uv[1]);
       }
     }
     for(const v of vehicles){if(v.dimension!==dimension||Math.hypot(v.x-player.x,v.z-player.z)>39)continue;const x=v.x,y=v.y,z=v.z;const boat=/boat|raft/i.test(v.kind);const c=boat?[.52,.31,.16]:[.45,.49,.55];
@@ -3574,6 +3579,9 @@ body.in-nether #game-wrap{background:#290f19}
     for(const m of mobs){
       if(Math.hypot(m.x-player.x,m.z-player.z)>39)continue;
       mobKind=m.kind;hitFlash=window.MineWorldImpactEffects?.flash(m.id)||0;
+      // Brief locally drawn recoil without changing collision or mob position.
+      const awayX=m.x-player.x,awayZ=m.z-player.z,len=Math.hypot(awayX,awayZ)||1;
+      recoilX=awayX/len*.12*hitFlash;recoilZ=awayZ/len*.12*hitFlash;
       const type=SPECIES[m.kind],x=m.x,z=m.z,y=m.y,hostile=type.kind==='hostile'||type.kind==='neutral'||type.kind==='boss';
       if(m.kind==='ender_dragon'){
         const wing=Math.sin(dayClock*3)*.7;
@@ -3632,7 +3640,7 @@ body.in-nether #game-wrap{background:#290f19}
           const uv=mapped?window.MineWorldMobPixels.uv(m.kind,window.MineWorldEntityTextureMaps.vertexCorner(face,corner,'animal'),part,face):fallbackUV;
           if(mapped||window.MineWorldMobPixels.hasImported(m.kind)){r=1;g=1;b=1;}
           if(hitFlash){g*=1-.66*hitFlash;b*=1-.66*hitFlash;}
-          a.push(px,py,pz,r,g,b,uv[0],uv[1]);
+          a.push(px+recoilX,py,pz+recoilZ,r,g,b,uv[0],uv[1]);
         },dayClock);
         continue;
       }

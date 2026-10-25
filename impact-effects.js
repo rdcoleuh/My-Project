@@ -26,6 +26,16 @@ function dust(x,y,z,block=3,count=18,dimension='overworld'){
  }
  return n;
 }
+function landing(x,y,z,block=3,dimension='overworld'){
+ if(![x,y,z].every(Number.isFinite)||!Number.isInteger(block)||block<1||block>169)return 0;
+ for(let i=0;i<5;i++){
+  add({kind:'dust',dimension,block,face:1,u:rand()*.68,v:rand()*.68,
+   x:x+(rand()-.5)*.19,y:y+.08,z:z+(rand()-.5)*.19,
+   vx:(rand()-.5)*.75,vy:.4+rand()*.65,vz:(rand()-.5)*.75,
+   gravity:3.8,life:.24+rand()*.2,size:.042+rand()*.03});
+ }
+ return 5;
+}
 function chip(x,y,z,block=3,dimension='overworld'){
  if(clock-lastChip<.105)return 0;
  lastChip=clock;
@@ -122,5 +132,5 @@ function geometry(eye,atlasUV,dimension='overworld'){
 }
 function stats(){return {particles:alive.length,flashes:flashes.size,clock,serial};}
 function reset(){alive.length=0;flashes.clear();lastChip=-Infinity;serial++;}
-window.MineWorldImpactEffects=Object.freeze({dust,chip,hit,sweep,pickup,hurtPlayer,flash,tick,geometry,stats,reset});
+window.MineWorldImpactEffects=Object.freeze({dust,chip,landing,hit,sweep,pickup,hurtPlayer,flash,tick,geometry,stats,reset});
 })();
