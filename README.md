@@ -1,3 +1,15 @@
+# MineWorld 6.31 — Bedrock Mob Skins, Item Art and Movement Recovery
+
+**Player movement:** Added a safe blocked-position recovery when starting/resuming a world, preserving the existing world, inventory, saved block edits and entity IDs. The updated browser smoke runner verifies physical movement by WASD in desktop Chrome and touch joystick drag in emulated mobile Chrome, rather than just loading the world. This does not prove every location in an existing saved world is navigable.
+
+**Bedrock/Java local texture packs:** The existing on-device ZIP/JAR importer now recognizes `textures/entity/<name>.png` and nested folders. It also parses Bedrock `resource_pack/entity/<species>.entity.json` descriptors to select the current `textures.default` (e.g. the official newer `pig_v3` sprite). A bounded subset of decoded 3D item sprites and available mob skins is packed into the game's existing small GPU atlas. Original mob skin colors are shown on MineWorld's independently modeled mobs; the current cuboid UV mapping samples skin regions and is **not** exact Bedrock geometric/model UV parity. Item PNGs now appear in hotbar slots and, for supported sprites, floating world drops. Dropped blocks use the active block texture atlas rather than solid procedural colors. Original Java-style inventory icons continue to load on demand, including those excluded from the bounded GPU drop atlas. Reimporting or resetting a pack removes prior imported mob skins.
+
+**Verification:** Automated tests use synthetic PNG and ZIP files, not packaged Minecraft asset bitmaps, and cover Bedrock entity paths, renamed client entity files, item sprites, GPU resets, hotbar/world integration and movement behavior. Browser tests also verify reloaded local packs and real desktop/mobile joystick travel. The player chooses their own licensed textures and retains them privately in browser storage; the website does not fetch or bundle game content.
+
+**Remaining work:** Full Bedrock texture UV mapping for each unique mob bone and geometry, alternate mob texture variants, modded pack namespaces, Bedrock TGA art, all Bedrock item atlas metadata, all remaining features requested across the game, and physical-device testing are not yet complete. This is a substantive upgrade, not a claim of 1:1 Bedrock or Java implementation.
+
+---
+
 # MineWorld 6.30 — Java-Style Entity Hitboxes and Collision
 
 The player hitbox is now 0.6 blocks wide by 1.8 standing or 1.5 crouching, with full-width collision checks against existing block geometry. A new independent entity hitbox module defines widths/heights for over 75 named animal and monster species using published Java Edition dimensions, plus baby sizes and selected variable-size states. Mob spawn/walk checks cover their entire width and height, rather than only the central voxel. Aiming at animals, villagers and PvP players now uses ray-versus-box intersection and checks which block face actually blocks the hit. Properly aimed large animals can be struck when the edge of their box is within reach.
