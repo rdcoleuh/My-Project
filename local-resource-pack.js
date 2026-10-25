@@ -251,11 +251,14 @@ function readArchive(buffer){
    // directly rather than forcing players to repackage copyrighted files.
    const bedrock=path.match(/(?:^|\/)resource_pack\/((?:textures|sounds|entity)\/.+)$/);
    const relative=namespace?namespace[1]:bedrock?bedrock[1]:
-     (/^(?:textures|sounds|entity)\//.test(path)?path:null);
+     (/^(?:textures|sounds|entity|models\/block)\//.test(path)?path:null);
    // Bedrock also stores valid block PNGs in folders such as deepslate/.
    // Keep the PNG's basename as the lookup key, with top-level art taking
    // precedence over nested variants when both exist.
    const match=relative?.match(/^textures\/(?:block|blocks)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png$/);
+   const blockPath=relative?.match(/^textures\/(?:block|blocks)\/([a-z0-9_/-]+)\.png$/);
+   const blockMetaPath=relative?.match(/^textures\/(?:block|blocks)\/([a-z0-9_/-]+)\.png\.mcmeta$/);
+   const modelPath=relative?.match(/^models\/block\/([a-z0-9_/-]+)\.json$/);
    const item=relative?.match(/^textures\/(?:item|items)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png$/);
    const entity=relative?.match(/^textures\/entity\/([a-z0-9_-]+(?:\/[a-z0-9_-]+)*)\.png$/);
    const entityDefinition=relative?.match(/^entity\/([a-z0-9_-]+)\.entity\.json$/);
@@ -267,7 +270,9 @@ function readArchive(buffer){
      (relative?.startsWith('textures/block/')?2:0)+
      (relative&&!/^textures\/(?:block|blocks|item|items)\/[^/]+\//.test(relative)?1:0);
    if(match&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8)){
-     keep(match[1],{method,size,expanded,local},priority);
+     const entry={method,size,expanded,local};
+     keep(match[1],entry,priority);
+     if(blockPath)keep('block:'+blockPath[1],entry,priority);
    }
    if(item&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8))
      keep('item:'+item[1],{method,size,expanded,local},priority);
@@ -275,8 +280,13 @@ function readArchive(buffer){
      keep('entity:'+entity[1],{method,size,expanded,local},priority);
    if(entityDefinition&&size<131072&&expanded<131072&&(method===0||method===8))
      keep('entity-def:'+entityDefinition[1],{method,size,expanded,local},priority);
-   if(matchMeta&&size<131072&&expanded<131072&&(method===0||method===8))
-     keep('meta:'+matchMeta[1],{method,size,expanded,local},priority);
+   if(matchMeta&&size<131072&&expanded<131072&&(method===0||method===8)){
+     const entry={method,size,expanded,local};
+     keep('meta:'+matchMeta[1],entry,priority);
+     if(blockMetaPath)keep('meta:block:'+blockMetaPath[1],entry,priority);
+   }
+   if(modelPath&&size<131072&&expanded<131072&&(method===0||method===8))
+     keep('model:'+modelPath[1],{method,size,expanded,local},priority);
    if(bedrockFlipbook&&size<256*1024&&expanded<256*1024&&(method===0||method===8))
      keep('bedrock:flipbook',{method,size,expanded,local},priority);
    if(mapColor&&size<4*1024*1024&&expanded<4*1024*1024&&(method===0||method===8))
@@ -476,6 +486,16 @@ async function applyResources(zip,sourceName){
  let faces=0,overlaid=0;
  const ids=new Set(),importedFaces=new Set(),cache=new Map(),decoded=new Map(),metaCache=new Map(),missing=new Set(),missingFaces=[],resolved=new Map(),animated=[];
  const timeline=window.MineWorldResourceAnimation;
+ const modelResolver=window.MineWorldJavaModelFaces;
+ const modelFaces=new Map();let modelMappedFaces=0;
+ if(modelResolver&&[...zip.entries.keys()].some(key=>key.startsWith('model:'))){
+   for(let id=1;id<=169;id++){
+     const model=modelResolver.nameFor(id,names[id]);
+     if(!model)continue;
+     const refs=await modelResolver.resolve(zip,model);
+     if(refs)modelFaces.set(id,refs);
+   }
+ }
  const bedrock=window.MineWorldBedrockFlipbooks;
  let bedrockEntries=new Map(),bedrockAnimatedFaces=0;
  if(bedrock&&zip.entries.has('bedrock:flipbook')){
@@ -547,9 +567,11 @@ async function applyResources(zip,sourceName){
  }
  for(let id=1;id<=169;id++){
    for(let face=0;face<3;face++){
-     const name=textureName(id,face);
+     const modelFace=modelFaces.get(id)?.[['top','side','bottom'][face]];
+     const name=modelFace||textureName(id,face);
 
      const image=await sprite(name);
+     if(image&&modelFace)modelMappedFaces++;
      const baseInfo=await spriteTimeline(name,image);
      const column=(id*3+face)%16,row=Math.floor((id*3+face)/16);
      const px=column*16,py=row*16;
@@ -705,7 +727,7 @@ async function applyResources(zip,sourceName){
  state.lastAnimationAt=-Infinity;
  state.animationDisabled=false;
  state.active=faces+directionalFaces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={blocks:ids.size,faces,directionalFaces,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
+ state.lastResult={blocks:ids.size,faces,directionalFaces,modelMappedFaces,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
@@ -753,6 +775,8 @@ async function loadFiles(fileList){
    if(ogg){const path=name.match(/(?:^|\/)sounds\/([a-z0-9_./-]+)\.ogg$/);if(path)key='sound:'+path[1];}
    if(png&&name.includes('/colormap/')&&['grass','foliage'].includes(png[1]))key='colormap:'+png[1];
    if(meta)key='meta:'+meta[1];
+   const modelFile=name.match(/(?:^|\/)models\/block\/([a-z0-9_/-]+)\.json$/);
+   if(modelFile)key='model:'+modelFile[1];
    if(leaf==='flipbook_textures.json'&&(name===leaf||/(?:^|\/)textures\/flipbook_textures\.json$/.test(name)))key='bedrock:flipbook';
    if(!key)continue;
    if(Number.isFinite(file.size)&&file.size>6*1024*1024)continue;
@@ -761,6 +785,12 @@ async function loadFiles(fileList){
    const priority=(/(?:^|\/)assets\/minecraft\//.test(name)?4:0)+
       (/(?:^|\/)textures\/block\//.test(name)?2:0);
     if((ranked.get(key)??-1)<priority){recognized.set(key,file);ranked.set(key,priority);}
+    const qualified=png?name.match(/(?:^|\/)textures\/(?:block|blocks)\/([a-z0-9_/-]+)\.png$/):
+      meta?name.match(/(?:^|\/)textures\/(?:block|blocks)\/([a-z0-9_/-]+)\.png\.mcmeta$/):null;
+    if(qualified){
+      const pathKey=(meta?'meta:block:':'block:')+qualified[1];
+      if((ranked.get(pathKey)??-1)<priority){recognized.set(pathKey,file);ranked.set(pathKey,priority);}
+    }
  }
  const zip={entries:recognized,async get(key){
    const source=recognized.get(key);return source?new Uint8Array(await source.arrayBuffer()):null;
@@ -995,7 +1025,7 @@ function addControls(root,title){
    if(!result)return;
    status.textContent='Matched '+result.faces+' of '+result.totalFaces+' block faces ('+
      result.coverage+'%) across '+result.blocks+' block types, '+(result.directionalFaces||0)+' dedicated directional side faces, '+(result.items||0)+' item PNGs, '+(result.entities||0)+' mob skins, '+(result.worldItemSprites||0)+' 3D item sprites, '+result.animatedFaces+' animated faces ('+(result.bedrockAnimatedFaces||0)+' from Bedrock flipbooks) and '+result.sounds+
-     ' sound events. '+(result.overlaid?'Grass uses the Java side overlay. ':'')+'Unmatched block faces keep independent MineWorld art.';
+     ' sound events, '+(result.modelMappedFaces||0)+' model-resolved faces. '+(result.overlaid?'Grass uses the Java side overlay. ':'')+'Unmatched block faces keep independent MineWorld art.';
    detail.textContent=result.unmapped.length?
      'Example unmatched sprite names: '+result.unmapped.slice(0,9).join(', ')+'.':'All mapped face names were present.';
    auditSummary.textContent='Inspect all '+result.missingFaces.length+' unmatched block faces';
