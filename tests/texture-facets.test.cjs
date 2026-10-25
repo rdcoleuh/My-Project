@@ -1,4 +1,4 @@
-/* MineWorld 6.5: full-palette painter regression and save-safe texture coverage. */
+/* MineWorld 6.6: full-palette painter regression and save-safe texture coverage. */
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..');
@@ -66,8 +66,8 @@ test('renderer and service worker load layer once, last in artwork stack',()=>{
  assert.ok(html.indexOf('src="./core-pixel-art.js"')<html.indexOf('src="./texture-facets.js"'));
  assert.ok(html.indexOf('src="./texture-facets.js"')<html.indexOf('src="./texture-motion.js"'));
  assert.ok(sw.includes("'./texture-facets.js'"));
- assert.ok(sw.includes('mineworld-6-5-classic-forms-20261024-v45'));
- assert.ok(html.includes('MineWorld 6.5'));
+ assert.ok(sw.includes('mineworld-6-6-java-inventory-20261024-v46'));
+ assert.ok(html.includes('MineWorld 6.6'));
  assert.ok(html.includes('mineworld-selfhost-v1'));
  assert.ok(!read('texture-facets.js').includes('fetch('));
  assert.equal(w.MineWorldTextureFacets.family(5),'bark');
