@@ -9,7 +9,7 @@ const extra=[55,64,89,126]; // prismarine, sculk, sea lantern, end portal
 const pixels=new Uint8Array(SIZE*SIZE*4);
 let last=-Infinity,rendered=0,disabled=false;
 const clamp=n=>Math.max(0,Math.min(255,Math.round(n)));
-function update(gl,texture,t,fps,touch){
+function update(gl,texture,t,fps,touch,hasImportedFace){
  if(disabled||!gl||!texture||!(Number.isFinite(t)))return;
  const slow=Number.isFinite(fps)&&fps>0&&fps<(touch?24:30);
  const cadence=slow?1500:touch?370:230;
@@ -26,6 +26,9 @@ function update(gl,texture,t,fps,touch){
    for(const block of selection){
      const frame=Math.floor(t/(block===66?260:390));
      for(let face=0;face<3;face++){
+       // A partial player-owned Java pack must not freeze unrelated procedural
+       // water, lava, portal, or luminous faces. Never overwrite imported pixels.
+       if(typeof hasImportedFace==='function'&&hasImportedFace(block,face))continue;
        for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
          const sy=(y+(block===7?frame:block===66?frame*2:Math.floor(frame/2)))&15;
          const sx=(x+(block===66?Math.floor(frame/2):block===87?frame:block===7?Math.floor(frame/3):0))&15;
