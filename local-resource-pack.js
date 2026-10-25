@@ -138,9 +138,12 @@ function readArchive(buffer){
    const path=decoder.decode(new Uint8Array(buffer,p+46,nlen)).replace(/\\/g,'/').toLowerCase();
    const match=path.match(/(?:^|\/)(?:assets\/minecraft\/)?textures\/(?:block|blocks)\/([a-z0-9_]+)\.png$/);
    const matchSound=path.match(/(?:^|\/)assets\/minecraft\/sounds\/([a-z0-9_./-]+)\.ogg$/);
+   const mapColor=path.match(/(?:^|\/)(?:assets\/minecraft\/)?textures\/colormap\/(grass|foliage)\.png$/);
    if(match&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8)){
      found.set(match[1],{method,size,expanded,local});
    }
+   if(mapColor&&size<4*1024*1024&&expanded<4*1024*1024&&(method===0||method===8))
+     found.set('colormap:'+mapColor[1],{method,size,expanded,local});
    if(matchSound&&size<4*1024*1024&&expanded<4*1024*1024&&(method===0||method===8))
      found.set('sound:'+matchSound[1],{method,size,expanded,local});
    p=end;
@@ -190,7 +193,9 @@ function imageFromURL(src){
    im.src=src;
  });
 }
-const state={active:false,canvas:null,sourceName:'',lastResult:null};
+const DEFAULT_GRASS=[145,189,89],DEFAULT_FOLIAGE=[119,171,47];
+const state={active:false,canvas:null,sourceName:'',lastResult:null,
+ tint:{grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()}};
 async function writeAtlas(canvas){
  const gl=META.gl;
  if(typeof gl.isContextLost==='function'&&gl.isContextLost())throw Error('The graphics context was lost.');
@@ -215,8 +220,8 @@ function baseCanvas(){
 // imported neutral sprites, but never recolor already-colored custom artwork.
 function tintNeutralSprite(ctx,x,y,id,face){
  if(typeof ctx.getImageData!=='function'||typeof ctx.putImageData!=='function')return false;
- const foliage={6:[109,169,82],31:[96,132,82],33:[130,158,87],35:[114,158,75],37:[109,169,82],39:[108,154,87]};
- const tint=id===1?[145,189,89]:foliage[id];
+ const foliage={6:state.tint.foliage,31:[97,153,97],33:[128,167,85],35:state.tint.foliage,37:state.tint.foliage,39:state.tint.foliage};
+ const tint=id===1?state.tint.grass:foliage[id];
  if(!tint||(id===1&&face!==0))return false;
  const height=id===1&&face===1?5:16;
  const data=ctx.getImageData(x,y,16,height);
@@ -272,17 +277,50 @@ function composeGrassSideOverlay(ctx,overlay,x,y){
  if(typeof layerCtx.getImageData==='function'&&typeof layerCtx.putImageData==='function'){
   try{
    const png=layerCtx.getImageData(0,0,16,16);
-   if(tintOverlayPixels(png.data,[145,189,89]))layerCtx.putImageData(png,0,0);
+   if(tintOverlayPixels(png.data,state.tint.grass))layerCtx.putImageData(png,0,0);
   }catch(_){/* Locked-down browsers still render the untinted original sprite. */}
  }
  // Canvas source-over preserves every transparent pixel and keeps the dirt base intact.
  ctx.drawImage(layer,x,y);
  return true;
 }
+// Read the actual color-map supplied by the player's Java Edition JAR/ZIP.
+// A Java plains biome (temperature .8, downfall .4) picks this pixel.
+function samplePlainsColormap(image){
+ if(!image||image.width<256||image.height<256)return null;
+ const canvas=document.createElement('canvas');canvas.width=1;canvas.height=1;
+ const ctx=canvas.getContext('2d',{willReadFrequently:true});
+ if(!ctx||typeof ctx.getImageData!=='function')return null;
+ ctx.imageSmoothingEnabled=false;
+ const temp=.8,downfall=.4;
+ const u=Math.max(0,Math.min(255,Math.floor((1-temp)*255)));
+ const v=Math.max(0,Math.min(255,Math.floor((1-temp*downfall)*255)));
+ try{
+  ctx.drawImage(image,u,v,1,1,0,0,1,1);
+  const rgb=ctx.getImageData(0,0,1,1).data;
+  return rgb[3]?[rgb[0],rgb[1],rgb[2]]:null;
+ }catch(_){return null;}
+}
+async function readPackTints(zip){
+ const palette={grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()};
+ let sources=0;
+ for(const key of ['grass','foliage']){
+  const file='colormap:'+key;
+  if(!zip.entries.has(file))continue;
+  try{
+   const image=await imageFromPng(await zip.get(file));
+   const tone=samplePlainsColormap(image);
+   if(tone){palette[key]=tone;sources++;}
+  }catch(e){console.warn('Ignoring invalid Java colormap '+key,e);}
+ }
+ return {palette,sources};
+}
 async function applyResources(zip,sourceName){
  if(zip.entries.size===0)throw Error('No compatible block PNGs or sounds were found in the selected files.');
  window.MineWorldSound?.clearSamples();
  const original=await imageFromURL(META.baseURL);
+ const importedTints=await readPackTints(zip);
+ state.tint=importedTints.palette;
  const [canvas,ctx]=baseCanvas();ctx.drawImage(original,0,0);
  let faces=0,overlaid=0;
  const ids=new Set(),cache=new Map(),missing=new Set(),resolved=new Map();
@@ -346,7 +384,7 @@ async function applyResources(zip,sourceName){
  if(!faces&&!audio)throw Error('No compatible block PNGs or playable OGG sound files found.');
  if(faces)await writeAtlas(canvas);
  state.active=faces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={blocks:ids.size,faces,overlaid,sounds:audio,available:zip.entries.size,
+ state.lastResult={blocks:ids.size,faces,overlaid,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
  window.MineWorldBridge?.refreshTextureUI?.();
@@ -370,6 +408,7 @@ async function loadFiles(fileList){
    const png=leaf.match(/^([a-z0-9_]+)\.png$/),ogg=leaf.match(/^([a-z0-9_]+)\.ogg$/);
    let key=png?.[1]||null;
    if(ogg){const path=name.match(/(?:^|\/)sounds\/([a-z0-9_./-]+)\.ogg$/);if(path)key='sound:'+path[1];}
+   if(png&&name.includes('/colormap/')&&['grass','foliage'].includes(png[1]))key='colormap:'+png[1];
    if(!key)continue;
    if(Number.isFinite(file.size)&&file.size>6*1024*1024)continue;
    total+=Number.isFinite(file.size)?file.size:0;
@@ -387,6 +426,7 @@ async function clear(){
  await writeAtlas(canvas);
  window.MineWorldSound?.clearSamples();window.MineWorldBridge?.refreshTextureUI?.();
  state.active=false;state.sourceName='';state.lastResult=null;
+ state.tint={grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()};
 }
 function drawFace(ctx,id,face){
  if(!state.active||!state.canvas)return false;
@@ -399,6 +439,8 @@ const exposed={
  get active(){return state.active;},
  get source(){return state.sourceName;},
  get lastResult(){return state.lastResult;},
+ get grassTint(){return [...state.tint.grass];},
+ get foliageTint(){return [...state.tint.foliage];},
  loadFile,loadFiles,clear,drawFace,textureName,
  inspectZip(buffer){return Array.from(readArchive(buffer).entries.keys());}
 };
