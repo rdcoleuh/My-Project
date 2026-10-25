@@ -49,3 +49,21 @@
 .mw-java-craft .craft-row{justify-content:center!important;gap:6px!important}
 .mw-java-craft .craft-actions{font-size:11px!important}
 .mw-java-craft #craft-state{font-size:11px!important}
+
+/* 6.7: tighter game-like proportions and clear mobile interaction. */
+.mw-java-shell{image-rendering:pixelated}
+.mw-java-shell .mw-java-head{gap:6px;padding-bottom:2px;border-bottom:1px solid #777}
+.mw-java-player{background:radial-gradient(circle at 40% 26%,#42525e,#1c252a 70%);flex:0 0 86px}
+.mw-java-avatar{width:60px;height:100px;object-fit:contain;image-rendering:pixelated}
+.mw-java-item-detail{padding:5px 8px;background:#303437;color:#fff;font:12px/1.45 monospace;border:2px inset #777;text-shadow:1px 1px #111;min-height:27px;box-sizing:border-box}
+.mw-java-slot.mw-focused{outline:2px solid #fbe1a2;outline-offset:-1px}
+.mw-java-slot:active{filter:brightness(1.2)}
+.mw-java-hot-preview{display:flex;align-items:center;flex-wrap:wrap;justify-content:center;gap:4px;margin:8px 0}
+.mw-java-hot-tile{width:31px;height:30px;color:#292929;background:#9a9a9a;border:3px inset #777;font:bold 12px monospace;cursor:pointer}
+.mw-java-hot-tile.mw-active{border-color:#f9efb7;background:#bcb093;box-shadow:0 0 0 2px #f9d75c}
+.mw-java-tabs{display:flex;gap:4px;flex-wrap:wrap;margin:7px 0}
+.mw-java-tabs button{font:700 11px Arial,sans-serif;background:#afafaf;color:#2b2b2b;border:2px outset #dedede;padding:5px 8px;cursor:pointer}
+.mw-java-tabs button.mw-active{background:#fcf6d1;border:2px inset #8f823d}
+.mw-java-creative-panel .mw-java-creative-grid button{position:relative}
+.mw-java-creative-panel .mw-java-creative-grid button:active{filter:brightness(1.25)}
+@media(max-width:560px){.mw-java-player{flex-basis:62px;min-height:82px}.mw-java-avatar{width:44px;height:75px}.mw-java-top{gap:6px}.mw-java-craft{flex-basis:230px;max-width:100%}.mw-java-creative-panel{max-height:91dvh}.mw-java-hot-tile{width:26px;height:26px}.mw-java-tabs button{font-size:10px;padding:4px 5px}}
