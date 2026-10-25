@@ -122,7 +122,7 @@ test('worlds and skin UI files are loaded, full-size block texel density is pres
  assert.ok(html.includes('worldLibrary.current'));
  assert.ok(html.includes('window.MineWorldSkin.uv'));
  assert.ok(html.includes('pxU=Math.max(1,Math.min(SIZE,Math.round((arguments[3]??1)*SIZE)))'));
- assert.ok(html.includes('uv(b,textureFace,window.MineWorldFaceUV.corner(f.n,v),spanU,spanV)') || html.includes('uv(b,textureFace,i,spanU,spanV)'));
+ assert.ok(/uv\(b,textureFace,window\.MineWorldFaceUV\.corner\(f\.n,v\),spanU,spanV(?:,0,offsetV)?\)/.test(html) || html.includes('uv(b,textureFace,i,spanU,spanV)'));
  assert.ok(html.includes('gl.NEAREST'));
  assert.ok(html.includes('mineworld-selfhost-v1'));
  assert.ok(html.includes("version:13"));
