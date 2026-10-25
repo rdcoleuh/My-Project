@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..'),src=fs.readFileSync(path.join(root,'local-resource-pack.js'),'utf8');
-const body=src.match(/function tintNeutralSprite\(ctx,x,y,id,face\)[\s\S]*?(?=\nasync function applyResources)/)?.[0];
+const body=src.match(/function tintNeutralSprite\(ctx,x,y,id,face,palette=state\.tint\)[\s\S]*?(?=\nasync function applyResources)/)?.[0];
 if(!body)throw Error('Import tint function missing');
 const tint=vm.runInNewContext("const state={tint:{grass:[145,189,89],foliage:[119,171,47]}};\n"+body+'\ntintNeutralSprite');
 function pixelContext(rgb,alpha=255){
@@ -56,7 +56,7 @@ test('optional tint safely skips low-feature browser canvases',()=>{
 });
 test('resource files stay local, ZIP sprite matching still wired to atlas',()=>{
  new Function(src);
- assert.ok(src.includes('tintNeutralSprite(ctx,px,py,id,face)'));
+ assert.ok(src.includes('tintNeutralSprite(ctx,px,py,id,face,importedTints.palette)'));
  assert.ok(src.includes('async function applyResources(zip,sourceName)'));
  assert.ok(src.includes('window.MineWorldLocalTextures=Object.freeze(exposed)'));
  assert.ok(src.includes('ctx.drawImage(image,0,0,frame,frame,px,py,16,16)'));
