@@ -87,6 +87,7 @@ test('player-supplied animated PNG updates only changed GPU tiles and resets saf
   name,size:bytes.length,arrayBuffer:async()=>Uint8Array.from(bytes).buffer
  }));
  const pack=window.MineWorldLocalTextures;
+ assert.equal(pack.textureName(169,2),'red_wool','Wool bottom must never become oak planks');
  const result=await pack.loadFiles(input);
  assert.equal(result.animatedFaces,3);
  assert.equal(pack.animatedFaces,3);
