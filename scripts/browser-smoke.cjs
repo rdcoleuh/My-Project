@@ -148,6 +148,16 @@ async function go(browser,name,mobile){
   assert.equal(await page.locator('#mw-options-screen').evaluate(el=>el.classList.contains('active')),true,name+': Options failed');
   assert.ok(await page.locator('#mw-options-screen .mw-local-experiment').count(),
     name+': importing controls missing from Options');
+  assert.ok(await page.evaluate(()=>window.MineWorldVisualPolish?.get().cleanScaling===true),
+    name+': clean display scaling was not enabled');
+  assert.equal(await page.locator('#mw-options-screen [data-mw-polish="cleanScaling"]').count(),1,
+    name+': clean scaling option is missing');
+  await page.locator('#mw-options-screen [data-mw-polish="cleanScaling"] input').uncheck();
+  assert.equal(await page.locator('#world').evaluate(c=>getComputedStyle(c).imageRendering),'pixelated',
+    name+': retro scaling did not apply');
+  await page.locator('#mw-options-screen [data-mw-polish="cleanScaling"] input').check();
+  assert.equal(await page.locator('#world').evaluate(c=>getComputedStyle(c).imageRendering),'auto',
+    name+': clean scaling did not restore');
   await page.locator('#mw-motion').click();
   await page.locator('#mw-back-options').click();
   assert.equal(await page.locator('#mw-menu-root').evaluate(el=>el.classList.contains('active')),true,name+': Options back failed');
@@ -170,8 +180,8 @@ async function go(browser,name,mobile){
   assert.ok(await page.locator('#world').evaluate(canvas=>
      canvas.width>=Math.floor(canvas.clientWidth)&&
      canvas.height>=Math.floor(canvas.clientHeight)&&
-     getComputedStyle(canvas).imageRendering==='pixelated'),
-    name+': world canvas is being rendered below CSS resolution or blurred');
+     getComputedStyle(canvas).imageRendering==='auto'),
+    name+': canvas resolution or clean screen scaling is incorrect');
   // Verify actual displacement, not merely that the Play screen opens.
   const before=await page.evaluate(()=>window.MineWorldBridge.getPlayer());
   if(!mobile){
@@ -201,6 +211,12 @@ async function go(browser,name,mobile){
     }
   }else await page.locator('#menu-toggle').click({timeout:15000});
   assert.equal(await page.locator('#pause').evaluate(el=>!el.classList.contains('hidden')),true,name+': Pause menu failed');
+  assert.equal(await page.locator('#pause [data-mw-polish="focusHud"]').count(),1,
+    name+': focus HUD option missing from pause menu');
+  await page.locator('#pause [data-mw-polish="focusHud"] input').check();
+  assert.ok(await page.evaluate(()=>document.documentElement.classList.contains('mw-quiet-hud')),
+    name+': focus HUD option did not apply');
+  await page.locator('#pause [data-mw-polish="focusHud"] input').uncheck();
   await page.locator('#home-btn').click();
   await page.locator('#mw-menu-root.active').waitFor({state:'visible',timeout:15000});
   if(errors.length)throw Error(name+' browser console/runtime errors:\n'+errors.slice(0,8).join('\n'));
