@@ -99,4 +99,8 @@ test('real inventory shows direct local item sprites and keeps blocks unchanged'
  assert.match(ui,/blockImage\(Number\(key.slice\(6\)\),where\)/);
  assert.ok(!ui.includes('https://minecraft'));
  assert.ok(read('index.html').includes('mineworld-selfhost-v1'));
+ assert.ok(ui.includes('Math.floor(tile/16)/63*100'),
+   'all block icons must address the current full-height atlas');
+ assert.ok(read('java-inventory.css').includes('background-size:1600% 6400%'),
+   'atlas background scaling must use all 64 rows, not the former 32 rows');
 });
