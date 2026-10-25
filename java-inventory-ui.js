@@ -219,11 +219,11 @@ function install(api){
    if(creativeTab!=='all'&&creativeTab!==type)continue;
    matches.push(id);
   }
-  const maxPage=Math.max(1,Math.ceil(matches.length/54));
+  const maxPage=Math.max(1,Math.ceil(matches.length/45));
   creativePage=Math.min(creativePage,maxPage-1);
   pageLabel.textContent=(creativePage+1)+' / '+maxPage+' · '+matches.length+' blocks';
   prevPage.disabled=creativePage===0;nextPage.disabled=creativePage===maxPage-1;
-  for(const id of matches.slice(creativePage*54,creativePage*54+54)){
+  for(const id of matches.slice(creativePage*45,creativePage*45+45)){
    const name=api.blockName(id);
    const b=node(collection,'button');b.type='button';b.title=name;
    b.setAttribute('aria-label','Add '+name+' to selected hotbar slot');
