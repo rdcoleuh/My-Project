@@ -217,7 +217,7 @@ function tintNeutralSprite(ctx,x,y,id,face){
  if(typeof ctx.getImageData!=='function'||typeof ctx.putImageData!=='function')return false;
  const foliage={6:[109,169,82],31:[96,132,82],33:[130,158,87],35:[114,158,75],37:[109,169,82],39:[108,154,87]};
  const tint=id===1?[145,189,89]:foliage[id];
- if(!tint||(id===1&&face===2))return false;
+ if(!tint||(id===1&&face!==0))return false;
  const height=id===1&&face===1?5:16;
  const data=ctx.getImageData(x,y,16,height);
  let grey=0,visible=0;
@@ -238,37 +238,88 @@ function tintNeutralSprite(ctx,x,y,id,face){
  ctx.putImageData(data,x,y);
  return true;
 }
+// Java grass uses TWO side layers: an untinted dirt/grass side texture
+// plus a separately tinted transparent grass_block_side_overlay.png.
+// Tinting the first five rows of the dirt base turns brown dirt green,
+// so its base must be left untouched when an actual overlay is available.
+function tintOverlayPixels(data,tint){
+ if(!data||!tint)return false;
+ let neutral=0,opaque=0;
+ for(let i=0;i<data.length;i+=4){
+   if(data[i+3]===0)continue;
+   opaque++;
+   if(Math.max(data[i],data[i+1],data[i+2])-Math.min(data[i],data[i+1],data[i+2])<=18)neutral++;
+ }
+ if(!opaque||neutral/opaque<.65)return false; // Respect deliberately precolored packs.
+ for(let i=0;i<data.length;i+=4){
+   if(data[i+3]===0)continue;
+   if(Math.max(data[i],data[i+1],data[i+2])-Math.min(data[i],data[i+1],data[i+2])>18)continue;
+   data[i]=Math.round(data[i]*tint[0]/255);
+   data[i+1]=Math.round(data[i+1]*tint[1]/255);
+   data[i+2]=Math.round(data[i+2]*tint[2]/255);
+ }
+ return true;
+}
+function composeGrassSideOverlay(ctx,overlay,x,y){
+ if(!overlay||!ctx)return false;
+ const layer=document.createElement('canvas');layer.width=16;layer.height=16;
+ const layerCtx=layer.getContext('2d',{alpha:true});
+ if(!layerCtx)return false;
+ layerCtx.imageSmoothingEnabled=false;
+ const frame=Math.min(overlay.width,overlay.height);
+ layerCtx.clearRect(0,0,16,16);
+ layerCtx.drawImage(overlay,0,0,frame,frame,0,0,16,16);
+ if(typeof layerCtx.getImageData==='function'&&typeof layerCtx.putImageData==='function'){
+  try{
+   const png=layerCtx.getImageData(0,0,16,16);
+   if(tintOverlayPixels(png.data,[145,189,89]))layerCtx.putImageData(png,0,0);
+  }catch(_){/* Locked-down browsers still render the untinted original sprite. */}
+ }
+ // Canvas source-over preserves every transparent pixel and keeps the dirt base intact.
+ ctx.drawImage(layer,x,y);
+ return true;
+}
 async function applyResources(zip,sourceName){
  if(zip.entries.size===0)throw Error('No compatible block PNGs or sounds were found in the selected files.');
  window.MineWorldSound?.clearSamples();
  const original=await imageFromURL(META.baseURL);
  const [canvas,ctx]=baseCanvas();ctx.drawImage(original,0,0);
- let faces=0;
+ let faces=0,overlaid=0;
  const ids=new Set(),cache=new Map(),missing=new Set(),resolved=new Map();
+ function resolveName(name){
+   if(!name)return null;
+   if(!resolved.has(name))resolved.set(name,[name,...(aliases[name]||[])].find(key=>zip.entries.has(key))||null);
+   return resolved.get(name);
+ }
+ async function sprite(name){
+   const key=resolveName(name);if(!key)return null;
+   if(!cache.has(key)){
+     cache.set(key,(async()=>{
+       try{return await imageFromPng(await zip.get(key));}
+       catch(e){console.warn('Skipping unsupported texture '+key,e);return null;}
+     })());
+   }
+   return cache.get(key);
+ }
  for(let id=1;id<=169;id++){
    for(let face=0;face<3;face++){
      const name=textureName(id,face);
 
-     let candidate=resolved.get(name);
-     if(candidate===undefined){
-       candidate=[name,...(aliases[name]||[])].find(key=>zip.entries.has(key))||null;
-       resolved.set(name,candidate);
-     }
-     if(!candidate){if(name)missing.add(name);continue;}
-     if(!cache.has(candidate)){
-       cache.set(candidate,(async()=>{
-         try{return await imageFromPng(await zip.get(candidate));}
-         catch(e){console.warn('Skipping unsupported texture '+candidate,e);return null;}
-       })());
-     }
-     const image=await cache.get(candidate);
-     if(!image)continue;
+     const image=await sprite(name);
      const column=(id*3+face)%16,row=Math.floor((id*3+face)/16);
-     // For animated PNG strips, draw frame zero. Standard 16px vanilla files remain pixel-exact.
-     const frame=Math.min(image.width,image.height);
-     ctx.drawImage(image,0,0,frame,frame,column*16,row*16,16,16);
-     tintNeutralSprite(ctx,column*16,row*16,id,face);
-     faces++;ids.add(id);
+     const px=column*16,py=row*16;
+     if(image){
+       // For animated PNG strips, draw frame zero. Standard 16px files remain pixel-exact.
+       const frame=Math.min(image.width,image.height);
+       ctx.drawImage(image,0,0,frame,frame,px,py,16,16);
+       tintNeutralSprite(ctx,px,py,id,face);
+     }else if(name)missing.add(name);
+     // Java's side overlay is not itself a block face: it is tinted and
+     // blended on top of the untouched grass_block_side.png base.
+     const grassSide=id===1&&face===1;
+     const overlay=grassSide?await sprite('grass_block_side_overlay'):null;
+     if(overlay&&composeGrassSideOverlay(ctx,overlay,px,py))overlaid++;
+     if(image||overlay){faces++;ids.add(id);}
    }
  }
  const sounds={
@@ -295,7 +346,7 @@ async function applyResources(zip,sourceName){
  if(!faces&&!audio)throw Error('No compatible block PNGs or playable OGG sound files found.');
  if(faces)await writeAtlas(canvas);
  state.active=faces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={blocks:ids.size,faces,sounds:audio,available:zip.entries.size,
+ state.lastResult={blocks:ids.size,faces,overlaid,sounds:audio,available:zip.entries.size,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
  window.MineWorldBridge?.refreshTextureUI?.();
@@ -392,7 +443,7 @@ function addControls(root,title){
    if(!result)return;
    status.textContent='Matched '+result.faces+' of '+result.totalFaces+' block faces ('+
      result.coverage+'%) across '+result.blocks+' block types and '+result.sounds+
-     ' sound events. Unmatched block faces keep independent MineWorld art.';
+     ' sound events. '+(result.overlaid?'Grass uses the Java side overlay. ':'')+'Unmatched block faces keep independent MineWorld art.';
    detail.textContent=result.unmapped.length?
      'Example unmatched sprite names: '+result.unmapped.slice(0,9).join(', ')+'.':'All mapped face names were present.';
    preview.replaceChildren();
