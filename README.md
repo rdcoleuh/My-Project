@@ -1,3 +1,20 @@
+# MineWorld 6.4 — 169-Block Pixel Microdetail Pass
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+This release adds an independent procedural `texture-facets.js` painter after the existing core-art layer. All **169 block IDs**, on **top, side and bottom 16×16 faces**, receive deterministic, nearest-neighbor-friendly microdetail while retaining their unique material patterns.
+
+- **Bark and leaves:** Vertical bark scoring, cut-end ring shading, species-specific foliage clusters and cherry highlights.
+- **Ores and stones:** Mineral facet edges, subtle rock flecks and clearer earthy/rocky material contrasts without flattening existing ore veins.
+- **Glass, ice, obsidian, cactus, bamboo and hay:** More recognizable reflection, fracture, dark-violet vein, rind/spine, cane joint and straw/binding details.
+- **Metal, brick, wood, Nether, glow blocks, crops and workstations:** Family-aware chipped edges and limited contrast changes that preserve established silhouettes, device faces, crop transparency and fluid animations.
+
+No world-save formats or block identities were changed, and no Minecraft/Eaglercraft artwork was copied. Existing custom resource-pack support remains available for owners of compatible resources.
+
+**Automated verification:** All **72 regression tests passed** on GitHub Actions. The new tests compare before/after texels for every block, verify alpha and cutouts, distinct side materials, 16×16 dimensions, face-specific geometry, script order, and offline precaching. GitHub Pages deployment completed successfully.
+
+---
+
 # MineWorld 6.3 — Cleaner Classic-Style Terrain & Building Blocks
 
 **Play:** https://rdcoleuh.github.io/My-Project/
