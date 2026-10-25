@@ -53,7 +53,7 @@ test('animal clearance checks feet and head before walking into a low roof',()=>
  assert.equal(can(3.5,10,4.5,2.375,wall),false,'camel needs head room');
  assert.equal(can(2.5,10,4.5,2.375,wall),true);
  assert.equal(can(NaN,10,4,1.4,wall),false);
- assert.ok(src.includes('animals.canOccupy(nx,ground,nz,animalModels.MODELS[m.kind]?.height||1.8,'));
- assert.ok(src.includes('animals.canOccupy(x,y,z,animalModels.MODELS[kind]?.height||1.8,'));
+ assert.ok(src.includes('collisionFree(nx,ground,nz,m.kind'));
+ assert.ok(src.includes('collisionFree(x,y,z,kind)'));
  assert.ok(src.includes("b.addEventListener('lostpointercapture',()=>{touchHold[verb]=false;if(verb==='mine')cancelMining();});"));
 });
