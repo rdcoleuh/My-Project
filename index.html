@@ -922,7 +922,9 @@ body.in-nether #game-wrap{background:#290f19}
     return texture;
   }
   function uv(b,face,corner){
-    const tile=face===4&&alternateFaces[b]?.extra?alternateFaces[b].extra.tile:
+    const override=arguments[7];
+    const tile=Number.isInteger(override)&&override>=518&&override<1024?override:
+      face===4&&alternateFaces[b]?.extra?alternateFaces[b].extra.tile:
       face===3&&alternateFaces[b]?alternateFaces[b].tile:b*3+(face>=3?1:face);
     const x=tile%COLUMNS,y=Math.floor(tile/COLUMNS);
     const corners=[[0,0],[0,1],[1,1],[1,0]];
@@ -1423,7 +1425,8 @@ body.in-nether #game-wrap{background:#290f19}
             // end portal frame uses [0,3,16,16]. Bottom-align those 13/15px
             // side strips rather than cropping the source's bottom pixels.
             offsetV=f.n[1]===0&&[125,137,138].includes(b)?1-height:0,
-            uv=window.MineWorldAtlas.uv(b,textureFace,window.MineWorldFaceUV.corner(f.n,v),spanU,spanV,0,offsetV);
+            uv=window.MineWorldAtlas.uv(b,textureFace,window.MineWorldFaceUV.corner(f.n,v),spanU,spanV,0,offsetV,
+               face===1?window.MineWorldJavaDirectionalFaces?.tile(b,f.n):null);
       const px=crop?x+.14+v[0]*.72:x+shape.left+v[0]*(shape.right-shape.left),
             py=crop?y+v[1]*(.22+crop.stage*.22):y+shape.bottom+v[1]*(shape.top-shape.bottom),
             pz=crop?z+.14+v[2]*.72:z+shape.front+v[2]*(shape.back-shape.front);
@@ -4330,6 +4333,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
       cancelMining();
     },
     refreshTextureUI:()=>updateHotbar(),
+    refreshWorldMeshes:()=>buildMesh(),
     getWorlds:mode=>worldLibrary.list(mode),
     getCurrentWorld:mode=>({...worldLibrary.current(mode||gameMode)}),
     openWorld:(mode,id,play)=>openNamedWorld(mode,id,!!play),
@@ -4550,6 +4554,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
 <script src="./block-face-uv.js"></script>
 <script src="./local-pack-storage.js"></script>
 <script src="./java-model-faces.js"></script>
+<script src="./java-directional-faces.js"></script>
 <script src="./local-resource-pack.js"></script>
 <script src="./visual-polish.js"></script>
 </body>

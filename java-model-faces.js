@@ -138,7 +138,10 @@ async function resolve(zip,modelName){
  const side=present.length&&new Set(present).size===1?present[0]:null;
  const allowed=value=>value&&zip.entries.has(value)?value:null;
  const result={top:allowed(top),side:allowed(side),bottom:allowed(bottom)};
- return Object.values(result).some(Boolean)?result:null;
+ const dirs=['north','south','east','west'];
+ const cardinal=Object.fromEntries(dirs.map((dir,i)=>[dir,allowed(sides[i])]));
+ if(new Set(Object.values(cardinal).filter(Boolean)).size>1)result.sides=cardinal;
+ return result.sides||Object.values(result).some(Boolean)?result:null;
 }
 window.MineWorldJavaModelFaces=Object.freeze({nameFor,resolve,modelPath,texturePath,stateModel});
 })();

@@ -600,6 +600,28 @@ async function applyResources(zip,sourceName){
        overlayTimeline:overlayInfo?.timeline,overlayGeometry:overlayInfo?.geometry,lastKey:''});
    }
  }
+ // Extra local Java cube sides retain the model's own north/south/east/west artwork.
+ const sideAllocator=window.MineWorldJavaDirectionalFaces;
+ const sidePlan=sideAllocator?.plan(modelFaces);
+ const mappedSides=new Map();let modelDirectionalFaces=0;
+ for(const [id,dirs] of sidePlan?.tiles||[]){
+  const row={};
+  for(const [dir,entry] of Object.entries(dirs)){
+   const image=await sprite(entry.name);
+   if(!image)continue;
+   const info=await spriteTimeline(entry.name,image);
+   const px=(entry.tile%16)*16,py=Math.floor(entry.tile/16)*16;
+   ctx.clearRect(px,py,16,16);
+   if(info)drawPackFrame(ctx,image,info.geometry,firstFrame(info),1,px,py);
+   else ctx.drawImage(image,0,0,Math.min(image.width,image.height),
+     Math.min(image.width,image.height),px,py,16,16);
+   row[dir]={tile:entry.tile};modelDirectionalFaces++;
+   if(info)animated.push({id,face:5,px,py,image,overlay:null,
+     baseTimeline:info.timeline,baseGeometry:info.geometry,
+     overlayTimeline:null,overlayGeometry:null,lastKey:''});
+  }
+  if(Object.keys(row).length)mappedSides.set(id,row);
+ }
  // Eleven reserved atlas tiles can display distinct Java workstation faces.
  // Existing block IDs and the original 507 atlas face slots stay unchanged.
  let directionalFaces=0;
@@ -715,7 +737,9 @@ async function applyResources(zip,sourceName){
  }
  if(!faces&&!directionalFaces&&!audio&&!items&&!mobArt.size)
   throw Error('No compatible block, item or sound files found.');
- if(faces||directionalFaces||state.active)await writeAtlas(canvas);
+ if(faces||directionalFaces||modelDirectionalFaces||state.active)await writeAtlas(canvas);
+ sideAllocator?.commit(mappedSides);
+ window.MineWorldBridge?.refreshWorldMeshes?.();
  // Do not erase a working pack when an invalid replacement is rejected.
  // Newly decoded sound types stay in place; old missing types are discarded.
  window.MineWorldSound?.clearSamples(importedSoundTypes);
@@ -730,7 +754,7 @@ async function applyResources(zip,sourceName){
  state.lastAnimationAt=-Infinity;
  state.animationDisabled=false;
  state.active=faces+directionalFaces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={blocks:ids.size,faces,directionalFaces,modelMappedFaces,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
+ state.lastResult={blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
@@ -806,6 +830,8 @@ async function clear(){
  const img=await imageFromURL(META.baseURL);
  const [canvas,ctx]=baseCanvas();ctx.drawImage(img,0,0);
  await writeAtlas(canvas);
+ window.MineWorldJavaDirectionalFaces?.commit(new Map());
+ window.MineWorldBridge?.refreshWorldMeshes?.();
  window.MineWorldSound?.clearSamples();window.MineWorldMobPixels?.applyImported?.(new Map());window.MineWorldBridge?.refreshTextureUI?.();
  state.active=false;state.sourceName='';state.lastResult=null;
  state.animations=[];state.importedFaces=new Set();state.originalImage=null;state.lastAnimationAt=-Infinity;
