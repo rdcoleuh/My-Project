@@ -1,3 +1,21 @@
+# MineWorld 6.6 — Java-style Slot Inventory and Local Java Texture Packs
+
+**Play:** https://rdcoleuh.github.io/My-Project/
+
+Version 6.6 replaces the old scrolling Survival backpack with a persistent Java-style layout: **27 main inventory slots, nine separate hotbar slots, armor positions, an offhand slot, a held cursor stack and safe overflow pages** for older saves with unusually large inventories. The original crafting grid and recipes remain available below the main inventory.
+
+- **Move and split:** Left click/tap pick up and place a stack; right click/contextmenu splits a stack in half or places one item; Shift+click moves a stack between inventory and hotbar; drag/drop swaps or merges stacks; hover + number key 1–9 swaps with a hotbar slot.
+- **Offhand:** Press F in Survival (or click the offhand button beside the hotbar) to swap the selected hotbar item with the offhand. F still toggles flight in Creative.
+- **Creative:** E and the inventory button open a searchable **169-block** selection instead of merely cycling predetermined hotbar pages.
+- **Save compatibility:** Legacy stack IDs, world slots, block IDs, total item counts and save schema version 13 are preserved. The new optional \`javaInventory\` field retains exact slot locations across save/load without discarding existing items. Existing inventory counters remain authoritative for crafting/gameplay.
+- **Textures:** The original procedural 16×16 textures remain as the default fallback. A new **Import Java textures** action inside the inventory allows you to choose your own Java Edition resource-pack ZIP/JAR. Compatible original textures are applied **locally in your browser**, never sent to or bundled in this public repository, and the inventory previews show imported block faces. Unsupported/missing sprite names retain MineWorld art.
+
+This inventory is modeled after Java Edition's familiar layout and core slot manipulation, but it does not reproduce every vanilla menu, keybinding or gameplay mechanic.
+
+**Verification:** GitHub Actions tests cover stack splitting, conservation of item totals, shift-transfer, number-key swaps, offhand, overflow migration, save wiring, asset caching, and the existing gameplay/texture regressions.
+
+---
+
 # MineWorld 6.5 — Stronger Classic Block Silhouettes
 
 **Play:** https://rdcoleuh.github.io/My-Project/
