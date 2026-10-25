@@ -138,10 +138,13 @@ function readArchive(buffer){
    const path=decoder.decode(new Uint8Array(buffer,p+46,nlen)).replace(/\\/g,'/').toLowerCase();
    const match=path.match(/(?:^|\/)(?:assets\/minecraft\/)?textures\/(?:block|blocks)\/([a-z0-9_]+)\.png$/);
    const matchSound=path.match(/(?:^|\/)assets\/minecraft\/sounds\/([a-z0-9_./-]+)\.ogg$/);
+   const matchMeta=path.match(/(?:^|\/)(?:assets\/minecraft\/)?textures\/(?:block|blocks)\/([a-z0-9_]+)\.png\.mcmeta$/);
    const mapColor=path.match(/(?:^|\/)(?:assets\/minecraft\/)?textures\/colormap\/(grass|foliage)\.png$/);
    if(match&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8)){
      found.set(match[1],{method,size,expanded,local});
    }
+   if(matchMeta&&size<131072&&expanded<131072&&(method===0||method===8))
+     found.set('meta:'+matchMeta[1],{method,size,expanded,local});
    if(mapColor&&size<4*1024*1024&&expanded<4*1024*1024&&(method===0||method===8))
      found.set('colormap:'+mapColor[1],{method,size,expanded,local});
    if(matchSound&&size<4*1024*1024&&expanded<4*1024*1024&&(method===0||method===8))
@@ -195,7 +198,8 @@ function imageFromURL(src){
 }
 const DEFAULT_GRASS=[145,189,89],DEFAULT_FOLIAGE=[119,171,47];
 const state={active:false,canvas:null,sourceName:'',lastResult:null,
- tint:{grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()}};
+  tint:{grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()},
+ animations:[],animationStart:0,lastAnimationAt:-Infinity,animationDisabled:false,originalImage:null};
 async function writeAtlas(canvas){
  const gl=META.gl;
  if(typeof gl.isContextLost==='function'&&gl.isContextLost())throw Error('The graphics context was lost.');
@@ -265,7 +269,7 @@ function tintOverlayPixels(data,tint){
  }
  return true;
 }
-function composeGrassSideOverlay(ctx,overlay,x,y){
+function composeGrassSideOverlay(ctx,overlay,x,y,frameIndex=0,nextIndex=frameIndex,blend=0){
  if(!overlay||!ctx)return false;
  const layer=document.createElement('canvas');layer.width=16;layer.height=16;
  const layerCtx=layer.getContext('2d',{alpha:true});
@@ -273,7 +277,12 @@ function composeGrassSideOverlay(ctx,overlay,x,y){
  layerCtx.imageSmoothingEnabled=false;
  const frame=Math.min(overlay.width,overlay.height);
  layerCtx.clearRect(0,0,16,16);
- layerCtx.drawImage(overlay,0,0,frame,frame,0,0,16,16);
+ layerCtx.drawImage(overlay,0,Math.max(0,frameIndex)*frame,frame,frame,0,0,16,16);
+ if(blend>0&&nextIndex!==frameIndex){
+  layerCtx.globalAlpha=blend;
+  layerCtx.drawImage(overlay,0,Math.max(0,nextIndex)*frame,frame,frame,0,0,16,16);
+  layerCtx.globalAlpha=1;
+ }
  if(typeof layerCtx.getImageData==='function'&&typeof layerCtx.putImageData==='function'){
   try{
    const png=layerCtx.getImageData(0,0,16,16);
@@ -323,7 +332,23 @@ async function applyResources(zip,sourceName){
  state.tint=importedTints.palette;
  const [canvas,ctx]=baseCanvas();ctx.drawImage(original,0,0);
  let faces=0,overlaid=0;
- const ids=new Set(),cache=new Map(),missing=new Set(),resolved=new Map();
+ const ids=new Set(),cache=new Map(),metaCache=new Map(),missing=new Set(),resolved=new Map(),animated=[];
+ const timeline=window.MineWorldResourceAnimation;
+ async function spriteTimeline(name,image){
+  if(!timeline||!image||timeline.frameDimensions(image).count<=1)return null;
+  const resolvedName=resolveName(name),key='meta:'+resolvedName;
+  if(!resolvedName||!zip.entries.has(key))return null;
+  if(!metaCache.has(key)){
+   metaCache.set(key,(async()=>{
+    try{
+     const bytes=await zip.get(key);
+     if(!bytes||bytes.length>131072)return null;
+     return timeline.parse(new TextDecoder().decode(bytes),timeline.frameDimensions(image).count);
+    }catch(e){console.warn('Skipping invalid sprite timeline '+key,e);return null;}
+   })());
+  }
+  return metaCache.get(key);
+ }
  function resolveName(name){
    if(!name)return null;
    if(!resolved.has(name))resolved.set(name,[name,...(aliases[name]||[])].find(key=>zip.entries.has(key))||null);
@@ -349,6 +374,7 @@ async function applyResources(zip,sourceName){
      if(image){
        // For animated PNG strips, draw frame zero. Standard 16px files remain pixel-exact.
        const frame=Math.min(image.width,image.height);
+       ctx.clearRect(px,py,16,16); // Transparent Java sprites must not inherit procedural pixels.
        ctx.drawImage(image,0,0,frame,frame,px,py,16,16);
        tintNeutralSprite(ctx,px,py,id,face);
      }else if(name)missing.add(name);
@@ -358,6 +384,10 @@ async function applyResources(zip,sourceName){
      const overlay=grassSide?await sprite('grass_block_side_overlay'):null;
      if(overlay&&composeGrassSideOverlay(ctx,overlay,px,py))overlaid++;
      if(image||overlay){faces++;ids.add(id);}
+     const baseTimeline=await spriteTimeline(name,image);
+     const overlayTimeline=grassSide?await spriteTimeline('grass_block_side_overlay',overlay):null;
+     if(baseTimeline||overlayTimeline)
+      animated.push({id,face,px,py,image,overlay,baseTimeline,overlayTimeline,lastKey:''});
    }
  }
  const sounds={
@@ -382,9 +412,14 @@ async function applyResources(zip,sourceName){
     try{if(await window.MineWorldSound?.loadSound(type,await zip.get('sound:'+key)))audio++}catch(e){console.warn('Unsupported optional sound '+type,e)}
  }
  if(!faces&&!audio)throw Error('No compatible block PNGs or playable OGG sound files found.');
- if(faces)await writeAtlas(canvas);
+ if(faces||state.active)await writeAtlas(canvas);
+ state.animations=animated;
+ state.originalImage=original;
+ state.animationStart=typeof performance!=='undefined'&&performance.now?performance.now():0;
+ state.lastAnimationAt=-Infinity;
+ state.animationDisabled=false;
  state.active=faces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={blocks:ids.size,faces,overlaid,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
+ state.lastResult={blocks:ids.size,faces,overlaid,animatedFaces:animated.length,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
  window.MineWorldBridge?.refreshTextureUI?.();
@@ -405,10 +440,11 @@ async function loadFiles(fileList){
    if(!file||typeof file.arrayBuffer!=='function')continue;
    const name=String(file.webkitRelativePath||file.name||'').replace(/\\/g,'/').toLowerCase();
    const leaf=name.split('/').pop()||'';
-   const png=leaf.match(/^([a-z0-9_]+)\.png$/),ogg=leaf.match(/^([a-z0-9_]+)\.ogg$/);
+   const png=leaf.match(/^([a-z0-9_]+)\.png$/),ogg=leaf.match(/^([a-z0-9_]+)\.ogg$/),meta=leaf.match(/^([a-z0-9_]+)\.png\.mcmeta$/);
    let key=png?.[1]||null;
    if(ogg){const path=name.match(/(?:^|\/)sounds\/([a-z0-9_./-]+)\.ogg$/);if(path)key='sound:'+path[1];}
    if(png&&name.includes('/colormap/')&&['grass','foliage'].includes(png[1]))key='colormap:'+png[1];
+   if(meta)key='meta:'+meta[1];
    if(!key)continue;
    if(Number.isFinite(file.size)&&file.size>6*1024*1024)continue;
    total+=Number.isFinite(file.size)?file.size:0;
@@ -426,7 +462,64 @@ async function clear(){
  await writeAtlas(canvas);
  window.MineWorldSound?.clearSamples();window.MineWorldBridge?.refreshTextureUI?.();
  state.active=false;state.sourceName='';state.lastResult=null;
+ state.animations=[];state.originalImage=null;state.lastAnimationAt=-Infinity;
  state.tint={grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()};
+}
+// Upload only changed 16×16 tiles. Animated Java PNGs remain on the user's
+// device; a new resource pack or Reset drops every decoded frame immediately.
+function updateAnimation(now,fps,touch){
+ if(!state.active||state.animationDisabled||!state.animations.length||!Number.isFinite(now))return 0;
+ const cadence=Number.isFinite(fps)&&fps>0&&fps<25?150:touch?100:45;
+ if(now-state.lastAnimationAt<cadence)return 0;
+ state.lastAnimationAt=now;
+ const gl=META.gl,timeline=window.MineWorldResourceAnimation;
+ if(!timeline||!state.canvas)return 0;
+ if(typeof gl.isContextLost==='function'&&gl.isContextLost())return 0;
+ const elapsed=Math.max(0,now-state.animationStart);
+ const tile=document.createElement('canvas');tile.width=16;tile.height=16;
+ const ctx=tile.getContext('2d',{alpha:true});
+ const atlasCtx=state.canvas.getContext('2d',{alpha:true});
+ if(!ctx||!atlasCtx)return 0;
+ ctx.imageSmoothingEnabled=false;atlasCtx.imageSmoothingEnabled=false;
+ let updated=0;
+ try{
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D,META.texture);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+  for(const entry of state.animations){
+   const base=entry.baseTimeline?timeline.sampleAt(entry.baseTimeline,elapsed):{index:0,nextIndex:0,blend:0};
+   const over=entry.overlayTimeline?timeline.sampleAt(entry.overlayTimeline,elapsed):{index:0,nextIndex:0,blend:0};
+   // Interpolated frames are quantized to avoid uploading unchanged blends.
+   base.blend=Math.round(base.blend*16)/16;
+   over.blend=Math.round(over.blend*16)/16;
+   const key=[base.index,base.nextIndex,base.blend,over.index,over.nextIndex,over.blend].join(':');
+   if(entry.lastKey===key)continue;
+   ctx.clearRect(0,0,16,16);
+   if(entry.image){
+    const frame=Math.min(entry.image.width,entry.image.height);
+    ctx.drawImage(entry.image,0,base.index*frame,frame,frame,0,0,16,16);
+    if(base.blend>0&&base.index!==base.nextIndex){
+     ctx.globalAlpha=base.blend;
+     ctx.drawImage(entry.image,0,base.nextIndex*frame,frame,frame,0,0,16,16);
+     ctx.globalAlpha=1;
+    }
+    tintNeutralSprite(ctx,0,0,entry.id,entry.face);
+   }else if(state.originalImage){
+    ctx.drawImage(state.originalImage,entry.px,entry.py,16,16,0,0,16,16);
+   }
+   if(entry.overlay)
+    composeGrassSideOverlay(ctx,entry.overlay,0,0,over.index,over.nextIndex,over.blend);
+   atlasCtx.clearRect(entry.px,entry.py,16,16);
+   atlasCtx.drawImage(tile,entry.px,entry.py);
+   gl.texSubImage2D(gl.TEXTURE_2D,0,entry.px,entry.py,gl.RGBA,gl.UNSIGNED_BYTE,tile);
+   entry.lastKey=key;
+   updated++;
+  }
+ }catch(e){
+  state.animationDisabled=true;
+  console.warn('Local Java texture animations disabled after GPU/canvas error:',e);
+ }
+ return updated;
 }
 function drawFace(ctx,id,face){
  if(!state.active||!state.canvas)return false;
@@ -441,7 +534,8 @@ const exposed={
  get lastResult(){return state.lastResult;},
  get grassTint(){return [...state.tint.grass];},
  get foliageTint(){return [...state.tint.foliage];},
- loadFile,loadFiles,clear,drawFace,textureName,
+ loadFile,loadFiles,clear,drawFace,textureName,updateAnimation,
+ get animatedFaces(){return state.animations.length;},
  inspectZip(buffer){return Array.from(readArchive(buffer).entries.keys());}
 };
 window.MineWorldLocalTextures=Object.freeze(exposed);
@@ -459,7 +553,7 @@ function addControls(root,title){
  file.setAttribute('aria-label','Select local Java Edition resource pack or client jar');
  file.style.cssText='display:block;width:100%;max-width:100%;color:white;font-size:13px;margin:8px 0;';
  const loose=document.createElement('input');
- loose.type='file';loose.multiple=true;loose.accept='.png,image/png,.ogg,audio/ogg';
+ loose.type='file';loose.multiple=true;loose.accept='.png,image/png,.ogg,audio/ogg,.mcmeta,application/json';
  loose.setAttribute('aria-label','Select multiple individually extracted Java block texture PNG files');
  loose.style.cssText='display:block;width:100%;max-width:100%;color:white;font-size:13px;margin:8px 0;';
  const looseLabel=document.createElement('small');
@@ -468,7 +562,7 @@ function addControls(root,title){
  folderLabel.textContent='On desktop, you can also select an extracted textures/block folder. All files stay on your device.';
  const folder=document.createElement('input');
  folder.type='file';folder.multiple=true;folder.webkitdirectory=true;
- folder.accept='.png,image/png,.ogg,audio/ogg';
+ folder.accept='.png,image/png,.ogg,audio/ogg,.mcmeta,application/json';
  folder.setAttribute('aria-label','Choose extracted Java block textures folder');
  folder.style.cssText='display:block;width:100%;max-width:100%;color:white;font-size:13px;margin:8px 0;';
  const reset=document.createElement('button');reset.type='button';reset.textContent='Restore original art & sounds';reset.className='ui-button';
@@ -484,7 +578,7 @@ function addControls(root,title){
  function showCoverage(result){
    if(!result)return;
    status.textContent='Matched '+result.faces+' of '+result.totalFaces+' block faces ('+
-     result.coverage+'%) across '+result.blocks+' block types and '+result.sounds+
+     result.coverage+'%) across '+result.blocks+' block types, '+result.animatedFaces+' animated faces and '+result.sounds+
      ' sound events. '+(result.overlaid?'Grass uses the Java side overlay. ':'')+'Unmatched block faces keep independent MineWorld art.';
    detail.textContent=result.unmapped.length?
      'Example unmatched sprite names: '+result.unmapped.slice(0,9).join(', ')+'.':'All mapped face names were present.';
