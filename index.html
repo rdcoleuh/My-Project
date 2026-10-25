@@ -687,6 +687,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./movement-modes.js"></script>
 <script src="./survival-hunger.js"></script>
 <script src="./block-models.js"></script>
+<script src="./entity-hitboxes.js"></script>
 <script src="./survival-world-rules.js"></script>
 <script src="./survival-weather-visual.js"></script>
 <script>
@@ -1330,27 +1331,25 @@ body.in-nether #game-wrap{background:#290f19}
     scheduleChunks(true);streamChunks(5);spawnWildlife();updateHotbar();updateFlyButton();markSave();
     updateSeedLabel();updateWeatherHUD();
   }
+  const entityHitboxes=window.MineWorldEntityHitboxes;
+  function collisionFree(x,y,z,kind='player',heightState='',baby=false){
+    return entityHitboxes.canOccupy({x,y,z,kind,baby,hitboxState:heightState},
+      get,window.MineWorldBlockModels.shape,solid,{width:W,height:H,depth:D});
+  }
   function blockAtFeet(x,y,z,height=isCrouching?1.5:1.8){
-    const r=.27,feet=y+.02,head=y+height;
-    const xa=Math.floor(x-r),xb=Math.floor(x+r);
-    const za=Math.floor(z-r),zb=Math.floor(z+r);
-    const ya=Math.floor(feet),yb=Math.floor(head-.0001);
-    if(xa<0||xb>=W||za<0||zb>=D||ya<0)return true;
-    for(let i=xa;i<=xb;i++)for(let k=za;k<=zb;k++)for(let j=ya;j<=yb;j++){
-      const b=get(i,j,k);if(!solid(b))continue;
-      const box=window.MineWorldBlockModels.shape(b);
-      if(x+r<=i+box.left||x-r>=i+box.right||z+r<=k+box.front||z-r>=k+box.back)continue;
-      if(head>j+box.bottom&&feet<j+box.top)return true;
-    }
-    return false;
+    // Java player: 0.6-wide box, 1.8 standing / 1.5 sneaking.
+    return !collisionFree(x,y,z,'player',height<=1.5?'crouching':'');
   }
   function setBlock(x,y,z,b,remote=false){
     if(!inside(x,y,z)||y===0)return false;
     if(b!==0&&solid(b)){
-      const shape=window.MineWorldBlockModels.shape(b),r=.29;
-      const left=x+shape.left,right=x+shape.right,front=z+shape.front,back=z+shape.back;
-      if(player.x+r>left&&player.x-r<right&&player.z+r>front&&player.z-r<back&&
-         player.y<y+shape.top&&player.y+(isCrouching?1.5:1.8)>y+shape.bottom)return false;
+      const shape=window.MineWorldBlockModels.shape(b);
+      const body=entityHitboxes.box({...player,pose:isCrouching?'crouching':''},'player');
+      if(entityHitboxes.intersects(body,{
+        minX:x+shape.left,maxX:x+shape.right,
+        minY:y+shape.bottom,maxY:y+shape.top,
+        minZ:z+shape.front,maxZ:z+shape.back
+      }))return false;
     }
     const before=get(x,y,z);if(before===b)return false;
     set(x,y,z,b);savedEdits.set(idx(x,y,z),b);savedChunkEditIndex.delete(savedEdits);dirtyAround(x,z);markSave();if(!remote)window.MineWorldMultiplayer?.localEdit(idx(x,y,z)+(dimension==='end'?2*W*D*H:dimension==='nether'?W*D*H:0),b);return true;
@@ -3069,8 +3068,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(dimension==='nether'&&get(Math.floor(x),y-1,Math.floor(z))===66&&kind!=='strider')return null;
     if(['ghast','happy_ghast','ghastling','blaze','wither'].includes(kind))y=Math.min(H-8,y+4);
     if(y>H-4||(!extraMobs?.isAquatic(kind)&&get(Math.floor(x),y,Math.floor(z))!==0)||
-      !animals.canOccupy(x,y,z,animalModels.MODELS[kind]?.height||1.8,
-        (X,Y,Z)=>solid(get(X,Y,Z))))return null;
+      !collisionFree(x,y,z,kind))return null;
     let m={id:++mobSerial,kind,x,y,z,hp:SPECIES[kind].hp,heading:Math.random()*6.28,step:.8+Math.random()*2.5,attack:1.5,anger:0,windup:0};
     m.dimension=dimension;mobs.push(m);return m;
   }
@@ -3289,8 +3287,7 @@ body.in-nether #game-wrap{background:#290f19}
         const level=Math.floor(m.y),canSwim=get(Math.floor(nx),level,Math.floor(nz))===7;
         if(canSwim){m.x=nx;m.z=nz;m.y=Math.max(1,level+.2+Math.sin(dayClock*1.5+m.id)*.12);}
       }else if(Math.abs(ground-m.y)<1.25&&get(Math.floor(nx),ground,Math.floor(nz))===0&&
-        animals.canOccupy(nx,ground,nz,animalModels.MODELS[m.kind]?.height||1.8,
-          (X,Y,Z)=>solid(get(X,Y,Z)))){m.x=nx;m.z=nz;m.y=ground}else if(['ghast','blaze','happy_ghast','ghastling','wither'].includes(m.kind)){m.x=nx;m.z=nz;m.y=Math.max(ground+3,Math.min(H-6,m.y+Math.sin(dayClock+m.id)*dt*.4));}
+        collisionFree(nx,ground,nz,m.kind,'',!!m.baby)){m.x=nx;m.z=nz;m.y=ground}else if(['ghast','blaze','happy_ghast','ghastling','wither'].includes(m.kind)){m.x=nx;m.z=nz;m.y=Math.max(ground+3,Math.min(H-6,m.y+Math.sin(dayClock+m.id)*dt*.4));}
       m.moving=Math.hypot(m.x-beforeX,m.z-beforeZ)>.001;
       if(m.moving&&animals.FOOD[m.kind])m.gait=(m.gait||0)+dt*(m.following?8.1:m.fleeTime>0?10:3.7);
       if(m.kind==='creeper'){
@@ -3377,31 +3374,37 @@ body.in-nether #game-wrap{background:#290f19}
       id:m.id,kind:m.kind,x:+m.x.toFixed(2),y:+m.y.toFixed(2),z:+m.z.toFixed(2),hp:m.hp,
       heading:+(m.heading||0).toFixed(3),baby:!!m.baby,sheared:!!m.sheared,dimension:m.dimension||dimension
     }));}
+  function targetBlockDistance(eye,forward,block){
+    if(!block)return Infinity;
+    const shape=window.MineWorldBlockModels.shape(block.b);
+    const bounds={
+      minX:block.x+shape.left,maxX:block.x+shape.right,
+      minY:block.y+shape.bottom,maxY:block.y+shape.top,
+      minZ:block.z+shape.front,maxZ:block.z+shape.back
+    };
+    // Occlusion uses the *entry* face, not the block's center.
+    return entityHitboxes.rayDistance(eye,forward,bounds,7)??Infinity;
+  }
   function targetRemotePlayer(eye,forward,block){
     if(!window.MineWorldMultiplayer?.canPvp())return null;
     let best=null,bestT=Infinity;
+    const wall=targetBlockDistance(eye,forward,block);
     for(const p of window.MineWorldMultiplayer.getCombatants()){
-      if((p.dimension||'overworld')!==dimension)continue;const to=[p.x-eye[0],p.y+1.15-eye[1],p.z-eye[2]];
-      const t=to[0]*forward[0]+to[1]*forward[1]+to[2]*forward[2];
-      if(t<0||t>4.6||t>=bestT)continue;
-      const side=Math.hypot(to[0]-forward[0]*t,to[1]-forward[1]*t,to[2]-forward[2]*t);
-      const wall=block?Math.hypot(block.x+.5-eye[0],block.y+.5-eye[1],block.z+.5-eye[2]):Infinity;
-      if(side<.7&&t<wall-.3){best=p;bestT=t}
+      if((p.dimension||'overworld')!==dimension)continue;
+      const t=entityHitboxes.rayDistance(eye,forward,entityHitboxes.box({...p,pose:p.crouching?'crouching':''},'player'),window.MineWorldCombat.REACH+.35);
+      if(t!==null&&t<bestT&&t<wall-.001){best=p;bestT=t;}
     }
     return best;
   }
   function targetMob(eye,forward,block){
     let best=null,bestT=Infinity;
+    const wall=targetBlockDistance(eye,forward,block);
     for(const m of mobs){
-      const to=[m.x-eye[0],m.y+1.08-eye[1],m.z-eye[2]];
-      const t=to[0]*forward[0]+to[1]*forward[1]+to[2]*forward[2];
-      if(t<0||t>window.MineWorldCombat.REACH+.35||t>=bestT)continue;
-      const side=Math.hypot(to[0]-forward[0]*t,to[1]-forward[1]*t,to[2]-forward[2]*t);
-      if(side<.72){
-        const blockDistance=block?Math.hypot(block.x+.5-eye[0],block.y+.5-eye[1],block.z+.5-eye[2]):Infinity;
-        if(t<blockDistance-.3){best=m;bestT=t}
-      }
-    }return best;
+      if((m.dimension||dimension)!==dimension)continue;
+      const t=entityHitboxes.rayDistance(eye,forward,entityHitboxes.box(m),window.MineWorldCombat.REACH+.35);
+      if(t!==null&&t<bestT&&t<wall-.001){best=m;bestT=t;}
+    }
+    return best;
   }
   function attackMob(m){
     if(paused||attackCooldown>0)return;
