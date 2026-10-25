@@ -47,6 +47,12 @@ async function go(browser,name,mobile){
   await page.locator('#mw-motion').click();
   await page.locator('#mw-back-options').click();
   assert.equal(await page.locator('#mw-menu-root').evaluate(el=>el.classList.contains('active')),true,name+': Options back failed');
+  await page.locator('#mw-multi').click();
+  assert.equal(await page.locator('#lobby').evaluate(el=>!el.classList.contains('hidden')),true,name+': Multiplayer failed');
+  await page.locator('#close-lobby').click();
+  await page.locator('#mw-return').click();
+  assert.equal(await page.locator('#atlas-modal').evaluate(el=>!el.classList.contains('hidden')),true,name+': World Atlas failed');
+  await page.locator('#close-atlas').click();
   await page.locator('#mw-single').click();
   assert.equal(await page.locator('#mw-world-screen').evaluate(el=>el.classList.contains('active')),true,name+': Singleplayer failed');
   await page.locator('#mw-back-worlds').click();
@@ -73,7 +79,7 @@ async function go(browser,name,mobile){
   await page.locator('#home-btn').click();
   await page.locator('#mw-menu-root.active').waitFor({state:'visible',timeout:15000});
   if(errors.length)throw Error(name+' browser console/runtime errors:\n'+errors.slice(0,8).join('\n'));
-  process.stdout.write(name+': menu, world picker, options, gameplay, pause and return all passed\n');
+  process.stdout.write(name+': all five menu actions, world picker, gameplay, pause and return all passed\n');
  }finally{await context.close();}
 }
 (async()=>{
