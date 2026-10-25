@@ -180,7 +180,7 @@ function textureName(id,face){
 }
 function readArchive(buffer){
  if(!(buffer instanceof ArrayBuffer))throw Error('Expected ZIP data');
- if(buffer.byteLength>160*1024*1024)throw Error('Choose a ZIP/JAR smaller than 160 MB.');
+ if(buffer.byteLength>240*1024*1024)throw Error('Choose a resource ZIP/JAR smaller than 240 MB. Large packs may need a desktop browser.');
  const v=new DataView(buffer),len=buffer.byteLength;
  const u16=p=>v.getUint16(p,true),u32=p=>v.getUint32(p,true);
  let eocd=-1;
@@ -210,13 +210,23 @@ function readArchive(buffer){
    // filename would silently replace the real vanilla stone texture.
    // Plain textures/ ZIP roots remain supported for hand-made packs.
    const namespace=path.match(/(?:^|\/)assets\/minecraft\/(.+)$/);
-   const relative=namespace?namespace[1]:(/^(?:textures|sounds)\//.test(path)?path:null);
-   const match=relative?.match(/^textures\/(?:block|blocks)\/([a-z0-9_]+)\.png$/);
-   const item=relative?.match(/^textures\/(?:item|items)\/([a-z0-9_]+)\.png$/);
+   // Mojang's official Bedrock Samples full ZIP contains a resource_pack/
+   // directory, sometimes nested under a release folder. Parse its sprites
+   // directly rather than forcing players to repackage copyrighted files.
+   const bedrock=path.match(/(?:^|\/)resource_pack\/((?:textures|sounds)\/.+)$/);
+   const relative=namespace?namespace[1]:bedrock?bedrock[1]:
+     (/^(?:textures|sounds)\//.test(path)?path:null);
+   // Bedrock also stores valid block PNGs in folders such as deepslate/.
+   // Keep the PNG's basename as the lookup key, with top-level art taking
+   // precedence over nested variants when both exist.
+   const match=relative?.match(/^textures\/(?:block|blocks)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png$/);
+   const item=relative?.match(/^textures\/(?:item|items)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png$/);
    const matchSound=relative?.match(/^sounds\/([a-z0-9_./-]+)\.ogg$/);
-   const matchMeta=relative?.match(/^textures\/(?:block|blocks)\/([a-z0-9_]+)\.png\.mcmeta$/);
+   const matchMeta=relative?.match(/^textures\/(?:block|blocks)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png\.mcmeta$/);
    const mapColor=relative?.match(/^textures\/colormap\/(grass|foliage)\.png$/);
-   const priority=(namespace?4:0)+(relative?.startsWith('textures/block/')?2:0);
+   const priority=(namespace?8:0)+(bedrock?4:0)+
+     (relative?.startsWith('textures/block/')?2:0)+
+     (relative&&!/^textures\/(?:block|blocks|item|items)\/[^/]+\//.test(relative)?1:0);
    if(match&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8)){
      keep(match[1],{method,size,expanded,local},priority);
    }
