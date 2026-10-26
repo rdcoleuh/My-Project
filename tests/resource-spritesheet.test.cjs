@@ -81,3 +81,54 @@ test('real local importer draws correct sheet frames into 16px atlas and uploads
  await pack.clear();
  assert.equal(pack.updateAnimation(200,60,false),0);
 });
+
+test('malformed Java sprite grids preserve all source pixels as static art',()=>{
+ const t=timeline();
+ const explicit='{"animation":{"width":16,"height":16,"frames":[0,1,2]}}';
+ const bad=t.frameDimensions({width:50,height:32},explicit);
+ assert.equal(bad.count,1,'incomplete rightmost column must not be discarded');
+ assert.deepEqual(Object.values(t.frameRect({width:50,height:32},0,bad)),[0,0,50,32]);
+ const vertical=t.frameDimensions({width:16,height:50});
+ assert.equal(vertical.count,1,'incomplete bottom frame must not be cropped');
+ assert.deepEqual(Object.values(t.frameRect({width:16,height:50},0,vertical)),[0,0,16,50]);
+ const valid=t.frameDimensions({width:64,height:32},explicit);
+ assert.equal(valid.count,8,'complete custom spritesheets still animate');
+ assert.deepEqual(Object.values(t.frameRect({width:64,height:32},5,valid)),[16,16,16,16]);
+});
+test('actual importer displays the complete malformed player PNG without cropped edges',async()=>{
+ const draws=[],window={};
+ class Canvas{
+  constructor(){this.width=16;this.height=16;}
+  getContext(){return {imageSmoothingEnabled:false,globalAlpha:1,
+   clearRect(){},drawImage(...args){draws.push(args)},
+   getImageData(_x,_y,w,h){return {data:new Uint8ClampedArray(w*h*4)}},
+   putImageData(){}};}
+  toDataURL(){return 'data:image/png;base64,original';}
+ }
+ class Image{constructor(){this.width=50;this.height=32;}
+  set src(_){queueMicrotask(()=>this.onload?.());}}
+ const gl={TEXTURE0:1,TEXTURE_2D:2,RGBA:3,UNSIGNED_BYTE:4,
+  UNPACK_FLIP_Y_WEBGL:5,TEXTURE_MIN_FILTER:6,TEXTURE_MAG_FILTER:7,NEAREST:8,
+  activeTexture(){},bindTexture(){},pixelStorei(){},texParameteri(){},texImage2D(){},
+  texSubImage2D(){},isContextLost:()=>false};
+ Object.assign(window,{MineWorldResourcePackContext:{gl,texture:{},baseURL:'data:image/png;base64,original'},
+  MineWorldAtlas:{dataURL:'data:image/png;base64,original'},
+  MineWorldBlockGuide:{names:Array(170).fill('stone')},
+  MineWorldSound:{clearSamples(){}},MineWorldBridge:{refreshTextureUI(){}}});
+ const context={window,document:{createElement:()=>new Canvas(),querySelector:()=>null},
+  Image,URL:{createObjectURL:()=> 'blob:synthetic',revokeObjectURL(){}},
+  Blob,Uint8Array,Uint8ClampedArray,TextDecoder,ArrayBuffer,DataView,Math,Number,
+  JSON,console,performance:{now:()=>0},queueMicrotask};
+ vm.runInNewContext(read('resource-animation.js'),context);
+ vm.runInNewContext(read('local-resource-pack.js'),context);
+ const png=Buffer.from([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,16,0,0,0,16]);
+ const meta=Buffer.from('{"animation":{"width":16,"height":16,"frames":[0,1,2]}}');
+ const file=(name,bytes)=>({name,size:bytes.length,
+  arrayBuffer:async()=>Uint8Array.from(bytes).buffer});
+ const pack=window.MineWorldLocalTextures;
+ const result=await pack.loadFiles([file('water_still.png',png),file('water_still.png.mcmeta',meta)]);
+ assert.equal(result.animatedFaces,0,'incomplete grids must not animate cropped frames');
+ assert.ok(draws.some(args=>args.length===9&&args[1]===0&&args[2]===0&&
+  args[3]===50&&args[4]===32),'static fallback samples every pixel of the source');
+ await pack.clear();
+});

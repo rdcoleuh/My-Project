@@ -429,7 +429,8 @@ function tintOverlayPixels(data,tint){
 // The decoded texture stays local and is reduced to one 16x16 atlas tile.
 function drawPackFrame(ctx,image,geometry,index,alpha=1,dx=0,dy=0,size=16){
  if(!image)return;
- const rect=(typeof window!=='undefined'&&window.MineWorldResourceAnimation?.frameRect(image,index,geometry))||
+ const sourceGeometry=geometry||window.MineWorldResourceAnimation?.frameDimensions(image);
+ const rect=(typeof window!=='undefined'&&window.MineWorldResourceAnimation?.frameRect(image,index,sourceGeometry))||
    {x:0,y:0,width:Math.min(image.width,image.height),height:Math.min(image.width,image.height)};
  if(alpha!==1)ctx.globalAlpha=alpha;
  ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,dx,dy,size,size);
@@ -599,10 +600,9 @@ async function applyResources(zip,sourceName){
      const px=column*16,py=row*16;
      if(image){
        // For animated PNG strips, draw frame zero. Standard 16px files remain pixel-exact.
-       const frame=Math.min(image.width,image.height);
        ctx.clearRect(px,py,16,16); // Transparent Java sprites must not inherit procedural pixels.
        if(baseInfo)drawPackFrame(ctx,image,baseInfo.geometry,firstFrame(baseInfo),1,px,py);
-       else ctx.drawImage(image,0,0,frame,frame,px,py,16,16);
+       else drawPackFrame(ctx,image,null,0,1,px,py);
        tintNeutralSprite(ctx,px,py,id,face,importedTints.palette);
      }else if(name)missing.add(name);
      // Java's side overlay is not itself a block face: it is tinted and
@@ -638,8 +638,7 @@ async function applyResources(zip,sourceName){
     const info=await spriteTimeline(entry.name,image);
     ctx.clearRect(px,py,16,16);
     if(info)drawPackFrame(ctx,image,info.geometry,firstFrame(info),1,px,py);
-    else ctx.drawImage(image,0,0,Math.min(image.width,image.height),
-      Math.min(image.width,image.height),px,py,16,16);
+    else drawPackFrame(ctx,image,null,0,1,px,py);
     nativeTiles.push({id,face:5,px,py,image,overlay:null,
       baseGeometry:info?.geometry,baseIndex:firstFrame(info)});
     if(info)animated.push({id,face:5,px,py,image,overlay:null,
@@ -664,8 +663,7 @@ async function applyResources(zip,sourceName){
      const info=await spriteTimeline(variant.name,image);
      ctx.clearRect(px,py,16,16);
      if(info)drawPackFrame(ctx,image,info.geometry,firstFrame(info),1,px,py);
-     else ctx.drawImage(image,0,0,Math.min(image.width,image.height),
-       Math.min(image.width,image.height),px,py,16,16);
+     else drawPackFrame(ctx,image,null,0,1,px,py);
      directionalFaces++;ids.add(id);
      nativeTiles.push({id,face:variantIndex===0?3:4,px,py,image,overlay:null,
        baseGeometry:info?.geometry,baseIndex:firstFrame(info)});

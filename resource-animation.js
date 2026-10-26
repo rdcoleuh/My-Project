@@ -63,7 +63,11 @@ function frameDimensions(image,mcmeta){
  // vertical strips have the implicit Java animation layout.
  const fw=hasWidth?animation.width:(!hasHeight&&iw>ih?iw:fallback);
  const fh=hasHeight?animation.height:hasWidth?animation.width:(!hasHeight&&iw>ih?ih:fallback);
- const columns=Math.max(1,Math.floor(iw/fw)),rows=Math.max(1,Math.floor(ih/fh));
+ // An incomplete final row/column must not silently discard imported pixels.
+ // Treat malformed grids as one static image rather than cropping the source.
+ if(iw%fw!==0||ih%fh!==0)
+  return {size:iw,width:iw,height:ih,columns:1,rows:1,count:1};
+ const columns=iw/fw,rows=ih/fh;
  return {size:fw,width:fw,height:fh,columns,rows,count:Math.min(4096,columns*rows)};
 }
 function frameRect(image,index,geometry){
