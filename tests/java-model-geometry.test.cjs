@@ -53,6 +53,6 @@ test('live importer and renderer refresh imported shapes safely',()=>{
  assert.match(pack,/MineWorldBlockModels\?\.commitImported\?\.\(new Map\(\)\)/);
  assert.match(pack,/modelGeometryBlocks:modelShapes\.size/);
  assert.match(html,/MineWorldBlockModels\.shape\(b\)/);
- assert.match(html,/MINEWORLD v6\.4[4-9]/);
- assert.match(sw,/mineworld-6-4[4-9]-/);
+ assert.match(html,/MINEWORLD v6\.\d+/);
+ assert.match(sw,/const VERSION='mineworld-6-\d+-/);
 });
