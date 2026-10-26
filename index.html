@@ -447,6 +447,14 @@ body.in-nether #game-wrap{background:#290f19}
   width:calc(100% - 2px)!important;height:min(38px,calc(100% - 2px))!important;
  }
 }
+/* Gameplay-style hotbar: icons float above the slot without their own square tile.
+   Food and blocks share the same centered art box. */
+#hotbar .hot-item .swatch,#hotbar .hot-item .hot-item-icon{
+ background-color:transparent!important;border:0!important;box-shadow:none!important;
+ overflow:hidden!important;
+}
+#hotbar .hot-item .swatch canvas,#hotbar .hot-item .swatch img,
+#hotbar .hot-item .hot-item-icon img{image-rendering:pixelated!important}
 /* Native Bedrock HUD art is 9x9: preserve its square pixels and touch layout. */
 #survival-hud{max-width:calc(100vw - 12px);box-sizing:border-box;flex-wrap:wrap}
 #health-text .mw-stat-icon,#hunger-text .mw-stat-icon{width:18px;height:18px;flex:0 0 18px}
@@ -2049,10 +2057,9 @@ body.in-nether #game-wrap{background:#290f19}
           }).catch(()=>{});
           if(iso)swatch.classList.add('mw-has-pack-icon');
         }
-        else if(window.MineWorldLocalTextures?.active){
-          sprite.width=sprite.height=16;
-          if(window.MineWorldLocalTextures.drawFace(sprite.getContext('2d'),id,0))swatch.appendChild(sprite);
-        }else{
+        else if(!iso){
+          // Only fall back to a tile when no 3D icon could be painted.
+          // A background atlas behind a 3D icon creates an incorrect double texture.
           swatch.style.backgroundImage='url('+window.MineWorldAtlas.dataURL+')';
           swatch.style.backgroundSize='1600% 3200%';swatch.style.backgroundPosition=tx+'% '+ty+'%';
         }
