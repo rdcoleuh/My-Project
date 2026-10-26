@@ -124,6 +124,19 @@ function stateVariant(data,available){
  return variantModel(matching[0].apply,available);
 }
 function stateModel(data){return stateVariant(data)?.name||null;}
+function rotatedShapeY(shape,turns){
+ if(!shape||turns===0)return shape;
+ const {left,right,front,back,bottom,top}=shape;
+ // Java blockstate +90 degrees turns source north toward world east.
+ // Rotate axis-aligned cuboid bounds about the block center; hitboxes and
+ // rendered faces must agree even for off-center imported geometry.
+ switch(turns){
+  case 1:return Object.freeze({left:1-back,right:1-front,front:left,back:right,bottom,top});
+  case 2:return Object.freeze({left:1-right,right:1-left,front:1-back,back:1-front,bottom,top});
+  case 3:return Object.freeze({left:front,right:back,front:1-right,back:1-left,bottom,top});
+  default:return null;
+ }
+}
 async function resolve(zip,modelName){
  let start=clean(modelName),turns=0,uvlock=false;
  if(!start||!zip?.entries||typeof zip.get!=='function')return null;
@@ -187,9 +200,9 @@ async function resolve(zip,modelName){
  }
  const data=await load(start,0);
  if(!data||(!data.fullCube&&!data.shape))return null;
- // A non-cubic shape rotated around Y would require rotated bounds/collision.
- // Leave those cases to the fallback until that rendering path exists.
- if(data.shape&&turns!==0)return null;
+ // Single axis-aligned cuboids remain axis-aligned after quarter turns.
+ // Rotate imported bounds with face selection, including collision geometry.
+ const rotatedShape=rotatedShapeY(data.shape,turns);
  const follow=ref=>{
   let value=ref;
   const seen=new Set();
@@ -227,7 +240,7 @@ async function resolve(zip,modelName){
   // Do not replace geometry unless all six corresponding owned sprites exist.
   // Partial imports must never leave transparent sides or mismatched hitboxes.
   if(!allowed(top)||!allowed(bottom)||!sides.every(allowed))return null;
-  result.shape=data.shape;
+  result.shape=rotatedShape;
  }
  const cardinal=Object.fromEntries(dirs.map((dir,i)=>[dir,allowed(sides[i])]));
  if(new Set(Object.values(cardinal).filter(Boolean)).size>1)result.sides=cardinal;
