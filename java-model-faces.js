@@ -63,15 +63,21 @@ const DEFAULT_STATE=Object.freeze({
  attachment:'floor',face:'floor',rotation:'0',hinge:'left',
  occupied:'false',enabled:'true',shape:'straight'
 });
-function variantModel(candidate){
- const item=Array.isArray(candidate)?candidate[0]:candidate;
- if(!item||typeof item!=='object'||Array.isArray(item))return null;
- const y=item.y??0;
- // Only Y quarter-turns preserve the current full-cube renderer.
- if((item.x??0)!==0||(item.z??0)!==0||
-   !Number.isInteger(y)||![0,90,180,270].includes(y))return null;
- const name=modelPath(item.model);
- return name?{name,y,uvlock:item.uvlock===true}:null;
+function variantModel(candidate,available){
+ // Weighted blockstate arrays can contain unsupported or absent models.
+ // Use the first valid local model, not blindly the first array element.
+ const options=Array.isArray(candidate)?candidate:[candidate];
+ for(const item of options){
+  if(!item||typeof item!=='object'||Array.isArray(item))continue;
+  const y=item.y??0;
+  // Only Y quarter-turns preserve the current full-cube renderer.
+  if((item.x??0)!==0||(item.z??0)!==0||
+    !Number.isInteger(y)||![0,90,180,270].includes(y))continue;
+  const name=modelPath(item.model);
+  if(name&&(!available||available(name)))
+   return {name,y,uvlock:item.uvlock===true};
+ }
+ return null;
 }
 // Match Java multipart predicates against known default states only.
 // Ambiguous multipart geometry must keep the existing fallback art.
@@ -88,7 +94,7 @@ function matchesDefault(when,depth=0){
   return value.split('|').some(v=>v===DEFAULT_STATE[key]);
  });
 }
-function stateVariant(data){
+function stateVariant(data,available){
  if(!data||typeof data!=='object'||Array.isArray(data))return null;
  const variants=data.variants;
  if(variants&&typeof variants==='object'&&!Array.isArray(variants)){
@@ -107,7 +113,7 @@ function stateVariant(data){
   // because it happens to be the closest name alphabetically.
   valid.sort((a,b)=>b.parts-a.parts||a.key.localeCompare(b.key));
   for(const choice of valid){
-   const picked=variantModel(choice.value);
+   const picked=variantModel(choice.value,available);
    if(picked)return picked;
   }
  }
@@ -115,7 +121,7 @@ function stateVariant(data){
  const matching=data.multipart.filter(part=>part&&typeof part==='object'&&
   !Array.isArray(part)&&matchesDefault(part.when));
  if(matching.length!==1)return null;
- return variantModel(matching[0].apply);
+ return variantModel(matching[0].apply,available);
 }
 function stateModel(data){return stateVariant(data)?.name||null;}
 async function resolve(zip,modelName){
@@ -125,7 +131,7 @@ async function resolve(zip,modelName){
   try{
    const bytes=await zip.get('state:'+start);
    if(bytes&&bytes.length<=131072){
-    const preferred=stateVariant(JSON.parse(new TextDecoder().decode(bytes)));
+    const preferred=stateVariant(JSON.parse(new TextDecoder().decode(bytes)),name=>zip.entries.has('model:'+name));
     if(preferred&&zip.entries.has('model:'+preferred.name)){
       start=preferred.name;turns=preferred.y/90;uvlock=preferred.uvlock;
     }

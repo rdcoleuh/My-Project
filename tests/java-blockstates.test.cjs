@@ -32,6 +32,52 @@ test('blockstate default axis=y picks the unrotated vertical log model',async()=
  assert.equal(result.side,'block:custom/oak_end');
  assert.equal(result.bottom,'block:custom/oak_end');
 });
+
+test('weighted Java variants skip unsupported and missing local models without changing UV rotation',async()=>{
+ const m=resolver();
+ const state={variants:{'':[
+  {model:'othermod:block/foreign'},
+  {model:'minecraft:block/not_in_pack',y:0},
+  {model:'minecraft:block/owned',y:90},
+  {model:'minecraft:block/later',y:180}
+ ]}};
+ const pack=zip({
+  'state:stone':enc(state),
+  'model:owned':enc({...cube,textures:{all:'minecraft:block/owned_tex'}}),
+  'block:owned_tex':Uint8Array.from([1])
+ });
+ assert.equal(m.stateVariant(state).name,'not_in_pack',
+   'standalone parser accepts the first syntactically valid candidate');
+ const result=await m.resolve(pack,'stone');
+ assert.equal(result.top,'block:owned_tex');
+ assert.equal(result.bottom,'block:owned_tex');
+ assert.equal(result.side,'block:owned_tex');
+});
+test('multipart Java weighted apply arrays use the first available vanilla model',async()=>{
+ const m=resolver(),pack=zip({
+  'state:stone':enc({multipart:[{when:{facing:'north'},apply:[
+   {model:'minecraft:block/missing'},
+   {model:'minecraft:block/owned',uvlock:true},
+   {model:'minecraft:block/other'}]}]}),
+  'model:owned':enc({...cube,textures:{all:'minecraft:block/owned_tex'}}),
+  'block:owned_tex':Uint8Array.from([1])
+ });
+ assert.equal((await m.resolve(pack,'stone')).top,'block:owned_tex');
+});
+test('invalid weighted variants safely retain direct model fallback and reject foreign namespaces',async()=>{
+ const m=resolver(),pack=zip({
+  'state:stone':enc({variants:{'':[
+   {model:'othermod:block/foreign'},
+   {model:'minecraft:block/rotated',x:90},
+   {model:'minecraft:block/absent'}]}}),
+  'model:stone':enc({...cube,textures:{all:'minecraft:block/stone'}}),
+  'block:stone':Uint8Array.from([1])
+ });
+ assert.equal((await m.resolve(pack,'stone')).top,'block:stone');
+ assert.equal(m.stateVariant({variants:{'':[
+  {model:'othermod:block/foreign'},{model:'minecraft:block/stone',x:90}]}}),null);
+});
+
 test('malformed, modded and missing blockstates preserve direct model fallback',async()=>{
  const m=resolver();
  const direct=enc({parent:'minecraft:block/cube_all',
