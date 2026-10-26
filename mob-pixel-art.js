@@ -78,7 +78,7 @@
    const atlasRows=Math.max(1,Math.ceil(keys.length/COLS));
    // Preserve up to 32 source pixels per face/item only when the entire atlas
    // fits both WebGL MAX_TEXTURE_SIZE and a 4 MiB mobile-friendly RGBA budget.
-   // Classic 64x32 skins contain 8px face crops, so they do not need 32px tiles.
+   // Even classic skins can have body crops wider than 16 source pixels.
    const maxTexture=typeof gpu.getParameter==='function'&&gpu.MAX_TEXTURE_SIZE!==undefined?
      gpu.getParameter(gpu.MAX_TEXTURE_SIZE):2048;
    const maxSide=Number.isFinite(maxTexture)&&maxTexture>0?maxTexture:2048;
