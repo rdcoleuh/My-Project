@@ -109,6 +109,9 @@ test('Bedrock terrain map stays optional and does not change saved world formats
  assert.match(src,/keep\('bedrock:terrain'/);
  assert.match(src,/zip\.get\('bedrock:terrain'\)/);
  assert.match(src,/spriteKeys\(name\)/);
- assert.match(sw,/bedrock-terrain-map-20261026/);
+ assert.match(sw,/const VERSION='mineworld-[^']+'/,
+  'offline cache remains versioned after unrelated feature updates');
+ assert.ok(sw.includes("'./bedrock-flipbook.js'"),
+  'Bedrock terrain parser remains available offline');
  assert.doesNotMatch(read('bedrock-flipbook.js'),/fetch\(|localStorage|indexedDB/);
 });
