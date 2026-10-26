@@ -52,6 +52,7 @@ test('missing imported sprite never commits partial rotated geometry',async()=>{
  assert.equal(await api().resolve(pack(270,{missing:'west'}),'stone'),null);
  const source=read('java-model-faces.js'),sw=read('sw.js');
  assert.match(source,/rotatedShapeY\(data\.shape,turns\)/);
- assert.match(sw,/rotated-cuboid-bounds/);
+ assert.match(sw,/const VERSION='mineworld-6-\\d+-/,'offline cache retains versioned updates');
+ assert.ok(sw.includes("'./java-model-faces.js'"),'model resolver remains precached');
  assert.doesNotMatch(source,/localStorage|indexedDB/);
 });
