@@ -4,16 +4,26 @@
  const FIRST=518,LIMIT=1024,DIRS=['north','south','east','west'];
  let active=new Map();
  function plan(models){
-  const tiles=new Map();let next=FIRST;
+  const tiles=new Map(),bySprite=new Map();let next=FIRST;
   if(!models?.entries)return {tiles,used:0};
   for(const [id,model] of models){
    const sides=model?.sides;
    if(!Number.isInteger(id)||id<1||id>169||!sides)continue;
-   if(new Set(DIRS.map(d=>sides[d]).filter(Boolean)).size<2)continue;
+   const names=DIRS.map(dir=>sides[dir]).filter(name=>typeof name==='string'&&name.length>0);
+   if(new Set(names).size<2)continue;
    const row={};
-   for(const dir of DIRS)if(sides[dir]&&next<LIMIT)row[dir]={tile:next++,name:sides[dir]};
+   for(const dir of DIRS){
+    const name=sides[dir];
+    if(typeof name!=='string'||!name)continue;
+    let tile=bySprite.get(name);
+    if(tile===undefined&&next<LIMIT){
+     tile=next++;
+     bySprite.set(name,tile);
+    }
+    if(tile!==undefined)row[dir]={tile,name};
+   }
    if(Object.keys(row).length)tiles.set(id,row);
-   if(next>=LIMIT)break;
+   // Continue after the atlas fills: later faces may reuse existing sprites.
   }
   return {tiles,used:next-FIRST};
  }

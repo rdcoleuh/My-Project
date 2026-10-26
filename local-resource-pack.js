@@ -627,25 +627,28 @@ async function applyResources(zip,sourceName){
  // Extra local Java cube sides retain the model's own north/south/east/west artwork.
  const sideAllocator=window.MineWorldJavaDirectionalFaces;
  const sidePlan=sideAllocator?.plan(modelFaces);
- const mappedSides=new Map();let modelDirectionalFaces=0;
+ const mappedSides=new Map(),renderedSideTiles=new Set();let modelDirectionalFaces=0;
  for(const [id,dirs] of sidePlan?.tiles||[]){
   const row={};
   for(const [dir,entry] of Object.entries(dirs)){
    const image=await sprite(entry.name);
    if(!image)continue;
-   const info=await spriteTimeline(entry.name,image);
    const px=(entry.tile%16)*16,py=Math.floor(entry.tile/16)*16;
-   ctx.clearRect(px,py,16,16);
-   if(info)drawPackFrame(ctx,image,info.geometry,firstFrame(info),1,px,py);
-   else ctx.drawImage(image,0,0,Math.min(image.width,image.height),
-     Math.min(image.width,image.height),px,py,16,16);
+   if(!renderedSideTiles.has(entry.tile)){
+    const info=await spriteTimeline(entry.name,image);
+    ctx.clearRect(px,py,16,16);
+    if(info)drawPackFrame(ctx,image,info.geometry,firstFrame(info),1,px,py);
+    else ctx.drawImage(image,0,0,Math.min(image.width,image.height),
+      Math.min(image.width,image.height),px,py,16,16);
+    nativeTiles.push({id,face:5,px,py,image,overlay:null,
+      baseGeometry:info?.geometry,baseIndex:firstFrame(info)});
+    if(info)animated.push({id,face:5,px,py,image,overlay:null,
+      baseTimeline:info.timeline,baseGeometry:info.geometry,
+      overlayTimeline:null,overlayGeometry:null,lastKey:''});
+    renderedSideTiles.add(entry.tile);
+   }
    row[dir]={tile:entry.tile};modelDirectionalFaces++;
-   nativeTiles.push({id,face:5,px,py,image,overlay:null,
-     baseGeometry:info?.geometry,baseIndex:firstFrame(info)});
    markTransform(id,dir);
-   if(info)animated.push({id,face:5,px,py,image,overlay:null,
-     baseTimeline:info.timeline,baseGeometry:info.geometry,
-     overlayTimeline:null,overlayGeometry:null,lastKey:''});
   }
   if(Object.keys(row).length)mappedSides.set(id,row);
  }
