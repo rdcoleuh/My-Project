@@ -261,6 +261,7 @@ function readArchive(buffer){
    const modelPath=relative?.match(/^models\/block\/([a-z0-9_/-]+)\.json$/);
    const blockstatePath=relative?.match(/^blockstates\/([a-z0-9_/-]+)\.json$/);
    const item=relative?.match(/^textures\/(?:item|items)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png$/);
+   const itemMeta=relative?.match(/^textures\/(?:item|items)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png\.mcmeta$/);
    const entity=relative?.match(/^textures\/entity\/([a-z0-9_-]+(?:\/[a-z0-9_-]+)*)\.png$/);
    const entityDefinition=relative?.match(/^entity\/([a-z0-9_-]+)\.entity\.json$/);
    const matchSound=relative?.match(/^sounds\/([a-z0-9_./-]+)\.ogg$/);
@@ -277,6 +278,8 @@ function readArchive(buffer){
    }
    if(item&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8))
      keep('item:'+item[1],{method,size,expanded,local},priority);
+   if(itemMeta&&size<131072&&expanded<131072&&(method===0||method===8))
+     keep('meta:item:'+itemMeta[1],{method,size,expanded,local},priority);
    if(entity&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8))
      keep('entity:'+entity[1],{method,size,expanded,local},priority);
    if(entityDefinition&&size<131072&&expanded<131072&&(method===0||method===8))
@@ -342,6 +345,21 @@ function imageFromURL(src){
    const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>reject(new Error('Could not restore original textures.'));
    im.src=src;
  });
+}
+// Select the first authored frame of player-imported animated item sprites.
+// Static PNGs stay uncropped, and no bitmap bytes leave the browser.
+async function itemFrameRect(source,key,image){
+ const whole={x:0,y:0,width:image.width,height:image.height};
+ const animation=window.MineWorldResourceAnimation,metaKey='meta:'+key;
+ if(!animation||!source?.entries?.has(metaKey))return whole;
+ try{
+  const bytes=await source.get(metaKey);
+  if(!bytes||bytes.length>131072)return whole;
+  const meta=new TextDecoder().decode(bytes),geometry=animation.frameDimensions(image,meta);
+  if(geometry.count<=1)return whole;
+  const frames=animation.parse(meta,geometry.count);
+  return animation.frameRect(image,frames.frames[0]?.index??0,geometry);
+ }catch(error){console.warn('Ignoring invalid local item animation '+key,error);return whole;}
 }
 const DEFAULT_GRASS=[145,189,89],DEFAULT_FOLIAGE=[119,171,47];
 const state={active:false,canvas:null,sourceName:'',lastResult:null,
@@ -762,7 +780,18 @@ async function applyResources(zip,sourceName){
  for(const key of itemKeys){
   try{
    const image=await imageFromPng(await zip.get(key));
-   if(image.width<=1024&&image.height<=1024)itemArt.set(key,image);
+   if(image.width<=1024&&image.height<=1024){
+    const rect=await itemFrameRect(zip,key,image);
+    if(rect.width===image.width&&rect.height===image.height)itemArt.set(key,image);
+    else{
+     const frame=document.createElement('canvas');frame.width=rect.width;frame.height=rect.height;
+     const fctx=frame.getContext('2d',{alpha:true});
+     if(!fctx)continue;
+     fctx.imageSmoothingEnabled=false;
+     fctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,0,0,rect.width,rect.height);
+     itemArt.set(key,frame);
+    }
+   }
   }catch(error){console.warn('Skipping unsupported local item PNG '+key,error);}
  }
  if(!faces&&!directionalFaces&&!audio&&!items&&!mobArt.size)
@@ -877,7 +906,7 @@ async function loadFiles(fileList){
    if(leaf.endsWith('.entity.json')){const match=name.match(/(?:^|\/)entity\/([a-z0-9_-]+)\.entity\.json$/);if(match)key='entity-def:'+match[1];}
    if(ogg){const path=name.match(/(?:^|\/)sounds\/([a-z0-9_./-]+)\.ogg$/);if(path)key='sound:'+path[1];}
    if(png&&name.includes('/colormap/')&&['grass','foliage'].includes(png[1]))key='colormap:'+png[1];
-   if(meta)key='meta:'+meta[1];
+   if(meta)key=/(?:^|\/)textures\/(?:item|items)\//.test(name)?'meta:item:'+meta[1]:'meta:'+meta[1];
    const modelFile=name.match(/(?:^|\/)models\/block\/([a-z0-9_/-]+)\.json$/);
    if(modelFile)key='model:'+modelFile[1];
    const blockstateFile=name.match(/(?:^|\/)blockstates\/([a-z0-9_/-]+)\.json$/);
@@ -998,20 +1027,20 @@ function itemIcon(key){
  const promise=(async()=>{
    const image=await imageFromPng(await source.get(path));
    if(generation!==state.itemGeneration)return null;
-   // Keep original high-density Java item pixels instead of forcing all
-   // player-imported 32px artwork through an irreversible 16px downsample.
-   // 32px cap keeps browser data URLs and mobile memory usage bounded.
-   const size=Math.min(32,Math.max(16,Math.floor(Math.max(image.width,image.height))));
+   const rect=await itemFrameRect(source,path,image);
+   if(generation!==state.itemGeneration)return null;
+   // Preserve native pixels from the first authored frame (up to 32px).
+   const size=Math.min(32,Math.max(16,Math.floor(Math.max(rect.width,rect.height))));
    const canvas=document.createElement('canvas');canvas.width=canvas.height=size;
    const ctx=canvas.getContext('2d',{alpha:true});
    if(!ctx)return null;
    ctx.imageSmoothingEnabled=false;
    ctx.clearRect(0,0,size,size);
-   const scale=Math.min(size/image.width,size/image.height);
-   const width=Math.max(1,Math.round(image.width*scale));
-   const height=Math.max(1,Math.round(image.height*scale));
-   // Non-square custom PNGs are centered instead of squeezed.
-   ctx.drawImage(image,0,0,image.width,image.height,
+   const scale=Math.min(size/rect.width,size/rect.height);
+   const width=Math.max(1,Math.round(rect.width*scale));
+   const height=Math.max(1,Math.round(rect.height*scale));
+   // Non-square custom frames are centered instead of squeezed.
+   ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,
      Math.floor((size-width)/2),Math.floor((size-height)/2),width,height);
    return generation===state.itemGeneration?canvas.toDataURL('image/png'):null;
  })().catch(error=>{console.warn('Skipping invalid local Java item '+name,error);return null;});
