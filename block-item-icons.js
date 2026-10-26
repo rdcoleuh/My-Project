@@ -9,6 +9,8 @@ function paint(canvas,blockId){
  if(!canvas||typeof canvas.getContext!=='function'||!Number.isInteger(blockId)||blockId<1||blockId>169)return false;
  const out=canvas.getContext('2d',{alpha:true});
  if(!out||typeof out.createImageData!=='function'||typeof out.putImageData!=='function')return false;
+ // Item previews must respect the imported block model's distinct visible faces.
+ // Each face is read separately so grass/logs/utility blocks keep their correct UV.
  const tiles=[];
  for(let face=0;face<3;face++){
   const tmp=document.createElement('canvas');tmp.width=tmp.height=16;
@@ -50,7 +52,8 @@ function paint(canvas,blockId){
   // Left face from (4,10) to (16,16) to (16,28) to (4,22)
   let u=(dx-4)/12,v=(dy-10-u*6)/12;
   if(u>=0&&u<1&&v>=0&&v<1)put(x,y,u,v,1,.80);
-  // Right face uses its OWN imported face (index 2), not the left-side texture.\n  // Right face from (16,16) to (28,10) to (28,22) to (16,28)
+  // Right face uses its OWN imported face (index 2), not the left-side texture.
+  // Right face from (16,16) to (28,10) to (28,22) to (16,28)
   u=(dx-16)/12;v=(dy-16+u*6)/12;
   if(u>=0&&u<1&&v>=0&&v<1)put(x,y,u,v,2,.72);
   // Top from (16,4), (28,10), (16,16), (4,10)
