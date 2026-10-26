@@ -465,6 +465,25 @@ body.in-nether #game-wrap{background:#290f19}
  #weapon-readout{max-width:100%;font-size:9px;overflow:hidden;text-overflow:ellipsis}
  #eat-btn{min-height:24px;padding:2px 6px}
 }
+/* Compact gameplay HUD: smaller hearts/drumsticks and more room for the world. */
+#survival-hud{gap:3px 7px!important;padding:3px 7px!important;max-width:calc(100vw - 16px)!important}
+#health-text,#hunger-text{gap:0!important;line-height:1!important}
+#health-text .mw-stat-icon,#hunger-text .mw-stat-icon{
+ width:14px!important;height:14px!important;flex:0 0 14px!important;
+ font-size:16px!important;line-height:14px!important;
+}
+#weapon-readout{font-size:9px!important;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#survival-hud button{font-size:10px!important;padding:2px 5px!important;min-height:22px!important}
+@media(max-width:550px){
+ #survival-hud{gap:2px 4px!important;padding:2px 4px!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #health-text .mw-stat-icon,#hunger-text .mw-stat-icon{
+  width:10px!important;height:10px!important;flex:0 0 10px!important;
+  font-size:13px!important;line-height:10px!important;
+ }
+ #weapon-readout{font-size:8px!important;max-width:110px}
+ #survival-hud button{min-height:20px!important;padding:1px 4px!important}
+ #coord-readout{opacity:.72;font-size:9px;padding:4px 6px}
+}
 </style>
 </head>
 <body>
