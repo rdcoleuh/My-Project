@@ -21,7 +21,7 @@ const defs=Object.freeze(Object.fromEntries(Object.entries(C).map(([name,parts])
 const faces=Object.freeze(['right','left','top','bottom','front','back']);
 function rect(kind,part,face,image){
  const layout=defs[kind]?.[part];
- if(!layout||!faces.includes(face)||!image||!Number.isFinite(image.width)||!Number.isFinite(image.height))return null;
+ if(!layout||!faces.includes(face)||!image||!Number.isInteger(image.width)||!Number.isInteger(image.height))return null;
  const scale=image.width/64;
  if(!Number.isFinite(scale)||scale<.5||image.height<32*scale)return null;
  const [u,v,w,h,d]=layout;
@@ -33,9 +33,15 @@ function rect(kind,part,face,image){
   top:[u+d,v,w,d],
   bottom:[u+d+w,v,w,d]
  }[face];
- const [x,y,width,height]=b.map(n=>n*scale);
- if(x<0||y<0||width<=0||height<=0||x+width>image.width+.001||y+height>image.height+.001)return null;
- return {x,y,width,height};
+ // Canvas drawImage must crop on actual source texel boundaries. Fractional
+ // UV rectangles from non-power-of-two player skins (e.g. 100x50) can
+ // sample neighboring face pixels even with imageSmoothingEnabled=false.
+ // Round shared edges, not widths, so adjacent faces stay seam-free.
+ const x=Math.round(b[0]*scale),y=Math.round(b[1]*scale);
+ const right=Math.round((b[0]+b[2])*scale);
+ const bottom=Math.round((b[1]+b[3])*scale);
+ if(x<0||y<0||right<=x||bottom<=y||right>image.width||bottom>image.height)return null;
+ return {x,y,width:right-x,height:bottom-y};
 }
 // Vertex emission order differs between MineWorld's axis-aligned hostile
 // cuboids and its rotating animal cuboids. Rectangles use top-left image UVs:
