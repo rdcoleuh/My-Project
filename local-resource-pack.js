@@ -287,7 +287,7 @@ function readArchive(buffer){
      hunger_full:'food:full',hunger_half:'food:half',
      hunger_empty:'food:empty',hunger_background:'food:empty',
      food_full:'food:full',food_half:'food:half',food_empty:'food:empty',
-     hotbar:'hotbar:background',hotbar_background:'hotbar:background',hotbar_slot:'hotbar:slot0',
+     hotbar:'hotbar:background',hotbar_background:'hotbar:background',hotbar_slot:'hotbar:slot',
      hotbar_start_cap:'hotbar:slot0',hotbar_end_cap:'hotbar:slot8',
      selected_hotbar_slot:'hotbar:selected',hotbar_selection:'hotbar:selected',hotbar_selected:'hotbar:selected'
    })[bedrockUI[1]] || (bedrockUI&&/^hotbar_[0-8]$/.test(bedrockUI[1])?
@@ -1106,7 +1106,7 @@ function itemName(key){
 function hudIcon(kind,fill){
  const source=state.itemArchive;
  if(!source||!['heart','food','hotbar'].includes(kind)||
-   !/^(full|half|empty|background|selected|slot[0-8])$/.test(fill))return Promise.resolve(null);
+   !/^(full|half|empty|background|selected|slot|slot[0-8])$/.test(fill))return Promise.resolve(null);
  const key='hud:'+kind+':'+fill;
  if(!source.entries.has(key))return Promise.resolve(null);
  if(state.itemCache.has(key))return state.itemCache.get(key);

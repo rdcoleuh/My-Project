@@ -2167,20 +2167,22 @@ body.in-nether #game-wrap{background:#290f19}
       hotbarArtTask=Promise.all([
         source?.hudIcon?.('hotbar','background'),
         source?.hudIcon?.('hotbar','selected'),
+        source?.hudIcon?.('hotbar','slot'),
         ...Array.from({length:9},(_,i)=>source?.hudIcon?.('hotbar','slot'+i))
-      ]).catch(()=>Array(11).fill(null));
+      ]).catch(()=>Array(12).fill(null));
     }
-    const [background,selected,...slots]=await hotbarArtTask;
+    const [background,selected,genericSlot,...slots]=await hotbarArtTask;
     if(generation!==(window.MineWorldLocalTextures?.generation??-1))return;
     const root=$('hotbar');
     if(!root)return;
-    root.classList.toggle('mw-pack-hotbar',!!background||slots.some(Boolean));
+    root.classList.toggle('mw-pack-hotbar',!!background||!!genericSlot||slots.some(Boolean));
     root.style.setProperty('--mw-pack-hotbar-bg',background?'url("'+background+'")':'none');
     root.style.setProperty('--mw-pack-hotbar-selected',selected?'url("'+selected+'")':'none');
     root.querySelectorAll('.hot-item').forEach((item,i)=>{
       item.classList.toggle('mw-pack-selected',!!selected&&item.classList.contains('active'));
-      item.classList.toggle('mw-pack-slot',!!slots[i]);
-      item.style.setProperty('--mw-pack-slot-bg',slots[i]?'url("'+slots[i]+'")':'none');
+      const slotArt=slots[i]||genericSlot;
+      item.classList.toggle('mw-pack-slot',!!slotArt);
+      item.style.setProperty('--mw-pack-slot-bg',slotArt?'url("'+slotArt+'")':'none');
     });
   }
   window.addEventListener('mineworld-pack-hud-changed',()=>{refreshPackHotbarArt();});
