@@ -42,10 +42,16 @@ function geometry(image,entry){
  // Vanilla flipbooks mostly use 16×N vertical strips. Bedrock replicate
  // enlarges displayed pixels, not source frame size or atlas dimensions.
  const iw=Math.floor(image?.width||16),ih=Math.floor(image?.height||16);
+ // A Bedrock flipbook can be a horizontal or vertical strip of square
+ // frames. Do not silently crop a non-divisible custom sprite: leave it
+ // static so every source pixel remains available to the importer.
+ const horizontal=iw>ih&&iw%ih===0;
+ const vertical=ih>iw&&ih%iw===0;
  const size=Math.min(iw,ih);
- const fw=iw>ih?iw:size,fh=iw>ih?ih:size;
- const columns=Math.max(1,Math.floor(iw/fw));
- const rows=Math.max(1,Math.floor(ih/fh));
+ const fw=horizontal||vertical?size:iw;
+ const fh=horizontal||vertical?size:ih;
+ const columns=horizontal?Math.min(MAX_FRAMES,iw/fw):1;
+ const rows=vertical?Math.min(MAX_FRAMES,ih/fh):1;
  return {size:fw,width:fw,height:fh,columns,rows,count:Math.min(MAX_FRAMES,columns*rows)};
 }
 function timeline(entry,count){
