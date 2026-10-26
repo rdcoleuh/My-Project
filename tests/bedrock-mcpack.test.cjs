@@ -104,3 +104,20 @@ test('Bedrock Samples HUD and nine hotbar PNGs are recognized and render locally
  await b.pack.clear();
  assert.equal(await b.pack.hudIcon('heart','full'),null);
 });
+
+test('Bedrock-specific item PNG names fill hotbar icons without overriding Java aliases',async()=>{
+ const b=boot(),buffer=zip([
+  ['resource_pack/textures/blocks/stone.png',FAKE_PNG],
+  ...['beef_raw','beef_cooked','fish_raw','fish_cooked','carrot_golden',
+      'apple_golden','chicken_cooked','wood_sword'].map(name=>
+        ['resource_pack/textures/items/'+name+'.png',FAKE_PNG])
+ ]);
+ const names=b.pack.inspectZip(buffer);
+ for(const name of ['beef_raw','beef_cooked','carrot_golden'])
+   assert.ok(names.includes('item:'+name),'missing '+name);
+ await b.pack.loadFile({name:'bedrock-samples.zip',arrayBuffer:async()=>buffer});
+ for(const key of ['raw','cooked','fish','cookedFish','goldenCarrot',
+                   'goldenApple','cookedChicken','woodenSword'])
+   assert.equal(await b.pack.itemIcon(key),'data:image/png;base64,local','item '+key);
+ assert.equal(await b.pack.itemIcon('nonexistent'),null);
+});

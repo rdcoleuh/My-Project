@@ -767,6 +767,11 @@ async function applyResources(zip,sourceName){
     try{if(await window.MineWorldSound?.loadSound(type,await zip.get('sound:'+key))){audio++;importedSoundTypes.push(type)}}catch(e){console.warn('Unsupported optional sound '+type,e)}
  }
  const items=[...zip.entries.keys()].filter(k=>k.startsWith('item:')).length;
+ const hudIcons=['heart:full','heart:half','heart:empty','food:full','food:half','food:empty']
+   .filter(key=>zip.entries.has('hud:'+key)).length;
+ const hotbarSlots=Array.from({length:9},(_,i)=>'hud:hotbar:slot'+i)
+   .filter(key=>zip.entries.has(key)).length;
+ const hotbarSelection=zip.entries.has('hud:hotbar:selected');
  // Local Bedrock entity skin files have no remote fetching or save-data dependency.
  // Match concrete species paths; generic MineWorld cuboids still aren't exact
  // Bedrock entity geometry/UV models.
@@ -917,7 +922,7 @@ async function applyResources(zip,sourceName){
  state.lastAnimationAt=-Infinity;
  state.animationDisabled=false;
  state.active=faces+directionalFaces+modelDirectionalFaces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,atlasTilePixels:state.tilePixels,modelGeometryBlocks:modelShapes.size,modelUVFaces:window.MineWorldJavaFaceTransforms?.stats().faces||0,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,bedrockTerrainMappings:bedrockTerrain.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
+ state.lastResult={hudIcons,hotbarSlots,hotbarSelection,blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,atlasTilePixels:state.tilePixels,modelGeometryBlocks:modelShapes.size,modelUVFaces:window.MineWorldJavaFaceTransforms?.stats().faces||0,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,bedrockTerrainMappings:bedrockTerrain.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
@@ -1123,11 +1128,21 @@ function hudIcon(kind,fill){
  state.itemCache.set(key,promise);
  return promise;
 }
+// Bedrock uses a handful of different vanilla item filenames from Java.
+// Resolve only within the player's selected archive; Java names win when present.
+const BEDROCK_ITEM_ALIASES=Object.freeze({
+ raw:['beef_raw'],cooked:['beef_cooked'],fish:['fish_raw'],cookedFish:['fish_cooked'],
+ goldenCarrot:['carrot_golden'],goldenApple:['apple_golden'],
+ cookedChicken:['chicken_cooked'],rawChicken:['chicken_raw'],
+ woodenSword:['wood_sword'],woodenPickaxe:['wood_pickaxe'],
+ woodenAxe:['wood_axe'],woodenHoe:['wood_hoe'],woodenShovel:['wood_shovel']
+});
 function itemIcon(key){
  const name=itemName(key),source=state.itemArchive;
  if(!name||!source)return Promise.resolve(null);
- const path='item:'+name;
- if(!source.entries.has(path))return Promise.resolve(null);
+ const path=['item:'+name,...(BEDROCK_ITEM_ALIASES[key]||[]).map(n=>'item:'+n)]
+   .find(candidate=>source.entries.has(candidate));
+ if(!path)return Promise.resolve(null);
  if(state.itemCache.has(path))return state.itemCache.get(path);
  const generation=state.itemGeneration;
  const promise=(async()=>{
@@ -1201,7 +1216,7 @@ function mountDefaultUI(root){
  const update=()=>{
   const result=state.lastResult;
   status.textContent=result?
-   'Active: '+state.sourceName+' · '+result.faces+'/'+result.totalFaces+' block faces · '+(result.items||0)+' item PNGs · '+(result.entities||0)+' mob skins.':
+   'Active: '+state.sourceName+' · '+result.faces+'/'+result.totalFaces+' block faces · '+(result.items||0)+' item PNGs · '+(result.entities||0)+' mob skins · HUD '+result.hudIcons+'/6 · hotbar '+result.hotbarSlots+'/9.':
    'Select Mojang’s ZIP once; save privately as your default.';
  };
  defaultStatusListeners.push(update);update();
@@ -1212,7 +1227,7 @@ function mountDefaultUI(root){
   try{
    const {result,saved}=await setDefaultPack(selected);
    status.textContent='Applied '+result.faces+'/'+result.totalFaces+' faces and '+(result.items||0)+
-    ' item PNGs and '+(result.entities||0)+' mob skins. '+(saved?'Saved as default on this device.':'Storage unavailable: reselect on next visit.');
+    ' item PNGs and '+(result.entities||0)+' mob skins · HUD '+result.hudIcons+'/6 · hotbar '+result.hotbarSlots+'/9. '+(saved?'Saved as default on this device.':'Storage unavailable: reselect on next visit.');
   }catch(e){status.textContent='Could not apply selected ZIP: '+e.message;}
   finally{button.disabled=false;file.value='';}
  });
@@ -1282,7 +1297,7 @@ function addControls(root,title){
    if(!result)return;
    status.textContent='Matched '+result.faces+' of '+result.totalFaces+' block faces ('+
      result.coverage+'%) across '+result.blocks+' block types, '+(result.atlasTilePixels||16)+'px atlas faces, '+(result.directionalFaces||0)+' dedicated directional side faces, '+(result.items||0)+' item PNGs, '+(result.entities||0)+' mob skins, '+(result.worldItemSprites||0)+' 3D item sprites, '+result.animatedFaces+' animated faces ('+(result.bedrockAnimatedFaces||0)+' from Bedrock flipbooks) and '+result.sounds+
-     ' sound events, '+(result.modelMappedFaces||0)+' model-resolved faces. '+(result.overlaid?'Grass uses the Java side overlay. ':'')+'Unmatched block faces keep independent MineWorld art.';
+     ' sound events, '+(result.modelMappedFaces||0)+' model-resolved faces. HUD '+result.hudIcons+'/6, hotbar '+result.hotbarSlots+'/9, selection '+(result.hotbarSelection?'yes':'no')+'. '+(result.overlaid?'Grass uses the Java side overlay. ':'')+'Unmatched block faces keep independent MineWorld art.';
    detail.textContent=result.unmapped.length?
      'Example unmatched sprite names: '+result.unmapped.slice(0,9).join(', ')+'.':'All mapped face names were present.';
    auditSummary.textContent='Inspect all '+result.missingFaces.length+' unmatched block faces';

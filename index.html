@@ -416,7 +416,16 @@ body.in-nether #game-wrap{background:#290f19}
 #hotbar .hot-item .swatch canvas{display:block;max-width:100%;max-height:100%}
 .mw-stat-half{position:absolute;left:0;top:0;width:50%;height:100%;overflow:hidden;color:#f23b44}
 #hunger-text .mw-stat-half{color:#b77a35}
-@media(max-width:550px){.mw-stat-icon{width:12px;font-size:16px}}
+/* Native Bedrock HUD art is 9x9: preserve its square pixels and touch layout. */
+#survival-hud{max-width:calc(100vw - 12px);box-sizing:border-box;flex-wrap:wrap}
+#health-text .mw-stat-icon,#hunger-text .mw-stat-icon{width:18px;height:18px;flex:0 0 18px}
+@media(max-width:550px){
+ #survival-hud{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 6px;justify-items:center;max-width:calc(100vw - 12px);padding:4px 5px}
+ #health-text,#hunger-text{gap:0}
+ #health-text .mw-stat-icon,#hunger-text .mw-stat-icon{width:12px;height:12px;flex:0 0 12px;font-size:16px;line-height:12px}
+ #weapon-readout{max-width:100%;font-size:9px;overflow:hidden;text-overflow:ellipsis}
+ #eat-btn{min-height:24px;padding:2px 6px}
+}
 </style>
 </head>
 <body>
