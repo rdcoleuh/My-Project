@@ -135,8 +135,10 @@
    for(const {key,img,rect} of faceTiles){
      const index=positions.get(key),dx=(index%COLS)*tilePixels,dy=Math.floor(index/COLS)*tilePixels;
      ctx.imageSmoothingEnabled=false;
-     // Transparent mob-face texels must not expose the grayscale base atlas.
-     ctx.clearRect?.(dx,dy,tilePixels,tilePixels);
+     // Entity skins often contain transparent unused regions. Clearing the
+     // underlying opaque tile made whole cow/sheep body faces disappear.
+     // Composite the imported pixels over the procedural opaque tile so
+     // transparent source texels never punch holes through 3D animals.
      ctx.imageSmoothingEnabled=false;
      ctx.drawImage(img,rect.x,rect.y,rect.width,rect.height,dx,dy,tilePixels,tilePixels);
    }
