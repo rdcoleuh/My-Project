@@ -50,6 +50,16 @@ function makeTestArchive(){
    ['resource_pack/textures/blocks/stone.png',generatedPng(16,80)],
    ['resource_pack/textures/entity/cow/cow.png',generatedPng(128,180,256)],
    ['resource_pack/textures/items/diamond.png',generatedPng(32,225,32)],
+   ['resource_pack/textures/items/beef_cooked.png',generatedPng(16,155)],
+   ['resource_pack/textures/ui/heart.png',generatedPng(9,205,9)],
+   ['resource_pack/textures/ui/heart_half.png',generatedPng(9,190,9)],
+   ['resource_pack/textures/ui/heart_background.png',generatedPng(9,40,9)],
+   ['resource_pack/textures/ui/hunger_full.png',generatedPng(9,170,9)],
+   ['resource_pack/textures/ui/hunger_half.png',generatedPng(9,140,9)],
+   ['resource_pack/textures/ui/hunger_background.png',generatedPng(9,55,9)],
+   ['resource_pack/textures/ui/selected_hotbar_slot.png',generatedPng(24,215,24)],
+   ...Array.from({length:9},(_,i)=>[
+     'resource_pack/textures/ui/hotbar_'+i+'.png',generatedPng(22,80+i*9,20)]),
    ['resource_pack/textures/blocks/water_still_grey.png',generatedPng(64,35)],
    ['assets/minecraft/models/block/furnace.json',Buffer.from(JSON.stringify({
      textures:{top:'minecraft:block/furnace_top',front:'minecraft:block/furnace_front',
@@ -146,6 +156,13 @@ async function go(browser,name,mobile){
   }),name+': crisp 3-face imported block icons or multi-copy ground drops unavailable');
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.faces>=3),
     name+': synthetic stone was not imported');
+  assert.ok(await page.evaluate(async()=>{
+    const pack=window.MineWorldLocalTextures,r=pack?.lastResult;
+    return r?.hudIcons===6&&r?.hotbarSlots===9&&r?.hotbarSelection===true&&
+      (await pack.hudIcon('heart','half'))?.startsWith('data:image/png')&&
+      (await pack.hudIcon('food','full'))?.startsWith('data:image/png')&&
+      (await pack.itemIcon('cooked'))?.startsWith('data:image/png');
+  }),name+': Bedrock HUD or renamed hotbar food item sprites were not decoded');
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.bedrockAnimatedFaces>=3),
     name+': Bedrock water animation did not load from flipbook_textures.json');
   assert.ok(await page.evaluate(()=>{
@@ -168,6 +185,9 @@ async function go(browser,name,mobile){
   await page.waitForFunction(()=>window.MineWorldLocalTextures?.lastResult?.faces>=3,null,{timeout:30000});
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.bedrockAnimatedFaces>=3),
     name+': stored Bedrock animation was lost after reload');
+  assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.hudIcons===6&&
+    window.MineWorldLocalTextures?.lastResult?.hotbarSlots===9),
+    name+': remembered Bedrock HUD sprites were lost after reload');
   assert.ok(await page.evaluate(()=>window.MineWorldLocalTextures?.lastResult?.modelDirectionalFaces>=4),
     name+': Java directional model textures did not persist after reload');
   assert.ok(await page.evaluate(()=>window.MineWorldJavaFaceTransforms?.descriptor(20,[0,0,-1])?.rotation===90),
@@ -218,6 +238,13 @@ async function go(browser,name,mobile){
   await play.click({timeout:20000});
   await page.waitForFunction(()=>document.querySelector('#welcome')?.classList.contains('hidden'),null,{timeout:25000});
   await page.waitForTimeout(600);
+  await page.waitForFunction(()=>document.querySelectorAll('#hotbar .hot-item.mw-pack-slot').length===9,
+    null,{timeout:10000});
+  assert.equal(await page.locator('#hotbar .hot-item.active.mw-pack-selected').count(),1,
+    name+': selected Bedrock hotbar overlay is not applied');
+  assert.ok(await page.locator('#hotbar').evaluate(el=>
+    getComputedStyle(el.querySelector('.mw-pack-slot')).backgroundImage.startsWith('url(')),
+    name+': hotbar slots are not displaying imported PNG backgrounds');
   // Visual events are transient and never written into game saves.
   assert.equal(await page.evaluate(()=>typeof window.MineWorldImpactEffects?.geometry),'function',
     name+': the impact effect engine did not load');
