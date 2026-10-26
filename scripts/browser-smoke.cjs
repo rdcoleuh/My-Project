@@ -301,9 +301,9 @@ async function go(browser,name,mobile){
   await page.locator('#pause [data-mw-polish="focusHud"] input').uncheck();
   await page.locator('#home-btn').click();
   await page.locator('#mw-menu-root.active').waitFor({state:'visible',timeout:15000});
-  // Start a separate Survival world to exercise actual heart/hunger DOM rendering.
+  // Start a separate Survival world (Creative uses #start-btn).
   await page.locator('#mw-single').click();
-  await page.locator('#start-btn').click({timeout:20000});
+  await page.locator('#survival-start').click({timeout:20000});
   await page.waitForFunction(()=>document.querySelector('#welcome')?.classList.contains('hidden'),
     null,{timeout:25000});
   await page.waitForFunction(()=>{
