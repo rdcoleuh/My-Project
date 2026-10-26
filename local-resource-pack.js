@@ -1139,6 +1139,16 @@ const BEDROCK_ITEM_ALIASES=Object.freeze({
  woodenSword:['wood_sword'],woodenPickaxe:['wood_pickaxe'],
  woodenAxe:['wood_axe'],woodenHoe:['wood_hoe'],woodenShovel:['wood_shovel']
 });
+function blockItemIcon(id){
+ const source=state.itemArchive;
+ if(!source||!Number.isInteger(id)||id<1||id>169)return Promise.resolve(null);
+ const raw=names[id]||'';
+ const name=String(raw).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+ const mapped=mappings.get(id)?.[0];
+ const candidates=[name,mapped].filter(Boolean);
+ const found=candidates.find(n=>source.entries.has('item:'+n));
+ return found?itemIcon(found):Promise.resolve(null);
+}
 function itemIcon(key){
  const name=itemName(key),source=state.itemArchive;
  if(!name||!source)return Promise.resolve(null);
@@ -1187,7 +1197,7 @@ const exposed={
  get generation(){return state.itemGeneration;},
  get grassTint(){return [...state.tint.grass];},
  get foliageTint(){return [...state.tint.foliage];},
- loadFile,loadFiles,clear,setDefaultPack,drawFace,textureName,updateAnimation,itemIcon,itemName,hudIcon,
+ loadFile,loadFiles,clear,setDefaultPack,drawFace,textureName,updateAnimation,itemIcon,itemName,blockItemIcon,hudIcon,
  mountDefaultUI,mountOptionsUI,
  get availableItemTextures(){return state.lastResult?.items||0;},
  hasImportedFace(id,face){return state.active&&Number.isInteger(id)&&Number.isInteger(face)&&face>=0&&face<3&&state.importedFaces.has(id*3+face);},

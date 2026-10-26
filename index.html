@@ -422,6 +422,10 @@ body.in-nether #game-wrap{background:#290f19}
 #hotbar.mw-pack-hotbar .hot-item.active{border-color:transparent!important;box-shadow:none!important}
 #hotbar .hot-item.mw-pack-slot{image-rendering:pixelated!important}
 #hotbar .hot-item.active.mw-pack-selected::after{image-rendering:pixelated!important}
+/* Imported transparent sprites should never sit on a colored placeholder tile. */
+#hotbar .swatch.mw-has-pack-icon{background-color:transparent!important;background-image:none!important}
+#hotbar .mw-block-pack-icon{display:block;width:30px;height:30px;object-fit:contain;image-rendering:pixelated}
+#hotbar .hot-item-icon img{image-rendering:pixelated;object-fit:contain}
 /* Native Bedrock HUD art is 9x9: preserve its square pixels and touch layout. */
 #survival-hud{max-width:calc(100vw - 12px);box-sizing:border-box;flex-wrap:wrap}
 #health-text .mw-stat-icon,#hunger-text .mw-stat-icon{width:18px;height:18px;flex:0 0 18px}
@@ -2010,6 +2014,19 @@ body.in-nether #game-wrap{background:#290f19}
         sprite.className='mw-imported-swatch';sprite.width=sprite.height=32;
         const iso=window.MineWorldBlockItemIcons?.paint(sprite,id);
         if(iso)swatch.appendChild(sprite);
+        // Prefer a matching player-imported item PNG when the pack supplies one.
+        // Otherwise retain the three-face, pack-textured block projection.
+        if(window.MineWorldLocalTextures?.active){
+          const packGeneration=window.MineWorldLocalTextures.generation;
+          window.MineWorldLocalTextures.blockItemIcon?.(id).then(src=>{
+            if(!src||!swatch.isConnected||packGeneration!==window.MineWorldLocalTextures?.generation)return;
+            const art=document.createElement('img');
+            art.src=src;art.alt='';art.className='mw-block-pack-icon';
+            sprite.replaceWith(art);
+            swatch.classList.add('mw-has-pack-icon');
+          }).catch(()=>{});
+          if(iso)swatch.classList.add('mw-has-pack-icon');
+        }
         else if(window.MineWorldLocalTextures?.active){
           sprite.width=sprite.height=16;
           if(window.MineWorldLocalTextures.drawFace(sprite.getContext('2d'),id,0))swatch.appendChild(sprite);
