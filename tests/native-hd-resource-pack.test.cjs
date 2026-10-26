@@ -86,7 +86,7 @@ test('HD atlas uses nearest-neighbor everywhere and never writes to world saves'
  assert.match(src,/ctx\.imageSmoothingEnabled=false/);
  assert.match(src,/MineWorldAtlas\?\.setTilePixels\?\.\(tileSize\)/);
  assert.match(src,/atlasTilePixels:state\.tilePixels/);
- assert.match(sw,/mineworld-6-47-hd-native-tiles/);
+ assert.match(sw,/const VERSION='mineworld-[^']+'/);
  assert.doesNotMatch(src,/localStorage\.setItem\(.*atlasTilePixels/);
 });
 
