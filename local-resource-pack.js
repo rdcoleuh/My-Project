@@ -271,6 +271,7 @@ function readArchive(buffer){
    const item=relative?.match(/^textures\/(?:item|items)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png$/);
    const itemMeta=relative?.match(/^textures\/(?:item|items)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png\.mcmeta$/);
    const entity=relative?.match(/^textures\/entity\/([a-z0-9_-]+(?:\/[a-z0-9_-]+)*)\.png$/);
+   const hud=relative?.match(/^textures\/gui\/sprites\/hud\/(heart|food)\/(full|half|empty)\.png$/);
    const entityDefinition=relative?.match(/^entity\/([a-z0-9_-]+)\.entity\.json$/);
    const matchSound=relative?.match(/^sounds\/([a-z0-9_./-]+)\.ogg$/);
    const matchMeta=relative?.match(/^textures\/(?:block|blocks)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png\.mcmeta$/);
@@ -289,6 +290,8 @@ function readArchive(buffer){
      keep('item:'+item[1],{method,size,expanded,local},priority);
    if(itemMeta&&size<131072&&expanded<131072&&(method===0||method===8))
      keep('meta:item:'+itemMeta[1],{method,size,expanded,local},priority);
+   if(hud&&size<262144&&expanded<262144&&(method===0||method===8))
+     keep('hud:'+hud[1]+':'+hud[2],{method,size,expanded,local},priority);
    if(entity&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8))
      keep('entity:'+entity[1],{method,size,expanded,local},priority);
    if(entityDefinition&&size<131072&&expanded<131072&&(method===0||method===8))
@@ -1053,6 +1056,27 @@ function itemName(key){
  if(typeof key!=='string'||key.length>80||!/^[a-zA-Z0-9_]+$/.test(key))return null;
  return ITEM_ALIASES[key]||key.replace(/([a-z0-9])([A-Z])/g,'$1_$2').toLowerCase();
 }
+function hudIcon(kind,fill){
+ const source=state.itemArchive;
+ if(!source||!['heart','food'].includes(kind)||!['full','half','empty'].includes(fill))return Promise.resolve(null);
+ const key='hud:'+kind+':'+fill;
+ if(!source.entries.has(key))return Promise.resolve(null);
+ if(state.itemCache.has(key))return state.itemCache.get(key);
+ const generation=state.itemGeneration;
+ const promise=(async()=>{
+   const image=await imageFromPng(await source.get(key));
+   if(generation!==state.itemGeneration)return null;
+   const canvas=document.createElement('canvas');
+   canvas.width=image.width;canvas.height=image.height;
+   const ctx=canvas.getContext('2d',{alpha:true});
+   if(!ctx)return null;
+   ctx.imageSmoothingEnabled=false;
+   ctx.drawImage(image,0,0);
+   return generation===state.itemGeneration?canvas.toDataURL('image/png'):null;
+ })().catch(()=>null);
+ state.itemCache.set(key,promise);
+ return promise;
+}
 function itemIcon(key){
  const name=itemName(key),source=state.itemArchive;
  if(!name||!source)return Promise.resolve(null);
@@ -1099,7 +1123,7 @@ const exposed={
  get lastResult(){return state.lastResult;},
  get grassTint(){return [...state.tint.grass];},
  get foliageTint(){return [...state.tint.foliage];},
- loadFile,loadFiles,clear,setDefaultPack,drawFace,textureName,updateAnimation,itemIcon,itemName,
+ loadFile,loadFiles,clear,setDefaultPack,drawFace,textureName,updateAnimation,itemIcon,itemName,hudIcon,
  mountDefaultUI,mountOptionsUI,
  get availableItemTextures(){return state.lastResult?.items||0;},
  hasImportedFace(id,face){return state.active&&Number.isInteger(id)&&Number.isInteger(face)&&face>=0&&face<3&&state.importedFaces.has(id*3+face);},
