@@ -54,5 +54,6 @@ test('directional atlas uploads and animations occur once per shared tile',()=>{
  assert.match(section,/if\(info\)animated\.push\(/);
  assert.ok(section.indexOf('markTransform(id,dir)')>section.indexOf('renderedSideTiles.add(entry.tile)'),
   'per-face UV transformations remain active even for shared atlas tiles');
- assert.match(read('sw.js'),/mineworld-6-50-java-side-dedup/);
+ assert.match(read('sw.js'),/const VERSION='mineworld-6-\d+[^']+'/);
+ assert.match(read('sw.js'),/'\.\/java-model-faces\.js'/);
 });
