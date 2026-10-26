@@ -11,6 +11,8 @@ if(!META||!META.gl||!META.texture||!META.baseURL){
  return;
 }
 const atlasW=256,atlasH=1024,tilePx=16;
+// Keep ZIP screening and extraction aligned with the bounded terrain parser.
+const MAX_BEDROCK_TERRAIN_BYTES=1024*1024;
 const packStorage=window.MineWorldPackStorage;
 const coverageCallbacks=[];
 let manualImportStarted=false;
@@ -302,7 +304,7 @@ function readArchive(buffer){
      keep('state:'+blockstatePath[1],{method,size,expanded,local},priority);
    if(bedrockFlipbook&&size<256*1024&&expanded<256*1024&&(method===0||method===8))
      keep('bedrock:flipbook',{method,size,expanded,local},priority);
-   if(bedrockTerrain&&size<256*1024&&expanded<256*1024&&(method===0||method===8))
+   if(bedrockTerrain&&size<=MAX_BEDROCK_TERRAIN_BYTES&&expanded<=MAX_BEDROCK_TERRAIN_BYTES&&(method===0||method===8))
      keep('bedrock:terrain',{method,size,expanded,local},priority);
    if(mapColor&&size<4*1024*1024&&expanded<4*1024*1024&&(method===0||method===8))
      keep('colormap:'+mapColor[1],{method,size,expanded,local},priority);
@@ -555,7 +557,7 @@ async function applyResources(zip,sourceName){
  if(bedrock&&zip.entries.has('bedrock:terrain')){
   try{
    const bytes=await zip.get('bedrock:terrain');
-   if(bytes&&bytes.length<=256*1024)
+   if(bytes&&bytes.length<=MAX_BEDROCK_TERRAIN_BYTES)
     bedrockTerrain=bedrock.terrain(new TextDecoder().decode(bytes));
   }catch(e){console.warn('Ignoring invalid local Bedrock terrain map:',e);}
  }

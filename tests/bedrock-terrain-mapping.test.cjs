@@ -115,3 +115,53 @@ test('Bedrock terrain map stays optional and does not change saved world formats
   'Bedrock terrain parser remains available offline');
  assert.doesNotMatch(read('bedrock-flipbook.js'),/fetch\(|localStorage|indexedDB/);
 });
+
+function largeBedrockTerrain(){
+ const texture_data={};
+ for(let i=0;i<3400;i++)texture_data['unused_'+i]={textures:'textures/blocks/nested/long_custom_terrain_entry_'+i};
+ const names=['still_water_grey','flowing_water_grey','still_lava','flowing_lava','oak_leaves'];
+ for(const n of names)texture_data[n]={textures:'textures/blocks/custom/'+n};
+ const json=Buffer.from(JSON.stringify({texture_data}));
+ assert.ok(json.length>256*1024&&json.length<1024*1024,'exercise the former 256 KiB cutoff');
+ return {json,names};
+}
+function storedBedrockZip(entries){
+ const local=[],central=[];let offset=0;
+ for(const [name,payload] of entries){
+  const n=Buffer.from(name),bytes=Buffer.from(payload);
+  const lh=Buffer.alloc(30+n.length),ch=Buffer.alloc(46+n.length);
+  lh.writeUInt32LE(0x04034b50,0);lh.writeUInt16LE(20,4);
+  lh.writeUInt32LE(bytes.length,18);lh.writeUInt32LE(bytes.length,22);
+  lh.writeUInt16LE(n.length,26);n.copy(lh,30);
+  ch.writeUInt32LE(0x02014b50,0);ch.writeUInt16LE(20,4);ch.writeUInt16LE(20,6);
+  ch.writeUInt32LE(bytes.length,20);ch.writeUInt32LE(bytes.length,24);
+  ch.writeUInt16LE(n.length,28);ch.writeUInt32LE(offset,42);n.copy(ch,46);
+  local.push(lh,bytes);central.push(ch);offset+=lh.length+bytes.length;
+ }
+ const end=Buffer.alloc(22);end.writeUInt32LE(0x06054b50,0);
+ end.writeUInt16LE(entries.length,8);end.writeUInt16LE(entries.length,10);
+ end.writeUInt32LE(central.reduce((s,x)=>s+x.length,0),12);end.writeUInt32LE(offset,16);
+ return Uint8Array.from(Buffer.concat([...local,...central,end])).buffer;
+}
+test('large Bedrock terrain metadata imports late water/lava/leaves from both folders and ZIP',async()=>{
+ const {json,names}=largeBedrockTerrain();
+ const png=Uint8Array.from([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,16,0,0,0,16]);
+ const entries=[['textures/terrain_texture.json',json],
+  ...names.map(n=>['textures/blocks/custom/'+n+'.png',png])];
+ const file=([name,bytes])=>({name:name.split('/').at(-1),webkitRelativePath:'MyPack/'+name,
+  size:bytes.length,async arrayBuffer(){return Uint8Array.from(bytes).buffer;}});
+ const folder=importer();
+ const folderResult=await folder.pack.loadFiles(entries.map(file));
+ assert.equal(folderResult.bedrockTerrainMappings,3405);
+ for(const id of [7,66,6])for(const face of [0,1,2])
+  assert.equal(folder.pack.hasImportedFace(id,face),true,'folder face '+id+':'+face);
+ await folder.pack.clear();
+ const archive=storedBedrockZip(entries),zipped=importer();
+ assert.ok(zipped.pack.inspectZip(archive).includes('bedrock:terrain'),
+  'ZIP screening must retain terrain JSON above 256 KiB');
+ const result=await zipped.pack.loadFile({name:'MyPack.mcpack',async arrayBuffer(){return archive;}});
+ assert.equal(result.bedrockTerrainMappings,3405);
+ for(const id of [7,66,6])for(const face of [0,1,2])
+  assert.equal(zipped.pack.hasImportedFace(id,face),true,'ZIP face '+id+':'+face);
+ await zipped.pack.clear();
+});
