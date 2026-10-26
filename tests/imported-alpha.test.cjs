@@ -35,7 +35,7 @@ test('imported transparent mob faces and item PNGs clear their procedural atlas 
  ])),2);
  assert.equal(x.api.size,32);
  const operations=x.events.filter(e=>e[0]==='clear'||e[0]==='draw');
- assert.equal(operations.length,40,'one clear and one draw for each of 18 mapped cow faces plus two sprites');
+ assert.equal(operations.length,38,'one clear and draw per 18 cow faces plus the item icon; mapped cows retain grayscale base');
  for(let i=0;i<operations.length;i+=2){
   const clear=operations[i],draw=operations[i+1];
   assert.equal(clear[0],'clear','background must be cleared before each imported draw');

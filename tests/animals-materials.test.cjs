@@ -18,7 +18,10 @@ test('model library has original scaled cattle, sheep, chickens, pigs and four m
   const result=A.draw({id:1,kind,x:5000,y:18,z:5000,heading:.5},(...numbers)=>{
     assert.equal(numbers.length,9);
     for(const n of numbers.slice(0,6))assert.ok(Number.isFinite(n),'invalid '+kind);
-    assert.ok(['body','head','leg'].includes(numbers[6]),'unknown cuboid part '+kind);
+    const validParts=kind==='chicken'?
+      ['body','head','leg','wing','beak','comb','eye','wattle','tail']:
+      ['body','head','leg'];
+    assert.ok(validParts.includes(numbers[6]),'unknown cuboid part '+kind);
     assert.ok(['front','back','top','bottom','left','right'].includes(numbers[7]));
     assert.ok(Number.isInteger(numbers[8])&&numbers[8]>=0&&numbers[8]<=3);
     xyz.push(numbers[1]);

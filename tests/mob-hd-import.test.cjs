@@ -55,7 +55,9 @@ test('16px items stay compact, while wider classic mob body crops retain detail'
  const y=boot();
  y.art.applyImported(new Map([['cow',{width:64,height:32}]]));
  assert.equal(y.art.size,32,'some classic mob body faces are wider than 16 source pixels');
- assert.ok(y.draws.some(d=>d.args[1]===8&&d.args[2]===8&&d.args[3]===8&&d.args[4]===8));
+ assert.ok(y.draws.some(d=>d.args[1]===28&&d.args[2]===14&&
+   d.args[3]===12&&d.args[4]===18),
+   'mapped cow body retains full 12x18 source crop without an extra generic head copy');
 });
 test('non-square HD world item keeps its aspect ratio and centered transparent margins',()=>{
  const x=boot();
