@@ -416,6 +416,12 @@ body.in-nether #game-wrap{background:#290f19}
 #hotbar .hot-item .swatch canvas{display:block;max-width:100%;max-height:100%}
 .mw-stat-half{position:absolute;left:0;top:0;width:50%;height:100%;overflow:hidden;color:#f23b44}
 #hunger-text .mw-stat-half{color:#b77a35}
+/* Render pack slot art as real square pixels, not stretched strips under opaque CSS. */
+#hotbar.mw-pack-hotbar{background-color:transparent!important;border-color:transparent!important;box-shadow:none!important;padding:3px!important}
+#hotbar.mw-pack-hotbar .hot-item{background-color:transparent!important;border-color:transparent!important;box-shadow:none!important}
+#hotbar.mw-pack-hotbar .hot-item.active{border-color:transparent!important;box-shadow:none!important}
+#hotbar .hot-item.mw-pack-slot{image-rendering:pixelated!important}
+#hotbar .hot-item.active.mw-pack-selected::after{image-rendering:pixelated!important}
 /* Native Bedrock HUD art is 9x9: preserve its square pixels and touch layout. */
 #survival-hud{max-width:calc(100vw - 12px);box-sizing:border-box;flex-wrap:wrap}
 #health-text .mw-stat-icon,#hunger-text .mw-stat-icon{width:18px;height:18px;flex:0 0 18px}
@@ -2087,11 +2093,11 @@ body.in-nether #game-wrap{background:#290f19}
     if(generation!==(window.MineWorldLocalTextures?.generation??-1))return;
     const root=$('hotbar');
     if(!root)return;
-    root.classList.toggle('mw-pack-hotbar',!!background);
+    root.classList.toggle('mw-pack-hotbar',!!background||slots.some(Boolean));
     root.style.setProperty('--mw-pack-hotbar-bg',background?'url("'+background+'")':'none');
     root.style.setProperty('--mw-pack-hotbar-selected',selected?'url("'+selected+'")':'none');
     root.querySelectorAll('.hot-item').forEach((item,i)=>{
-      item.classList.toggle('mw-pack-selected',!!selected);
+      item.classList.toggle('mw-pack-selected',!!selected&&item.classList.contains('active'));
       item.classList.toggle('mw-pack-slot',!!slots[i]);
       item.style.setProperty('--mw-pack-slot-bg',slots[i]?'url("'+slots[i]+'")':'none');
     });

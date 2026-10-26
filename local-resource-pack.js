@@ -287,7 +287,9 @@ function readArchive(buffer){
      hunger_full:'food:full',hunger_half:'food:half',
      hunger_empty:'food:empty',hunger_background:'food:empty',
      food_full:'food:full',food_half:'food:half',food_empty:'food:empty',
-     hotbar:'hotbar:background',selected_hotbar_slot:'hotbar:selected',hotbar_selection:'hotbar:selected'
+     hotbar:'hotbar:background',hotbar_background:'hotbar:background',hotbar_slot:'hotbar:slot0',
+     hotbar_start_cap:'hotbar:slot0',hotbar_end_cap:'hotbar:slot8',
+     selected_hotbar_slot:'hotbar:selected',hotbar_selection:'hotbar:selected',hotbar_selected:'hotbar:selected'
    })[bedrockUI[1]] || (bedrockUI&&/^hotbar_[0-8]$/.test(bedrockUI[1])?
      'hotbar:slot'+bedrockUI[1].slice(-1):null);
    const entityDefinition=relative?.match(/^entity\/([a-z0-9_-]+)\.entity\.json$/);
