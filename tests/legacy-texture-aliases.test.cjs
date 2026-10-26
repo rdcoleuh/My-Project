@@ -51,10 +51,11 @@ test('older Java Edition filenames replace the expected block atlas faces',async
  assert.equal(pack.active,false);
 });
 test('canonical Java sprite names are still preferred and no images are bundled',()=>{
- const position=src.indexOf('function resolveName(name)');
+ const position=src.indexOf('function spriteKeys(name)');
  const code=src.slice(position,position+400);
- assert.ok(code.includes('[name,...(aliases[name]||[])]'),
-  'canonical names must take precedence over historical aliases');
+ assert.ok(code.includes('const keys=[name,...(aliases[name]||[])]')&&
+   code.indexOf('candidates.push(key)')<code.indexOf('candidates.push(mapped)'),
+  'canonical names must take precedence over historical and terrain aliases');
  assert.ok(src.includes("red_bed_top"),'fictional bed should not inherit wool');
  assert.ok(src.includes("poplar_log"),'fictional poplar should not inherit oak');
  assert.ok(!src.includes('data:image/png;base64,iVBOR'),'no embedded Mojang images');
