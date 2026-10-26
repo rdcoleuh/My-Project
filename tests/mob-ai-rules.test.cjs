@@ -26,6 +26,26 @@ test('creeper blast damage decays with range and is limited to a radius',()=>{
  assert.ok(rules.explosionDamage(.2)>rules.explosionDamage(2.4));
  assert.equal(rules.explosionDamage(NaN),0);
 });
+test('local steering avoids walls, favors a stable side, and stops in sealed spaces',()=>{
+ const straight=rules.steerHeading(0,()=>true,1);
+ assert.equal(straight,0);
+ const corridor=a=>Math.abs(a)>0.5;
+ assert.ok(rules.steerHeading(0,corridor,1)>0,'prefer left turn');
+ assert.ok(rules.steerHeading(0,corridor,-1)<0,'prefer right turn');
+ assert.equal(rules.steerHeading(0,()=>false,1),null,'sealed cell must not force movement');
+ assert.equal(rules.steerHeading(NaN,()=>true),null);
+ assert.equal(rules.steerHeading(0,null),null);
+});
+test('last-seen pursuit expires and does not retain an invalid or infinite target',()=>{
+ const seen=rules.pursuitPoint(null,{x:3,y:2,z:5},.05);
+ assert.equal(seen.ttl,2);
+ assert.equal(seen.x,3);
+ let memory=seen;
+ for(let i=0;i<21;i++)memory=rules.pursuitPoint(memory,null,.1);
+ assert.equal(memory,null,'a lost player cannot be tracked forever');
+ assert.equal(rules.pursuitPoint(null,{x:Infinity,y:2,z:5},.1),null);
+ assert.equal(rules.pursuitPoint({x:1,y:0,z:0,ttl:-1},null,.1),null);
+});
 test('host simulation uses validated pure mob rules; no changes to survival saves',()=>{
  const html=read('index.html'),sw=read('sw.js');
  for(const name of ['mob-ai-rules.js','mob-pixel-art.js','mob-expansion.js']){
@@ -35,5 +55,8 @@ test('host simulation uses validated pure mob rules; no changes to survival save
  assert.ok(html.includes('mobAI.creeperTick(m.fuse||0,dt,close)'));
  assert.ok(html.includes('mobAI.explosionDamage(distance)'));
  assert.ok(html.includes('mobAI.spiderAggressive(m.kind,nightTime(),m.anger)'));
+ assert.ok(html.includes('mobAI.steerHeading(m.heading,angle=>'));
+ assert.ok(html.includes('m.lastSeen=mobAI.pursuitPoint(m.lastSeen,null,dt)'));
+ assert.ok(html.includes('const pursuing=aggressive&&!target&&!!m.lastSeen'));
  assert.ok(html.includes('mineworld-selfhost-v1'));
 });

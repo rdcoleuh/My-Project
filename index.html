@@ -3377,12 +3377,21 @@ body.in-nether #game-wrap{background:#290f19}
         if(target){
           dist=Math.hypot(m.x-target.x,m.z-target.z);
           m.heading=Math.atan2(target.z-m.z,target.x-m.x);
+          m.lastSeen=mobAI.pursuitPoint(null,target,dt);
+        }else if(m.lastSeen){
+          m.lastSeen=mobAI.pursuitPoint(m.lastSeen,null,dt);
+          if(m.lastSeen){
+            const remaining=Math.hypot(m.lastSeen.x-m.x,m.lastSeen.z-m.z);
+            if(remaining<.7)m.lastSeen=null;
+            else m.heading=Math.atan2(m.lastSeen.z-m.z,m.lastSeen.x-m.x);
+          }
         }
         // Despawn distant Overworld threats in daylight without using invisible targets.
         if(dimension==='overworld'&&!nightTime()&&living.every(p=>Math.hypot(m.x-p.x,m.z-p.z)>25)){
           mobs.splice(i,1);continue;
         }
       }else if(animals.FOOD[m.kind]){
+        m.lastSeen=null;
         const dx=player.x-m.x,dz=player.z-m.z,meters=Math.hypot(dx,dz);
         const held=gameMode==='survival'?stackAtHotbar(selection)?.key:null;
         if(m.fleeTime>0){m.step=.55;}
@@ -3390,9 +3399,26 @@ body.in-nether #game-wrap{background:#290f19}
         else{m.following=false;if(m.step<=0){m.step=1.4+Math.random()*4;m.heading+=-1.5+Math.random()*3;}}
       }else if(m.step<=0){m.step=1.4+Math.random()*4;m.heading+=-1.5+Math.random()*3;}
       const chase=aggressive&&!!target&&dist<=25;
+      const pursuing=aggressive&&!target&&!!m.lastSeen;
       const flight=m.fleeTime>0?1.75:1,approach=m.following?1.12:1;
-      const pace=(chase?type.speed:(!m.anger?.34:.8)*type.speed)*dt*flight*approach;
-      const vx=Math.cos(m.heading)*pace,vz=Math.sin(m.heading)*pace;
+      const pace=((chase||pursuing)?type.speed:(!m.anger?.34:.8)*type.speed)*dt*flight*approach;
+      // Probe ahead with the actual collision hitbox, including slopes and
+      // low ceilings. Steer around walls instead of walking into them forever.
+      // Flying/swimming mobs retain their existing specialized locomotion.
+      const flying=['ghast','blaze','happy_ghast','ghastling','wither'].includes(m.kind);
+      const swimming=!!extraMobs?.isAquatic(m.kind);
+      const steered=(!flying&&!swimming&&pace>.0001)?mobAI.steerHeading(m.heading,angle=>{
+        const look=Math.max(.65,pace*2.5);
+        const tx=clamp(m.x+Math.cos(angle)*look,1.6,W-1.6);
+        const tz=clamp(m.z+Math.sin(angle)*look,1.6,D-1.6);
+        if(Math.hypot(tx-m.x,tz-m.z)<look*.5)return false;
+        const ty=topAt(tx,tz)+1;
+        return Math.abs(ty-m.y)<1.25&&get(Math.floor(tx),ty,Math.floor(tz))===0&&
+          collisionFree(tx,ty,tz,m.kind,'',!!m.baby);
+      },m.id%2?1:-1):m.heading;
+      if(steered!==null)m.heading=steered;
+      const vx=steered===null?0:Math.cos(m.heading)*pace;
+      const vz=steered===null?0:Math.sin(m.heading)*pace;
       const nx=clamp(m.x+vx,1.6,W-1.6),nz=clamp(m.z+vz,1.6,D-1.6);
       const beforeX=m.x,beforeZ=m.z;
       const ground=topAt(nx,nz)+1;

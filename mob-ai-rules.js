@@ -19,5 +19,28 @@
    if(distance>=radius)return 0;
    return Math.max(1,Math.ceil(base*(1-distance/radius)));
  }
- window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage});
+ // Short-lived pursuit keeps a monster searching the last *seen* location
+ // when a player rounds a corner; it never grants invisible melee attacks.
+ function pursuitPoint(last,visible,dt){
+   if(visible&&[visible.x,visible.y,visible.z].every(Number.isFinite))
+     return {x:visible.x,y:visible.y,z:visible.z,ttl:2};
+   if(!last||![last.x,last.y,last.z,last.ttl].every(Number.isFinite))return null;
+   const ttl=Math.max(0,last.ttl-Math.max(0,Math.min(.1,Number(dt)||0)));
+   return ttl>0?{x:last.x,y:last.y,z:last.z,ttl}:null;
+ }
+ // Local collision-aware steering. Check straight ahead first, then bounded
+ // sidesteps in a stable left/right order; never scan the entire world.
+ // Caller supplies a hitbox + terrain probe so this stays pure and cheap.
+ function steerHeading(heading,isOpen,side=1){
+   if(!Number.isFinite(heading)||typeof isOpen!=='function')return null;
+   const sign=side<0?-1:1;
+   const turns=[0,sign*Math.PI/4,-sign*Math.PI/4,
+     sign*Math.PI/2,-sign*Math.PI/2,sign*Math.PI*3/4,-sign*Math.PI*3/4,Math.PI];
+   for(const turn of turns){
+     const candidate=heading+turn;
+     if(isOpen(candidate))return candidate;
+   }
+   return null;
+ }
+ window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,pursuitPoint,steerHeading});
 })();
