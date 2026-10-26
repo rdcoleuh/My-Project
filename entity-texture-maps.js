@@ -11,6 +11,9 @@ const C={
  pig:{head:[0,0,8,8,8],body:[28,8,10,16,8],leg:[0,16,4,6,4]},
  cow:{head:[0,0,8,8,6],body:[18,4,12,18,10],leg:[0,16,4,12,4]},
  sheep:{head:[0,0,6,6,8],body:[28,8,8,16,6],leg:[0,16,4,6,4]},
+ // Classic player-owned chicken skin UV origins, no source bitmap included.
+ chicken:{head:[0,0,4,6,3],beak:[14,0,4,2,2],comb:[14,4,2,2,2],
+   body:[0,9,6,8,6],wing:[24,13,1,4,6],leg:[26,0,3,5,3]},
  creeper:{head:[0,0,8,8,8],body:[16,16,8,12,4],leg:[0,16,4,6,4]},
  zombie:{head:[0,0,8,8,8],body:[16,16,8,12,4],leg:[0,16,4,12,4],arm:[40,16,4,12,4]},
  skeleton:{head:[0,0,8,8,8],body:[16,16,8,12,4],leg:[0,16,2,12,2],arm:[40,16,2,12,2]}

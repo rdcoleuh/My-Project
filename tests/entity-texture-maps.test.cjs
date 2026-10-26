@@ -30,6 +30,36 @@ test('six face layouts use different real head/body/leg PNG rectangles',()=>{
   }
  }
 });
+test('player-owned chicken skins map six separate rectangular UV nets',()=>{
+ const m=maps(),img={width:64,height:32};
+ const expected={
+  head:{x:3,y:3,width:4,height:6},
+  body:{x:6,y:15,width:6,height:8},
+  wing:{x:30,y:19,width:1,height:4},
+  beak:{x:16,y:2,width:4,height:2},
+  comb:{x:16,y:6,width:2,height:2},
+  leg:{x:29,y:3,width:3,height:5}
+ };
+ for(const [part,r] of Object.entries(expected)){
+  assert.deepEqual({...m.rect('chicken',part,'front',img)},r,part);
+  for(const face of m.faces)assert.ok(m.rect('chicken',part,face,img),part+' '+face);
+  const hd=m.rect('chicken',part,'front',{width:128,height:64});
+  assert.deepEqual({...hd},{x:r.x*2,y:r.y*2,width:r.width*2,height:r.height*2});
+ }
+ assert.equal(m.rect('chicken','wattle','front',img),null);
+});
+test('chicken animal cuboids expose mapped parts without exceeding geometry budget',()=>{
+ const ctx={window:{},console};vm.createContext(ctx);
+ vm.runInContext(read('animal-models.js'),ctx);
+ const tags=new Set(),faces=new Set();
+ const count=ctx.window.MineWorldAnimalModels.draw(
+  {kind:'chicken',id:1,x:5,y:5,z:5,moving:false},
+  (x,y,z,r,g,b,part,face)=>{tags.add(part);faces.add(face)});
+ assert.ok(count>0&&count<70);
+ for(const part of ['head','body','wing','beak','comb','leg','wattle','eye','tail'])
+  assert.ok(tags.has(part),part+' not tagged');
+ assert.equal(faces.size,6);
+});
 test('face UVs scale with imported texture resolution and reject unsupported images',()=>{
  const m=maps();
  const normal=m.rect('zombie','head','front',{width:64,height:64});
@@ -63,9 +93,17 @@ test('imported species use mapped cuboid faces with nearest-neighbor sampling an
  vm.runInNewContext(read('entity-texture-maps.js'),context);
  vm.runInNewContext(read('mob-pixel-art.js'),context);
  const art=context.window.MineWorldMobPixels;
- art.create(gl,{cow:{},zombie:{},horse:{}});
- art.applyImported(new Map([['cow',{width:64,height:32}],
+ art.create(gl,{cow:{},zombie:{},horse:{},chicken:{}});
+ art.applyImported(new Map([['chicken',{width:64,height:32}],['cow',{width:64,height:32}],
   ['item:diamond',{width:16,height:16}]]));
+ assert.ok(art.hasMapped('chicken','wing','left'));
+ assert.ok(art.hasMapped('chicken','beak','front'));
+ assert.equal(art.hasMapped('chicken','eye','front'),false);
+ assert.equal(art.hasMappedKind('chicken'),true);
+ assert.equal(art.hasMappedKind('cow'),true);
+ assert.equal(art.hasMappedKind('horse'),false);
+ // 18 cow face crops + 36 chicken face crops + one unmapped item icon.
+ assert.equal(draws.length,55);
  assert.ok(art.hasMapped('cow','head','front'));
  assert.ok(art.hasMapped('cow','body','back'));
  assert.ok(art.hasMapped('cow','leg','left'));
@@ -80,6 +118,7 @@ test('imported species use mapped cuboid faces with nearest-neighbor sampling an
  art.applyImported(new Map());
  assert.equal(art.hasMapped('cow','head','front'),false);
  assert.equal(art.importedCount,0);
+ assert.equal(art.hasMappedKind('chicken'),false);
 });
 test('actual animal and hostile renderers send face/part identity and preserve procedural fallback',()=>{
  const animals=read('animal-models.js'),html=read('index.html'),sw=read('sw.js');
@@ -87,6 +126,8 @@ test('actual animal and hostile renderers send face/part identity and preserve p
  assert.ok(animals.includes("color,'leg'"));
  assert.ok(animals.includes("face,'head'"));
  assert.ok(html.includes('MineWorldMobPixels.hasMapped(m.kind,part,face)'));
+ assert.ok(html.includes('!window.MineWorldMobPixels.hasMappedKind(m.kind)'));
+ assert.ok(read('mob-pixel-art.js').includes('if(mappedKinds.has(key)){imported.add(key);continue;}'));
  assert.ok(html.includes("MineWorldEntityTextureMaps.vertexCorner(face,corner,'animal')"));
  assert.ok(html.includes('MineWorldMobPixels.hasMapped(mobKind,part,dir)'));
  assert.ok(html.includes("type.body,'leg'"),'creeper has separately mapped feet');

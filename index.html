@@ -3670,7 +3670,8 @@ body.in-nether #game-wrap{background:#290f19}
           const fallbackUV=window.MineWorldMobPixels.uv(m.kind,order[index++%6]);
           const mapped=window.MineWorldMobPixels.hasMapped(m.kind,part,face);
           const uv=mapped?window.MineWorldMobPixels.uv(m.kind,window.MineWorldEntityTextureMaps.vertexCorner(face,corner,'animal'),part,face):fallbackUV;
-          if(mapped||window.MineWorldMobPixels.hasImported(m.kind)){r=1;g=1;b=1;}
+          if(mapped||(window.MineWorldMobPixels.hasImported(m.kind)&&
+             !window.MineWorldMobPixels.hasMappedKind(m.kind))){r=1;g=1;b=1;}
           if(hitFlash){g*=1-.66*hitFlash;b*=1-.66*hitFlash;}
           a.push(px+recoilX,py,pz+recoilZ,r,g,b,uv[0],uv[1]);
         },dayClock);

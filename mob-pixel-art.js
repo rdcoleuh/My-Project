@@ -8,7 +8,7 @@
  const faceKey=(kind,part,face)=>kind+'|'+part+'|'+face;
  const corners=[[0,0],[0,1],[1,1],[1,0]];
  let positions=new Map(),rows=1,baseKinds=[],canvas=null,ctx=null,gpu=null,texture=null;
- let imported=new Set(),tilePixels=SIZE;
+ let imported=new Set(),mappedKinds=new Set(),tilePixels=SIZE;
  function stableHash(s){
    let h=2166136261;
    for(const c of String(s)){h=Math.imul(h^c.charCodeAt(0),16777619);}
@@ -50,7 +50,7 @@
    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
-   imported.clear();
+   imported.clear();mappedKinds.clear();
   return texture;
  }
  // Import a player-owned entity skin or item PNG by scaling a meaningful
@@ -73,6 +73,7 @@
        }
      }
    }
+   mappedKinds=new Set(faceTiles.map(tile=>tile.key.split('|')[0]));
    const keys=[...baseKinds,...entries.map(([name])=>name).filter(name=>!baseKinds.includes(name)),
      ...faceTiles.map(tile=>tile.key)];
    const atlasRows=Math.max(1,Math.ceil(keys.length/COLS));
@@ -107,6 +108,10 @@
    ctx.putImageData(pixels,0,0);
    imported=new Set();
    for(const [key,img] of entries){
+     // Species with mapped skin regions retain their neutral grayscale base
+     // for decorative parts not represented in the player's source skin.
+     // Otherwise eyes and wattles can inherit arbitrary skin pixel colors.
+     if(mappedKinds.has(key)){imported.add(key);continue;}
      const index=positions.get(key),dx=(index%COLS)*tilePixels,dy=Math.floor(index/COLS)*tilePixels;
      let sx=0,sy=0,sw=img.width,sh=img.height;
      if(!key.startsWith('item:')&&img.width>=64&&img.height>=32){
@@ -153,6 +158,7 @@
     (row*tilePixels+.5+point[1]*(tilePixels-1))/(tilePixels*rows)];
  }
  window.MineWorldMobPixels=Object.freeze({create,uv,shade,applyImported,
-  hasImported:key=>imported.has(key),hasMapped,get kinds(){return baseKinds.slice();},
+  hasImported:key=>imported.has(key),hasMapped,
+   hasMappedKind:key=>mappedKinds.has(key),get kinds(){return baseKinds.slice();},
   get importedCount(){return imported.size;},get count(){return positions.size;},get size(){return tilePixels;}});
 })();
