@@ -275,6 +275,17 @@ function readArchive(buffer){
    const heartSprite=relative?.match(/^textures\/gui\/sprites\/hud\/heart\/(full|half|empty)\.png$/);
    const foodSprite=relative?.match(/^textures\/gui\/sprites\/hud\/food_(full|half|empty)\.png$/);
    const hud=heartSprite?['heart',heartSprite[1]]:foodSprite?['food',foodSprite[1]]:null;
+   // Bedrock packs ship standalone UI bitmaps in textures/ui, not Java HUD sprites.
+   const bedrockUI=relative?.match(/^textures\/ui\/([a-z0-9_-]+)\.png$/);
+   const bedrockHud=bedrockUI&&({
+     heart:'heart:full',heart_full:'heart:full',heart_half:'heart:half',heart_empty:'heart:empty',
+     hearts:'heart:full',heart_background:'heart:empty',
+     hunger:'food:full',hunger_full:'food:full',hunger_half:'food:half',
+     hunger_empty:'food:empty',hunger_background:'food:empty',
+     food:'food:full',food_full:'food:full',food_half:'food:half',food_empty:'food:empty',
+     hotbar:'hotbar:background',hotbar_start_cap:'hotbar:background',
+     selected_hotbar_slot:'hotbar:selected',hotbar_selection:'hotbar:selected'
+   })[bedrockUI[1]];
    const entityDefinition=relative?.match(/^entity\/([a-z0-9_-]+)\.entity\.json$/);
    const matchSound=relative?.match(/^sounds\/([a-z0-9_./-]+)\.ogg$/);
    const matchMeta=relative?.match(/^textures\/(?:block|blocks)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png\.mcmeta$/);
@@ -295,6 +306,8 @@ function readArchive(buffer){
      keep('meta:item:'+itemMeta[1],{method,size,expanded,local},priority);
    if(hud&&size<262144&&expanded<262144&&(method===0||method===8))
      keep('hud:'+hud[1]+':'+hud[2],{method,size,expanded,local},priority);
+   if(bedrockHud&&size<262144&&expanded<262144&&(method===0||method===8))
+     keep('hud:'+bedrockHud,{method,size,expanded,local},priority);
    if(entity&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8))
      keep('entity:'+entity[1],{method,size,expanded,local},priority);
    if(entityDefinition&&size<131072&&expanded<131072&&(method===0||method===8))
@@ -1063,7 +1076,7 @@ function itemName(key){
 }
 function hudIcon(kind,fill){
  const source=state.itemArchive;
- if(!source||!['heart','food'].includes(kind)||!['full','half','empty'].includes(fill))return Promise.resolve(null);
+ if(!source||!['heart','food','hotbar'].includes(kind)||!['full','half','empty','background','selected'].includes(fill))return Promise.resolve(null);
  const key='hud:'+kind+':'+fill;
  if(!source.entries.has(key))return Promise.resolve(null);
  if(state.itemCache.has(key))return state.itemCache.get(key);

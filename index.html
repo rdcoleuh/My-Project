@@ -408,6 +408,8 @@ body.in-nether #game-wrap{background:#290f19}
 #health-text .mw-stat-icon.full{color:#f23b44}#hunger-text .mw-stat-icon.full{color:#b77a35}
 .mw-stat-icon.empty{color:#474747}
 .mw-pack-stat-art{display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+#hotbar.mw-pack-hotbar{background-image:var(--mw-pack-hotbar-bg)!important;background-repeat:repeat-x!important;background-size:auto 100%!important}
+#hotbar .hot-item.active.mw-pack-selected{background-image:var(--mw-pack-hotbar-selected)!important;background-size:100% 100%!important;background-repeat:no-repeat!important}
 #hotbar .hot-item .swatch canvas{display:block;max-width:100%;max-height:100%}
 .mw-stat-half{position:absolute;left:0;top:0;width:50%;height:100%;overflow:hidden;color:#f23b44}
 #hunger-text .mw-stat-half{color:#b77a35}
@@ -2023,6 +2025,7 @@ body.in-nether #game-wrap{background:#290f19}
     }
     const offhandHud=$('offhand-hud');if(offhandHud){offhandHud.style.display=survival?'flex':'none';const item=survival?javaInventory.stackAt('offhand'):null;offhandHud.firstChild.textContent=item?stackIcon(item.key):'🛡';offhandHud.title=item?'Offhand: '+itemLabel(item.key)+' ×'+item.qty+' (F)':'Offhand empty · press F to swap';}
     hotbarSignature=survival?stackSignature():'creative:'+hotbarPage;
+    refreshPackHotbarArt();
   }
   function toast(s){let x=$('toast');x.textContent=s;x.classList.add('show');notifications++;const n=notifications;setTimeout(()=>{if(n===notifications)x.classList.remove('show')},1250)}
   function gainExperience(points){
@@ -2056,6 +2059,20 @@ body.in-nether #game-wrap{background:#290f19}
     ui.title=xp.xp+' total XP · Level '+xp.level;
   }
   window.addEventListener('mineworld-pack-hud-changed',()=>{updateHotbar();updateSurvivalHUD();});
+  async function refreshPackHotbarArt(){
+    const source=window.MineWorldLocalTextures;
+    const [background,selected]=await Promise.all([
+      source?.hudIcon?.('hotbar','background'),source?.hudIcon?.('hotbar','selected')
+    ]);
+    const root=$('hotbar');
+    if(!root)return;
+    root.classList.toggle('mw-pack-hotbar',!!background);
+    root.style.setProperty('--mw-pack-hotbar-bg',background?'url("'+background+'")':'none');
+    root.style.setProperty('--mw-pack-hotbar-selected',selected?'url("'+selected+'")':'none');
+    root.querySelectorAll('.hot-item').forEach(item=>item.classList.toggle('mw-pack-selected',!!selected));
+  }
+  window.addEventListener('mineworld-pack-hud-changed',()=>{refreshPackHotbarArt();});
+
   function updateSurvivalHUD(){
     updateExperienceHUD();
     $('survival-hud').classList.toggle('hidden',gameMode!=='survival');
