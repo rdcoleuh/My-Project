@@ -59,5 +59,5 @@ test('resource files stay local, ZIP sprite matching still wired to atlas',()=>{
  assert.ok(src.includes('tintNeutralSprite(ctx,px,py,id,face,importedTints.palette)'));
  assert.ok(src.includes('async function applyResources(zip,sourceName)'));
  assert.ok(src.includes('window.MineWorldLocalTextures=Object.freeze(exposed)'));
- assert.ok(src.includes('ctx.drawImage(image,0,0,frame,frame,px,py,16,16)'));
+ assert.ok(src.includes('else drawPackFrame(ctx,image,null,0,1,px,py);'));
 });
