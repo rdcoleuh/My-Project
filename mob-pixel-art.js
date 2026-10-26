@@ -8,7 +8,7 @@
  const faceKey=(kind,part,face)=>kind+'|'+part+'|'+face;
  const corners=[[0,0],[0,1],[1,1],[1,0]];
  let positions=new Map(),rows=1,baseKinds=[],canvas=null,ctx=null,gpu=null,texture=null;
- let imported=new Set();
+ let imported=new Set(),tilePixels=SIZE;
  function stableHash(s){
    let h=2166136261;
    for(const c of String(s)){h=Math.imul(h^c.charCodeAt(0),16777619);}
@@ -28,6 +28,7 @@
    if(!gl||!species)return null;
    const names=[...new Set([...Object.keys(species),'vehicle'])].sort();
    baseKinds=names.slice();
+   tilePixels=SIZE;
    positions=new Map(names.map((kind,i)=>[kind,i]));
    rows=Math.max(1,Math.ceil(names.length/COLS));
    canvas=document.createElement('canvas');canvas.width=COLS*SIZE;canvas.height=rows*SIZE;
@@ -60,9 +61,7 @@
    const entries=[...artworks].filter(([name,img])=>typeof name==='string'&&img&&
      Number.isFinite(img.width)&&Number.isFinite(img.height)&&img.width>0&&img.height>0&&
      img.width<=2048&&img.height<=2048);
-   // Keep original species positions stable, but reserve one atlas tile for
-   // every mapped cuboid face. This avoids stretching a single head sample
-   // over legs, back, belly and other body parts.
+   // Keep stable species slots and a separate tile for every mapped cuboid face.
    const mapper=window.MineWorldEntityTextureMaps;
    const faceTiles=[];
    for(const [kind,img] of entries){
@@ -76,41 +75,65 @@
    }
    const keys=[...baseKinds,...entries.map(([name])=>name).filter(name=>!baseKinds.includes(name)),
      ...faceTiles.map(tile=>tile.key)];
+   const atlasRows=Math.max(1,Math.ceil(keys.length/COLS));
+   // Preserve up to 32 source pixels per face/item only when the entire atlas
+   // fits both WebGL MAX_TEXTURE_SIZE and a 4 MiB mobile-friendly RGBA budget.
+   // Classic 64x32 skins contain 8px face crops, so they do not need 32px tiles.
+   const maxTexture=typeof gpu.getParameter==='function'&&gpu.MAX_TEXTURE_SIZE!==undefined?
+     gpu.getParameter(gpu.MAX_TEXTURE_SIZE):2048;
+   const maxSide=Number.isFinite(maxTexture)&&maxTexture>0?maxTexture:2048;
+   const highDetail=faceTiles.some(t=>Math.max(t.rect.width,t.rect.height)>SIZE)||
+     entries.some(([name,img])=>{
+       if(name.startsWith('item:'))return Math.max(img.width,img.height)>SIZE;
+       return img.width>=64&&img.height>=32?
+         Math.min(img.width/8,img.height/4)>SIZE:Math.min(img.width,img.height)>SIZE;
+     });
+   const HD=32;
+   tilePixels=highDetail&&COLS*HD<=maxSide&&atlasRows*HD<=maxSide&&
+     COLS*HD*atlasRows*HD*4<=4*1024*1024?HD:SIZE;
    positions=new Map(keys.map((key,i)=>[key,i]));
-   rows=Math.max(1,Math.ceil(keys.length/COLS));
-   canvas.width=COLS*SIZE;canvas.height=rows*SIZE;
+   rows=atlasRows;
+   canvas.width=COLS*tilePixels;canvas.height=rows*tilePixels;
    const pixels=ctx.createImageData(canvas.width,canvas.height);
    for(let i=0;i<keys.length;i++){
      const kind=keys[i],col=i%COLS,row=Math.floor(i/COLS);
-     for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
-       const tone=shade(kind,x,y),j=((row*SIZE+y)*canvas.width+col*SIZE+x)*4;
+     for(let y=0;y<tilePixels;y++)for(let x=0;x<tilePixels;x++){
+       const t=tilePixels/SIZE;
+       const tone=shade(kind,Math.floor(x/t),Math.floor(y/t));
+       const j=((row*tilePixels+y)*canvas.width+col*tilePixels+x)*4;
        pixels.data[j]=tone;pixels.data[j+1]=tone;pixels.data[j+2]=tone;pixels.data[j+3]=255;
      }
    }
    ctx.putImageData(pixels,0,0);
    imported=new Set();
    for(const [key,img] of entries){
-     const index=positions.get(key),dx=(index%COLS)*SIZE,dy=Math.floor(index/COLS)*SIZE;
+     const index=positions.get(key),dx=(index%COLS)*tilePixels,dy=Math.floor(index/COLS)*tilePixels;
      let sx=0,sy=0,sw=img.width,sh=img.height;
      if(!key.startsWith('item:')&&img.width>=64&&img.height>=32){
-       // Head front texture is an 8x8 region of the classic 64-wide skin.
+       // Head front texture is an 8x8 region of a classic 64-wide skin.
        const scale=img.width/64;
        sx=8*scale;sy=8*scale;sw=8*scale;sh=8*scale;
        if(sy+sh>img.height){sx=0;sy=0;sw=img.width;sh=img.height;}
      }
-     // Preserve original pixel edges and transparent pixels.
+     // Do not squeeze a rectangular player-owned item into a square sprite.
+     const fit=key.startsWith('item:')?Math.min(tilePixels/sw,tilePixels/sh):1;
+     const width=key.startsWith('item:')?Math.max(1,Math.round(sw*fit)):tilePixels;
+     const height=key.startsWith('item:')?Math.max(1,Math.round(sh*fit)):tilePixels;
      ctx.imageSmoothingEnabled=false;
-     ctx.drawImage(img,sx,sy,sw,sh,dx,dy,SIZE,SIZE);
+     ctx.drawImage(img,sx,sy,sw,sh,dx+Math.floor((tilePixels-width)/2),
+       dy+Math.floor((tilePixels-height)/2),width,height);
      imported.add(key);
    }
    for(const {key,img,rect} of faceTiles){
-     const index=positions.get(key),dx=(index%COLS)*SIZE,dy=Math.floor(index/COLS)*SIZE;
+     const index=positions.get(key),dx=(index%COLS)*tilePixels,dy=Math.floor(index/COLS)*tilePixels;
      ctx.imageSmoothingEnabled=false;
-     ctx.drawImage(img,rect.x,rect.y,rect.width,rect.height,dx,dy,SIZE,SIZE);
+     ctx.drawImage(img,rect.x,rect.y,rect.width,rect.height,dx,dy,tilePixels,tilePixels);
    }
    gpu.activeTexture(gpu.TEXTURE0);gpu.bindTexture(gpu.TEXTURE_2D,texture);
    gpu.pixelStorei(gpu.UNPACK_FLIP_Y_WEBGL,false);
    gpu.texImage2D(gpu.TEXTURE_2D,0,gpu.RGBA,gpu.RGBA,gpu.UNSIGNED_BYTE,canvas);
+   gpu.texParameteri(gpu.TEXTURE_2D,gpu.TEXTURE_MIN_FILTER,gpu.NEAREST);
+   gpu.texParameteri(gpu.TEXTURE_2D,gpu.TEXTURE_MAG_FILTER,gpu.NEAREST);
    return imported.size;
  }
  function hasMapped(kind,part,face){
@@ -120,10 +143,10 @@
    const index=(part&&face?positions.get(faceKey(kind,part,face)):undefined)
      ??positions.get(kind)??positions.get('vehicle')??0;
    const col=index%COLS,row=Math.floor(index/COLS),point=corners[corner&3]||corners[0];
-   return [(col*SIZE+.5+point[0]*(SIZE-1))/(SIZE*COLS),
-    (row*SIZE+.5+point[1]*(SIZE-1))/(SIZE*rows)];
+   return [(col*tilePixels+.5+point[0]*(tilePixels-1))/(tilePixels*COLS),
+    (row*tilePixels+.5+point[1]*(tilePixels-1))/(tilePixels*rows)];
  }
  window.MineWorldMobPixels=Object.freeze({create,uv,shade,applyImported,
   hasImported:key=>imported.has(key),hasMapped,get kinds(){return baseKinds.slice();},
-  get importedCount(){return imported.size;},get count(){return positions.size;},size:SIZE});
+  get importedCount(){return imported.size;},get count(){return positions.size;},get size(){return tilePixels;}});
 })();
