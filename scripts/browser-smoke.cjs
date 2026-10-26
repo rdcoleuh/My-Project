@@ -301,6 +301,32 @@ async function go(browser,name,mobile){
   await page.locator('#pause [data-mw-polish="focusHud"] input').uncheck();
   await page.locator('#home-btn').click();
   await page.locator('#mw-menu-root.active').waitFor({state:'visible',timeout:15000});
+  // Start a separate Survival world to exercise actual heart/hunger DOM rendering.
+  await page.locator('#mw-single').click();
+  await page.locator('#start-btn').click({timeout:20000});
+  await page.waitForFunction(()=>document.querySelector('#welcome')?.classList.contains('hidden'),
+    null,{timeout:25000});
+  await page.waitForFunction(()=>{
+    const hud=document.querySelector('#survival-hud');
+    return hud&&!hud.classList.contains('hidden')&&
+      document.querySelectorAll('#health-text img.mw-pack-stat-art').length===10&&
+      document.querySelectorAll('#hunger-text img.mw-pack-stat-art').length===10;
+  },null,{timeout:15000});
+  const survival=await page.evaluate(()=>{
+    const hud=document.querySelector('#survival-hud'),box=hud.getBoundingClientRect();
+    const heart=document.querySelector('#health-text'),food=document.querySelector('#hunger-text');
+    const imgs=[...hud.querySelectorAll('img.mw-pack-stat-art')];
+    return {hearts:heart.querySelectorAll('.mw-stat-icon').length,
+      hunger:food.querySelectorAll('.mw-stat-icon').length,
+      labels:heart.getAttribute('aria-label')?.startsWith('Health: ')&&
+        food.getAttribute('aria-label')?.startsWith('Hunger: '),
+      sharp:imgs.every(img=>getComputedStyle(img).imageRendering==='pixelated'),
+      fits:box.left>=-2&&box.right<=innerWidth+2};
+  });
+  assert.ok(survival.hearts===10&&survival.hunger===10&&survival.labels&&survival.sharp,
+    name+': Survival heart/hunger sprites or accessible labels are incorrect');
+  if(mobile)assert.equal(survival.fits,true,
+    name+': Survival hearts/hunger overflow the mobile viewport');
   if(errors.length)throw Error(name+' browser console/runtime errors:\n'+errors.slice(0,8).join('\n'));
   process.stdout.write(name+': Bedrock ZIP import/persistent reload, real movement, menu actions, gameplay, pause and return passed\n');
  }finally{await context.close();}
