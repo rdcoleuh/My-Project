@@ -97,6 +97,28 @@ test('animal food, breeding, following and fleeing depend on the species',()=>{
  assert.equal(flee.fleeTime,5);
  assert.equal(flee.heading,0);
 });
+test('animals follow food without crowding and flee away from remembered attackers',()=>{
+ assert.equal(B.followIntent('cow','wheat',5),'approach');
+ assert.equal(B.followIntent('cow','wheat',1.5),'wait');
+ assert.equal(B.followIntent('cow','wheat',0),'wait');
+ assert.equal(B.followIntent('cow','carrot',1),'none');
+ assert.equal(B.followIntent('cow','wheat',7),'none');
+ assert.equal(B.followIntent('cow','wheat',Infinity),'none');
+ const hit=B.reactionAfterHit({x:7,z:4},4,4);
+ assert.equal(hit.heading,0);
+ assert.equal(hit.fleeX,4);
+ assert.equal(hit.fleeZ,4);
+ assert.equal(B.fleeHeading(7,4,hit.fleeX,hit.fleeZ,1),0);
+ assert.ok(Math.abs(B.fleeHeading(4,7,4,4))>1.4);
+ assert.equal(B.fleeHeading(4,4,4,4,.6),.6);
+ assert.equal(B.fleeHeading(1,1,NaN,0,1.2),1.2);
+ const html=read('index.html');
+ for(const marker of ['animals.followIntent(m.kind,held,meters)',
+   'animals.fleeHeading(m.x,m.z,m.fleeX,m.fleeZ,m.heading)',
+   'm.waitingForFood=true','m.fleeTime>0)?type.speed'])
+   assert.ok(html.includes(marker),marker);
+ assert.ok(html.includes("m.anger=['neutral','hostile','boss'].includes"));
+});
 test('all 169 original block materials stay valid, distinct, and 16px after the clarity upgrade',()=>{
  const ctx={window:{},console};vm.createContext(ctx);
  for(const p of ['pixel-materials.js','texture-refinement.js','texture-details.js',

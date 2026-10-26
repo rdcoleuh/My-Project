@@ -36,10 +36,22 @@ function canBreed(a,b){
 }
 function reactionAfterHit(m,x,z){
  const angle=Math.atan2(m.z-z,m.x-x);
- return {heading:angle,fleeTime:5,anger:0};
+ return {heading:angle,fleeTime:5,anger:0,fleeX:x,fleeZ:z};
 }
 function following(kind,held,meters){
  return edible(kind,held)&&Number.isFinite(meters)&&meters>1.5&&meters<=6;
+}
+// Animals offering food should wait nearby, not collide with the player.
+function followIntent(kind,held,meters){
+ if(!edible(kind,held)||!Number.isFinite(meters)||meters>6||meters<0)return 'none';
+ return meters>1.5?'approach':'wait';
+}
+// Flee away from the last attacker position; no omniscient tracking.
+function fleeHeading(x,z,threatX,threatZ,fallback=0){
+ if(![x,z,threatX,threatZ].every(Number.isFinite))
+   return Number.isFinite(fallback)?fallback:0;
+ const dx=x-threatX,dz=z-threatZ;
+ return dx*dx+dz*dz>.0001?Math.atan2(dz,dx):(Number.isFinite(fallback)?fallback:0);
 }
 // Check all occupied vertical voxels, rather than only an animal's feet.
  // The callback receives integer world coordinates and returns true for
@@ -56,5 +68,5 @@ function following(kind,held,meters){
  const sizes={cow:1.4,pig:.9,sheep:1.3,chicken:.7,horse:1.6,donkey:1.6,mule:1.6,camel:2.375,llama:1.87,skeleton_horse:1.6,zombie_horse:1.6};
  return sizes[kind]||1;
 }
-window.MineWorldAnimalBehavior=Object.freeze({FOOD,NATURAL,habitat,pickNatural,edible,canBreed,reactionAfterHit,following,maximum,canOccupy});
+window.MineWorldAnimalBehavior=Object.freeze({FOOD,NATURAL,habitat,pickNatural,edible,canBreed,reactionAfterHit,following,followIntent,fleeHeading,maximum,canOccupy});
 })();

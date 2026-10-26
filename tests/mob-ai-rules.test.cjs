@@ -46,6 +46,12 @@ test('last-seen pursuit expires and does not retain an invalid or infinite targe
  assert.equal(rules.pursuitPoint(null,{x:Infinity,y:2,z:5},.1),null);
  assert.equal(rules.pursuitPoint({x:1,y:0,z:0,ttl:-1},null,.1),null);
 });
+test('hostile attacks require current line of sight even between cached sight scans',()=>{
+ const html=read('index.html');
+ assert.ok(html.includes('if(chase&&m.attack<=0&&mobHasLineOfSight(m,target))'));
+ assert.ok(html.includes('const close=chase&&dist<3'),'creeper fuse remains proximity-triggered');
+ assert.ok(html.includes('chase&&dist<.9'),'close-range monsters stop walking through players');
+});
 test('host simulation uses validated pure mob rules; no changes to survival saves',()=>{
  const html=read('index.html'),sw=read('sw.js');
  for(const name of ['mob-ai-rules.js','mob-pixel-art.js','mob-expansion.js']){

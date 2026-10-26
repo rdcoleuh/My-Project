@@ -3394,14 +3394,22 @@ body.in-nether #game-wrap{background:#290f19}
         m.lastSeen=null;
         const dx=player.x-m.x,dz=player.z-m.z,meters=Math.hypot(dx,dz);
         const held=gameMode==='survival'?stackAtHotbar(selection)?.key:null;
-        if(m.fleeTime>0){m.step=.55;}
-        else if(animals.following(m.kind,held,meters)){m.heading=Math.atan2(dz,dx);m.step=.65;m.following=true;}
-        else{m.following=false;if(m.step<=0){m.step=1.4+Math.random()*4;m.heading+=-1.5+Math.random()*3;}}
+        m.waitingForFood=false;
+        if(m.fleeTime>0){
+          m.step=.55;m.following=false;
+          m.heading=animals.fleeHeading(m.x,m.z,m.fleeX,m.fleeZ,m.heading);
+        }else{
+          const intent=animals.followIntent(m.kind,held,meters);
+          if(intent==='approach'){m.heading=Math.atan2(dz,dx);m.step=.65;m.following=true;}
+          else if(intent==='wait'){m.step=.5;m.following=false;m.waitingForFood=true;}
+          else{m.following=false;if(m.step<=0){m.step=1.4+Math.random()*4;m.heading+=-1.5+Math.random()*3;}}
+        }
       }else if(m.step<=0){m.step=1.4+Math.random()*4;m.heading+=-1.5+Math.random()*3;}
       const chase=aggressive&&!!target&&dist<=25;
       const pursuing=aggressive&&!target&&!!m.lastSeen;
       const flight=m.fleeTime>0?1.75:1,approach=m.following?1.12:1;
-      const pace=((chase||pursuing)?type.speed:(!m.anger?.34:.8)*type.speed)*dt*flight*approach;
+      const pace=(m.waitingForFood||(chase&&dist<.9)?0:
+        ((chase||pursuing||m.fleeTime>0)?type.speed:(!m.anger?.34:.8)*type.speed)*dt*flight*approach);
       // Probe ahead with the actual collision hitbox, including slopes and
       // low ceilings. Steer around walls instead of walking into them forever.
       // Flying/swimming mobs retain their existing specialized locomotion.
@@ -3446,7 +3454,7 @@ body.in-nether #game-wrap{background:#290f19}
         }
         continue; // No instantaneous melee: nearby players get a warning fuse.
       }
-      if(chase&&m.attack<=0){
+      if(chase&&m.attack<=0&&mobHasLineOfSight(m,target)){
         const mul=difficulty==='hard'?1.65:difficulty==='easy'?.65:1;
         if(dist<1.55){
           const amount=Math.ceil(type.damage*mul);
@@ -3502,7 +3510,7 @@ body.in-nether #game-wrap{background:#290f19}
       }
       return {hit:true,dead:true,kind:m.kind,drop,count};
     }
-    m.anger=9;
+    m.anger=['neutral','hostile','boss'].includes(SPECIES[m.kind].kind)?9:0;
     return {hit:true,dead:false,kind:m.kind,hp:m.hp};
   }
   function grantLoot(drop,count){
