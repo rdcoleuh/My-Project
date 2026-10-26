@@ -47,12 +47,15 @@ test('256px player-owned skins retain native 32px face crops in bounded sharp at
  assert.equal(x.canvas.width,256);
  assert.equal(x.art.importedCount,0);
 });
-test('16px source art remains a compact atlas, including classic 64x32 skins',()=>{
+test('16px items stay compact, while wider classic mob body crops retain detail',()=>{
  const x=boot();
- x.art.applyImported(new Map([['cow',{width:64,height:32}],['item:apple',{width:16,height:16}]]));
+ x.art.applyImported(new Map([['item:apple',{width:16,height:16}]]));
  assert.equal(x.art.size,16);
  assert.equal(x.canvas.width,256);
- assert.ok(x.draws.some(d=>d.args[1]===8&&d.args[2]===8&&d.args[3]===8&&d.args[4]===8));
+ const y=boot();
+ y.art.applyImported(new Map([['cow',{width:64,height:32}]]));
+ assert.equal(y.art.size,32,'some classic mob body faces are wider than 16 source pixels');
+ assert.ok(y.draws.some(d=>d.args[1]===8&&d.args[2]===8&&d.args[3]===8&&d.args[4]===8));
 });
 test('non-square HD world item keeps its aspect ratio and centered transparent margins',()=>{
  const x=boot();
