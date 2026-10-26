@@ -12,5 +12,6 @@ test('HUD uses imported full, half and empty icons with procedural fallback',()=
  assert.ok(src.includes('MineWorldLocalTextures?.hudIcon?.('));
  assert.ok(src.includes("kind==='Health'?'heart':'food'"));
  assert.ok(src.includes('image-rendering:pixelated'));
- assert.ok(src.includes('icon.textContent=remaining>=2'));
+ assert.ok(src.includes('MineWorldHudArt?.paint(glyph,fill)'));
+ assert.ok(src.includes("src=await pack.hudIcon(glyph,'full')"));
 });

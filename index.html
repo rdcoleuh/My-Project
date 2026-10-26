@@ -484,6 +484,17 @@ body.in-nether #game-wrap{background:#290f19}
  #survival-hud button{min-height:20px!important;padding:1px 4px!important}
  #coord-readout{opacity:.72;font-size:9px;padding:4px 6px}
 }
+/* Pack art retains a visible selected slot even when selection PNG is missing. */
+#hotbar.mw-pack-hotbar .hot-item.active:not(.mw-pack-selected){
+ outline:2px solid #f8f8f8!important;outline-offset:-2px!important;
+ box-shadow:0 0 0 2px #202020!important;
+}
+#health-text .mw-stat-fallback,#hunger-text .mw-stat-fallback{
+ width:100%;height:100%;display:block;image-rendering:pixelated!important;
+}
+#health-text .mw-pack-stat-clipped,#hunger-text .mw-pack-stat-clipped{
+ position:absolute;inset:0;clip-path:inset(0 50% 0 0);pointer-events:none;
+}
 </style>
 </head>
 <body>
@@ -781,6 +792,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./block-item-icons.js"></script>
 <script src="./java-inventory-ui.js"></script>
 <script src="./movement-modes.js"></script>
+<script src="./classic-hud-art.js"></script>
 <script src="./survival-hunger.js"></script>
 <script src="./block-models.js"></script>
 <script src="./entity-hitboxes.js"></script>
@@ -2049,6 +2061,7 @@ body.in-nether #game-wrap{background:#290f19}
       const button=document.createElement('button');button.type='button';
       button.className='hot-item'+(i===selection?' active':'')+(!key?' empty':'');
       button.setAttribute('aria-label','Slot '+(i+1)+': '+label+(survival?' ('+count+')':''));
+      button.setAttribute('aria-pressed',String(i===selection));
       button.title='Slot '+(i+1)+' · '+(key?label+(survival?' ×'+count+' / '+stackLimit(key):''):'Empty — pick up items');
       const qty=document.createElement('small');
       qty.className=survival?'hot-stack-number':'hot-slot-index';
@@ -2066,7 +2079,7 @@ body.in-nether #game-wrap{background:#290f19}
         // Otherwise retain the three-face, pack-textured block projection.
         // Full cubes render as three-face isometric models, not flattened item PNGs.
         // Thin/cross-shaped blocks can instead use their imported item sprite.
-        const flatBlock=/\\b(?:rail|torch|ladder|vine|flower|grass|fern|sapling|door|trapdoor|carpet|pane|sign|banner|button|pressure plate|lever|repeater|comparator|redstone|lily pad|sea pickle|mushroom|candle)\\b/i.test(label);
+        const flatBlock=/\b(?:rail|torch|ladder|vine|flower|grass|fern|sapling|door|trapdoor|carpet|pane|sign|banner|button|pressure plate|lever|repeater|comparator|redstone|lily pad|sea pickle|mushroom|candle)\b/i.test(label);
         if(flatBlock&&window.MineWorldLocalTextures?.active){
           const packGeneration=window.MineWorldLocalTextures.generation;
           window.MineWorldLocalTextures.blockItemIcon?.(id).then(src=>{
@@ -2190,21 +2203,29 @@ body.in-nether #game-wrap{background:#290f19}
         const remaining=Math.max(0,Math.min(2,points-i*2));
         icon.className='mw-stat-icon '+(remaining>=2?'full':remaining>=1?'half':'empty');
         icon.setAttribute('aria-hidden','true');
-        icon.textContent=remaining>=2?symbol:emptySymbol;
-        if(remaining>=1&&remaining<2){
-          const fill=document.createElement('span');
-          fill.className='mw-stat-half';
-          fill.textContent=symbol;
-          icon.appendChild(fill);
-        }
-        node.appendChild(icon);
-        // Apply only locally imported, user-owned HUD sprite assets.
         const fill=remaining>=2?'full':remaining>=1?'half':'empty';
-        window.MineWorldLocalTextures?.hudIcon?.(kind==='Health'?'heart':'food',fill).then(src=>{
-          if(!src||!icon.isConnected)return;
+        const glyph=kind==='Health'?'heart':'food';
+        const fallback=window.MineWorldHudArt?.paint(glyph,fill);
+        if(fallback)icon.appendChild(fallback);
+        else icon.textContent=remaining>=2?symbol:emptySymbol;
+        node.appendChild(icon);
+        // Imported local art takes priority. If a pack has no half sprite,
+        // clip its full sprite over the original half/empty fallback.
+        const pack=window.MineWorldLocalTextures;
+        const generation=pack?.generation??-1;
+        if(pack?.hudIcon)Promise.resolve(pack.hudIcon(glyph,fill)).then(async src=>{
+          let clipped=false;
+          if(!src&&remaining>=1&&remaining<2){
+            src=await pack.hudIcon(glyph,'full');
+            clipped=!!src;
+          }
+          if(!src||!icon.isConnected||generation!==(window.MineWorldLocalTextures?.generation??-1))return;
           const image=document.createElement('img');
           image.src=src;image.alt='';image.className='mw-pack-stat-art';
-          icon.replaceChildren(image);
+          if(clipped){
+            image.classList.add('mw-pack-stat-clipped');
+            icon.appendChild(image);
+          }else icon.replaceChildren(image);
         }).catch(()=>{});
       }
     };
