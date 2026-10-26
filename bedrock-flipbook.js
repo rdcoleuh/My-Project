@@ -64,6 +64,29 @@ function timeline(entry,count){
   interpolate:entry.interpolate
  });
 }
+// Resolve Bedrock terrain_texture.json references to player-owned block PNGs.
+// Only local block paths are accepted; URLs, namespaces and traversal are rejected.
+function terrain(source){
+ if(typeof source!=='string'||source.length>MAX_JSON)return new Map();
+ let data;
+ try{data=JSON.parse(source.replace(/^\s*\/\/[^\r\n]*$/gm,''));}
+ catch(_){return new Map();}
+ const rows=data?.texture_data;
+ if(!rows||typeof rows!=='object'||Array.isArray(rows))return new Map();
+ const found=new Map();
+ for(const [name,entry] of Object.entries(rows).slice(0,MAX_ENTRIES)){
+  if(!/^[a-z0-9_-]{1,80}$/.test(name)||!entry||typeof entry!=='object')continue;
+  const options=Array.isArray(entry.textures)?entry.textures:[entry.textures];
+  for(const option of options.slice(0,32)){
+   const ref=typeof option==='string'?option:option?.path;
+   if(typeof ref!=='string')continue;
+   const m=ref.match(/^textures\/(?:block|blocks)\/([a-z0-9_/-]+)$/);
+   if(!m||m[1].split('/').some(part=>!part||part==='.'||part==='..'))continue;
+   found.set(name,'block:'+m[1]);break;
+  }
+ }
+ return found;
+}
 function match(map,name,aliases=[]){
  if(!(map instanceof Map))return null;
  for(const n of [name,...aliases]){
@@ -71,5 +94,5 @@ function match(map,name,aliases=[]){
  }
  return null;
 }
-window.MineWorldBedrockFlipbooks=Object.freeze({parse,geometry,timeline,match,TICK_MS});
+window.MineWorldBedrockFlipbooks=Object.freeze({parse,geometry,timeline,terrain,match,TICK_MS});
 })();

@@ -138,11 +138,11 @@ Object.assign(aliases,{
  furnace_front:['furnace_front_off'],
  blast_furnace_front:['blast_furnace_front_off'],
  smoker_front:['smoker_front_off'],
- water_still:['water_still_grey'],
+ water_still:['water_still_grey','still_water_grey','still_water'],
  // Prefer authored flow artwork, but preserve still-only partial packs.
- water_flow:['water_flow_grey','flowing_water','water_still','water_still_grey'],
- lava_still:['lava_still'],
- lava_flow:['flowing_lava','lava_still'],
+ water_flow:['water_flow_grey','flowing_water_grey','flowing_water','water_still','water_still_grey','still_water_grey'],
+ lava_still:['still_lava'],
+ lava_flow:['flowing_lava','lava_still','still_lava'],
  chiseled_nether_bricks:['chiseled_nether_brick'],
  crafting_table_top:['workbench_top'],
  crafting_table_front:['workbench_front'],
@@ -274,6 +274,7 @@ function readArchive(buffer){
    const matchMeta=relative?.match(/^textures\/(?:block|blocks)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png\.mcmeta$/);
    const mapColor=relative?.match(/^textures\/colormap\/(grass|foliage)\.png$/);
    const bedrockFlipbook=relative==='textures/flipbook_textures.json';
+   const bedrockTerrain=relative==='textures/terrain_texture.json';
    const priority=(namespace?8:0)+(bedrock?4:0)+
      (relative?.startsWith('textures/block/')?2:0)+
      (relative&&!/^textures\/(?:block|blocks|item|items)\/[^/]+\//.test(relative)?1:0);
@@ -301,6 +302,8 @@ function readArchive(buffer){
      keep('state:'+blockstatePath[1],{method,size,expanded,local},priority);
    if(bedrockFlipbook&&size<256*1024&&expanded<256*1024&&(method===0||method===8))
      keep('bedrock:flipbook',{method,size,expanded,local},priority);
+   if(bedrockTerrain&&size<256*1024&&expanded<256*1024&&(method===0||method===8))
+     keep('bedrock:terrain',{method,size,expanded,local},priority);
    if(mapColor&&size<4*1024*1024&&expanded<4*1024*1024&&(method===0||method===8))
      keep('colormap:'+mapColor[1],{method,size,expanded,local},priority);
    if(matchSound&&size<4*1024*1024&&expanded<4*1024*1024&&(method===0||method===8))
@@ -546,13 +549,24 @@ async function applyResources(zip,sourceName){
        bedrockEntries=bedrock.parse(new TextDecoder().decode(bytes));
    }catch(e){console.warn('Ignoring invalid local Bedrock flipbook metadata:',e);}
  }
+ // Bedrock's terrain atlas names may refer to nested, differently named PNGs.
+ // Resolve those names locally; never fetch pack artwork over the network.
+ let bedrockTerrain=new Map();
+ if(bedrock&&zip.entries.has('bedrock:terrain')){
+  try{
+   const bytes=await zip.get('bedrock:terrain');
+   if(bytes&&bytes.length<=256*1024)
+    bedrockTerrain=bedrock.terrain(new TextDecoder().decode(bytes));
+  }catch(e){console.warn('Ignoring invalid local Bedrock terrain map:',e);}
+ }
  const firstFrame=info=>info?.timeline?.frames?.[0]?.index??0;
  async function spriteTimeline(name,image){
   if(!timeline||!image)return null;
   const resolvedName=resolveName(name),key='meta:'+resolvedName;
   if(!resolvedName)return null;
   if(!zip.entries.has(key)){
-    const entry=bedrock?.match?.(bedrockEntries,resolvedName);
+    const physical=resolvedName.replace(/^block:/,'').split('/').pop();
+    const entry=bedrock?.match?.(bedrockEntries,resolvedName,[physical]);
     if(!entry)return null;
     const geometry=bedrock.geometry(image,entry);
     if(geometry.count<=1)return null;
@@ -576,9 +590,18 @@ async function applyResources(zip,sourceName){
   if(geometry.count<=1)return null;
   return {timeline:timeline.parse(text,geometry.count),geometry};
  }
+ function spriteKeys(name){
+  const keys=[name,...(aliases[name]||[])],candidates=[];
+  for(const key of keys){
+   candidates.push(key);
+   const mapped=bedrockTerrain.get(key);
+   if(mapped)candidates.push(mapped);
+  }
+  return [...new Set(candidates)];
+ }
  function resolveName(name){
    if(!name)return null;
-   if(!resolved.has(name))resolved.set(name,[name,...(aliases[name]||[])].find(key=>zip.entries.has(key))||null);
+   if(!resolved.has(name))resolved.set(name,spriteKeys(name).find(key=>zip.entries.has(key))||null);
    return resolved.get(name);
  }
  async function sprite(name){
@@ -589,7 +612,7 @@ async function applyResources(zip,sourceName){
    // texture files repeatedly across the 507 block faces.
    if(!cache.has(name)){
      cache.set(name,(async()=>{
-       for(const key of new Set([name,...(aliases[name]||[])])){
+       for(const key of spriteKeys(name)){
          if(!zip.entries.has(key))continue;
          if(!decoded.has(key)){
            decoded.set(key,(async()=>{
@@ -869,7 +892,7 @@ async function applyResources(zip,sourceName){
  state.lastAnimationAt=-Infinity;
  state.animationDisabled=false;
  state.active=faces+directionalFaces+modelDirectionalFaces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,atlasTilePixels:state.tilePixels,modelGeometryBlocks:modelShapes.size,modelUVFaces:window.MineWorldJavaFaceTransforms?.stats().faces||0,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
+ state.lastResult={blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,atlasTilePixels:state.tilePixels,modelGeometryBlocks:modelShapes.size,modelUVFaces:window.MineWorldJavaFaceTransforms?.stats().faces||0,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,bedrockTerrainMappings:bedrockTerrain.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
@@ -922,6 +945,7 @@ async function loadFiles(fileList){
    const blockstateFile=name.match(/(?:^|\/)blockstates\/([a-z0-9_/-]+)\.json$/);
    if(blockstateFile)key='state:'+blockstateFile[1];
    if(leaf==='flipbook_textures.json'&&(name===leaf||/(?:^|\/)textures\/flipbook_textures\.json$/.test(name)))key='bedrock:flipbook';
+   if(leaf==='terrain_texture.json'&&(name===leaf||/(?:^|\/)textures\/terrain_texture\.json$/.test(name)))key='bedrock:terrain';
    if(!key)continue;
    if(Number.isFinite(file.size)&&file.size>6*1024*1024)continue;
    total+=Number.isFinite(file.size)?file.size:0;
