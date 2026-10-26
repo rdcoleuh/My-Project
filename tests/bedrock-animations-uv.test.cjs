@@ -168,6 +168,7 @@ test('local Bedrock importer paints horizontal animation frames from correct x o
  assert.equal(result.bedrockAnimatedFaces,3);
  assert.ok(draws.some(args=>args.length===9&&args[1]===48&&args[2]===0
    &&args[3]===16&&args[4]===16),'initial frame 3 crops x=48, not the full strip');
+ assert.equal(pack.updateAnimation(0,60,false),3);
  assert.equal(pack.updateAnimation(100,60,false),3);
  assert.ok(draws.some(args=>args.length===9&&args[1]===16&&args[2]===0),
    'next frame 1 crops x=16');
