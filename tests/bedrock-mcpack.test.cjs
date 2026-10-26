@@ -77,3 +77,30 @@ test('accept Bedrock .mcpack in inventory picker and optional private storage wi
  assert.doesNotMatch(pack,/fetch\(/);
  assert.ok(read('index.html').includes('mineworld-selfhost-v1'));
 });
+
+test('Bedrock Samples HUD and nine hotbar PNGs are recognized and render locally',async()=>{
+ const b=boot(),files=[
+  ['resource_pack/textures/blocks/stone.png',FAKE_PNG],
+  ['resource_pack/textures/ui/heart.png',FAKE_PNG],
+  ['resource_pack/textures/ui/heart_half.png',FAKE_PNG],
+  ['resource_pack/textures/ui/heart_background.png',FAKE_PNG],
+  ['resource_pack/textures/ui/hunger_full.png',FAKE_PNG],
+  ['resource_pack/textures/ui/hunger_half.png',FAKE_PNG],
+  ['resource_pack/textures/ui/hunger_background.png',FAKE_PNG],
+  ['resource_pack/textures/ui/selected_hotbar_slot.png',FAKE_PNG],
+  ...Array.from({length:9},(_,i)=>['resource_pack/textures/ui/hotbar_'+i+'.png',FAKE_PNG])
+ ];
+ const buffer=zip(files),names=b.pack.inspectZip(buffer);
+ for(const key of ['hud:heart:full','hud:heart:half','hud:heart:empty',
+   'hud:food:full','hud:food:half','hud:food:empty',
+   'hud:hotbar:selected',...Array.from({length:9},(_,i)=>'hud:hotbar:slot'+i)])
+   assert.ok(names.includes(key),'missing '+key);
+ await b.pack.loadFile({name:'bedrock-samples.zip',arrayBuffer:async()=>buffer});
+ assert.equal(await b.pack.hudIcon('heart','half'),'data:image/png;base64,local');
+ assert.equal(await b.pack.hudIcon('food','full'),'data:image/png;base64,local');
+ assert.equal(await b.pack.hudIcon('hotbar','slot4'),'data:image/png;base64,local');
+ assert.equal(await b.pack.hudIcon('hotbar','selected'),'data:image/png;base64,local');
+ assert.ok(b.pack.generation>0);
+ await b.pack.clear();
+ assert.equal(await b.pack.hudIcon('heart','full'),null);
+});

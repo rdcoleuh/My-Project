@@ -272,20 +272,24 @@ function readArchive(buffer){
    const itemMeta=relative?.match(/^textures\/(?:item|items)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png\.mcmeta$/);
    const entity=relative?.match(/^textures\/entity\/([a-z0-9_-]+(?:\/[a-z0-9_-]+)*)\.png$/);
    // Java hunger sprites are flat hud/food_full.png, not hud/food/full.png.
-   const heartSprite=relative?.match(/^textures\/gui\/sprites\/hud\/heart\/(full|half|empty)\.png$/);
+   const heartSprite=relative?.match(/^textures\/gui\/sprites\/hud\/heart\/(full|half|empty|container)\.png$/);
    const foodSprite=relative?.match(/^textures\/gui\/sprites\/hud\/food_(full|half|empty)\.png$/);
-   const hud=heartSprite?['heart',heartSprite[1]]:foodSprite?['food',foodSprite[1]]:null;
-   // Bedrock packs ship standalone UI bitmaps in textures/ui, not Java HUD sprites.
+   const javaHotbar=relative?.match(/^textures\/gui\/sprites\/hud\/(hotbar|hotbar_selection)\.png$/);
+   const hud=heartSprite?['heart',heartSprite[1]==='container'?'empty':heartSprite[1]]:
+     foodSprite?['food',foodSprite[1]]:
+     javaHotbar?['hotbar',javaHotbar[1]==='hotbar'?'background':'selected']:null;
+   // Bedrock Samples uses nine hotbar cells and separate heart/hunger PNGs.
+   // Each image remains in the player's local ZIP; only lookup keys are retained.
    const bedrockUI=relative?.match(/^textures\/ui\/([a-z0-9_-]+)\.png$/);
    const bedrockHud=bedrockUI&&({
      heart:'heart:full',heart_full:'heart:full',heart_half:'heart:half',heart_empty:'heart:empty',
-     hearts:'heart:full',heart_background:'heart:empty',
-     hunger:'food:full',hunger_full:'food:full',hunger_half:'food:half',
+     heart_background:'heart:empty',
+     hunger_full:'food:full',hunger_half:'food:half',
      hunger_empty:'food:empty',hunger_background:'food:empty',
-     food:'food:full',food_full:'food:full',food_half:'food:half',food_empty:'food:empty',
-     hotbar:'hotbar:background',hotbar_start_cap:'hotbar:background',
-     selected_hotbar_slot:'hotbar:selected',hotbar_selection:'hotbar:selected'
-   })[bedrockUI[1]];
+     food_full:'food:full',food_half:'food:half',food_empty:'food:empty',
+     hotbar:'hotbar:background',selected_hotbar_slot:'hotbar:selected',hotbar_selection:'hotbar:selected'
+   })[bedrockUI[1]] || (bedrockUI&&/^hotbar_[0-8]$/.test(bedrockUI[1])?
+     'hotbar:slot'+bedrockUI[1].slice(-1):null);
    const entityDefinition=relative?.match(/^entity\/([a-z0-9_-]+)\.entity\.json$/);
    const matchSound=relative?.match(/^sounds\/([a-z0-9_./-]+)\.ogg$/);
    const matchMeta=relative?.match(/^textures\/(?:block|blocks)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png\.mcmeta$/);
@@ -906,7 +910,6 @@ async function applyResources(zip,sourceName){
  catch(error){console.warn('Local mob sprites unavailable:',error);}
  state.tint=importedTints.palette;
  state.itemArchive=zip;state.itemCache.clear();state.itemGeneration++;
- window.dispatchEvent(new Event('mineworld-pack-hud-changed'));
  state.animations=animated;
  state.importedFaces=importedFaces;
  state.originalImage=original;
@@ -919,6 +922,7 @@ async function applyResources(zip,sourceName){
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
  window.MineWorldBridge?.refreshTextureUI?.();
+ if(typeof window.dispatchEvent==='function'&&typeof Event==='function')window.dispatchEvent(new Event('mineworld-pack-hud-changed'));
  notifyDefaultStatus();
  return state.lastResult;
 }
@@ -957,6 +961,24 @@ async function loadFiles(fileList){
    const png=leaf.match(/^([a-z0-9_]+)\.png$/),ogg=leaf.match(/^([a-z0-9_]+)\.ogg$/),meta=leaf.match(/^([a-z0-9_]+)\.png\.mcmeta$/);
    let key=png?.[1]||null;
    if(png&&/(?:^|\/)textures\/(?:item|items)\//.test(name))key='item:'+png[1];
+   if(png&&/(?:^|\/)textures\/ui\//.test(name)){
+     const ui=png[1],map={
+       heart:'heart:full',heart_half:'heart:half',heart_background:'heart:empty',
+       hunger_full:'food:full',hunger_half:'food:half',hunger_background:'food:empty',
+       selected_hotbar_slot:'hotbar:selected',hotbar:'hotbar:background'
+     };
+     const mapped=map[ui]||(/^hotbar_[0-8]$/.test(ui)?'hotbar:slot'+ui.slice(-1):null);
+     if(mapped)key='hud:'+mapped;
+   }
+   if(png&&/(?:^|\/)textures\/gui\/sprites\/hud\//.test(name)){
+     const hudMatch=name.match(/(?:^|\/)hud\/(heart\/(?:full|half|empty|container)|food_(?:full|half|empty)|hotbar(?:_selection)?)\.png$/);
+     if(hudMatch){
+       const part=hudMatch[1],kind=part.startsWith('heart/')?'heart':part.startsWith('food_')?'food':'hotbar';
+       const fill=kind==='heart'?(part.split('/')[1]==='container'?'empty':part.split('/')[1]):
+         kind==='food'?part.slice(5):part==='hotbar'?'background':'selected';
+       key='hud:'+kind+':'+fill;
+     }
+   }
    if(png){const path=name.match(/(?:^|\/)textures\/entity\/([a-z0-9_\/-]+)\.png$/);if(path)key='entity:'+path[1];}
    if(leaf.endsWith('.entity.json')){const match=name.match(/(?:^|\/)entity\/([a-z0-9_-]+)\.entity\.json$/);if(match)key='entity-def:'+match[1];}
    if(ogg){const path=name.match(/(?:^|\/)sounds\/([a-z0-9_./-]+)\.ogg$/);if(path)key='sound:'+path[1];}
@@ -999,7 +1021,7 @@ async function clear(){
  state.active=false;state.sourceName='';state.lastResult=null;
  state.animations=[];state.importedFaces=new Set();state.originalImage=null;state.lastAnimationAt=-Infinity;
  state.itemArchive=null;state.itemCache.clear();state.itemGeneration++;
- window.dispatchEvent(new Event('mineworld-pack-hud-changed'));
+ if(typeof window.dispatchEvent==='function'&&typeof Event==='function')window.dispatchEvent(new Event('mineworld-pack-hud-changed'));
  state.tint={grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()};
  await packStorage?.clear?.();
  notifyDefaultStatus();
@@ -1076,7 +1098,8 @@ function itemName(key){
 }
 function hudIcon(kind,fill){
  const source=state.itemArchive;
- if(!source||!['heart','food','hotbar'].includes(kind)||!['full','half','empty','background','selected'].includes(fill))return Promise.resolve(null);
+ if(!source||!['heart','food','hotbar'].includes(kind)||
+   !/^(full|half|empty|background|selected|slot[0-8])$/.test(fill))return Promise.resolve(null);
  const key='hud:'+kind+':'+fill;
  if(!source.entries.has(key))return Promise.resolve(null);
  if(state.itemCache.has(key))return state.itemCache.get(key);
@@ -1084,14 +1107,19 @@ function hudIcon(kind,fill){
  const promise=(async()=>{
    const image=await imageFromPng(await source.get(key));
    if(generation!==state.itemGeneration)return null;
+   const backgroundKey='hud:'+kind+':empty';
+   const underlay=kind!=='hotbar'&&fill!=='empty'&&source.entries.has(backgroundKey)?
+     await imageFromPng(await source.get(backgroundKey)):null;
+   if(generation!==state.itemGeneration)return null;
    const canvas=document.createElement('canvas');
    canvas.width=image.width;canvas.height=image.height;
    const ctx=canvas.getContext('2d',{alpha:true});
    if(!ctx)return null;
    ctx.imageSmoothingEnabled=false;
+   if(underlay)ctx.drawImage(underlay,0,0,canvas.width,canvas.height);
    ctx.drawImage(image,0,0);
    return generation===state.itemGeneration?canvas.toDataURL('image/png'):null;
- })().catch(()=>null);
+ })().catch(error=>{console.warn('Ignoring damaged local HUD image '+key,error);return null;});
  state.itemCache.set(key,promise);
  return promise;
 }
@@ -1139,6 +1167,7 @@ const exposed={
  get active(){return state.active;},
  get source(){return state.sourceName;},
  get lastResult(){return state.lastResult;},
+ get generation(){return state.itemGeneration;},
  get grassTint(){return [...state.tint.grass];},
  get foliageTint(){return [...state.tint.foliage];},
  loadFile,loadFiles,clear,setDefaultPack,drawFace,textureName,updateAnimation,itemIcon,itemName,hudIcon,
