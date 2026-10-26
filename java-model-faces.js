@@ -32,6 +32,23 @@ const SPECIAL=Object.freeze({
  163:'lectern',164:'stonecutter',165:'loom',
  166:'smithing_table',167:'grindstone',168:'crafting_table'
 });
+// Java model elements may omit face UVs; derive the crop from their bounds.
+function inferredUV(dir,from,to){
+ const [x,y,z]=from,[X,Y,Z]=to;
+ switch(dir){
+  case 'down':return [x,16-Z,X,16-z];
+  case 'up':return [x,z,X,Z];
+  case 'north':return [16-X,16-Y,16-x,16-y];
+  case 'south':return [x,16-Y,X,16-y];
+  case 'west':return [z,16-Y,Z,16-y];
+  case 'east':return [16-Z,16-Y,16-z,16-y];
+ }
+ return null;
+}
+function validUV(uv){
+ return Array.isArray(uv)&&uv.length===4&&uv.every(n=>Number.isFinite(n)&&n>=0&&n<=16)&&
+  uv[0]!==uv[2]&&uv[1]!==uv[3];
+}
 function nameFor(id,label){
  if(SPECIAL[id])return SPECIAL[id];
  if(typeof label!=='string')return null;
@@ -151,9 +168,10 @@ async function resolve(zip,modelName){
     faces=el.faces&&typeof el.faces==='object'&&!Array.isArray(el.faces)?el.faces:null;
     if(!fullCube&&faces&&['up','down','north','south','east','west'].every(
       dir=>faces[dir]&&typeof faces[dir].texture==='string'&&
-      Array.isArray(faces[dir].uv)&&faces[dir].uv.length===4&&
-      faces[dir].uv.every(n=>Number.isFinite(n)&&n>=0&&n<=16)
+      (faces[dir].uv===undefined||validUV(faces[dir].uv))
     )){
+     faces=Object.fromEntries(['up','down','north','south','east','west'].map(
+      dir=>[dir,{...faces[dir],uv:faces[dir].uv??inferredUV(dir,from,to)}]));
      shape=Object.freeze({left:from[0]/16,bottom:from[1]/16,front:from[2]/16,
       right:to[0]/16,top:to[1]/16,back:to[2]/16});
     }
