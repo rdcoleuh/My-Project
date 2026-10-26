@@ -13,7 +13,7 @@ function start(size,height=size){
    drawImage(...args){draws.push(args);},
    getImageData(_x,_y,w,h){return {data:new Uint8ClampedArray(w*h*4)};},
    putImageData(){}};}
-  toDataURL(){return 'data:image/png;base64,synthetic';}
+  toDataURL(){return 'data:image/png;base64,synthetic'+this.width;}
  }
  class Image{
   constructor(){this.width=size;this.height=height;}
@@ -88,4 +88,27 @@ test('HD atlas uses nearest-neighbor everywhere and never writes to world saves'
  assert.match(src,/atlasTilePixels:state\.tilePixels/);
  assert.match(sw,/mineworld-6-47-hd-native-tiles/);
  assert.doesNotMatch(src,/localStorage\.setItem\(.*atlasTilePixels/);
+});
+
+test('HD local item icons keep 32px sources; 16px icons stay unchanged',async()=>{
+ for(const side of [16,32]){
+  const x=start(side),file=x.file('diamond.png');
+  file.webkitRelativePath='assets/minecraft/textures/item/diamond.png';
+  const pack=x.window.MineWorldLocalTextures;
+  const result=await pack.loadFiles([x.file('stone.png'),file]);
+  assert.equal(result.items,1);
+  const dataURL=await pack.itemIcon('diamond');
+  assert.ok(dataURL.endsWith('synthetic'+side),
+   'item icon must retain original square source detail at '+side+'px');
+ }
+});
+test('non-square local item icons preserve aspect ratio, not stretch to square',async()=>{
+ const x=start(64,32),item=x.file('diamond.png');
+ item.webkitRelativePath='assets/minecraft/textures/item/diamond.png';
+ await x.window.MineWorldLocalTextures.loadFiles([x.file('stone.png'),item]);
+ const icon=await x.window.MineWorldLocalTextures.itemIcon('diamond');
+ assert.ok(icon.endsWith('synthetic32'));
+ assert.ok(x.draws.some(args=>args.length===9&&args[1]===0&&args[2]===0&&
+   args[3]===64&&args[4]===32&&args[7]===32&&args[8]===16),
+   'HD rectangular item should draw at a bounded 32x16 without distortion');
 });

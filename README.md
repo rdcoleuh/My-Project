@@ -1,3 +1,9 @@
+# MineWorld 6.48 — High-density item icons as well as block faces
+
+In addition to the 6.47 player-owned 32px block atlas, local Java Edition item PNGs now keep up to 32x32 source pixel detail in inventory, crafting and hotbar icons instead of being forced through a 16px canvas. Rectangular custom sprites keep their aspect ratio and are centered, rather than stretched. Original 16px sprites are unchanged. Image rendering is still nearest-neighbor, and no original Minecraft bitmap has been added to the repository.
+
+No world-save migrations or movement changes. Mobile rendering and real-world local HD pack appearance should still be checked on the user's phone.
+
 # MineWorld 6.47 — Preserve higher-resolution local resource pack textures
 
 Player-selected Java/Bedrock ZIP/JAR block PNGs now retain **up to 32×32 actual pixels per face in 3D** rather than always shrinking to 16×16. When any imported block frame exceeds 16px, MineWorld builds a nearest-neighbor 512×2048 local atlas, redraws original source frames and grass overlays at 32px, and updates Java UV crop texel centers and animated face uploads accordingly. A pack containing only 16px blocks continues using the smaller 256×1024 atlas. The mobile-friendly 32px cap means 64px-and-higher source files still downsample to 32px. Inventory previews and directional textures share the active source-size mapping.

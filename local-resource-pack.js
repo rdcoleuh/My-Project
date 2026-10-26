@@ -980,13 +980,21 @@ function itemIcon(key){
  const promise=(async()=>{
    const image=await imageFromPng(await source.get(path));
    if(generation!==state.itemGeneration)return null;
-   const canvas=document.createElement('canvas');canvas.width=canvas.height=16;
+   // Keep original high-density Java item pixels instead of forcing all
+   // player-imported 32px artwork through an irreversible 16px downsample.
+   // 32px cap keeps browser data URLs and mobile memory usage bounded.
+   const size=Math.min(32,Math.max(16,Math.floor(Math.max(image.width,image.height))));
+   const canvas=document.createElement('canvas');canvas.width=canvas.height=size;
    const ctx=canvas.getContext('2d',{alpha:true});
    if(!ctx)return null;
    ctx.imageSmoothingEnabled=false;
-   ctx.clearRect(0,0,16,16);
-   // Flat Java inventory artwork remains unmodified except 16px scaling.
-   ctx.drawImage(image,0,0,image.width,image.height,0,0,16,16);
+   ctx.clearRect(0,0,size,size);
+   const scale=Math.min(size/image.width,size/image.height);
+   const width=Math.max(1,Math.round(image.width*scale));
+   const height=Math.max(1,Math.round(image.height*scale));
+   // Non-square custom PNGs are centered instead of squeezed.
+   ctx.drawImage(image,0,0,image.width,image.height,
+     Math.floor((size-width)/2),Math.floor((size-height)/2),width,height);
    return generation===state.itemGeneration?canvas.toDataURL('image/png'):null;
  })().catch(error=>{console.warn('Skipping invalid local Java item '+name,error);return null;});
  state.itemCache.set(path,promise);
