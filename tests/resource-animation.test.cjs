@@ -45,7 +45,8 @@ test('game loads timeline before importer, updates imported frames, and caches b
  assert.ok(html.includes('if(localPack?.active)localPack.updateAnimation(t,currentFPS,isTouch)'));
  assert.ok(sw.includes("'./resource-animation.js'"));
  assert.ok(pack.includes("keep('meta:'+matchMeta[1]"));
- assert.ok(pack.includes("if(meta)key='meta:'+meta[1]"));
+ assert.ok(pack.includes("if(meta)key="));
+ assert.ok(pack.includes("'meta:item:'+meta[1]"),'item timelines use a separate namespace');
  assert.ok(pack.includes('gl.texSubImage2D('));
  assert.ok(pack.includes('ctx.clearRect(px,py,16,16)'));
 });
