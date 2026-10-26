@@ -426,6 +426,27 @@ body.in-nether #game-wrap{background:#290f19}
 #hotbar .swatch.mw-has-pack-icon{background-color:transparent!important;background-image:none!important}
 #hotbar .mw-block-pack-icon{display:block;width:30px;height:30px;object-fit:contain;image-rendering:pixelated}
 #hotbar .hot-item-icon img{image-rendering:pixelated;object-fit:contain}
+/* Fill the slot like the large imported beef icon; preserve transparent pixels. */
+#hotbar .hot-item{display:flex!important;align-items:center!important;justify-content:center!important}
+#hotbar .hot-item .swatch,#hotbar .hot-item .hot-item-icon{
+ width:min(38px,calc(100% - 4px))!important;
+ height:min(38px,calc(100% - 4px))!important;
+ min-width:0!important;min-height:0!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ padding:0!important;margin:0!important;transform:none!important;
+ border:0!important;box-shadow:none!important;background-color:transparent!important;
+ background-repeat:no-repeat!important;background-position:center!important;
+}
+#hotbar .hot-item .swatch canvas,#hotbar .hot-item .swatch img,
+#hotbar .hot-item .hot-item-icon img{
+ width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+ object-fit:contain!important;image-rendering:pixelated!important;
+}
+@media(max-width:550px){
+ #hotbar .hot-item .swatch,#hotbar .hot-item .hot-item-icon{
+  width:calc(100% - 2px)!important;height:min(38px,calc(100% - 2px))!important;
+ }
+}
 /* Native Bedrock HUD art is 9x9: preserve its square pixels and touch layout. */
 #survival-hud{max-width:calc(100vw - 12px);box-sizing:border-box;flex-wrap:wrap}
 #health-text .mw-stat-icon,#hunger-text .mw-stat-icon{width:18px;height:18px;flex:0 0 18px}
@@ -2022,7 +2043,8 @@ body.in-nether #game-wrap{background:#290f19}
             if(!src||!swatch.isConnected||packGeneration!==window.MineWorldLocalTextures?.generation)return;
             const art=document.createElement('img');
             art.src=src;art.alt='';art.className='mw-block-pack-icon';
-            sprite.replaceWith(art);
+            if(sprite.isConnected)sprite.replaceWith(art);
+            else swatch.prepend(art);
             swatch.classList.add('mw-has-pack-icon');
           }).catch(()=>{});
           if(iso)swatch.classList.add('mw-has-pack-icon');
