@@ -271,7 +271,10 @@ function readArchive(buffer){
    const item=relative?.match(/^textures\/(?:item|items)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png$/);
    const itemMeta=relative?.match(/^textures\/(?:item|items)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png\.mcmeta$/);
    const entity=relative?.match(/^textures\/entity\/([a-z0-9_-]+(?:\/[a-z0-9_-]+)*)\.png$/);
-   const hud=relative?.match(/^textures\/gui\/sprites\/hud\/(heart|food)\/(full|half|empty)\.png$/);
+   // Java hunger sprites are flat hud/food_full.png, not hud/food/full.png.
+   const heartSprite=relative?.match(/^textures\/gui\/sprites\/hud\/heart\/(full|half|empty)\.png$/);
+   const foodSprite=relative?.match(/^textures\/gui\/sprites\/hud\/food_(full|half|empty)\.png$/);
+   const hud=heartSprite?['heart',heartSprite[1]]:foodSprite?['food',foodSprite[1]]:null;
    const entityDefinition=relative?.match(/^entity\/([a-z0-9_-]+)\.entity\.json$/);
    const matchSound=relative?.match(/^sounds\/([a-z0-9_./-]+)\.ogg$/);
    const matchMeta=relative?.match(/^textures\/(?:block|blocks)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png\.mcmeta$/);
@@ -890,6 +893,7 @@ async function applyResources(zip,sourceName){
  catch(error){console.warn('Local mob sprites unavailable:',error);}
  state.tint=importedTints.palette;
  state.itemArchive=zip;state.itemCache.clear();state.itemGeneration++;
+ window.dispatchEvent(new Event('mineworld-pack-hud-changed'));
  state.animations=animated;
  state.importedFaces=importedFaces;
  state.originalImage=original;
@@ -982,6 +986,7 @@ async function clear(){
  state.active=false;state.sourceName='';state.lastResult=null;
  state.animations=[];state.importedFaces=new Set();state.originalImage=null;state.lastAnimationAt=-Infinity;
  state.itemArchive=null;state.itemCache.clear();state.itemGeneration++;
+ window.dispatchEvent(new Event('mineworld-pack-hud-changed'));
  state.tint={grass:DEFAULT_GRASS.slice(),foliage:DEFAULT_FOLIAGE.slice()};
  await packStorage?.clear?.();
  notifyDefaultStatus();

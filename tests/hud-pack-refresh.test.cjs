@@ -1,0 +1,3 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
+test('Java HUD hunger uses flat food_full and food_half paths',()=>{const s=read('local-resource-pack.js');assert.ok(s.includes('hud\\/food_(full|half|empty)'));assert.ok(s.includes('hud\\/heart\\/(full|half|empty)'));});
+test('loading or clearing packs refreshes hotbar and survival HUD',()=>{const s=read('local-resource-pack.js'),html=read('index.html');assert.equal(s.split("dispatchEvent(new Event('mineworld-pack-hud-changed'))").length-1,2);assert.ok(html.includes("addEventListener('mineworld-pack-hud-changed'"));assert.ok(html.includes('updateHotbar();updateSurvivalHUD();'));});
