@@ -36,6 +36,23 @@ test('model library has original scaled cattle, sheep, chickens, pigs and four m
  const sheared=A.draw({id:1,kind:'sheep',x:5,y:5,z:5,sheared:true},()=>{});
  assert.ok(unsheared>sheared,'shearing should remove wool tufts');
 });
+test('chickens animate paired feet and wings while standing still remains motionless',()=>{
+ function vertices(moving,gait){
+  const parts={body:[],wing:[],leg:[]};
+  A.draw({kind:'chicken',id:0,x:3,y:5,z:7,heading:0,moving,gait},(x,y,z,r,g,b,part)=>{
+   if(parts[part])parts[part].push([x,y,z]);
+  });
+  return parts;
+ }
+ const still=vertices(false,1.5),step=vertices(true,1.5);
+ assert.deepEqual(still.body,step.body,'walking must not distort the body');
+ assert.notDeepEqual(still.leg,step.leg,'walking feet must swing');
+ assert.notDeepEqual(still.wing,step.wing,'walking wings must bob');
+ assert.deepEqual(vertices(false,0).leg,still.leg,'idle pose must ignore gait phase');
+ assert.deepEqual(vertices(false,0).wing,still.wing,'idle wings must not flap');
+ for(const part of ['wing','leg'])for(const p of step[part])
+  assert.ok(p.every(Number.isFinite),part+' contains invalid moving vertex');
+});
 test('animal detail geometry preserves facial accents and wool when importing skin maps',()=>{
  const expected={
   pig:['snout','ear','eye','nostril','tail'],

@@ -52,9 +52,12 @@ function rect(kind,part,face,image){
 function vertexCorner(face,index,renderer='cube'){
  const k=index&3;
  const table=renderer==='animal'?{
-  front:[1,2,3,0],back:[2,1,0,3],
-  left:[2,1,0,3],right:[1,2,3,0],
-  top:[0,3,2,1],bottom:[1,0,3,2]
+  // For each outward-looking face, source U increases toward the viewer's
+  // right and source V increases downward. The old animal table mirrored
+  // front/back/left and rotated bottom by 90 degrees.
+  front:[2,1,0,3],back:[1,2,3,0],
+  left:[1,2,3,0],right:[1,2,3,0],
+  top:[0,3,2,1],bottom:[0,3,2,1]
  }:{
   front:[1,0,3,2],back:[1,0,3,2],
   left:[1,0,3,2],right:[1,0,3,2],

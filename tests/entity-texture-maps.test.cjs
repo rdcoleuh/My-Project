@@ -140,6 +140,31 @@ test('actual animal and hostile renderers send face/part identity and preserve p
  assert.ok(sw.includes("'./entity-texture-maps.js'"));
  assert.ok(html.includes('mineworld-selfhost-v1'));
 });
+test('all six animal skin faces are outward-facing and not mirrored or rotated',()=>{
+ const m=maps(),uvCorners=[[0,0],[0,1],[1,1],[1,0]];
+ // These are the eight vertices emitted by animal-models.js for one cuboid.
+ const xyz=[[-1,0,-1],[1,0,-1],[1,0,1],[-1,0,1],
+            [-1,1,-1],[1,1,-1],[1,1,1],[-1,1,1]];
+ const faces={
+  bottom:[1,0,3,2],top:[4,5,6,7],front:[0,1,5,4],
+  back:[3,2,6,7],left:[0,3,7,4],right:[2,1,5,6]
+ };
+ // Screen-right axis for an observer standing outside each cuboid face.
+ const horizontal={front:p=>-p[0],back:p=>p[0],
+   left:p=>p[2],right:p=>-p[2],top:p=>p[0],bottom:p=>-p[0]};
+ for(const [face,indices] of Object.entries(faces)){
+  const verts=indices.map(i=>xyz[i]);
+  const us=verts.map(horizontal[face]);
+  const vs=verts.map(p=>face==='top'||face==='bottom'?p[2]:-p[1]);
+  const umin=Math.min(...us),umax=Math.max(...us);
+  const vmin=Math.min(...vs),vmax=Math.max(...vs);
+  for(let i=0;i<4;i++){
+   const corner=m.vertexCorner(face,i,'animal');
+   const expected=[(us[i]-umin)/(umax-umin),(vs[i]-vmin)/(vmax-vmin)];
+   assert.deepEqual(uvCorners[corner],expected,face+' vertex '+i);
+  }
+ }
+});
 test('imported UV faces retain upright top-left and bottom-left corners',()=>{
  const m=maps();
  // MineWorld's hostile cube starts each vertical face at its bottom edge.
@@ -147,11 +172,13 @@ test('imported UV faces retain upright top-left and bottom-left corners',()=>{
  assert.equal(m.vertexCorner('front',1),0);
  assert.equal(m.vertexCorner('front',2),3);
  // Rotating animal cuboids use a different vertex ordering.
- assert.equal(m.vertexCorner('front',0,'animal'),1);
- assert.equal(m.vertexCorner('front',3,'animal'),0);
+ assert.equal(m.vertexCorner('front',0,'animal'),2);
+ assert.equal(m.vertexCorner('front',3,'animal'),3);
  assert.equal(m.vertexCorner('top',0,'animal'),0);
  assert.equal(m.vertexCorner('top',1,'animal'),3);
- assert.equal(m.vertexCorner('back',0,'animal'),2);
+ assert.equal(m.vertexCorner('back',0,'animal'),1);
+ assert.equal(m.vertexCorner('left',0,'animal'),1);
+ assert.equal(m.vertexCorner('bottom',0,'animal'),0);
  const html=read('index.html');
  assert.ok(html.includes('MineWorldEntityTextureMaps.vertexCorner(dir,i)'));
  assert.ok(html.includes("MineWorldEntityTextureMaps.vertexCorner(face,corner,'animal')"));

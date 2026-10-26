@@ -67,12 +67,16 @@ function draw(m,write,time=0){
  if(m.kind==='chicken'){
   box(-.19,.28,-.22,.38,.38,.47,body);
   box(-.14,.49,-.32,.28,.25,.27,face,'head');
-  for(const sx of [-1,1])box(sx*.15-.085,.29,-.1,.09,.17,.24,pattern(body,.93),'wing');
+  // Wings bob subtly and the feet swing in opposite phases when walking.
+  // Shared hinges keep each foot attached to its shin; idle poses stay still.
+  for(const sx of [-1,1])box(sx*.15-.085,.29,-.1,.09,.17,.24,
+    pattern(body,.93),'wing',{y:.45,z:-.10,angle:sx*gait*.65});
   box(-.09,.50,-.41,.18,.09,.12,[.94,.63,.13],'beak');
   box(-.045,.44,-.41,.09,.14,.09,[.72,.14,.13],'wattle');
   for(const sx of [-1,1]){
-   box(sx*.105-.016,.025,-.02,.032,.27,.035,[.84,.63,.21],'leg');
-   box(sx*.105-.04,.015,-.15,.085,.04,.17,[.84,.63,.21],'leg');
+   const hinge={y:.295,z:-.02,angle:sx*gait};
+   box(sx*.105-.016,.025,-.02,.032,.27,.035,[.84,.63,.21],'leg',hinge);
+   box(sx*.105-.04,.015,-.15,.085,.04,.17,[.84,.63,.21],'leg',hinge);
    box(sx*.085-.022,.675,-.29,.045,.08,.06,[.79,.19,.18],'comb');
   }
   for(const sx of [-1,1])box(sx*.08-.027,.60,-.355,.055,.052,.035,[.14,.17,.17],'eye');
