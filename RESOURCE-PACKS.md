@@ -1,6 +1,6 @@
 ## 6.47 — Higher-resolution source textures
 
-MineWorld's private player-selected resource importer retains up to 32x32 per-block-face source pixels in the 3D world. A 32px+ local PNG triggers a bounded 512x2048 GPU atlas (~4MiB RGBA) with nearest-neighbor processing, including animated frames and directional faces. Default 16px vanilla PNGs continue to use 16x16 unchanged, and high-resolution packs larger than 32px are still capped to 32px for mobile GPU compatibility. Imported bitmaps stay in the user's browser.
+MineWorld's private player-selected resource importer retains up to 32x32 per-block-face source pixels in the 3D world. A 32px+ local PNG uses a bounded 512x2048 GPU atlas (~4MiB RGBA) with nearest-neighbor processing, including animated frames and directional faces, **only when WebGL reports MAX_TEXTURE_SIZE of at least 2048**. Devices limited to 1024 or 1536 instead import those textures into the original 256x1024 atlas with nearest-neighbor downscaling, avoiding an invalid GPU upload. Default 16px vanilla PNGs continue to use 16x16 unchanged, and high-resolution packs larger than 32px are still capped to 32px for mobile GPU compatibility. Imported bitmaps stay in the user's browser.
 
 ## 6.43 — safe Java multipart default cube selection (October 25, 2026)
 

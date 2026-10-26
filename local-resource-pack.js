@@ -774,8 +774,19 @@ async function applyResources(zip,sourceName){
    geometry?.width||image.width,geometry?.height||image.height):0;
  const native32=nativeTiles.some(t=>Math.max(
    sourceSize(t.image,t.baseGeometry),sourceSize(t.overlay,t.overlayGeometry))>16);
+ // The HD atlas is 512x2048 (4 MiB RGBA). WebGL 1 devices can expose
+ // MAX_TEXTURE_SIZE=1024 or 1536: uploading 2048px would silently fail and
+ // leave player-owned textures missing. Retain the sharp 16px atlas instead.
+ // Standard WebGL always exposes this query; mocks without it assume 2048.
+ let maxTextureSize=2048;
+ if(typeof META.gl.getParameter==='function'&&META.gl.MAX_TEXTURE_SIZE!==undefined){
+   try{
+     const reported=META.gl.getParameter(META.gl.MAX_TEXTURE_SIZE);
+     maxTextureSize=Number.isFinite(reported)&&reported>0?reported:1024;
+   }catch(_){maxTextureSize=1024;}
+ }
  let finalCanvas=canvas;
- if(native32){
+ if(native32&&maxTextureSize>=atlasH*2){
    const high=document.createElement('canvas');high.width=atlasW*2;high.height=atlasH*2;
    const hctx=high.getContext('2d',{alpha:true});
    if(hctx){

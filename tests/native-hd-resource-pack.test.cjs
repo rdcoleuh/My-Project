@@ -5,7 +5,7 @@ const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
 const html=read('index.html');
 const inline=html.match(/\/\* MineWorld original procedural 16x16 voxel pixel-art atlas\. No external assets\. \*\/\s*\(\(\) => \{[\s\S]*?\}\)\(\);/);
 assert.ok(inline,'runtime atlas source must remain extractable for tests');
-function start(size,height=size){
+function start(size,height=size,maxTextureSize=2048){
  const draws=[],uploads=[],subUploads=[];
  class Canvas{
   constructor(){this.width=16;this.height=16;}
@@ -21,6 +21,7 @@ function start(size,height=size){
  }
  const gl={TEXTURE0:1,TEXTURE_2D:2,RGBA:3,UNSIGNED_BYTE:4,
   UNPACK_FLIP_Y_WEBGL:5,TEXTURE_MIN_FILTER:6,TEXTURE_MAG_FILTER:7,NEAREST:8,
+  MAX_TEXTURE_SIZE:9,getParameter(p){return p===this.MAX_TEXTURE_SIZE?maxTextureSize:null;},
   activeTexture(){},bindTexture(){},pixelStorei(){},texParameteri(){},
   texImage2D(...a){uploads.push(a);},texSubImage2D(...a){subUploads.push(a);},
   isContextLost:()=>false};
@@ -61,6 +62,32 @@ test('32px pack keeps 32 source pixels per face without bilinear blur',async()=>
  await pack.clear();
  assert.equal(x.window.MineWorldAtlas.tilePixels,16);
  assert.equal(x.uploads.at(-1).at(-1).width,256);
+});
+test('mobile GPUs without 2048px texture support keep sharp imported art at 16px',async()=>{
+ for(const limit of [1024,1536]){
+  const x=start(32,32,limit),pack=x.window.MineWorldLocalTextures;
+  const r=await pack.loadFiles([x.file('stone.png')]);
+  assert.equal(r.atlasTilePixels,16,'GPU max '+limit+' must not upload a 2048px atlas');
+  assert.equal(r.faces,3,'source pack remains usable after HD fallback');
+  assert.equal(x.window.MineWorldAtlas.tilePixels,16);
+  assert.equal(x.uploads.at(-1).at(-1).width,256);
+  assert.equal(x.uploads.at(-1).at(-1).height,1024);
+  assert.ok(!x.uploads.some(a=>a.at(-1).height>limit));
+  assert.ok(x.draws.some(a=>a.length===9&&a[7]===16&&a[8]===16),
+   'the 32px source still draws with nearest-neighbor into the fallback tile');
+  await pack.clear();
+ }
+});
+test('animated HD sprites also use 16px GPU subuploads on limited mobile devices',async()=>{
+ const x=start(32,64,1024),pack=x.window.MineWorldLocalTextures;
+ const meta=Uint8Array.from(Buffer.from(JSON.stringify({animation:{frametime:1,frames:[0,1]}})));
+ const r=await pack.loadFiles([x.file('stone.png'),x.file('stone.png.mcmeta',meta)]);
+ assert.equal(r.atlasTilePixels,16);
+ assert.ok(r.animatedFaces>0);
+ assert.ok(pack.updateAnimation(100,60,true)>0);
+ assert.ok(x.subUploads.some(a=>a.at(-1).width===16&&a.at(-1).height===16));
+ assert.ok(x.subUploads.every(a=>a.at(-1).width===16));
+ await pack.clear();
 });
 test('vanilla 16px pack retains smaller atlas and exact normal texel centers',async()=>{
  const x=start(16),r=await x.window.MineWorldLocalTextures.loadFiles([x.file('stone.png')]);
