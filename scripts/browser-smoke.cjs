@@ -48,8 +48,8 @@ function generatedPng(height,channel,width=16){
 function makeTestArchive(){
  const files=[
    ['resource_pack/textures/blocks/stone.png',generatedPng(16,80)],
-   ['resource_pack/textures/entity/cow/cow.png',generatedPng(32,180,64)],
-   ['resource_pack/textures/items/diamond.png',generatedPng(16,225)],
+   ['resource_pack/textures/entity/cow/cow.png',generatedPng(128,180,256)],
+   ['resource_pack/textures/items/diamond.png',generatedPng(32,225,32)],
    ['resource_pack/textures/blocks/water_still_grey.png',generatedPng(64,35)],
    ['assets/minecraft/models/block/furnace.json',Buffer.from(JSON.stringify({
      textures:{top:'minecraft:block/furnace_top',front:'minecraft:block/furnace_front',
@@ -122,6 +122,11 @@ async function go(browser,name,mobile){
     window.MineWorldMobPixels?.hasImported('item:diamond')),
     name+': Bedrock mob and item PNGs did not reach GPU atlas');
   assert.ok(await page.evaluate(()=>{
+    const art=window.MineWorldMobPixels;
+    const a=art?.uv('cow',0,'head','front'),b=art?.uv('cow',3,'head','front');
+    return art?.size===32&&Math.abs(b[0]-a[0]-31/512)<1e-7;
+  }),name+': imported HD mob UVs were downsampled or misaligned');
+  assert.ok(await page.evaluate(()=>{
     const pack=window.MineWorldResourcePackContext;
     const gl=pack?.gl;
     if(!gl||!pack.texture||window.MineWorldTextureSmoothing?.enabled!==false)return false;
@@ -171,6 +176,8 @@ async function go(browser,name,mobile){
      window.MineWorldMobPixels?.hasMapped('cow','head','front')&&
      window.MineWorldMobPixels?.hasImported('item:diamond')),
     name+': remembered mob/item skins did not restore after reload');
+  assert.equal(await page.evaluate(()=>window.MineWorldMobPixels?.size),32,
+    name+': HD mob atlas did not survive saved pack reload');
   await page.locator('#mw-options').click();
   assert.equal(await page.locator('#mw-options-screen').evaluate(el=>el.classList.contains('active')),true,name+': Options failed');
   assert.ok(await page.locator('#mw-options-screen .mw-local-experiment').count(),
