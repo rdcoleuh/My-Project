@@ -4,7 +4,7 @@
  */
 (()=>{
 'use strict';
-const MAX_JSON=256*1024,MAX_ENTRIES=512,MAX_FRAMES=4096,TICK_MS=50;
+const MAX_JSON=256*1024,MAX_ENTRIES=512,MAX_TERRAIN_JSON=1024*1024,MAX_TERRAIN_ENTRIES=4096,MAX_FRAMES=4096,TICK_MS=50;
 const int=(n,def,min,max)=>Number.isInteger(n)&&n>=min&&n<=max?n:def;
 function parse(source){
  if(typeof source!=='string'||source.length>MAX_JSON)return new Map();
@@ -67,20 +67,23 @@ function timeline(entry,count){
 // Resolve Bedrock terrain_texture.json references to player-owned block PNGs.
 // Only local block paths are accepted; URLs, namespaces and traversal are rejected.
 function terrain(source){
- if(typeof source!=='string'||source.length>MAX_JSON)return new Map();
+ // Bedrock terrain_texture.json commonly contains far more than 512 entries.
+ // Keep flipbooks tightly capped, but scan bounded large terrain atlases so
+ // late water, lava and foliage aliases are not silently discarded.
+ if(typeof source!=='string'||source.length>MAX_TERRAIN_JSON)return new Map();
  let data;
  try{data=JSON.parse(source.replace(/^\s*\/\/[^\r\n]*$/gm,''));}
  catch(_){return new Map();}
  const rows=data?.texture_data;
  if(!rows||typeof rows!=='object'||Array.isArray(rows))return new Map();
  const found=new Map();
- for(const [name,entry] of Object.entries(rows).slice(0,MAX_ENTRIES)){
+ for(const [name,entry] of Object.entries(rows).slice(0,MAX_TERRAIN_ENTRIES)){
   if(!/^[a-z0-9_-]{1,80}$/.test(name)||!entry||typeof entry!=='object')continue;
   const options=Array.isArray(entry.textures)?entry.textures:[entry.textures];
   for(const option of options.slice(0,32)){
    const ref=typeof option==='string'?option:option?.path;
    if(typeof ref!=='string')continue;
-   const m=ref.match(/^textures\/(?:block|blocks)\/([a-z0-9_/-]+)$/);
+   const m=ref.match(/^textures\/(?:block|blocks)\/([a-z0-9_/-]+)(?:\.png)?$/);
    if(!m||m[1].split('/').some(part=>!part||part==='.'||part==='..'))continue;
    found.set(name,'block:'+m[1]);break;
   }

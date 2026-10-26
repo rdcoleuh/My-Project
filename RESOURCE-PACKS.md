@@ -125,3 +125,7 @@ cleared before drawing and nearest-neighbor scaling is retained;
 No original Minecraft artwork is included or downloaded. Fluid geometry
 and translucency are still simplified and are not a complete
 Java/Bedrock renderer.
+
+## 6.62 — large Bedrock terrain atlas compatibility
+
+Player-imported Bedrock `textures/terrain_texture.json` files can contain thousands of entries. MineWorld now checks up to 4,096 local texture definitions (with a 1 MiB JSON size cap), rather than stopping after the first 512. This preserves late water, lava, and foliage aliases from large player-owned packs. Local `textures/blocks/...png` references also resolve alongside extensionless paths. URLs, mod namespaces, and directory traversal remain rejected; no game artwork is bundled or downloaded.

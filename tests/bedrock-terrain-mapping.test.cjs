@@ -19,6 +19,23 @@ test('Bedrock terrain map resolves local nested water, lava and foliage sprites'
  assert.equal(map.get('still_lava'),'block:custom/magma_still');
  assert.equal(map.get('oak_leaves'),'block:foliage/leaf_a');
 });
+
+test('large Bedrock terrain maps preserve late water, lava and leaf paths including optional .png',()=>{
+ const b=terrainAPI(),texture_data={};
+ for(let i=0;i<700;i++)
+  texture_data['unused_'+i]={textures:'textures/blocks/custom/other_'+i};
+ texture_data.still_water_grey={textures:'textures/blocks/custom/late_water.png'};
+ texture_data.flowing_lava={textures:{path:'textures/blocks/custom/late_lava.png'}};
+ texture_data.oak_leaves={textures:'textures/blocks/foliage/late_leaves.png'};
+ const map=b.terrain(JSON.stringify({texture_data}));
+ assert.equal(map.size,703,'atlas entries beyond the old 512-entry limit are retained');
+ assert.equal(map.get('still_water_grey'),'block:custom/late_water');
+ assert.equal(map.get('flowing_lava'),'block:custom/late_lava');
+ assert.equal(map.get('oak_leaves'),'block:foliage/late_leaves');
+ assert.equal(b.terrain('x'.repeat(1024*1024+1)).size,0,
+  'oversized untrusted terrain definitions remain bounded');
+});
+
 test('malformed and remote Bedrock terrain paths never escape local pack',()=>{
  const b=terrainAPI();
  assert.equal(b.terrain('{bad').size,0);
