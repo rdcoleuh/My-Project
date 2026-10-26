@@ -249,10 +249,18 @@ async function resolve(zip,modelName){
  const faceUV={};
  for(const dir of ['up','down',...dirs]){
   const face=data.faces?.[sourceFace(dir)];
-  if(!face||typeof face!=='object')continue;
-  const baseRotation=face.rotation??0,uv=face.uv;
   const modelTurn=!uvlock&&dir==='up'?turns*90:
      !uvlock&&dir==='down'?((4-turns)%4)*90:0;
+  // Texture-only models are common in partial ZIP/JAR packs: their vanilla
+  // cube parent may not be included. Rotate the horizontal UVs with the
+  // selected blockstate even without explicit face objects. Never transform
+  // missing PNGs or UV-locked faces (the importer retains its fallback art).
+  if(!face||typeof face!=='object'){
+   if(modelTurn&&(dir==='up'?allowed(top):dir==='down'?allowed(bottom):false))
+    faceUV[dir]={rotation:modelTurn,uv:[0,0,16,16]};
+   continue;
+  }
+  const baseRotation=face.rotation??0,uv=face.uv;
   const rotation=(baseRotation+modelTurn)%360;
   if(!Number.isInteger(baseRotation)||![0,90,180,270].includes(baseRotation))continue;
   if(uv!==undefined&&(!Array.isArray(uv)||uv.length!==4||

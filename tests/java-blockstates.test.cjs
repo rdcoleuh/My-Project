@@ -167,3 +167,53 @@ test('uvlock leaves top texture orientation fixed when a default blockstate rota
  assert.equal(result.faceUV.up.rotation,90);
  assert.equal(result.faceUV.down,undefined);
 });
+
+test('texture-only Java cube models rotate top and bottom UVs for Y blockstates',async()=>{
+ const m=resolver();
+ for(const [y,top,bottom] of [[90,90,270],[180,180,180],[270,270,90]]){
+  const pack=zip({
+   'state:stone':enc({variants:{'':{model:'minecraft:block/owned',y}}}),
+   // An imported pack need not bundle the vanilla parent model's face JSON.
+   'model:owned':enc({parent:'minecraft:block/cube_all',textures:{
+    top:'minecraft:block/custom/top',bottom:'minecraft:block/custom/bottom',
+    side:'minecraft:block/custom/side'}}),
+   'block:custom/top':Uint8Array.of(1),
+   'block:custom/bottom':Uint8Array.of(1),
+   'block:custom/side':Uint8Array.of(1)
+  });
+  const result=await m.resolve(pack,'stone');
+  assert.equal(result.top,'block:custom/top');
+  assert.equal(result.side,'block:custom/side');
+  assert.equal(result.bottom,'block:custom/bottom');
+  assert.equal(result.faceUV.up.rotation,top,'up Y='+y);
+  assert.equal(result.faceUV.down.rotation,bottom,'down Y='+y);
+  assert.deepEqual(Array.from(result.faceUV.up.uv),[0,0,16,16]);
+  assert.equal(result.faceUV.north,undefined,'side UV must remain upright');
+ }
+});
+
+test('UV lock preserves unrotated top and bottom in texture-only Java models',async()=>{
+ const m=resolver(),pack=zip({
+  'state:stone':enc({variants:{'':{model:'minecraft:block/owned',y:90,uvlock:true}}}),
+  'model:owned':enc({textures:{all:'minecraft:block/owned'}}),
+  'block:owned':Uint8Array.of(1)
+ });
+ const result=await m.resolve(pack,'stone');
+ assert.equal(result.top,'block:owned');
+ assert.equal(result.faceUV,undefined,'UV lock must not introduce synthetic rotations');
+});
+
+test('missing local top PNG never rotates the procedural fallback texture',async()=>{
+ const m=resolver(),pack=zip({
+  'state:stone':enc({variants:{'':{model:'minecraft:block/owned',y:90}}}),
+  'model:owned':enc({textures:{top:'minecraft:block/absent',
+   bottom:'minecraft:block/owned_bottom',side:'minecraft:block/owned_side'}}),
+  'block:owned_bottom':Uint8Array.of(1),
+  'block:owned_side':Uint8Array.of(1)
+ });
+ const result=await m.resolve(pack,'stone');
+ assert.equal(result.top,null);
+ assert.equal(result.faceUV.up,undefined);
+ assert.equal(result.faceUV.down.rotation,270);
+ assert.equal(result.faceUV.north,undefined);
+});
