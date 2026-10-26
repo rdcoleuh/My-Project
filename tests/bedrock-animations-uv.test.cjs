@@ -82,7 +82,7 @@ test('all six cube surfaces use upright and deterministic pixel UVs',()=>{
      html.includes('MineWorldJavaFaceTransforms?.sample('));
  assert.ok(read('sw.js').includes("'./block-face-uv.js'"));
 });
-function fakeImporter(){
+function fakeImporter(width=16,height=64){
  const uploads=[],draws=[];
  const window={
   MineWorldResourcePackContext:{gl:null,texture:{},baseURL:'data:image/png;base64,default'},
@@ -103,7 +103,7 @@ function fakeImporter(){
   }
   toDataURL(){return 'data:image/png;base64,fallback';}
  }
- class Image{constructor(){this.width=16;this.height=64;}set src(_){queueMicrotask(()=>this.onload?.())}}
+ class Image{constructor(){this.width=width;this.height=height;}set src(_){queueMicrotask(()=>this.onload?.())}}
  const context={window,document:{createElement:()=>new Canvas(),querySelector:()=>null},
   Image,URL:{createObjectURL:()=> 'blob:synthetic',revokeObjectURL(){}},Blob,
   Uint8Array,Uint8ClampedArray,TextDecoder,ArrayBuffer,DataView,
@@ -134,6 +134,47 @@ test('actual local imported Bedrock water flipbook animates three faces on GPU a
  await pack.clear();
  assert.equal(pack.updateAnimation(500,60,false),0);
 });
+test('Bedrock horizontal flipbook geometry keeps each native square frame',()=>{
+ const {MineWorldBedrockFlipbooks:b,MineWorldResourceAnimation:a}=bootTimelines();
+ const info=b.parse(JSON.stringify([{
+  flipbook_texture:'textures/blocks/water_still_grey',
+  frames:[3,1,0,2],ticks_per_frame:2,blend_frames:false
+ }])).get('water_still_grey');
+ const geometry=b.geometry({width:64,height:16},info);
+ assert.equal(geometry.count,4);
+ assert.equal(geometry.columns,4);
+ assert.equal(geometry.rows,1);
+ assert.equal(geometry.width,16);
+ assert.equal(geometry.height,16);
+ assert.equal(a.frameRect({width:64,height:16},3,geometry).x,48);
+ assert.equal(a.frameRect({width:64,height:16},3,geometry).y,0);
+ assert.equal(a.sampleAt(b.timeline(info,geometry.count),100).index,1);
+ const malformed=b.geometry({width:48,height:32},info);
+ assert.equal(malformed.count,1,'non-divisible sprites remain static, without cropping');
+ assert.equal(malformed.width,48);
+ assert.equal(malformed.height,32);
+});
+
+test('local Bedrock importer paints horizontal animation frames from correct x offsets',async()=>{
+ const {pack,draws,uploads}=fakeImporter(64,16);
+ const png=Buffer.from([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,16,0,0,0,16]);
+ const file=(name,content)=>({name,size:content.length,arrayBuffer:async()=>Uint8Array.from(content).buffer});
+ const meta=Buffer.from(JSON.stringify([{
+  flipbook_texture:'textures/blocks/water_still_grey',
+  frames:[3,1,0,2],ticks_per_frame:2,blend_frames:false
+ }]));
+ const result=await pack.loadFiles([file('water_still_grey.png',png),
+  file('flipbook_textures.json',meta)]);
+ assert.equal(result.bedrockAnimatedFaces,3);
+ assert.ok(draws.some(args=>args.length===9&&args[1]===48&&args[2]===0
+   &&args[3]===16&&args[4]===16),'initial frame 3 crops x=48, not the full strip');
+ assert.equal(pack.updateAnimation(100,60,false),3);
+ assert.ok(draws.some(args=>args.length===9&&args[1]===16&&args[2]===0),
+   'next frame 1 crops x=16');
+ assert.equal(uploads.length,6);
+ await pack.clear();
+});
+
 test('Bedrock flipbook metadata is cached as optional resource and Java metadata remains supported',()=>{
  const src=read('local-resource-pack.js'),sw=read('sw.js'),html=read('index.html');
  assert.match(src,/keep\('bedrock:flipbook'/);
