@@ -802,21 +802,17 @@ async function applyResources(zip,sourceName){
  }
  if(!faces&&!directionalFaces&&!audio&&!items&&!mobArt.size)
   throw Error('No compatible block, item or sound files found.');
- // A 32px atlas is 512x2048 RGBA (~4MiB); 16px packs keep their 1MiB atlas.
- // A wide static PNG can contain more horizontal texels than a 16px tile.
- // Measure the actual sampled frame, not the whole animation strip: a
- // 16x64 implicit vertical animation still has 16x16 source frames.
+ // Preserve native player-supplied texels when the GPU can hold the atlas.
+ // 16px = 256x1024 (1 MiB); 32px = 512x2048 (4 MiB);
+ // 64px = 1024x4096 (16 MiB). Never allocate the 64px atlas on
+ // coarse-pointer mobile devices or known low-memory devices.
  const sourceSize=(image,geometry)=>{
    if(!image)return 0;
    const frame=geometry||window.MineWorldResourceAnimation?.frameDimensions(image);
    return Math.max(frame?.width||image.width,frame?.height||image.height);
  };
- const native32=nativeTiles.some(t=>Math.max(
-   sourceSize(t.image,t.baseGeometry),sourceSize(t.overlay,t.overlayGeometry))>16);
- // The HD atlas is 512x2048 (4 MiB RGBA). WebGL 1 devices can expose
- // MAX_TEXTURE_SIZE=1024 or 1536: uploading 2048px would silently fail and
- // leave player-owned textures missing. Retain the sharp 16px atlas instead.
- // Standard WebGL always exposes this query; mocks without it assume 2048.
+ const largestSource=nativeTiles.reduce((n,t)=>Math.max(n,
+   sourceSize(t.image,t.baseGeometry),sourceSize(t.overlay,t.overlayGeometry)),0);
  let maxTextureSize=2048;
  if(typeof META.gl.getParameter==='function'&&META.gl.MAX_TEXTURE_SIZE!==undefined){
    try{
@@ -824,24 +820,32 @@ async function applyResources(zip,sourceName){
      maxTextureSize=Number.isFinite(reported)&&reported>0?reported:1024;
    }catch(_){maxTextureSize=1024;}
  }
+ const coarsePointer=window.matchMedia?.('(pointer: coarse)')?.matches===true;
+ const memoryGB=window.navigator?.deviceMemory;
+ const canUse64=!coarsePointer&&(!Number.isFinite(memoryGB)||memoryGB>=4)
+   &&maxTextureSize>=atlasH*4;
+ const scale=largestSource>32&&canUse64?4:
+   largestSource>16&&maxTextureSize>=atlasH*2?2:1;
  let finalCanvas=canvas;
- if(native32&&maxTextureSize>=atlasH*2){
-   const high=document.createElement('canvas');high.width=atlasW*2;high.height=atlasH*2;
+ if(scale>1){
+   const high=document.createElement('canvas');
+   high.width=atlasW*scale;high.height=atlasH*scale;
    const hctx=high.getContext('2d',{alpha:true});
    if(hctx){
+     const size=16*scale;
      hctx.imageSmoothingEnabled=false;
      hctx.drawImage(canvas,0,0,atlasW,atlasH,0,0,high.width,high.height);
      for(const t of nativeTiles){
-       const px=t.px*2,py=t.py*2;
-       hctx.clearRect(px,py,32,32);
+       const px=t.px*scale,py=t.py*scale;
+       hctx.clearRect(px,py,size,size);
        if(t.image){
-         drawPackFrame(hctx,t.image,t.baseGeometry,t.baseIndex,1,px,py,32);
-         if(t.face<=2)tintNeutralSprite(hctx,px,py,t.id,t.face,importedTints.palette,32);
+         drawPackFrame(hctx,t.image,t.baseGeometry,t.baseIndex,1,px,py,size);
+         if(t.face<=2)tintNeutralSprite(hctx,px,py,t.id,t.face,importedTints.palette,size);
        }else{
-         hctx.drawImage(original,t.px,t.py,16,16,px,py,32,32);
+         hctx.drawImage(original,t.px,t.py,16,16,px,py,size,size);
        }
        if(t.overlay)composeGrassSideOverlay(hctx,t.overlay,px,py,
-         t.overlayIndex,t.overlayIndex,0,t.overlayGeometry,importedTints.palette,32);
+         t.overlayIndex,t.overlayIndex,0,t.overlayGeometry,importedTints.palette,size);
      }
      finalCanvas=high;
    }

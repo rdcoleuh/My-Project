@@ -24,7 +24,7 @@ function png(label,w=16,h=16){
 }
 function file(name,bytes){return {name,size:bytes.length,
  arrayBuffer:async()=>Uint8Array.from(bytes).buffer};}
-function boot(max=2048){
+function boot(max=2048,coarse=false){
  const canvases=[],uploads=[],blobs=new Map();let serial=0;
  class Canvas{
   constructor(){this.width=16;this.height=16;this.calls=[];canvases.push(this);}
@@ -56,7 +56,8 @@ function boot(max=2048){
   MAX_TEXTURE_SIZE:9,activeTexture(){},bindTexture(){},pixelStorei(){},
   texImage2D(){},texParameteri(){},isContextLost(){return false;},
   getParameter(){return max;},texSubImage2D(...a){uploads.push(a);}};
- const window={MineWorldResourcePackContext:{gl,texture:{},baseURL:'data:image/png;base64,original'},
+ const window={matchMedia:()=>({matches:coarse}),navigator:{deviceMemory:8},
+  MineWorldResourcePackContext:{gl,texture:{},baseURL:'data:image/png;base64,original'},
   MineWorldAtlas:{dataURL:'data:image/png;base64,original'},
   MineWorldBlockGuide:{names:Array(170).fill('stone')},
   MineWorldSound:{clearSamples(){}},MineWorldBridge:{refreshTextureUI(){}}};
@@ -140,5 +141,35 @@ test('Bedrock grey flowing-water flipbook animates the side only',async()=>{
  assert.equal(pack.hasImportedFace(7,0),false);
  assert.equal(pack.hasImportedFace(7,1),true);
  assert.equal(pack.hasImportedFace(7,2),false);
+ await pack.clear();
+});
+
+test('desktop 4096px GPU retains native 64px animated water and transparent leaf texels',async()=>{
+ const {pack,canvases,uploads}=boot(4096,false);
+ const result=await pack.loadFiles([
+  file('water_still.png',png('water_still',64,192)),
+  file('water_still.png.mcmeta',Buffer.from('{"animation":{"frametime":2}}')),
+  file('oak_leaves.png',png('oak_leaves',64,64))
+ ]);
+ assert.equal(result.atlasTilePixels,64);
+ assert.equal(result.faces,6);
+ const atlas=canvases.find(c=>c.width===1024&&c.height===4096);
+ assert.ok(atlas,'desktop 64px atlas should fit a 4096px GPU');
+ for(const [id,name] of [[7,'water_still'],[6,'oak_leaves']]){
+  const tile=id*3,x=tile%16*64,y=Math.floor(tile/16)*64;
+  assert.ok(hasDraw(atlas,name,x,y,64),'64px source pixels must remain sharp');
+ }
+ assert.equal(atlas.ctx.imageSmoothingEnabled,false);
+ assert.equal(pack.updateAnimation(0,60,false),3);
+ assert.equal(uploads.length,3);
+ assert.ok(uploads.every(call=>call.at(-1).width===64&&call.at(-1).height===64));
+ await pack.clear();
+});
+test('coarse-pointer mobile keeps a bounded 32px atlas even on a 4096px GPU',async()=>{
+ const {pack,canvases}=boot(4096,true);
+ const result=await pack.loadFiles([file('oak_leaves.png',png('oak_leaves',64,64))]);
+ assert.equal(result.atlasTilePixels,32);
+ assert.ok(canvases.some(c=>c.width===512&&c.height===2048));
+ assert.ok(!canvases.some(c=>c.width===1024&&c.height===4096));
  await pack.clear();
 });

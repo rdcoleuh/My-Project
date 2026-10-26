@@ -922,10 +922,10 @@ body.in-nether #game-wrap{background:#290f19}
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
     return texture;
   }
-  // Imported HD packs use 32 texels per face; original fallback stays 16.
+  // Imported packs can retain 32 or 64 texels per face within GPU budgets.
   let atlasTilePixels=SIZE;
   function setTilePixels(pixels){
-    if(pixels===16||pixels===32)atlasTilePixels=pixels;
+    if(pixels===16||pixels===32||pixels===64)atlasTilePixels=pixels;
     return atlasTilePixels;
   }
   function uv(b,face,corner){
