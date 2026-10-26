@@ -383,7 +383,7 @@ async function writeAtlas(canvas){
  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
  // Change UV centers only after the atlas upload was accepted by the GPU.
  const tileSize=canvas.width/16;
- if(tileSize===16||tileSize===32){
+ if(tileSize===16||tileSize===32||tileSize===64){
    window.MineWorldAtlas?.setTilePixels?.(tileSize);
    state.tilePixels=tileSize;
  }
