@@ -7,6 +7,14 @@ function maps(){
  vm.runInNewContext(read('entity-texture-maps.js'),context,{filename:'entity-texture-maps.js'});
  return context.window.MineWorldEntityTextureMaps;
 }
+test('hostile mapped skins keep unmapped eye and scar accents colored',()=>{
+ const html=read('index.html');
+ assert.ok(html.includes('const importedBase=window.MineWorldMobPixels.hasImported(mobKind)&&'));
+ assert.ok(html.includes('!window.MineWorldMobPixels.hasMappedKind(mobKind);'));
+ assert.ok(html.includes('const baseTint=mapped||importedBase?[1,1,1]:c;'));
+ assert.ok(html.includes("cube(x-.2,y+1.72,z-.273,.16,.11,.02,[.75,.16,.18])"),
+   'zombie scar is intentionally colored without a separate skin UV');
+});
 test('six face layouts use different real head/body/leg PNG rectangles',()=>{
  const m=maps(),img={width:64,height:32};
  assert.ok(Object.keys(m.defs).length>=6);

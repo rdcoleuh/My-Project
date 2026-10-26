@@ -3622,7 +3622,12 @@ body.in-nether #game-wrap{background:#290f19}
         const mapped=window.MineWorldMobPixels.hasMapped(mobKind,part,dir);
         const uv=mapped?window.MineWorldMobPixels.uv(mobKind,window.MineWorldEntityTextureMaps.vertexCorner(dir,i),part,dir):
           window.MineWorldMobPixels.uv(mobKind,i);
-        const baseTint=mapped||window.MineWorldMobPixels.hasImported(mobKind)?[1,1,1]:c;
+        // A mapped skin covers only the declared head/body/limb faces.
+        // Preserve procedural accent colors on all other cuboids (eyes,
+        // scars, mouth markings, horns) instead of washing them out white.
+        const importedBase=window.MineWorldMobPixels.hasImported(mobKind)&&
+          !window.MineWorldMobPixels.hasMappedKind(mobKind);
+        const baseTint=mapped||importedBase?[1,1,1]:c;
         const tint=hitFlash?[baseTint[0],baseTint[1]*(1-.66*hitFlash),baseTint[2]*(1-.66*hitFlash)]:baseTint;
         let vy=y+v[1]*h,vz=z+v[2]*d;
         if(hinge){
