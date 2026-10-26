@@ -119,6 +119,9 @@
      const fit=key.startsWith('item:')?Math.min(tilePixels/sw,tilePixels/sh):1;
      const width=key.startsWith('item:')?Math.max(1,Math.round(sw*fit)):tilePixels;
      const height=key.startsWith('item:')?Math.max(1,Math.round(sh*fit)):tilePixels;
+     // Imported PNG alpha must replace, not reveal, procedural fallback pixels.
+     // Clear the full slot, including padding around non-square item sprites.
+     ctx.clearRect?.(dx,dy,tilePixels,tilePixels);
      ctx.imageSmoothingEnabled=false;
      ctx.drawImage(img,sx,sy,sw,sh,dx+Math.floor((tilePixels-width)/2),
        dy+Math.floor((tilePixels-height)/2),width,height);
@@ -126,6 +129,9 @@
    }
    for(const {key,img,rect} of faceTiles){
      const index=positions.get(key),dx=(index%COLS)*tilePixels,dy=Math.floor(index/COLS)*tilePixels;
+     ctx.imageSmoothingEnabled=false;
+     // Transparent mob-face texels must not expose the grayscale base atlas.
+     ctx.clearRect?.(dx,dy,tilePixels,tilePixels);
      ctx.imageSmoothingEnabled=false;
      ctx.drawImage(img,rect.x,rect.y,rect.width,rect.height,dx,dy,tilePixels,tilePixels);
    }
