@@ -68,6 +68,9 @@ for(const [id,tex] of Object.entries({
  168:'crafting_table_front',169:'red_bed_top'
 })){bind(Number(id),tex);}
 bind(1,'grass_block_top','grass_block_side','dirt');
+// Player-supplied flowing sprites belong on liquid sides, still on top/bottom.
+bind(7,'water_still','water_flow','water_still');
+bind(66,'lava_still','lava_flow','lava_still');
 for(const [id,stem,leaf] of [
  [5,'oak_log','oak_log_top'],[15,'poplar_log','poplar_log_top'],
  [30,'spruce_log','spruce_log_top'],[32,'birch_log','birch_log_top'],
@@ -136,7 +139,10 @@ Object.assign(aliases,{
  blast_furnace_front:['blast_furnace_front_off'],
  smoker_front:['smoker_front_off'],
  water_still:['water_still_grey'],
+ // Prefer authored flow artwork, but preserve still-only partial packs.
+ water_flow:['water_flow_grey','flowing_water','water_still','water_still_grey'],
  lava_still:['lava_still'],
+ lava_flow:['flowing_lava','lava_still'],
  chiseled_nether_bricks:['chiseled_nether_brick'],
  crafting_table_top:['workbench_top'],
  crafting_table_front:['workbench_front'],

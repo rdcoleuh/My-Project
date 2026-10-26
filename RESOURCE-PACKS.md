@@ -109,3 +109,19 @@ Java `.png.mcmeta` animations can begin at a frame other than zero (for example,
 ## Imported Java quarter-turn cuboids (6.57)
 
 A player-selected Java blockstate can rotate a **single axis-aligned cuboid** by 90°, 180°, or 270° around the Y axis. MineWorld now rotates that cuboid's X/Z bounds about the block center as well as its face textures and UV orientation. This corrects off-center shapes whose artwork previously fell back instead of rendering, and keeps imported mesh and collision bounds aligned. The change does not rotate or approximate angled elements, multi-element models, X/Z blockstate rotations, or incomplete six-face models; those still use the established fallback. Imported art stays local, nearest-neighbor filtered, and subject to existing mobile GPU limits. Existing world saves and touch controls are unchanged.
+
+### Imported liquid faces and foliage (6.59)
+
+Local Java Edition `water_still.png` and `lava_still.png` are used on
+horizontal faces, while `water_flow.png` and `lava_flow.png` supply
+vertical faces. Their separate `.png.mcmeta` animations retain their
+authored frame timing. Bedrock `water_flow_grey.png` and flipbooks are
+recognized too. When a player imports only still artwork, the sides
+reuse it instead of exposing procedural art. Imported leaf alpha is
+cleared before drawing and nearest-neighbor scaling is retained;
+32-pixel leaves remain native resolution when the GPU supports the
+2048-pixel atlas, otherwise the 16-pixel mobile fallback is used.
+
+No original Minecraft artwork is included or downloaded. Fluid geometry
+and translucency are still simplified and are not a complete
+Java/Bedrock renderer.
