@@ -107,6 +107,31 @@ test('animated 32px sprites update GPU subtiles at 32px coordinates',async()=>{
  assert.ok(refreshed>0);
  assert.ok(x.subUploads.some(a=>a[2]===288&&a[3]===0&&a.at(-1).width===32));
 });
+test('wide static block art retains more horizontal source texels on capable GPUs',async()=>{
+ const x=start(64,16,2048),pack=x.window.MineWorldLocalTextures;
+ const result=await pack.loadFiles([x.file('stone.png')]);
+ assert.equal(result.atlasTilePixels,32,'64x16 static source must not be mistaken for a 16px frame');
+ assert.equal(x.uploads.at(-1).at(-1).height,2048);
+ assert.ok(x.draws.some(a=>a.length===9&&a[3]===64&&a[4]===16&&
+  a[7]===32&&a[8]===32),'HD tile must sample the entire wide original image');
+ await pack.clear();
+});
+test('implicit vertical animation measures individual frames, not the tall strip',async()=>{
+ const x=start(16,64,2048),pack=x.window.MineWorldLocalTextures;
+ const result=await pack.loadFiles([x.file('stone.png')]);
+ assert.equal(result.atlasTilePixels,16,'four 16x16 frames should not allocate a 32px atlas');
+ assert.ok(x.draws.some(a=>a.length===9&&a[3]===16&&a[4]===16),
+  'first frame should sample 16x16 rather than shrinking all four frames');
+ await pack.clear();
+});
+test('wide static source respects 1024px mobile GPU atlas limit',async()=>{
+ const x=start(64,16,1024),pack=x.window.MineWorldLocalTextures;
+ const result=await pack.loadFiles([x.file('stone.png')]);
+ assert.equal(result.atlasTilePixels,16);
+ assert.equal(result.faces,3);
+ assert.ok(x.uploads.every(a=>a.at(-1).height<=1024));
+ await pack.clear();
+});
 test('HD atlas uses nearest-neighbor everywhere and never writes to world saves',()=>{
  const src=read('local-resource-pack.js'),sw=read('sw.js');
  assert.match(src,/hctx\.imageSmoothingEnabled=false/);

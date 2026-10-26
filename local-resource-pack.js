@@ -768,8 +768,14 @@ async function applyResources(zip,sourceName){
  if(!faces&&!directionalFaces&&!audio&&!items&&!mobArt.size)
   throw Error('No compatible block, item or sound files found.');
  // A 32px atlas is 512x2048 RGBA (~4MiB); 16px packs keep their 1MiB atlas.
- const sourceSize=(image,geometry)=>image?Math.min(
-   geometry?.width||image.width,geometry?.height||image.height):0;
+ // A wide static PNG can contain more horizontal texels than a 16px tile.
+ // Measure the actual sampled frame, not the whole animation strip: a
+ // 16x64 implicit vertical animation still has 16x16 source frames.
+ const sourceSize=(image,geometry)=>{
+   if(!image)return 0;
+   const frame=geometry||window.MineWorldResourceAnimation?.frameDimensions(image);
+   return Math.max(frame?.width||image.width,frame?.height||image.height);
+ };
  const native32=nativeTiles.some(t=>Math.max(
    sourceSize(t.image,t.baseGeometry),sourceSize(t.overlay,t.overlayGeometry))>16);
  // The HD atlas is 512x2048 (4 MiB RGBA). WebGL 1 devices can expose
