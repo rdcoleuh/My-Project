@@ -28,24 +28,21 @@ function boot(maxTexture=2048){
  api.create(gl,{cow:{},pig:{}});
  return {api,events,uploads,filters,gl,ctx};
 }
-test('imported transparent mob faces and item PNGs clear their procedural atlas slots first',()=>{
+test('imported animal faces retain opaque fallback while item icons clear their slots',()=>{
  const x=boot();
  assert.equal(x.api.applyImported(new Map([
   ['cow',{width:64,height:32}],['item:diamond',{width:16,height:16}]
  ])),2);
  assert.equal(x.api.size,32);
  const operations=x.events.filter(e=>e[0]==='clear'||e[0]==='draw');
- assert.equal(operations.length,38,'one clear and draw per 18 cow faces plus the item icon; mapped cows retain grayscale base');
- for(let i=0;i<operations.length;i+=2){
-  const clear=operations[i],draw=operations[i+1];
-  assert.equal(clear[0],'clear','background must be cleared before each imported draw');
-  assert.equal(draw[0],'draw');
-  const [,x0,y0,w,h]=clear;
-  assert.equal(w,32);assert.equal(h,32);
-  // drawImage(img,sx,sy,sw,sh,dx,dy,width,height)
-  assert.ok(draw[6]>=x0&&draw[7]>=y0);
-  assert.ok(draw[6]+draw[8]<=x0+w&&draw[7]+draw[9]<=y0+h);
- }
+ assert.equal(operations.filter(e=>e[0]==='draw').length,19,
+  '18 cow face crops plus one item image');
+ assert.equal(operations.filter(e=>e[0]==='clear').length,1,
+  'only the item slot is cleared; cow faces retain opaque grayscale fallback');
+ assert.equal(operations[0][0],'clear','item padding must be cleared');
+ assert.equal(operations[1][0],'draw');
+ for(const e of operations.slice(2))assert.equal(e[0],'draw',
+  'clearing a mapped animal face can make its body disappear');
  assert.ok(!operations.some(e=>e[0]==='clear'&&e[1]===32&&e[2]===0),
   'unimported pig retains its procedural fallback');
  assert.equal(x.ctx.imageSmoothingEnabled,false);
