@@ -54,11 +54,11 @@ function vertexCorner(face,index,renderer='cube'){
  const table=renderer==='animal'?{
   // For each outward-looking face, source U increases toward the viewer's
   // right and source V increases downward. The old animal table mirrored
-  // front/back/left and rotated bottom by 90 degrees.
+  // front/back and rotated bottom by 90 degrees.
   // Animal-models.js emits front vertices bottom-left -> bottom-right ->
   // top-right -> top-left. Match those to PNG top-left-origin corners.
   // The rear is viewed from +Z, reversing horizontal screen direction.
-  front:[1,2,3,0],back:[2,1,0,3],
+  front:[2,1,0,3],back:[1,2,3,0],
   left:[1,2,3,0],right:[1,2,3,0],
   top:[0,3,2,1],bottom:[0,3,2,1]
  }:{
