@@ -2045,7 +2045,10 @@ body.in-nether #game-wrap{background:#290f19}
         if(iso)swatch.appendChild(sprite);
         // Prefer a matching player-imported item PNG when the pack supplies one.
         // Otherwise retain the three-face, pack-textured block projection.
-        if(window.MineWorldLocalTextures?.active){
+        // Full cubes render as three-face isometric models, not flattened item PNGs.
+        // Thin/cross-shaped blocks can instead use their imported item sprite.
+        const flatBlock=/\\b(?:rail|torch|ladder|vine|flower|grass|fern|sapling|door|trapdoor|carpet|pane|sign|banner|button|pressure plate|lever|repeater|comparator|redstone|lily pad|sea pickle|mushroom|candle)\\b/i.test(label);
+        if(flatBlock&&window.MineWorldLocalTextures?.active){
           const packGeneration=window.MineWorldLocalTextures.generation;
           window.MineWorldLocalTextures.blockItemIcon?.(id).then(src=>{
             if(!src||!swatch.isConnected||packGeneration!==window.MineWorldLocalTextures?.generation)return;

@@ -50,9 +50,9 @@ function paint(canvas,blockId){
   // Left face from (4,10) to (16,16) to (16,28) to (4,22)
   let u=(dx-4)/12,v=(dy-10-u*6)/12;
   if(u>=0&&u<1&&v>=0&&v<1)put(x,y,u,v,1,.80);
-  // Right face from (16,16) to (28,10) to (28,22) to (16,28)
+  // Right face uses its OWN imported face (index 2), not the left-side texture.\n  // Right face from (16,16) to (28,10) to (28,22) to (16,28)
   u=(dx-16)/12;v=(dy-16+u*6)/12;
-  if(u>=0&&u<1&&v>=0&&v<1)put(x,y,u,v,1,.65);
+  if(u>=0&&u<1&&v>=0&&v<1)put(x,y,u,v,2,.72);
   // Top from (16,4), (28,10), (16,16), (4,10)
   const q=(dx-16)/12,r=(dy-4)/6;
   u=(q+r)/2;v=(r-q)/2;
