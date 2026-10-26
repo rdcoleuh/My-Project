@@ -20,7 +20,7 @@ test('model library has original scaled cattle, sheep, chickens, pigs and four m
     for(const n of numbers.slice(0,6))assert.ok(Number.isFinite(n),'invalid '+kind);
     const validParts=kind==='chicken'?
       ['body','head','leg','wing','beak','comb','eye','wattle','tail']:
-      ['body','head','leg'];
+      ['body','head','leg','snout','ear','eye','nostril','tail','wool','muzzle','horn','udder','patch'];
     assert.ok(validParts.includes(numbers[6]),'unknown cuboid part '+kind);
     assert.ok(['front','back','top','bottom','left','right'].includes(numbers[7]));
     assert.ok(Number.isInteger(numbers[8])&&numbers[8]>=0&&numbers[8]<=3);
@@ -35,6 +35,23 @@ test('model library has original scaled cattle, sheep, chickens, pigs and four m
  const unsheared=A.draw({id:1,kind:'sheep',x:5,y:5,z:5},()=>{});
  const sheared=A.draw({id:1,kind:'sheep',x:5,y:5,z:5,sheared:true},()=>{});
  assert.ok(unsheared>sheared,'shearing should remove wool tufts');
+});
+test('animal detail geometry preserves facial accents and wool when importing skin maps',()=>{
+ const expected={
+  pig:['snout','ear','eye','nostril','tail'],
+  cow:['muzzle','horn','eye','udder','ear','patch'],
+  sheep:['wool','muzzle','eye','tail']
+ };
+ for(const [kind,parts] of Object.entries(expected)){
+  const seen=new Map();
+  A.draw({kind,id:2,x:5,y:6,z:5,heading:0},(x,y,z,r,g,b,part)=>{
+   if(!seen.has(part))seen.set(part,[r,g,b]);
+  });
+  for(const part of parts){
+   assert.ok(seen.has(part),kind+' missing '+part);
+   assert.ok(seen.get(part).some(v=>v<.95),kind+' '+part+' must retain original tint');
+  }
+ }
 });
 test('biome appropriate animals spawn; undead mounts no longer occur in farms',()=>{
  assert.deepEqual(Array.from(B.NATURAL),['cow','sheep','pig','chicken','horse','donkey','llama','camel']);

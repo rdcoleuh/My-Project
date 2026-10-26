@@ -3668,7 +3668,7 @@ body.in-nether #game-wrap{background:#290f19}
         const order=[0,1,2,0,2,3];
         animalModels.draw(m,(px,py,pz,r,g,b,part,face,corner)=>{
           const fallbackUV=window.MineWorldMobPixels.uv(m.kind,order[index++%6]);
-          const mapped=window.MineWorldMobPixels.hasMapped(m.kind,part,face);
+          const mapped=window.MineWorldMobPixels.hasMapped(m.kind,part,face,m);
           const uv=mapped?window.MineWorldMobPixels.uv(m.kind,window.MineWorldEntityTextureMaps.vertexCorner(face,corner,'animal'),part,face):fallbackUV;
           if(mapped||(window.MineWorldMobPixels.hasImported(m.kind)&&
              !window.MineWorldMobPixels.hasMappedKind(m.kind))){r=1;g=1;b=1;}

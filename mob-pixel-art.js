@@ -147,7 +147,11 @@
    gpu.texParameteri(gpu.TEXTURE_2D,gpu.TEXTURE_MAG_FILTER,gpu.NEAREST);
    return imported.size;
  }
- function hasMapped(kind,part,face){
+ function hasMapped(kind,part,face,appearance){
+   // Sheared sheep must expose their original short-coat material, not
+   // repaint it with the player pack's wool-body artwork. The head and legs
+   // continue using the imported skin, and no save format changes are needed.
+   if(kind==='sheep'&&part==='body'&&appearance?.sheared)return false;
    return imported.has(kind)&&positions.has(faceKey(kind,part,face));
  }
  function uv(kind,corner,part,face){

@@ -93,8 +93,8 @@ test('imported species use mapped cuboid faces with nearest-neighbor sampling an
  vm.runInNewContext(read('entity-texture-maps.js'),context);
  vm.runInNewContext(read('mob-pixel-art.js'),context);
  const art=context.window.MineWorldMobPixels;
- art.create(gl,{cow:{},zombie:{},horse:{},chicken:{}});
- art.applyImported(new Map([['chicken',{width:64,height:32}],['cow',{width:64,height:32}],
+ art.create(gl,{cow:{},zombie:{},horse:{},chicken:{},sheep:{}});
+ art.applyImported(new Map([['chicken',{width:64,height:32}],['cow',{width:64,height:32}],['sheep',{width:64,height:32}],
   ['item:diamond',{width:16,height:16}]]));
  assert.ok(art.hasMapped('chicken','wing','left'));
  assert.ok(art.hasMapped('chicken','beak','front'));
@@ -102,8 +102,13 @@ test('imported species use mapped cuboid faces with nearest-neighbor sampling an
  assert.equal(art.hasMappedKind('chicken'),true);
  assert.equal(art.hasMappedKind('cow'),true);
  assert.equal(art.hasMappedKind('horse'),false);
- // 18 cow face crops + 36 chicken face crops + one unmapped item icon.
- assert.equal(draws.length,55);
+ // 18 cow, 36 chicken and 18 sheep face crops + one item icon.
+ assert.equal(draws.length,73);
+ assert.ok(art.hasMapped('sheep','body','front'));
+ assert.equal(art.hasMapped('sheep','body','front',{sheared:true}),false);
+ assert.ok(art.hasMapped('sheep','head','front',{sheared:true}));
+ assert.ok(art.hasMapped('sheep','leg','left',{sheared:true}));
+ assert.equal(art.hasMapped('cow','eye','front'),false);
  assert.ok(art.hasMapped('cow','head','front'));
  assert.ok(art.hasMapped('cow','body','back'));
  assert.ok(art.hasMapped('cow','leg','left'));
@@ -125,7 +130,8 @@ test('actual animal and hostile renderers send face/part identity and preserve p
  assert.ok(animals.includes('part,faceNames[f],k'));
  assert.ok(animals.includes("color,'leg'"));
  assert.ok(animals.includes("face,'head'"));
- assert.ok(html.includes('MineWorldMobPixels.hasMapped(m.kind,part,face)'));
+ assert.ok(html.includes('MineWorldMobPixels.hasMapped(m.kind,part,face,m)'));
+ assert.ok(read('mob-pixel-art.js').includes("kind==='sheep'&&part==='body'&&appearance?.sheared"));
  assert.ok(html.includes('!window.MineWorldMobPixels.hasMappedKind(m.kind)'));
  assert.ok(read('mob-pixel-art.js').includes('if(mappedKinds.has(key)){imported.add(key);continue;}'));
  assert.ok(html.includes("MineWorldEntityTextureMaps.vertexCorner(face,corner,'animal')"));
