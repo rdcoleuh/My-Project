@@ -396,6 +396,21 @@ body.in-nether #game-wrap{background:#290f19}
 </style>
 <link rel="stylesheet" href="./visual-polish.css">
 <title>MineWorld 6.42 — Java Default Blockstate Rotation</title>
+<style id="mw-classic-hud">
+/* Pixel-aligned survival HUD, independent artwork; imported item icons remain enabled. */
+#hotbar{background:#252525e8!important;border:3px solid #080808!important;border-radius:2px!important;box-shadow:inset 0 0 0 2px #858585,0 3px 10px #0009!important;backdrop-filter:none!important;gap:2px!important}
+#hotbar .hot-item{background:#7777!important;border:2px solid #343434!important;border-radius:0!important;box-shadow:inset 1px 1px #aaa8!important}
+#hotbar .hot-item.active{border:3px solid #fff!important;box-shadow:0 0 0 1px #171717,inset 0 0 0 1px #fff!important}
+#hotbar .hot-item .swatch,#hotbar .hot-item img,#hotbar .hot-item canvas{image-rendering:pixelated!important}
+#hotbar .hot-item>span{display:none!important}
+#health-text,#hunger-text{display:inline-flex!important;gap:1px;align-items:center;font-family:monospace;white-space:nowrap}
+.mw-stat-icon{display:inline-block;position:relative;width:15px;height:18px;font-size:20px;line-height:18px;text-align:center;text-shadow:1px 1px #000;overflow:hidden}
+#health-text .mw-stat-icon.full{color:#f23b44}#hunger-text .mw-stat-icon.full{color:#b77a35}
+.mw-stat-icon.empty{color:#474747}
+.mw-stat-half{position:absolute;left:0;top:0;width:50%;height:100%;overflow:hidden;color:#f23b44}
+#hunger-text .mw-stat-half{color:#b77a35}
+@media(max-width:550px){.mw-stat-icon{width:12px;font-size:16px}}
+</style>
 </head>
 <body>
 <div id="game-wrap">
@@ -2041,8 +2056,31 @@ body.in-nether #game-wrap{background:#290f19}
   function updateSurvivalHUD(){
     updateExperienceHUD();
     $('survival-hud').classList.toggle('hidden',gameMode!=='survival');
-    $('health-text').textContent='♥ '+Math.ceil(health)+'/20';
-    $('hunger-text').textContent='🍖 '+Math.ceil(hunger)+'/20';$('hunger-text').title='Saturation: '+hungerSaturation.toFixed(1)+' · exhaustion: '+hungerDrain.toFixed(2);
+    // Ten discrete two-point HUD icons, preserving accessible numeric descriptions.
+    const paintStat=(node,value,symbol,emptySymbol,kind)=>{
+      const points=Math.max(0,Math.min(20,Number(value)||0));
+      node.replaceChildren();
+      node.setAttribute('role','img');
+      node.setAttribute('aria-label',kind+': '+Math.ceil(points)+' of 20');
+      node.title=kind+': '+Math.ceil(points)+'/20';
+      for(let i=0;i<10;i++){
+        const icon=document.createElement('span');
+        const remaining=Math.max(0,Math.min(2,points-i*2));
+        icon.className='mw-stat-icon '+(remaining>=2?'full':remaining>=1?'half':'empty');
+        icon.setAttribute('aria-hidden','true');
+        icon.textContent=remaining>=2?symbol:emptySymbol;
+        if(remaining>=1&&remaining<2){
+          const fill=document.createElement('span');
+          fill.className='mw-stat-half';
+          fill.textContent=symbol;
+          icon.appendChild(fill);
+        }
+        node.appendChild(icon);
+      }
+    };
+    paintStat($('health-text'),health,'♥','♡','Health');
+    paintStat($('hunger-text'),hunger,'◆','◇','Hunger');
+    $('hunger-text').title+=' · Saturation: '+hungerSaturation.toFixed(1)+' · exhaustion: '+hungerDrain.toFixed(2);
     $('eat-btn').textContent='Eat '+(bag.cooked?'🍖 '+bag.cooked:bag.raw?'🥩 '+bag.raw:'🍄 '+inventory[17]);$('weapon-readout').textContent=equipped==='none'?'✊ Fists':(equipped==='sword'?'⚔ ':equipped==='hoe'?'🌾 ':equipped==='axe'?'🪓 ':'⛏ ')+(tools[equipped]==='none'?'Hands':tools[equipped]+' '+equipped);
   }
   function setGameMode(next){
