@@ -1108,23 +1108,28 @@ function hudIcon(kind,fill){
  if(!source||!['heart','food','hotbar'].includes(kind)||
    !/^(full|half|empty|background|selected|slot|slot[0-8])$/.test(fill))return Promise.resolve(null);
  const key='hud:'+kind+':'+fill;
- if(!source.entries.has(key))return Promise.resolve(null);
+ const derivedSlot=kind==='hotbar'&&/^slot[0-8]$/.test(fill)&&
+   !source.entries.has(key)&&source.entries.has('hud:hotbar:background');
+ if(!source.entries.has(key)&&!derivedSlot)return Promise.resolve(null);
  if(state.itemCache.has(key))return state.itemCache.get(key);
  const generation=state.itemGeneration;
  const promise=(async()=>{
-   const image=await imageFromPng(await source.get(key));
+   const image=await imageFromPng(await source.get(derivedSlot?'hud:hotbar:background':key));
    if(generation!==state.itemGeneration)return null;
+   const rect=derivedSlot?window.MineWorldHotbarUV?.slotRect(image.width,image.height,Number(fill.slice(-1))):null;
+   if(derivedSlot&&!rect)return null;
    const backgroundKey='hud:'+kind+':empty';
    const underlay=kind!=='hotbar'&&fill!=='empty'&&source.entries.has(backgroundKey)?
      await imageFromPng(await source.get(backgroundKey)):null;
    if(generation!==state.itemGeneration)return null;
    const canvas=document.createElement('canvas');
-   canvas.width=image.width;canvas.height=image.height;
+   canvas.width=rect?rect.width:image.width;canvas.height=rect?rect.height:image.height;
    const ctx=canvas.getContext('2d',{alpha:true});
    if(!ctx)return null;
    ctx.imageSmoothingEnabled=false;
    if(underlay)ctx.drawImage(underlay,0,0,canvas.width,canvas.height);
-   ctx.drawImage(image,0,0);
+   if(rect)ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,0,0,canvas.width,canvas.height);
+   else ctx.drawImage(image,0,0);
    return generation===state.itemGeneration?canvas.toDataURL('image/png'):null;
  })().catch(error=>{console.warn('Ignoring damaged local HUD image '+key,error);return null;});
  state.itemCache.set(key,promise);

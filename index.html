@@ -484,6 +484,13 @@ body.in-nether #game-wrap{background:#290f19}
  #survival-hud button{min-height:20px!important;padding:1px 4px!important}
  #coord-readout{opacity:.72;font-size:9px;padding:4px 6px}
 }
+/* A complete imported bar sheet is sliced into native pixel-grid slots, not
+   stretched across nine buttons. For unsliceable bar art, expose the image
+   behind transparent buttons rather than obscuring it with gray placeholders. */
+#hotbar.mw-pack-hotbar.mw-pack-hotbar-slots{background-image:none!important}
+#hotbar.mw-pack-hotbar.mw-pack-bar-image .hot-item:not(.mw-pack-slot){
+ background:transparent!important;border-color:transparent!important;box-shadow:none!important;
+}
 /* Pack art retains a visible selected slot even when selection PNG is missing. */
 #hotbar.mw-pack-hotbar .hot-item.active:not(.mw-pack-selected){
  outline:2px solid #f8f8f8!important;outline-offset:-2px!important;
@@ -2106,8 +2113,9 @@ body.in-nether #game-wrap{background:#290f19}
         if(survival&&count>0)icon.appendChild(qty);
         // Hotbar uses the same player-owned PNGs as Java-style inventory.
         if(key&&!key.startsWith('block:')){
+          const packGeneration=window.MineWorldLocalTextures?.generation;
           window.MineWorldLocalTextures?.itemIcon?.(key).then(src=>{
-            if(!src||!icon.isConnected)return;
+            if(!src||!icon.isConnected||packGeneration!==window.MineWorldLocalTextures?.generation)return;
             const art=document.createElement('img');
             art.src=src;art.alt='';art.width=art.height=30;
             art.style.cssText='width:30px;height:30px;object-fit:contain;image-rendering:pixelated;';
@@ -2175,8 +2183,11 @@ body.in-nether #game-wrap{background:#290f19}
     if(generation!==(window.MineWorldLocalTextures?.generation??-1))return;
     const root=$('hotbar');
     if(!root)return;
-    root.classList.toggle('mw-pack-hotbar',!!background||!!genericSlot||slots.some(Boolean));
-    root.style.setProperty('--mw-pack-hotbar-bg',background?'url("'+background+'")':'none');
+    const allSlots=slots.length===9&&slots.every(Boolean);
+    root.classList.toggle('mw-pack-hotbar',!!background||!!selected||!!genericSlot||slots.some(Boolean));
+    root.classList.toggle('mw-pack-hotbar-slots',allSlots);
+    root.classList.toggle('mw-pack-bar-image',!!background&&!allSlots&&!genericSlot);
+    root.style.setProperty('--mw-pack-hotbar-bg',background&&!allSlots?'url("'+background+'")':'none');
     root.style.setProperty('--mw-pack-hotbar-selected',selected?'url("'+selected+'")':'none');
     root.querySelectorAll('.hot-item').forEach((item,i)=>{
       item.classList.toggle('mw-pack-selected',!!selected&&item.classList.contains('active'));
@@ -4830,6 +4841,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
 <script src="./java-model-faces.js"></script>
 <script src="./java-directional-faces.js"></script>
 <script src="./java-face-transforms.js"></script>
+<script src="./hotbar-sprite-uv.js"></script>
 <script src="./local-resource-pack.js"></script>
 <script src="./visual-polish.js"></script>
 </body>
