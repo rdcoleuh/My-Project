@@ -50,6 +50,8 @@ test('hostile attacks require current line of sight even between cached sight sc
  const html=read('index.html');
  assert.ok(html.includes('if(chase&&m.attack<=0&&mobHasLineOfSight(m,target))'));
  assert.ok(html.includes('const close=chase&&dist<3'),'creeper fuse remains proximity-triggered');
+ assert.ok(html.includes('Math.abs((target?.y||0)-m.y)<2.5&&mobHasLineOfSight(m,target)'),
+   'creepers must regain direct sight before advancing their fuse');
  assert.ok(html.includes("intent==='melee'&&dist<.9"),'close-range melee monsters stop walking through players');
  assert.ok(html.includes("intent==='fuse'"),'creepers pause movement while priming');
  assert.ok(html.includes("intent==='ranged'"),'ranged mobs hold position when attacking');

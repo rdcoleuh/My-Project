@@ -3662,7 +3662,7 @@ body.in-nether #game-wrap{background:#290f19}
       m.moving=Math.hypot(m.x-beforeX,m.z-beforeZ)>.001;
       if(m.moving&&animals.FOOD[m.kind])m.gait=(m.gait||0)+dt*(m.following?8.1:m.fleeTime>0?10:3.7);
       if(m.kind==='creeper'){
-        const close=chase&&dist<3&&Math.abs((target?.y||0)-m.y)<2.5;
+        const close=chase&&dist<3&&Math.abs((target?.y||0)-m.y)<2.5&&mobHasLineOfSight(m,target);
         const fuse=mobAI.creeperTick(m.fuse||0,dt,close);
         m.fuse=fuse.fuse;
         if(fuse.explode){
