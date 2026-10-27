@@ -357,7 +357,8 @@ async function go(browser,name,mobile){
     const good=badge.parentElement===slot&&style.display!=='none'&&
       rect.width>0&&rect.height>0&&rect.left>=outer.left-1&&
       rect.right<=outer.right+1&&rect.top>outer.top+outer.height/2&&
-      outer.bottom-rect.bottom>=0&&outer.bottom-rect.bottom<=5;
+      // Account for the 3px inner inset plus the button's border/padding.
+      outer.bottom-rect.bottom>=0&&outer.bottom-rect.bottom<=8;
     const diagnostics={good,outer:{x:outer.x,y:outer.y,width:outer.width,height:outer.height,
       bottom:outer.bottom,right:outer.right},rect:{x:rect.x,y:rect.y,width:rect.width,
       height:rect.height,bottom:rect.bottom,right:rect.right},display:style.display,
