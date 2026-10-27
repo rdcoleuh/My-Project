@@ -25,7 +25,11 @@
    if(visible&&[visible.x,visible.y,visible.z].every(Number.isFinite))
      return {x:visible.x,y:visible.y,z:visible.z,ttl:2};
    if(!last||![last.x,last.y,last.z,last.ttl].every(Number.isFinite))return null;
-   const ttl=Math.max(0,last.ttl-Math.max(0,Math.min(.1,Number(dt)||0)));
+   // Pursuit memory is measured in elapsed seconds, not simulation frames.
+   // A suspended/mobile tab may resume after several seconds; limiting the
+   // decrement to 0.1 kept monsters tracking an already-lost player.
+   const elapsed=Math.max(0,Math.min(last.ttl,Number(dt)||0));
+   const ttl=last.ttl-elapsed;
    return ttl>0?{x:last.x,y:last.y,z:last.z,ttl}:null;
  }
  // Local collision-aware steering. Check straight ahead first, then bounded

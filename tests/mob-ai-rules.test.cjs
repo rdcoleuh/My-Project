@@ -82,3 +82,12 @@ test('creeper movement only pauses inside its actual explosion trigger range',()
  assert.ok(html.includes("(intent==='fuse'&&Math.abs(target.y-m.y)<2.5)"),
    'creepers must not freeze when the player is vertically outside fuse range');
 });
+
+test('last-seen pursuit uses actual elapsed time after background pauses',()=>{
+ const seen=rules.pursuitPoint(null,{x:4,y:2,z:6},0);
+ assert.equal(rules.pursuitPoint(seen,null,.5).ttl,1.5);
+ assert.equal(rules.pursuitPoint(seen,null,2.5),null,
+   'a long suspended frame must expire last-seen memory immediately');
+ assert.equal(rules.pursuitPoint(seen,null,-10).ttl,2,
+   'a negative delta must not extend or reduce pursuit memory');
+});
