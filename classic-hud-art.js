@@ -37,5 +37,15 @@ function paint(kind,fill){
  ctx.imageSmoothingEnabled=false;
  return canvas;
 }
-window.MineWorldHudArt=Object.freeze({paint,pixels});
+// One displayed half-icon represents one point of the 0-20 scale.
+function points(value){
+ const number=Number(value);
+ return Number.isFinite(number)?Math.max(0,Math.min(20,Math.floor(number))):0;
+}
+function slots(value){
+ const amount=points(value);
+ return Array.from({length:10},(_,i)=>amount>=i*2+2?'full':amount===i*2+1?'half':'empty');
+}
+function description(kind,value){return kind+': '+points(value)+' of 20';}
+window.MineWorldHudArt=Object.freeze({paint,pixels,points,slots,description});
 })();
