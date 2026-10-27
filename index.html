@@ -3476,7 +3476,7 @@ body.in-nether #game-wrap{background:#290f19}
       let best=null,bestDist=26;
       for(const p of players){
         const d=Math.hypot(p.x-m.x,p.y-m.y,p.z-m.z);
-        if(d<bestDist&&mobHasLineOfSight(m,p)){best=p;bestDist=d;}
+        if(d<bestDist&&mobAI.withinSight(m,p,p.id===null&&isCrouching?15:25)&&mobHasLineOfSight(m,p)){best=p;bestDist=d;}
       }
       m.sightTarget=best?(best.id===null?'__host__':String(best.id)):null;
     }
