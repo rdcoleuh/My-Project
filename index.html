@@ -502,6 +502,15 @@ body.in-nether #game-wrap{background:#290f19}
 #health-text .mw-pack-stat-clipped,#hunger-text .mw-pack-stat-clipped{
  position:absolute;inset:0;clip-path:inset(0 50% 0 0);pointer-events:none;
 }
+/* Preserve the square pixel grid of player-owned slot and selection PNGs
+   even when the clickable hotbar button is taller on a narrow touchscreen. */
+#hotbar .hot-item.mw-pack-slot{
+ background-size:100% auto!important;background-position:center!important;
+ image-rendering:pixelated!important;
+}
+#hotbar .hot-item.active.mw-pack-selected::after{
+ background-size:contain!important;background-position:center!important;
+}
 </style>
 </head>
 <body>
@@ -2087,8 +2096,13 @@ body.in-nether #game-wrap{background:#290f19}
         // Full cubes render as three-face isometric models, not flattened item PNGs.
         // Thin/cross-shaped blocks can instead use their imported item sprite.
         const flatBlock=/\b(?:rail|torch|ladder|vine|flower|grass|fern|sapling|door|trapdoor|carpet|pane|sign|banner|button|pressure plate|lever|repeater|comparator|redstone|lily pad|sea pickle|mushroom|candle)\b/i.test(label);
-        if(flatBlock&&window.MineWorldLocalTextures?.active){
-          const packGeneration=window.MineWorldLocalTextures.generation;
+        // A GUI/item-only pack can contain block item PNGs without terrain.
+        // Prefer those sprites when no imported block faces exist; preserve
+        // three-face terrain projections for full cubes with imported terrain.
+        const localPack=window.MineWorldLocalTextures;
+        const importedBlockFaces=[0,1,2].some(face=>localPack?.hasImportedFace?.(id,face));
+        if(localPack?.hasPack&&(flatBlock||!importedBlockFaces)){
+          const packGeneration=localPack.generation;
           window.MineWorldLocalTextures.blockItemIcon?.(id).then(src=>{
             if(!src||!swatch.isConnected||packGeneration!==window.MineWorldLocalTextures?.generation)return;
             const art=document.createElement('img');
