@@ -358,9 +358,13 @@ async function go(browser,name,mobile){
       rect.width>0&&rect.height>0&&rect.left>=outer.left-1&&
       rect.right<=outer.right+1&&rect.top>outer.top+outer.height/2&&
       outer.bottom-rect.bottom>=0&&outer.bottom-rect.bottom<=5;
-    badge.remove();return good;
+    const diagnostics={good,outer:{x:outer.x,y:outer.y,width:outer.width,height:outer.height,
+      bottom:outer.bottom,right:outer.right},rect:{x:rect.x,y:rect.y,width:rect.width,
+      height:rect.height,bottom:rect.bottom,right:rect.right},display:style.display,
+      position:style.position,bottom:style.bottom,right:style.right};
+    badge.remove();return diagnostics;
   });
-  assert.equal(countBadge,true,name+': 64-stack badge is hidden or clipped by hotbar art');
+  assert.equal(countBadge.good,true,name+': 64-stack badge is hidden or clipped by hotbar art '+JSON.stringify(countBadge));
   // A resource pack may provide only a selection border or one slot PNG.
   // Unprovided slot backgrounds must remain usable in desktop and touch HUDs.
   // The classic fallback tile is intentionally painted on ::before, while
