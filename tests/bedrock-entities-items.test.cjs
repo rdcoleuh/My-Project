@@ -124,7 +124,7 @@ test('renderer uses pack art for world drop blocks, mob skins and hotbar icons',
  const html=read('index.html');
  assert.ok(html.includes("MineWorldMobPixels.hasImported(mobKind)"));
  assert.ok(html.includes("MineWorldMobPixels.hasImported(m.kind)"));
- assert.ok(html.includes("window.MineWorldLocalTextures?.itemIcon?.(key)"));
+ assert.ok(html.includes("itemPack?.itemIcon?.(key)"));
  assert.ok(html.includes("window.MineWorldMobPixels?.hasImported(iconKey)"));
  assert.ok(html.includes("upload(blocks,atlasTexture,true)"));
  assert.ok(html.includes("upload(itemSprites,mobPixelTexture||atlasTexture,true)"));

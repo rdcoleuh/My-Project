@@ -37,7 +37,7 @@ test('resource importer slices a player-owned hotbar image and keeps fallback fo
  assert.ok(html.includes('mw-pack-hotbar-slots'));
  assert.ok(html.includes('src="./hotbar-sprite-uv.js"'));
  assert.ok(sw.includes("'./hotbar-sprite-uv.js'"));
- assert.ok(html.includes('packGeneration!==window.MineWorldLocalTextures?.generation'));
+ assert.ok(html.includes('hotbarIconRequestCurrent(localPack,packGeneration,swatch)'));
 });
 
 test('generic slot artwork overrides slicing of the same imported bar sheet',()=>{
