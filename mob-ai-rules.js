@@ -42,5 +42,18 @@
    }
    return null;
  }
- window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,pursuitPoint,steerHeading});
+ // Pure visibility and target-selection helpers for callers to opt into.
+ function withinSight(a,b,maxDistance=25){
+  if(!a||!b||![a.x,a.y,a.z,b.x,b.y,b.z,maxDistance].every(Number.isFinite)||maxDistance<=0)return false;
+  const dx=a.x-b.x,dy=a.y-b.y,dz=a.z-b.z;
+  return dx*dx+dy*dy+dz*dz<=maxDistance*maxDistance;
+ }
+ function targetIntent(kind,distance,visible,anger=0,isNight=false){
+  if(!Number.isFinite(distance)||distance<0||distance>25||!visible)return 'idle';
+  if((kind==='spider'||kind==='cave_spider')&&!spiderAggressive(kind,isNight,anger))return 'idle';
+  if(kind==='creeper')return distance<=3?'fuse':'approach';
+  if(kind==='skeleton')return distance<5?'retreat':distance<=16?'ranged':'approach';
+  return distance<=1.6?'melee':'approach';
+ }
+ window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,pursuitPoint,steerHeading,withinSight,targetIntent});
 })();
