@@ -86,6 +86,10 @@ function makeTestArchive(mode='full'){
   ['assets/minecraft/textures/gui/widgets.png',
     generatedPng(mode==='legacy-widgets-hd'?512:256,160,mode==='legacy-widgets-hd'?512:256,true)]
  ];
+ if(mode==='legacy-icons'||mode==='legacy-icons-hd')files=[
+  ['assets/minecraft/textures/gui/icons.png',
+    generatedPng(mode==='legacy-icons-hd'?512:256,170,mode==='legacy-icons-hd'?512:256,true)]
+ ];
  if(mode==='sheet-generic')files=[
   ['resource_pack/textures/ui/hotbar.png',generatedPng(20,120,180,true)],
   ['resource_pack/textures/ui/hotbar_slot.png',generatedPng(20,180,20)]
@@ -426,6 +430,34 @@ async function go(browser,name,mobile){
         img.naturalHeight===(mode==='legacy-widgets-hd'?40:20)&&first!==last&&
         (!mode.startsWith('legacy-')||bar.querySelectorAll('.mw-pack-selected').length===1);
     },mode),name+': '+mode+' imported sheet did not produce nine distinct square slot textures');
+  }
+  // Older Java ZIP/JAR packs store both health and hunger in gui/icons.png.
+  // Exercise the actual imported atlas in desktop and mobile Chrome.
+  for(const mode of ['legacy-icons','legacy-icons-hd']){
+    await page.evaluate(async bytes=>{
+      const file=new File([new Uint8Array(bytes)],'legacy-icons-fixture.zip',{type:'application/zip'});
+      await window.MineWorldLocalTextures.loadFile(file);
+    },Array.from(makeTestArchive(mode)));
+    await page.waitForFunction(()=>
+      document.querySelectorAll('#health-text .mw-pack-stat-art').length===10&&
+      document.querySelectorAll('#hunger-text .mw-pack-stat-art').length===10,
+      null,{timeout:15000});
+    assert.ok(await page.evaluate(async mode=>{
+      const pack=window.MineWorldLocalTextures;
+      const icons=await Promise.all([
+        pack.hudIcon('heart','empty'),pack.hudIcon('heart','full'),
+        pack.hudIcon('heart','half'),pack.hudIcon('food','empty'),
+        pack.hudIcon('food','full'),pack.hudIcon('food','half')]);
+      if(icons.some(icon=>!icon?.startsWith('data:image/png')))return false;
+      const images=await Promise.all(icons.map(async src=>{
+        const img=new Image();img.src=src;await img.decode();return img;
+      }));
+      const size=mode==='legacy-icons-hd'?18:9;
+      return images.every(img=>img.naturalWidth===size&&img.naturalHeight===size)&&
+        new Set(icons).size===6&&
+        document.querySelector('#health-text')?.getAttribute('aria-label')?.includes('of 20')&&
+        document.querySelector('#hunger-text')?.getAttribute('aria-label')?.includes('of 20');
+    },mode),name+': '+mode+' legacy Java heart/hunger atlas was not decoded or displayed');
   }
   // A separately supplied generic slot takes precedence over a sheet-derived
   // slot; explicit player artwork must not be silently replaced by the sheet.

@@ -37,6 +37,18 @@ function legacyRect(width,height,kind){
  }
  return null;
 }
+// Older Java client JARs keep the survival glyphs in gui/icons.png.
+// The 256x256 atlas stores 9x9 empty, full and half icons in fixed cells.
+// Only the player's imported PNG is sampled; no copyrighted bitmap is bundled.
+function legacyStatRect(width,height,kind,fill){
+ if(!Number.isInteger(width)||!Number.isInteger(height)||
+    width!==height||width<256||width>4096||width%256!==0||
+    !['heart','food'].includes(kind)||!['empty','full','half'].includes(fill))return null;
+ const scale=width/256;
+ const x={empty:16,full:52,half:61}[fill]*scale;
+ const y=(kind==='food'?27:0)*scale;
+ return Object.freeze({x,y,width:9*scale,height:9*scale});
+}
 // An explicitly supplied generic slot is authoritative for all unnumbered
 // positions. A sliced bar is a fallback only when neither a numbered slot
 // nor a generic slot exists in the player's pack.
@@ -52,5 +64,5 @@ function validSlotSprite(width,height){
    width>=2&&height>=2&&width<=1024&&height<=1024&&
    Math.max(width,height)/Math.min(width,height)<=1.25;
 }
-window.MineWorldHotbarUV=Object.freeze({slotRect,legacyRect,shouldDeriveSlot,validSlotSprite});
+window.MineWorldHotbarUV=Object.freeze({slotRect,legacyRect,legacyStatRect,shouldDeriveSlot,validSlotSprite});
 })();

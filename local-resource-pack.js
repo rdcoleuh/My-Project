@@ -288,6 +288,7 @@ function readArchive(buffer){
    const javaHotbar=relative?.match(/^textures\/gui\/sprites\/hud\/(hotbar|hotbar_selection)\.png$/);
    // Old Java GUI atlases coexist with modern standalone HUD sprites.
    const legacyWidgets=relative==='textures/gui/widgets.png';
+   const legacyIcons=relative==='textures/gui/icons.png';
    const hud=heartSprite?['heart',heartSprite[1]==='container'?'empty':heartSprite[1]]:
      foodSprite?['food',foodSprite[1]]:
      javaHotbar?['hotbar',javaHotbar[1]==='hotbar'?'background':'selected']:null;
@@ -316,6 +317,8 @@ function readArchive(buffer){
      keep('meta:item:'+itemMeta[1],{method,size,expanded,local},priority);
    if(legacyWidgets&&size<1024*1024&&expanded<1024*1024&&(method===0||method===8))
      keep('hud:hotbar:legacy-widgets',{method,size,expanded,local},priority);
+   if(legacyIcons&&size<1024*1024&&expanded<1024*1024&&(method===0||method===8))
+     keep('hud:legacy-icons',{method,size,expanded,local},priority);
    if(hud&&size<262144&&expanded<262144&&(method===0||method===8))
      keep('hud:'+hud[1]+':'+hud[2],{method,size,expanded,local},priority);
    if(bedrockHud&&size<262144&&expanded<262144&&(method===0||method===8))
@@ -1139,7 +1142,11 @@ function hudIcon(kind,fill){
       [key,legacyKey].filter(candidate=>source.entries.has(candidate)):null;
   const derivedHalf=kind!=='hotbar'&&fill==='half'&&!source.entries.has(key)&&
     source.entries.has('hud:'+kind+':full')&&source.entries.has('hud:'+kind+':empty');
-  if(!source.entries.has(key)&&!derivedSlot&&!derivedHalf&&!slotCandidates?.length)return Promise.resolve(null);
+  // Prefer modern individual sprites; a missing older stat sprite can be
+  // cropped from the user's legacy gui/icons.png atlas.
+  const legacyStat=kind!=='hotbar'&&!source.entries.has(key)&&!derivedHalf&&
+    source.entries.has('hud:legacy-icons');
+  if(!source.entries.has(key)&&!derivedSlot&&!derivedHalf&&!legacyStat&&!slotCandidates?.length)return Promise.resolve(null);
   if(state.itemCache.has(key))return state.itemCache.get(key);
   const generation=state.itemGeneration;
   const promise=(async()=>{
@@ -1163,8 +1170,12 @@ function hudIcon(kind,fill){
       }
       if(!image)return null;
     }else{
-      image=await smallSpriteFromPng(await source.get(derivedHalf?'hud:'+kind+':full':key));
+      image=await smallSpriteFromPng(await source.get(legacyStat?'hud:legacy-icons':derivedHalf?'hud:'+kind+':full':key));
       if(generation!==state.itemGeneration)return null;
+      if(legacyStat){
+        rect=window.MineWorldHotbarUV?.legacyStatRect(image.width,image.height,kind,fill);
+        if(!rect)return null;
+      }
     }
     // Prevent huge HUD canvas allocations from tiny, malicious PNG files.
     if(!Number.isInteger(image.width)||!Number.isInteger(image.height)||
@@ -1179,7 +1190,7 @@ function hudIcon(kind,fill){
     const backgroundKey='hud:'+kind+':empty';
     // Damaged optional underlays must never hide otherwise valid HUD artwork.
     let underlay=null;
-    if(kind!=='hotbar'&&fill!=='empty'&&source.entries.has(backgroundKey)){
+    if(!legacyStat&&kind!=='hotbar'&&fill!=='empty'&&source.entries.has(backgroundKey)){
       try{underlay=await smallSpriteFromPng(await source.get(backgroundKey));}
       catch(error){console.warn('Ignoring damaged local HUD underlay '+backgroundKey,error);}
     }
@@ -1191,6 +1202,10 @@ function hudIcon(kind,fill){
     if(!ctx)return null;
     ctx.imageSmoothingEnabled=false;
     if(underlay)ctx.drawImage(underlay,0,0,canvas.width,canvas.height);
+    if(legacyStat&&fill!=='empty'){
+      const emptyRect=window.MineWorldHotbarUV?.legacyStatRect(image.width,image.height,kind,'empty');
+      if(emptyRect)ctx.drawImage(image,emptyRect.x,emptyRect.y,emptyRect.width,emptyRect.height,0,0,canvas.width,canvas.height);
+    }
     if(derivedHalf){
       const half=Math.floor(image.width/2);
       const fromX=kind==='food'?image.width-half:0;
