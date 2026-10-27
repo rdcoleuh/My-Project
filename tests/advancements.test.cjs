@@ -98,10 +98,13 @@ test('game bundles advancement UI and per-world progress plus visible hotbar ico
   "emitAdvancement('dimension',next)","emitAdvancement('plant',kind)",
   "emitAdvancement('trade','any')","emitAdvancement('kill',m.kind",
   'getAdvancementState:()=>advancementEngine','tickAdvancements()',
-  "e.code==='KeyL'","if(survival&&count>0)swatch.appendChild(qty)",
-  "if(survival&&count>0)icon.appendChild(qty)","qty.className=survival?'hot-stack-number'"])
+  "e.code==='KeyL'","if(survival&&count>0)button.appendChild(qty)",
+  "qty.className=survival?'hot-stack-number'"])
   assert.ok(html.includes(marker),'Missing integration '+marker);
  assert.ok(html.includes(".hot-item .hot-stack-number{display:block!important"),'quantity not visible on phone');
+ assert.ok(html.includes('#hotbar .hot-item > .hot-stack-number{'),'quantity must be outside clipped art');
+ assert.ok(!html.includes('if(survival&&count>0)swatch.appendChild(qty)'));
+ assert.ok(!html.includes('if(survival&&count>0)icon.appendChild(qty)'));
  assert.ok(/MineWorld \d+\.\d+/.test(html));
  for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))if(m[1].trim())new Function(m[1]);
 });
