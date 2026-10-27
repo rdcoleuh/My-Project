@@ -286,6 +286,8 @@ function readArchive(buffer){
    const heartSprite=relative?.match(/^textures\/gui\/sprites\/hud\/heart\/(full|half|empty|container)\.png$/);
    const foodSprite=relative?.match(/^textures\/gui\/sprites\/hud\/food_(full|half|empty)\.png$/);
    const javaHotbar=relative?.match(/^textures\/gui\/sprites\/hud\/(hotbar|hotbar_selection)\.png$/);
+   // Old Java GUI atlases coexist with modern standalone HUD sprites.
+   const legacyWidgets=relative==='textures/gui/widgets.png';
    const hud=heartSprite?['heart',heartSprite[1]==='container'?'empty':heartSprite[1]]:
      foodSprite?['food',foodSprite[1]]:
      javaHotbar?['hotbar',javaHotbar[1]==='hotbar'?'background':'selected']:null;
@@ -312,6 +314,8 @@ function readArchive(buffer){
      keep('item:'+item[1],{method,size,expanded,local},priority);
    if(itemMeta&&size<131072&&expanded<131072&&(method===0||method===8))
      keep('meta:item:'+itemMeta[1],{method,size,expanded,local},priority);
+   if(legacyWidgets&&size<1024*1024&&expanded<1024*1024&&(method===0||method===8))
+     keep('hud:hotbar:legacy-widgets',{method,size,expanded,local},priority);
    if(hud&&size<262144&&expanded<262144&&(method===0||method===8))
      keep('hud:'+hud[1]+':'+hud[2],{method,size,expanded,local},priority);
    if(bedrockHud&&size<262144&&expanded<262144&&(method===0||method===8))
@@ -1127,8 +1131,12 @@ function hudIcon(kind,fill){
   // A bad explicit slot or generic slot must not suppress a valid imported
   // nine-cell bar. Try authored art first, then generic art, then the sheet.
   // Each candidate is decoded and dimension-checked independently.
+  const legacyKey='hud:hotbar:legacy-widgets';
   const slotCandidates=numberedSlot?
-    [key,'hud:hotbar:slot','hud:hotbar:background'].filter(candidate=>source.entries.has(candidate)):null;
+    [key,'hud:hotbar:slot','hud:hotbar:background',legacyKey]
+      .filter(candidate=>source.entries.has(candidate)):
+    kind==='hotbar'&&['background','selected'].includes(fill)?
+      [key,legacyKey].filter(candidate=>source.entries.has(candidate)):null;
   const derivedHalf=kind!=='hotbar'&&fill==='half'&&!source.entries.has(key)&&
     source.entries.has('hud:'+kind+':full')&&source.entries.has('hud:'+kind+':empty');
   if(!source.entries.has(key)&&!derivedSlot&&!derivedHalf&&!slotCandidates?.length)return Promise.resolve(null);
@@ -1136,16 +1144,20 @@ function hudIcon(kind,fill){
   const generation=state.itemGeneration;
   const promise=(async()=>{
     let image=null,rect=null;
-    if(numberedSlot){
+    if(slotCandidates){
       for(const candidate of slotCandidates){
         try{
           const attempt=await smallSpriteFromPng(await source.get(candidate));
           if(generation!==state.itemGeneration)return null;
-          const sliced=candidate==='hud:hotbar:background';
-          const candidateRect=sliced?
-            window.MineWorldHotbarUV?.slotRect(attempt.width,attempt.height,Number(fill.slice(-1))):null;
-          if(sliced?!candidateRect:
-             !window.MineWorldHotbarUV?.validSlotSprite(attempt.width,attempt.height))continue;
+          const legacy=candidate===legacyKey;
+          const sliced=numberedSlot&&candidate==='hud:hotbar:background';
+          const candidateRect=legacy?
+            window.MineWorldHotbarUV?.legacyRect(attempt.width,attempt.height,fill):
+            sliced?window.MineWorldHotbarUV?.slotRect(attempt.width,attempt.height,Number(fill.slice(-1))):null;
+          if(legacy||sliced){if(!candidateRect)continue;}
+          else if(candidate==='hud:hotbar:background'){
+            if(!window.MineWorldHotbarUV?.slotRect(attempt.width,attempt.height,0))continue;
+          }else if(!window.MineWorldHotbarUV?.validSlotSprite(attempt.width,attempt.height))continue;
           image=attempt;rect=candidateRect;break;
         }catch(error){console.warn('Skipping damaged local hotbar candidate '+candidate,error);}
       }
@@ -1160,9 +1172,9 @@ function hudIcon(kind,fill){
        image.width*image.height>1024*1024)return null;
     // A full background must be a genuine nine-cell sheet, while individual
     // selection and generic slot images must be approximately square.
-    if(kind==='hotbar'&&!numberedSlot&&fill==='background'&&
+    if(kind==='hotbar'&&!numberedSlot&&fill==='background'&&!rect&&
        !window.MineWorldHotbarUV?.slotRect(image.width,image.height,0))return null;
-    if(kind==='hotbar'&&!numberedSlot&&fill!=='background'&&
+    if(kind==='hotbar'&&!numberedSlot&&fill!=='background'&&!rect&&
        !window.MineWorldHotbarUV?.validSlotSprite(image.width,image.height))return null;
     const backgroundKey='hud:'+kind+':empty';
     // Damaged optional underlays must never hide otherwise valid HUD artwork.

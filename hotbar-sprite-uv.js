@@ -22,6 +22,21 @@ function slotRect(width,height,index){
  if(x<0||y<0||right>width||bottom>height||right<=x||bottom<=y)return null;
  return Object.freeze({x,y,width:right-x,height:bottom-y});
 }
+// Legacy Java packs and client JARs store the bar and selection frame in
+// textures/gui/widgets.png. Extract pixel-aligned rectangles from the user's
+// own 256x256 atlas; MineWorld does not distribute Minecraft bitmap art.
+function legacyRect(width,height,kind){
+ if(!Number.isInteger(width)||!Number.isInteger(height)||
+    width!==height||width<256||width>4096||width%256!==0)return null;
+ const scale=width/256;
+ if(kind==='background')return Object.freeze({x:0,y:0,width:182*scale,height:22*scale});
+ if(kind==='selected')return Object.freeze({x:0,y:22*scale,width:24*scale,height:24*scale});
+ if(/^slot[0-8]$/.test(kind)){
+  const i=Number(kind.slice(-1));
+  return Object.freeze({x:(1+20*i)*scale,y:scale,width:20*scale,height:20*scale});
+ }
+ return null;
+}
 // An explicitly supplied generic slot is authoritative for all unnumbered
 // positions. A sliced bar is a fallback only when neither a numbered slot
 // nor a generic slot exists in the player's pack.
@@ -37,5 +52,5 @@ function validSlotSprite(width,height){
    width>=2&&height>=2&&width<=1024&&height<=1024&&
    Math.max(width,height)/Math.min(width,height)<=1.25;
 }
-window.MineWorldHotbarUV=Object.freeze({slotRect,shouldDeriveSlot,validSlotSprite});
+window.MineWorldHotbarUV=Object.freeze({slotRect,legacyRect,shouldDeriveSlot,validSlotSprite});
 })();

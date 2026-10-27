@@ -82,6 +82,10 @@ function makeTestArchive(mode='full'){
   files=[['resource_pack/textures/ui/hotbar.png',
     generatedPng(invalid?20:bordered?22:20,120,invalid?20:bordered?182:180,true)]];
  }
+ if(mode==='legacy-widgets'||mode==='legacy-widgets-hd')files=[
+  ['assets/minecraft/textures/gui/widgets.png',
+    generatedPng(mode==='legacy-widgets-hd'?512:256,160,mode==='legacy-widgets-hd'?512:256,true)]
+ ];
  if(mode==='sheet-generic')files=[
   ['resource_pack/textures/ui/hotbar.png',generatedPng(20,120,180,true)],
   ['resource_pack/textures/ui/hotbar_slot.png',generatedPng(20,180,20)]
@@ -404,7 +408,7 @@ async function go(browser,name,mobile){
   }),name+': partial slot pack hid the remaining fallback tiles');
   // Both bordered Java and seamless Bedrock nine-cell sheets must decode
   // into nine crisp local slot sprites without bundling any copyrighted art.
-  for(const mode of ['sheet-180','sheet-182']){
+  for(const mode of ['sheet-180','sheet-182','legacy-widgets','legacy-widgets-hd']){
     await page.evaluate(async bytes=>{
       const file=new File([new Uint8Array(bytes)],'sheet-fixture.zip',{type:'application/zip'});
       await window.MineWorldLocalTextures.loadFile(file);
@@ -418,7 +422,9 @@ async function go(browser,name,mobile){
       const img=new Image();img.src=first;await img.decode();
       return bar.classList.contains('mw-pack-hotbar-slots')&&items.length===9&&
         items.every(item=>getComputedStyle(item).backgroundImage.startsWith('url('))&&
-        img.naturalWidth===20&&img.naturalHeight===20&&first!==last;
+        img.naturalWidth===(mode==='legacy-widgets-hd'?40:20)&&
+        img.naturalHeight===(mode==='legacy-widgets-hd'?40:20)&&first!==last&&
+        bar.querySelectorAll('.mw-pack-selected').length===1;
     }),name+': '+mode+' imported sheet did not produce nine distinct square slot textures');
   }
   // A separately supplied generic slot takes precedence over a sheet-derived
