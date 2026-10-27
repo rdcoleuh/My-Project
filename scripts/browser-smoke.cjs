@@ -34,13 +34,13 @@ function pngChunk(name,data){
  size.writeUInt32BE(data.length);crc.writeUInt32BE(crc32(Buffer.concat([typ,data])));
  return Buffer.concat([size,typ,data,crc]);
 }
-function generatedPng(height,channel,width=16){
+function generatedPng(height,channel,width=16,perColumn=false){
  const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(width,0);ihdr.writeUInt32BE(height,4);
  ihdr[8]=8;ihdr[9]=6;
  const rows=Buffer.alloc(height*(1+width*4));
  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
   const pos=y*(1+width*4)+1+x*4;
-  rows[pos]=110;rows[pos+1]=(channel+y*8)%255;rows[pos+2]=140;rows[pos+3]=255;
+  rows[pos]=perColumn?(110+x)%255:110;rows[pos+1]=(channel+y*8)%255;rows[pos+2]=140;rows[pos+3]=255;
  }
  return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),
   pngChunk('IHDR',ihdr),pngChunk('IDAT',deflateSync(rows)),pngChunk('IEND',Buffer.alloc(0))]);
@@ -80,7 +80,7 @@ function makeTestArchive(mode='full'){
  if(mode==='sheet-180'||mode==='sheet-182'){
   const bordered=mode==='sheet-182';
   files=[['resource_pack/textures/ui/hotbar.png',
-    generatedPng(bordered?22:20,120,bordered?182:180)]];
+    generatedPng(bordered?22:20,120,bordered?182:180,true)]];
  }
  if(mode==='selected-only')files=files.filter(([name])=>name.endsWith('/selected_hotbar_slot.png'));
  if(mode==='partial-slots')files=files.filter(([name])=>name.endsWith('/hotbar_0.png'));
