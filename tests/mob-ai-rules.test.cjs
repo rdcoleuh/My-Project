@@ -70,3 +70,15 @@ test('host simulation uses validated pure mob rules; no changes to survival save
  assert.ok(html.includes('const pursuing=aggressive&&!target&&!!m.lastSeen'));
  assert.ok(html.includes('mineworld-selfhost-v1'));
 });
+
+test('creeper movement only pauses inside its actual explosion trigger range',()=>{
+ assert.equal(rules.targetIntent('creeper',3,true),'approach');
+ assert.equal(rules.targetIntent('creeper',2.8,true),'approach');
+ assert.equal(rules.targetIntent('creeper',2.7,true),'fuse');
+ assert.equal(rules.targetIntent('creeper',2.7,false),'idle');
+ assert.equal(rules.targetIntent('skeleton',4.5,true),'retreat');
+ assert.equal(rules.targetIntent('skeleton',6,true),'ranged');
+ const html=read('index.html');
+ assert.ok(html.includes("(intent==='fuse'&&Math.abs(target.y-m.y)<2.5)"),
+   'creepers must not freeze when the player is vertically outside fuse range');
+});

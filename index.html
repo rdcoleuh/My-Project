@@ -3672,7 +3672,7 @@ body.in-nether #game-wrap{background:#290f19}
       // prevent creepers from walking through players during their fuse.
       const intent=chase?mobAI.targetIntent(m.kind,dist,true,m.anger,nightTime()):'idle';
       if(intent==='retreat'&&target)m.heading=Math.atan2(m.z-target.z,m.x-target.x);
-      const holding=chase&&(intent==='ranged'||intent==='fuse'||(intent==='melee'&&dist<.9));
+      const holding=chase&&(intent==='ranged'||(intent==='fuse'&&Math.abs(target.y-m.y)<2.5)||(intent==='melee'&&dist<.9));
       const flight=m.fleeTime>0?1.75:1,approach=m.following?1.12:1;
       const pace=(m.waitingForFood||holding?0:
         ((chase||pursuing||m.fleeTime>0)?type.speed:(!m.anger?.34:.8)*type.speed)*dt*flight*approach);
