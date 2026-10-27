@@ -1897,8 +1897,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(!stack&&gameMode==='survival'&&aim?.b===168){
       // Interacting with a targeted crafting table must open its 3×3 grid,
       // even if the nearby-station memo was populated before placement.
-      cancelMining();craftBenchMemo.until=0;openGear();
-      if(craftSize!==3){craftSize=3;craftCells=Array(9).fill(null);preferredCraft=null;renderCraftingGrid();}
+      cancelMining();craftBenchMemo.until=0;openGear(true);
       return true;
     }
     if(!stack&&gameMode==='survival'&&aim?.b===119){cancelMining();openTreasureChest(aim.x,aim.y,aim.z);return;}
@@ -3142,8 +3141,10 @@ body.in-nether #game-wrap{background:#290f19}
     if(preferredCraft&&gridMatchesRecipe(preferredCraft))return preferredCraft;
     return ALL_RECIPES.find(r=>gridMatchesRecipe(r))||null;
   }
-  function enterCraftStation(){
-    const newSize=nearbyCraftTable()?3:2;
+  function enterCraftStation(forceTable=false){
+    // An explicitly targeted workbench is authoritative even when the
+    // nearby-station memo is stale or the raycast reaches beyond its radius.
+    const newSize=(forceTable||nearbyCraftTable())?3:2;
     if(newSize!==craftSize){craftSize=newSize;craftCells=Array(9).fill(null);preferredCraft=null;}
     renderCraftingGrid();
   }
@@ -3306,7 +3307,7 @@ body.in-nether #game-wrap{background:#290f19}
   $('item-equip').addEventListener('click',equipSelection);$('item-use').addEventListener('click',consumeSelection);
   $('item-drop').addEventListener('click',()=>dropSelection());$('item-drop-stack').addEventListener('click',()=>dropSelection(true));
   for(const id of ['recipe-search','recipe-category','recipe-craftable'])$(id).addEventListener(id==='recipe-search'?'input':'change',renderRecipes);
-  function openGear(){if(gameMode!=='survival'){toast('The Survival backpack and recipes are only available in Survival. Use ▣ Blocks to build in Creative.');return;}cancelMining();mouseMiningHeld=false;touchHold.mine=false;craftRemoveMode=false;enterCraftStation();renderGear();$('gear-panel').classList.remove('hidden');paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock()}
+  function openGear(forceTable=false){if(gameMode!=='survival'){toast('The Survival backpack and recipes are only available in Survival. Use ▣ Blocks to build in Creative.');return;}cancelMining();mouseMiningHeld=false;touchHold.mine=false;craftRemoveMode=false;enterCraftStation(forceTable);renderGear();$('gear-panel').classList.remove('hidden');paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock()}
   function closeGear(){window.MineWorldJavaInventoryScreen?.putAway();craftCells=Array(9).fill(null);preferredCraft=null;craftRemoveMode=false;$('gear-panel').classList.add('hidden');if(started)start();else $('welcome').classList.remove('hidden')}
   function setDifficulty(level){
     if(!['peaceful','easy','normal','hard'].includes(level))return;
