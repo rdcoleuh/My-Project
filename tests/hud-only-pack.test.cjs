@@ -1,0 +1,89 @@
+/* Synthetic HUD-only resource pack regression: no bundled game artwork. */
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
+const png=Uint8Array.from([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,16,0,0,0,16]);
+function zip(files){
+ const local=[],central=[];let offset=0;
+ for(const [name,data] of files){
+  const n=Buffer.from(name),b=Buffer.from(data),a=Buffer.alloc(30+n.length),c=Buffer.alloc(46+n.length);
+  a.writeUInt32LE(0x04034b50,0);a.writeUInt16LE(20,4);a.writeUInt32LE(b.length,18);
+  a.writeUInt32LE(b.length,22);a.writeUInt16LE(n.length,26);n.copy(a,30);
+  c.writeUInt32LE(0x02014b50,0);c.writeUInt16LE(20,4);c.writeUInt16LE(20,6);
+  c.writeUInt32LE(b.length,20);c.writeUInt32LE(b.length,24);c.writeUInt32LE(offset,42);n.copy(c,46);
+  local.push(a,b);central.push(c);offset+=a.length+b.length;
+ }
+ const end=Buffer.alloc(22);end.writeUInt32LE(0x06054b50,0);
+ end.writeUInt16LE(files.length,8);end.writeUInt16LE(files.length,10);
+ end.writeUInt32LE(central.reduce((n,b)=>n+b.length,0),12);end.writeUInt32LE(offset,16);
+ return Uint8Array.from(Buffer.concat([...local,...central,end])).buffer;
+}
+function boot(imageWidth=16,imageHeight=16){
+ const draws=[];
+ class Canvas{
+  constructor(){this.width=256;this.height=1024;}
+  getContext(){return {imageSmoothingEnabled:true,clearRect(){},drawImage(...args){draws.push(args)},
+   getImageData(_x,_y,w,h){return {data:new Uint8ClampedArray(w*h*4)}},putImageData(){}};}
+  toDataURL(){return 'data:image/png;base64,owned';}
+ }
+ class Image{constructor(){this.width=imageWidth;this.height=imageHeight;}
+  set src(_){queueMicrotask(()=>this.onload?.());}}
+ const gl={TEXTURE0:1,TEXTURE_2D:2,RGBA:3,UNSIGNED_BYTE:4,UNPACK_FLIP_Y_WEBGL:5,
+  TEXTURE_MIN_FILTER:6,TEXTURE_MAG_FILTER:7,NEAREST:8,
+  activeTexture(){},bindTexture(){},pixelStorei(){},texImage2D(){},texParameteri(){},
+  isContextLost(){return false}};
+ const window={MineWorldResourcePackContext:{gl,texture:{},baseURL:'data:image/png;base64,base'},
+  MineWorldAtlas:{dataURL:'data:image/png;base64,base'},
+  MineWorldBlockGuide:{names:Array(170).fill('unknown_block')},
+  MineWorldBridge:{refreshTextureUI(){}},MineWorldSound:{clearSamples(){}}};
+ const context={window,document:{createElement:()=>new Canvas(),querySelector:()=>null},
+  Image,URL:{createObjectURL:()=> 'blob:owned',revokeObjectURL(){}},Blob,Uint8Array,
+  Uint8ClampedArray,TextDecoder,ArrayBuffer,DataView,Math,Number,JSON,console,queueMicrotask,
+  performance:{now:()=>0}};
+ vm.runInNewContext(read('local-resource-pack.js'),context);
+ return {pack:window.MineWorldLocalTextures,draws};
+}
+test('Java GUI-only folder is accepted and missing half-heart uses the imported empty backing',async()=>{
+ const b=boot();
+ const files=['heart/full','heart/container','food_full','food_empty','hotbar'].map(name=>({
+  name:name.split('/').at(-1)+'.png',
+  webkitRelativePath:'pack/assets/minecraft/textures/gui/sprites/hud/'+name+'.png',
+  size:png.length,arrayBuffer:async()=>png.buffer
+ }));
+ const result=await b.pack.loadFiles(files);
+ assert.equal(result.faces,0);assert.equal(result.items,0);assert.equal(result.hudAssets,5);
+ assert.equal(b.pack.active,true,'GUI-only pack must be shown as active');
+ const before=b.draws.length;
+ assert.equal(await b.pack.hudIcon('heart','half'),'data:image/png;base64,owned');
+ const ops=b.draws.slice(before);
+ assert.equal(ops.length,2,'draw empty underlay, then cropped full heart');
+ assert.equal(ops[0].length,5);
+ assert.equal(ops[1].length,9);
+ assert.equal(ops[1][3],8,'crop exactly half the 16-pixel source width');
+ assert.equal(ops[1][7],8,'render exactly half the destination width');
+ assert.equal(await b.pack.hudIcon('heart','half'),'data:image/png;base64,owned');
+ assert.equal(b.draws.length,before+2,'half sprite is cached');
+ await b.pack.clear();
+ assert.equal(b.pack.active,false);
+ assert.equal(await b.pack.hudIcon('heart','half'),null);
+});
+test('Bedrock HUD-only ZIP imports without blocks and keeps selected slot artwork',async()=>{
+ const b=boot(),buffer=zip([
+  ['textures/ui/heart.png',png],['textures/ui/heart_background.png',png],
+  ['textures/ui/hunger_full.png',png],['textures/ui/hunger_background.png',png],
+  ['textures/ui/selected_hotbar_slot.png',png]
+ ]);
+ const result=await b.pack.loadFile({name:'owned-hud.mcpack',arrayBuffer:async()=>buffer});
+ assert.equal(result.faces,0);assert.equal(result.hudAssets,5);
+ assert.equal(b.pack.active,true);
+ assert.equal(await b.pack.hudIcon('food','half'),'data:image/png;base64,owned');
+ assert.equal(await b.pack.hudIcon('hotbar','selected'),'data:image/png;base64,owned');
+});
+test('oversized decoded HUD artwork is skipped without a canvas allocation',async()=>{
+ const b=boot(4097,16),file={name:'heart.png',
+  webkitRelativePath:'textures/ui/heart.png',size:png.length,arrayBuffer:async()=>png.buffer};
+ await b.pack.loadFiles([file]);
+ const before=b.draws.length;
+ assert.equal(await b.pack.hudIcon('heart','full'),null);
+ assert.equal(b.draws.length,before);
+});

@@ -52,7 +52,7 @@ test('Options mounts a single import panel and rejected replacements preserve th
  assert.deepEqual([...loaded],['pickup']);
  const oldTint=api.grassTint,oldResult=api.lastResult,oldUploads=uploads.length;
  await assert.rejects(api.loadFiles([file('not_a_known_block.png',png)]),
-  /No compatible block, item or sound files found/);
+  /No compatible block, item, HUD or sound files found/);
  assert.equal(api.active,true,'prior texture atlas stays active');
  assert.equal(api.lastResult,oldResult,'previous coverage report stays active');
  assert.equal(uploads.length,oldUploads,'rejected archive never reaches the GPU');

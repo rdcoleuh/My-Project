@@ -776,6 +776,8 @@ async function applyResources(zip,sourceName){
  const hotbarSlots=Array.from({length:9},(_,i)=>'hud:hotbar:slot'+i)
    .filter(key=>zip.entries.has(key)).length;
  const hotbarSelection=zip.entries.has('hud:hotbar:selected');
+ // Player-owned GUI-only packs need no terrain or item sprites.
+ const hudAssets=[...zip.entries.keys()].filter(key=>key.startsWith('hud:')).length;
  // Local Bedrock entity skin files have no remote fetching or save-data dependency.
  // Match concrete species paths; generic MineWorld cuboids still aren't exact
  // Bedrock entity geometry/UV models.
@@ -857,8 +859,8 @@ async function applyResources(zip,sourceName){
    }
   }catch(error){console.warn('Skipping unsupported local item PNG '+key,error);}
  }
- if(!faces&&!directionalFaces&&!audio&&!items&&!mobArt.size)
-  throw Error('No compatible block, item or sound files found.');
+ if(!faces&&!directionalFaces&&!audio&&!items&&!mobArt.size&&!hudAssets)
+  throw Error('No compatible block, item, HUD or sound files found.');
  // Preserve native player-supplied texels when the GPU can hold the atlas.
  // 16px = 256x1024 (1 MiB); 32px = 512x2048 (4 MiB);
  // 64px = 1024x4096 (16 MiB). Never allocate the 64px atlas on
@@ -925,8 +927,8 @@ async function applyResources(zip,sourceName){
  state.animationStart=typeof performance!=='undefined'&&performance.now?performance.now():0;
  state.lastAnimationAt=-Infinity;
  state.animationDisabled=false;
- state.active=faces+directionalFaces+modelDirectionalFaces>0;state.sourceName=sourceName||'selected local assets';
- state.lastResult={hudIcons,hotbarSlots,hotbarSelection,blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,atlasTilePixels:state.tilePixels,modelGeometryBlocks:modelShapes.size,modelUVFaces:window.MineWorldJavaFaceTransforms?.stats().faces||0,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,bedrockTerrainMappings:bedrockTerrain.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
+ state.active=faces+directionalFaces+modelDirectionalFaces+items+audio+mobArt.size+hudAssets>0;state.sourceName=sourceName||'selected local assets';
+ state.lastResult={hudIcons,hudAssets,hotbarSlots,hotbarSelection,blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,atlasTilePixels:state.tilePixels,modelGeometryBlocks:modelShapes.size,modelUVFaces:window.MineWorldJavaFaceTransforms?.stats().faces||0,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,bedrockTerrainMappings:bedrockTerrain.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
     unmapped:[...missing].filter(Boolean).slice(0,24)};
@@ -1109,12 +1111,21 @@ function hudIcon(kind,fill){
  const key='hud:'+kind+':'+fill;
  const derivedSlot=kind==='hotbar'&&/^slot[0-8]$/.test(fill)&&
    !source.entries.has(key)&&source.entries.has('hud:hotbar:background');
- if(!source.entries.has(key)&&!derivedSlot)return Promise.resolve(null);
+ // Missing half sprite: crop the player's full sprite over their empty icon.
+ // Preserve source pixel edges; CSS clipping remains a fallback without empty art.
+ const derivedHalf=kind!=='hotbar'&&fill==='half'&&!source.entries.has(key)&&
+   source.entries.has('hud:'+kind+':full')&&source.entries.has('hud:'+kind+':empty');
+ if(!source.entries.has(key)&&!derivedSlot&&!derivedHalf)return Promise.resolve(null);
  if(state.itemCache.has(key))return state.itemCache.get(key);
  const generation=state.itemGeneration;
  const promise=(async()=>{
-   const image=await imageFromPng(await source.get(derivedSlot?'hud:hotbar:background':key));
+   const image=await imageFromPng(await source.get(derivedSlot?'hud:hotbar:background':
+     derivedHalf?'hud:'+kind+':full':key));
    if(generation!==state.itemGeneration)return null;
+   // Prevent huge HUD canvas allocations from tiny, malicious PNG files.
+   if(!Number.isInteger(image.width)||!Number.isInteger(image.height)||
+      image.width<1||image.height<1||image.width>4096||image.height>4096||
+      image.width*image.height>1024*1024)return null;
    const rect=derivedSlot?window.MineWorldHotbarUV?.slotRect(image.width,image.height,Number(fill.slice(-1))):null;
    if(derivedSlot&&!rect)return null;
    const backgroundKey='hud:'+kind+':empty';
@@ -1127,7 +1138,10 @@ function hudIcon(kind,fill){
    if(!ctx)return null;
    ctx.imageSmoothingEnabled=false;
    if(underlay)ctx.drawImage(underlay,0,0,canvas.width,canvas.height);
-   if(rect)ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,0,0,canvas.width,canvas.height);
+   if(derivedHalf){
+     const half=Math.ceil(image.width/2);
+     ctx.drawImage(image,0,0,half,image.height,0,0,half,canvas.height);
+   }else if(rect)ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,0,0,canvas.width,canvas.height);
    else ctx.drawImage(image,0,0);
    return generation===state.itemGeneration?canvas.toDataURL('image/png'):null;
  })().catch(error=>{console.warn('Ignoring damaged local HUD image '+key,error);return null;});
