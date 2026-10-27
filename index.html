@@ -535,6 +535,12 @@ body.in-nether #game-wrap{background:#290f19}
  transform:translateY(-50%);border:2px solid #fff;box-shadow:0 0 0 1px #181818;
  pointer-events:none;z-index:2
 }
+/* Stack badges stay outside clipped item artwork, above the selection frame. */
+#hotbar .hot-item > .hot-stack-number{
+ right:3px!important;bottom:3px!important;z-index:5!important;
+ max-width:calc(100% - 4px);box-sizing:border-box;
+}
+@media(max-width:550px){#hotbar .hot-item > .hot-stack-number{right:2px!important;bottom:2px!important;font-size:11px!important}}
 #hotbar .hot-item:focus-visible{outline:2px solid #ffe998!important;outline-offset:2px!important}
 #hotbar.mw-pack-bar-image{background-size:100% auto!important;background-position:center!important;image-rendering:pixelated!important}
 #hotbar:not(.mw-pack-bar-image):not(.mw-pack-hotbar-slots){
@@ -2149,12 +2155,10 @@ body.in-nether #game-wrap{background:#290f19}
           swatch.style.backgroundImage='url('+window.MineWorldAtlas.dataURL+')';
           swatch.style.backgroundSize='1600% 3200%';swatch.style.backgroundPosition=tx+'% '+ty+'%';
         }
-        if(survival&&count>0)swatch.appendChild(qty);
         button.appendChild(swatch);
       }else{
         const icon=document.createElement('div');icon.className='hot-item-icon';
         icon.textContent=key?stackIcon(key):'';
-        if(survival&&count>0)icon.appendChild(qty);
         // Hotbar uses the same player-owned PNGs as Java-style inventory.
         if(key&&!key.startsWith('block:')){
           const packGeneration=window.MineWorldLocalTextures?.generation;
@@ -2164,11 +2168,13 @@ body.in-nether #game-wrap{background:#290f19}
             art.src=src;art.alt='';art.width=art.height=30;
             art.style.cssText='width:30px;height:30px;object-fit:contain;image-rendering:pixelated;';
             icon.replaceChildren(art);
-            if(survival&&count>0)icon.appendChild(qty);
-          }).catch(()=>{});
+            }).catch(()=>{});
         }
         button.appendChild(icon);
       }
+      // Counts are button overlays, not children of clipped texture art.
+      // Keep 64-stack labels visible above player-imported transparent sprites.
+      if(survival&&count>0)button.appendChild(qty);
       const name=document.createElement('span');name.textContent=key?label:'—';button.appendChild(name);
       button.addEventListener('pointerdown',e=>e.stopPropagation());
       button.addEventListener('click',()=>{selectHotbarSlot(i);if(key)toast(label)});

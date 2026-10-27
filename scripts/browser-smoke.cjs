@@ -338,6 +338,21 @@ async function go(browser,name,mobile){
     name+': Survival heart/hunger sprites or accessible labels are incorrect');
   if(mobile)assert.equal(survival.fits,true,
     name+': Survival hearts/hunger overflow the mobile viewport');
+  // The actual desktop/touch layout must not crop stack counts behind icons.
+  const countBadge=await page.evaluate(()=>{
+    const slot=document.querySelector('#hotbar .hot-item');
+    if(!slot)return false;
+    const badge=document.createElement('small');
+    badge.className='hot-stack-number';badge.textContent='64';
+    slot.appendChild(badge);
+    const outer=slot.getBoundingClientRect(),rect=badge.getBoundingClientRect();
+    const style=getComputedStyle(badge);
+    const good=badge.parentElement===slot&&style.display!=='none'&&
+      rect.width>0&&rect.height>0&&rect.left>=outer.left-1&&
+      rect.right<=outer.right+1&&rect.top>=outer.top-1&&rect.bottom<=outer.bottom+1;
+    badge.remove();return good;
+  });
+  assert.equal(countBadge,true,name+': 64-stack badge is hidden or clipped by hotbar art');
   // A resource pack may provide only a selection border or one slot PNG.
   // Unprovided slot backgrounds must remain usable in desktop and touch HUDs.
   // The classic fallback tile is intentionally painted on ::before, while
