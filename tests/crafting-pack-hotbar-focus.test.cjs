@@ -43,5 +43,23 @@ test('hotbar retains keyboard focus through redraw without scrolling',()=>{
 test('placing a crafting table invalidates nearby-station memo immediately',()=>{
  assert.match(place,/if\(b===168\)craftBenchMemo\.until=0/);
  assert.match(place,/aim\?\.b===168/);
- assert.match(place,/openGear\(\)/);
+ assert.match(place,/openGear\(true\)/);
+});
+// A clicked table must select the full grid before the gear UI and recipe
+// list are rendered; the previous post-open override left recipes stale.
+test('direct workbench entry forces a 3x3 grid before gear rendering',()=>{
+ const enter=html.slice(html.indexOf('function enterCraftStation('),html.indexOf('function renderCraftingGrid(){'));
+ const context={craftSize:2,craftCells:Array(9).fill('old'),preferredCraft:'old',
+  nearbyCraftTable:()=>false,renderCraftingGrid:()=>{context.drawnSize=context.craftSize;}};
+ vm.runInNewContext(enter+'\\nthis.enter=enterCraftStation;',context);
+ context.enter(true);
+ assert.equal(context.craftSize,3);
+ assert.equal(context.drawnSize,3);
+ assert.equal(context.preferredCraft,null);
+ assert.equal(context.craftCells.every(x=>x===null),true);
+ context.enter(false);
+ assert.equal(context.craftSize,2);
+ assert.equal(context.drawnSize,2);
+ assert.match(html,/function openGear\\(forceTable=false\\)[^\\n]*enterCraftStation\\(forceTable\\);renderGear\\(\\)/);
+ assert.match(place,/craftBenchMemo\\.until=0;openGear\\(true\\)/);
 });
