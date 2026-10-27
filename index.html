@@ -1546,6 +1546,9 @@ body.in-nether #game-wrap{background:#290f19}
       }))return false;
     }
     const before=get(x,y,z);if(before===b)return false;
+    // Placing or removing a crafting table invalidates 3x3 detection for
+    // mining, placement, crafting and world updates alike.
+    if(before===168||b===168)craftBenchMemo.until=0;
     set(x,y,z,b);savedEdits.set(idx(x,y,z),b);savedChunkEditIndex.delete(savedEdits);dirtyAround(x,z);markSave();if(!remote)window.MineWorldMultiplayer?.localEdit(idx(x,y,z)+(dimension==='end'?2*W*D*H:dimension==='nether'?W*D*H:0),b);return true;
   }
   function pushFace(a,x,y,z,b,f,biomeName=''){
@@ -4779,6 +4782,9 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
       const x=Math.floor(localIndex/(D*H)),z=Math.floor(localIndex/H)%D,y=localIndex%H;
       if(y===0)return false;
       (target==='end'?endEdits:target==='nether'?netherEdits:overworldEdits).set(localIndex,b);
+      // Multiplayer world edits can place or remove a nearby workbench while
+      // a cached crafting-station result is still live.
+      if(target===dimension&&(b===168||craftBenchMemo.value))craftBenchMemo.until=0;
       if(target!==dimension)return true;
       const chunk=chunkCache.get(chunkKey(Math.floor(x/CHUNK),Math.floor(z/CHUNK)));
       if(chunk){chunk.data[chunkIndex(x,y,z)]=b;dirtyAround(x,z);}
