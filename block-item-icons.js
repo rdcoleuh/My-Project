@@ -26,15 +26,19 @@ function paint(canvas,blockId){
   ctx.imageSmoothingEnabled=false;
   const active=window.MineWorldLocalTextures?.active;
   const directionalTile=active?resolveFaceTile(blockId,face):null;
+  // Render face 2 is the east wall, not atlas face 2 (the bottom).
+  // Directional imported faces can override it; otherwise both walls use
+  // the side tile (atlas face 1), preserving top/side/bottom UV semantics.
+  const atlasFace=face===2?1:face;
   let drawn=false;
   if(directionalTile!==null)drawn=!!window.MineWorldLocalTextures?.drawAtlasTile?.(ctx,directionalTile);
-  if(!drawn)drawn=!!active&&!!window.MineWorldLocalTextures.drawFace(ctx,blockId,face);
+  if(!drawn)drawn=!!active&&!!window.MineWorldLocalTextures.drawFace(ctx,blockId,atlasFace);
   if(!drawn){
    const colors=ctx.createImageData(16,16);
    const art=window.MineWorldPixelMaterials?.paint;
    if(typeof art!=='function')return false;
    for(let y=0;y<16;y++)for(let x=0;x<16;x++)
-    colors.data.set(art(blockId,face,x,y),(y*16+x)*4);
+    colors.data.set(art(blockId,atlasFace,x,y),(y*16+x)*4);
    ctx.putImageData(colors,0,0);
   }
   if(typeof ctx.getImageData!=='function')return false;
