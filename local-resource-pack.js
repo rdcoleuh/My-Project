@@ -927,7 +927,7 @@ async function applyResources(zip,sourceName){
  state.animationStart=typeof performance!=='undefined'&&performance.now?performance.now():0;
  state.lastAnimationAt=-Infinity;
  state.animationDisabled=false;
- state.active=faces+directionalFaces+modelDirectionalFaces+items+audio+mobArt.size+hudAssets>0;state.sourceName=sourceName||'selected local assets';
+ state.active=faces+directionalFaces+modelDirectionalFaces>0;state.sourceName=sourceName||'selected local assets';
  state.lastResult={hudIcons,hudAssets,hotbarSlots,hotbarSelection,blocks:ids.size,faces,directionalFaces,modelDirectionalFaces,modelMappedFaces,atlasTilePixels:state.tilePixels,modelGeometryBlocks:modelShapes.size,modelUVFaces:window.MineWorldJavaFaceTransforms?.stats().faces||0,items,entities:mobArt.size,worldItemSprites:itemArt.size,overlaid,animatedFaces:animated.length,bedrockAnimatedFaces,bedrockDefinitions:bedrockEntries.size,bedrockTerrainMappings:bedrockTerrain.size,colormaps:importedTints.sources,sounds:audio,available:zip.entries.size,
     missingFaces,
     coverage:Math.round(faces/(169*3)*1000)/10,totalFaces:169*3,
@@ -1210,6 +1210,8 @@ function drawFace(ctx,id,face){
 }
 const exposed={
  get active(){return state.active;},
+ // Unlike active (block-face coverage), hasPack includes HUD-only or item-only packs.
+ get hasPack(){return !!state.itemArchive;},
  get source(){return state.sourceName;},
  get lastResult(){return state.lastResult;},
  get generation(){return state.itemGeneration;},

@@ -78,7 +78,7 @@ test('all corrupt matching PNGs are safely rejected instead of replacing the wor
  const {pack}=setup();
  await assert.rejects(pack.loadFiles([
   file('furnace_front.png',bytes(0)),file('furnace_front_off.png',bytes(0))
- ]),/No compatible block, item or sound files found/);
+ ]),/No compatible block, item, HUD or sound files found/);
  assert.equal(pack.active,false);
  assert.equal(pack.lastResult,null);
 });

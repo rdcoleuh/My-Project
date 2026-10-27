@@ -10,7 +10,7 @@ function zip(files){
   a.writeUInt32LE(0x04034b50,0);a.writeUInt16LE(20,4);a.writeUInt32LE(b.length,18);
   a.writeUInt32LE(b.length,22);a.writeUInt16LE(n.length,26);n.copy(a,30);
   c.writeUInt32LE(0x02014b50,0);c.writeUInt16LE(20,4);c.writeUInt16LE(20,6);
-  c.writeUInt32LE(b.length,20);c.writeUInt32LE(b.length,24);c.writeUInt32LE(offset,42);n.copy(c,46);
+  c.writeUInt32LE(b.length,20);c.writeUInt32LE(b.length,24);c.writeUInt16LE(n.length,28);c.writeUInt32LE(offset,42);n.copy(c,46);
   local.push(a,b);central.push(c);offset+=a.length+b.length;
  }
  const end=Buffer.alloc(22);end.writeUInt32LE(0x06054b50,0);
@@ -52,7 +52,8 @@ test('Java GUI-only folder is accepted and missing half-heart uses the imported 
  }));
  const result=await b.pack.loadFiles(files);
  assert.equal(result.faces,0);assert.equal(result.items,0);assert.equal(result.hudAssets,5);
- assert.equal(b.pack.active,true,'GUI-only pack must be shown as active');
+ assert.equal(b.pack.active,false,'GUI-only pack must not claim block coverage');
+ assert.equal(b.pack.hasPack,true,'GUI-only artwork is loaded and available');
  const before=b.draws.length;
  assert.equal(await b.pack.hudIcon('heart','half'),'data:image/png;base64,owned');
  const ops=b.draws.slice(before);
@@ -65,6 +66,7 @@ test('Java GUI-only folder is accepted and missing half-heart uses the imported 
  assert.equal(b.draws.length,before+2,'half sprite is cached');
  await b.pack.clear();
  assert.equal(b.pack.active,false);
+ assert.equal(b.pack.hasPack,false);
  assert.equal(await b.pack.hudIcon('heart','half'),null);
 });
 test('Bedrock HUD-only ZIP imports without blocks and keeps selected slot artwork',async()=>{
@@ -75,7 +77,8 @@ test('Bedrock HUD-only ZIP imports without blocks and keeps selected slot artwor
  ]);
  const result=await b.pack.loadFile({name:'owned-hud.mcpack',arrayBuffer:async()=>buffer});
  assert.equal(result.faces,0);assert.equal(result.hudAssets,5);
- assert.equal(b.pack.active,true);
+ assert.equal(b.pack.active,false);
+ assert.equal(b.pack.hasPack,true);
  assert.equal(await b.pack.hudIcon('food','half'),'data:image/png;base64,owned');
  assert.equal(await b.pack.hudIcon('hotbar','selected'),'data:image/png;base64,owned');
 });
