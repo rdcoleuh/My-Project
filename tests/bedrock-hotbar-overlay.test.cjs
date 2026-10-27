@@ -9,3 +9,14 @@ test('selection-only and partial HUD packs preserve fallback slot backgrounds',(
  assert.ok(s.includes('#hotbar.mw-pack-bar-image,#hotbar.mw-pack-hotbar-slots{background-color:transparent!important'));
  assert.ok(!s.includes('#hotbar.mw-pack-hotbar .hot-item{background-color:transparent!important'));
 });
+
+test('survival stack quantities stay bottom-right instead of inheriting top-aligned slot indices',()=>{
+ const html=read('index.html');
+ const match=html.match(/#hotbar \.hot-item > \.hot-stack-number\{([^}]+)\}/);
+ assert.ok(match,'expected a dedicated stack-count overlay rule');
+ assert.match(match[1],/top:auto!important/);
+ assert.match(match[1],/bottom:3px!important/);
+ assert.match(match[1],/z-index:5!important/);
+ assert.match(match[1],/pointer-events:none/);
+ assert.ok(html.includes('if(survival&&count>0)button.appendChild(qty)'));
+});
