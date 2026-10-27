@@ -10,6 +10,6 @@ test('item-only resource packs provide block icons even without terrain atlas',(
 });
 test('imported hotbar sprites preserve square pixels inside touch-sized buttons',()=>{
  const s=read('index.html');
- assert.match(s,/#hotbar \\.hot-item\\.mw-pack-slot\\{[\\s\\S]*?background-size:100% auto!important/);
- assert.match(s,/#hotbar \\.hot-item\\.active\\.mw-pack-selected::after\\{[\\s\\S]*?background-size:contain!important/);
+ assert.ok(s.includes('background-size:100% auto!important;background-position:center!important'));
+ assert.ok(s.includes('background-size:contain!important;background-position:center!important'));
 });
