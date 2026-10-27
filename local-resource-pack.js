@@ -1150,9 +1150,18 @@ function hudIcon(kind,fill){
    const rect=derivedSlot?window.MineWorldHotbarUV?.slotRect(image.width,image.height,Number(fill.slice(-1))):null;
    if(derivedSlot&&!rect)return null;
    const backgroundKey='hud:'+kind+':empty';
-   const underlay=kind!=='hotbar'&&fill!=='empty'&&source.entries.has(backgroundKey)?
-     await smallSpriteFromPng(await source.get(backgroundKey)):null;
+   // Empty art is optional decoration, not a dependency of a valid full or
+   // half icon. One damaged PNG in a partially imported pack must not hide
+   // the player's other HUD sprites.
+   let underlay=null;
+   if(kind!=='hotbar'&&fill!=='empty'&&source.entries.has(backgroundKey)){
+     try{underlay=await smallSpriteFromPng(await source.get(backgroundKey));}
+     catch(error){console.warn('Ignoring damaged local HUD underlay '+backgroundKey,error);}
+   }
    if(generation!==state.itemGeneration)return null;
+   // A one-pixel-wide source cannot supply either half. Return null so the
+   // HUD can clip the intact full sprite instead of displaying a blank icon.
+   if(derivedHalf&&image.width<2)return null;
    const canvas=document.createElement('canvas');
    canvas.width=rect?rect.width:image.width;canvas.height=rect?rect.height:image.height;
    const ctx=canvas.getContext('2d',{alpha:true});

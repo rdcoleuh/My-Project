@@ -136,3 +136,30 @@ test('a valid bordered player-owned bar remains available and slices the last sl
    args[1]===161&&args[2]===1&&args[3]===20&&args[4]===20),
    'last slot must use its own unscaled source rectangle');
 });
+
+test('corrupt optional empty-heart PNG does not hide a valid full or synthesized half heart',async()=>{
+ const b=boot(),broken=Uint8Array.from([0,1,2,3,4,5]);
+ const files=[
+  {name:'full.png',webkitRelativePath:'pack/assets/minecraft/textures/gui/sprites/hud/heart/full.png',data:png},
+  {name:'container.png',webkitRelativePath:'pack/assets/minecraft/textures/gui/sprites/hud/heart/container.png',data:broken}
+ ].map(({name,webkitRelativePath,data})=>({name,webkitRelativePath,size:data.length,arrayBuffer:async()=>data.buffer}));
+ await b.pack.loadFiles(files);
+ const before=b.draws.length;
+ assert.equal(await b.pack.hudIcon('heart','full'),'data:image/png;base64,owned');
+ assert.equal(await b.pack.hudIcon('heart','half'),'data:image/png;base64,owned');
+ const operations=b.draws.slice(before);
+ assert.equal(operations.length,2,'full and half art render without a corrupt optional backing');
+ assert.equal(operations[1].length,9,'synthesized half crops the valid full sprite');
+});
+test('one-pixel full HUD sprite cannot synthesize an invisible half icon',async()=>{
+ const b=boot(1,16);
+ const files=['full','container'].map(name=>({
+  name:name+'.png',webkitRelativePath:'pack/assets/minecraft/textures/gui/sprites/hud/heart/'+name+'.png',
+  size:png.length,arrayBuffer:async()=>png.buffer
+ }));
+ await b.pack.loadFiles(files);
+ assert.equal(await b.pack.hudIcon('heart','full'),'data:image/png;base64,owned');
+ const before=b.draws.length;
+ assert.equal(await b.pack.hudIcon('heart','half'),null,'caller should clip the full sprite instead');
+ assert.equal(b.draws.length,before,'no blank half-icon canvas is allocated');
+});
