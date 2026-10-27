@@ -82,6 +82,13 @@ function makeTestArchive(mode='full'){
   files=[['resource_pack/textures/ui/hotbar.png',
     generatedPng(invalid?20:bordered?22:20,120,invalid?20:bordered?182:180,true)]];
  }
+ if(mode==='sheet-generic')files=[
+  ['resource_pack/textures/ui/hotbar.png',generatedPng(20,120,180,true)],
+  ['resource_pack/textures/ui/hotbar_slot.png',generatedPng(20,180,20)]
+ ];
+ if(mode==='malformed-selected')files=[
+  ['resource_pack/textures/ui/selected_hotbar_slot.png',generatedPng(22,180,182,true)]
+ ];
  if(mode==='selected-only')files=files.filter(([name])=>name.endsWith('/selected_hotbar_slot.png'));
  if(mode==='partial-slots')files=files.filter(([name])=>name.endsWith('/hotbar_0.png'));
  const local=[],central=[];let offset=0;
@@ -403,6 +410,35 @@ async function go(browser,name,mobile){
         img.naturalWidth===20&&img.naturalHeight===20&&first!==last;
     }),name+': '+mode+' imported sheet did not produce nine distinct square slot textures');
   }
+  // A separately supplied generic slot takes precedence over a sheet-derived
+  // slot; explicit player artwork must not be silently replaced by the sheet.
+  await page.evaluate(async bytes=>{
+    const file=new File([new Uint8Array(bytes)],'generic-slot-fixture.zip',{type:'application/zip'});
+    await window.MineWorldLocalTextures.loadFile(file);
+  },Array.from(makeTestArchive('sheet-generic')));
+  await page.waitForFunction(()=>document.querySelectorAll('#hotbar .hot-item.mw-pack-slot').length===9,
+    null,{timeout:15000});
+  assert.ok(await page.evaluate(async()=>{
+    const bar=document.querySelector('#hotbar'),pack=window.MineWorldLocalTextures;
+    const [generic,derived]=await Promise.all([
+      pack.hudIcon('hotbar','slot'),pack.hudIcon('hotbar','slot0')]);
+    return !!generic&&!derived&&!bar.classList.contains('mw-pack-hotbar-slots')&&
+      !bar.classList.contains('mw-pack-bar-image')&&
+      [...bar.querySelectorAll('.hot-item')].every(item=>
+        item.classList.contains('mw-pack-slot')&&
+        getComputedStyle(item).backgroundImage.startsWith('url('));
+  }),name+': generic imported slot was overridden by a sliced background');
+  // An unrelated wide GUI strip mislabeled as a selection sprite must not
+  // flatten across the selected button or hide the fallback outline.
+  await page.evaluate(async bytes=>{
+    const file=new File([new Uint8Array(bytes)],'malformed-selection-fixture.zip',{type:'application/zip'});
+    await window.MineWorldLocalTextures.loadFile(file);
+  },Array.from(makeTestArchive('malformed-selected')));
+  assert.ok(await page.evaluate(async()=>{
+    const pack=window.MineWorldLocalTextures;
+    const selected=await pack.hudIcon('hotbar','selected');
+    return !selected;
+  }),name+': malformed imported selection was not rejected');
   // A square GUI sprite named hotbar.png must not erase procedural slot tiles.
   await page.evaluate(async bytes=>{
     const file=new File([new Uint8Array(bytes)],'invalid-sheet.zip',{type:'application/zip'});
