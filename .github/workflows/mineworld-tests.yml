@@ -28,3 +28,25 @@ jobs:
         run: npm install --no-save --no-package-lock --ignore-scripts playwright@1.56.1
       - name: Verify menu and gameplay in desktop and mobile Chrome
         run: node scripts/browser-smoke.cjs
+      - name: Trim focused HUD gameplay demonstrations
+        if: always()
+        run: |
+          mkdir -p artifacts/clips
+          for device in desktop mobile; do
+            source="artifacts/recordings/${device}-smoke.webm"
+            if [ -f "$source" ]; then
+              ffmpeg -y -loglevel error -sseof -9 -i "$source" -t 9 -an \\
+                -c:v libvpx -deadline realtime -cpu-used 8 -b:v 1300k \\
+                "artifacts/clips/${device}-hud-and-inventory.webm"
+            fi
+          done
+      - name: Upload visible gameplay recordings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mineworld-gameplay-videos
+          path: |
+            artifacts/clips/*.webm
+            artifacts/recordings/*.webm
+          if-no-files-found: warn
+          retention-days: 7
