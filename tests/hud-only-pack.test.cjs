@@ -40,6 +40,7 @@ function boot(imageWidth=16,imageHeight=16){
   Image,URL:{createObjectURL:()=> 'blob:owned',revokeObjectURL(){}},Blob,Uint8Array,
   Uint8ClampedArray,TextDecoder,ArrayBuffer,DataView,Math,Number,JSON,console,queueMicrotask,
   performance:{now:()=>0}};
+ vm.runInNewContext(read('hotbar-sprite-uv.js'),context);
  vm.runInNewContext(read('local-resource-pack.js'),context);
  return {pack:window.MineWorldLocalTextures,draws,get decoded(){return decoded}};
 }
@@ -111,4 +112,27 @@ test('valid imported item icon still uses a small nearest-neighbor canvas',async
  await b.pack.loadFiles([file]);
  assert.equal(await b.pack.itemIcon('diamond'),'data:image/png;base64,owned');
  assert.ok(b.draws.some(args=>args.length===9),'valid sprite is drawn with explicit source and destination rectangles');
+});
+
+test('a square GUI sprite is not stretched into a nine-slot hotbar sheet',async()=>{
+ const b=boot(16,16),file={name:'hotbar.png',
+  webkitRelativePath:'assets/minecraft/textures/gui/sprites/hud/hotbar.png',
+  size:png.length,arrayBuffer:async()=>png.buffer};
+ await b.pack.loadFiles([file]);
+ const before=b.draws.length;
+ assert.equal(await b.pack.hudIcon('hotbar','background'),null);
+ assert.equal(await b.pack.hudIcon('hotbar','slot0'),null);
+ assert.equal(b.draws.length,before,'invalid full-bar art should not draw onto a HUD canvas');
+});
+test('a valid bordered player-owned bar remains available and slices the last slot',async()=>{
+ const b=boot(182,22),file={name:'hotbar.png',
+  webkitRelativePath:'assets/minecraft/textures/gui/sprites/hud/hotbar.png',
+  size:png.length,arrayBuffer:async()=>png.buffer};
+ await b.pack.loadFiles([file]);
+ assert.equal(await b.pack.hudIcon('hotbar','background'),'data:image/png;base64,owned');
+ const before=b.draws.length;
+ assert.equal(await b.pack.hudIcon('hotbar','slot8'),'data:image/png;base64,owned');
+ assert.ok(b.draws.slice(before).some(args=>args.length===9&&
+   args[1]===161&&args[2]===1&&args[3]===20&&args[4]===20),
+   'last slot must use its own unscaled source rectangle');
 });
