@@ -32,6 +32,8 @@ jobs:
         run: node scripts/browser-smoke.cjs
       - name: Ensure FFmpeg is available for short clips
         if: always()
+        timeout-minutes: 2
+        continue-on-error: true
         run: |
           if command -v ffmpeg >/dev/null 2>&1; then
             ffmpeg -version | head -n 1
@@ -43,6 +45,10 @@ jobs:
         if: always()
         run: |
           mkdir -p artifacts/clips
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            echo "FFmpeg unavailable: keeping original Playwright recordings for upload"
+            exit 0
+          fi
           for device in desktop mobile; do
             source="artifacts/recordings/${device}-smoke.webm"
             if [ -f "$source" ]; then
