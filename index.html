@@ -4781,7 +4781,11 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
       const target=i>=2*W*D*H?'end':i>=W*D*H?'nether':'overworld',localIndex=i-(target==='end'?2*W*D*H:target==='nether'?W*D*H:0);
       const x=Math.floor(localIndex/(D*H)),z=Math.floor(localIndex/H)%D,y=localIndex%H;
       if(y===0)return false;
-      (target==='end'?endEdits:target==='nether'?netherEdits:overworldEdits).set(localIndex,b);
+      const editedDimension=target==='end'?endEdits:target==='nether'?netherEdits:overworldEdits;
+      editedDimension.set(localIndex,b);
+      // Overwriting an existing voxel keeps Map.size unchanged; without this,
+      // the chunk edit index can replay the OLD block when the chunk reloads.
+      savedChunkEditIndex.delete(editedDimension);
       // Multiplayer world edits can place or remove a nearby workbench while
       // a cached crafting-station result is still live.
       if(target===dimension&&(b===168||craftBenchMemo.value))craftBenchMemo.until=0;
