@@ -121,3 +121,29 @@ test('Bedrock-specific item PNG names fill hotbar icons without overriding Java 
    assert.equal(await b.pack.itemIcon(key),'data:image/png;base64,local','item '+key);
  assert.equal(await b.pack.itemIcon('nonexistent'),null);
 });
+
+test('selected Bedrock UI folder and .mcpack resolve identical HUD aliases',async()=>{
+ const aliases=['heart','heart_full','heart_half','heart_empty','heart_background',
+  'hunger_full','hunger_half','hunger_empty','hunger_background',
+  'food_full','food_half','food_empty',
+  'hotbar','hotbar_background','hotbar_slot','hotbar_start_cap','hotbar_end_cap',
+  'selected_hotbar_slot','hotbar_selection','hotbar_selected',
+  ...Array.from({length:9},(_,i)=>'hotbar_'+i)];
+ const files=[['textures/blocks/stone.png',FAKE_PNG],
+  ...aliases.map(name=>['textures/ui/'+name+'.png',FAKE_PNG])];
+ const archive=boot().pack.inspectZip(zip(files));
+ const b=boot();
+ const folder=files.map(([name,bytes])=>({name:name.split('/').pop(),
+  webkitRelativePath:'resource_pack/'+name,size:bytes.length,
+  arrayBuffer:async()=>Uint8Array.from(bytes).buffer}));
+ await b.pack.loadFiles(folder);
+ for(const key of archive.filter(key=>key.startsWith('hud:'))){
+  const [,kind,fill]=key.split(':');
+  assert.equal(await b.pack.hudIcon(kind,fill),'data:image/png;base64,local',
+   'folder import must resolve '+key+' just like ZIP import');
+ }
+ for(const fill of ['full','half','empty'])for(const kind of ['heart','food'])
+  assert.equal(await b.pack.hudIcon(kind,fill),'data:image/png;base64,local');
+ for(const fill of ['slot','slot0','slot4','slot8','selected','background'])
+  assert.equal(await b.pack.hudIcon('hotbar',fill),'data:image/png;base64,local');
+});

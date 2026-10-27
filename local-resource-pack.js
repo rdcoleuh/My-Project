@@ -222,6 +222,17 @@ function textureName(id,face){
  const def=mappings.get(id);
  return def?def[face]:(normalize(names[id])||null);
 }
+// Shared player-owned Bedrock UI lookup: ZIP and folder imports use identical keys.
+const BEDROCK_UI_HUD_KEYS=Object.freeze({
+ heart:'heart:full',heart_full:'heart:full',heart_half:'heart:half',heart_empty:'heart:empty',
+ heart_background:'heart:empty',
+ hunger_full:'food:full',hunger_half:'food:half',
+ hunger_empty:'food:empty',hunger_background:'food:empty',
+ food_full:'food:full',food_half:'food:half',food_empty:'food:empty',
+ hotbar:'hotbar:background',hotbar_background:'hotbar:background',hotbar_slot:'hotbar:slot',
+ hotbar_start_cap:'hotbar:slot0',hotbar_end_cap:'hotbar:slot8',
+ selected_hotbar_slot:'hotbar:selected',hotbar_selection:'hotbar:selected',hotbar_selected:'hotbar:selected'
+});
 function readArchive(buffer){
  if(!(buffer instanceof ArrayBuffer))throw Error('Expected ZIP data');
  if(buffer.byteLength>240*1024*1024)throw Error('Choose a resource ZIP/JAR smaller than 240 MB. Large packs may need a desktop browser.');
@@ -281,17 +292,8 @@ function readArchive(buffer){
    // Bedrock Samples uses nine hotbar cells and separate heart/hunger PNGs.
    // Each image remains in the player's local ZIP; only lookup keys are retained.
    const bedrockUI=relative?.match(/^textures\/ui\/([a-z0-9_-]+)\.png$/);
-   const bedrockHud=bedrockUI&&({
-     heart:'heart:full',heart_full:'heart:full',heart_half:'heart:half',heart_empty:'heart:empty',
-     heart_background:'heart:empty',
-     hunger_full:'food:full',hunger_half:'food:half',
-     hunger_empty:'food:empty',hunger_background:'food:empty',
-     food_full:'food:full',food_half:'food:half',food_empty:'food:empty',
-     hotbar:'hotbar:background',hotbar_background:'hotbar:background',hotbar_slot:'hotbar:slot',
-     hotbar_start_cap:'hotbar:slot0',hotbar_end_cap:'hotbar:slot8',
-     selected_hotbar_slot:'hotbar:selected',hotbar_selection:'hotbar:selected',hotbar_selected:'hotbar:selected'
-   })[bedrockUI[1]] || (bedrockUI&&/^hotbar_[0-8]$/.test(bedrockUI[1])?
-     'hotbar:slot'+bedrockUI[1].slice(-1):null);
+   const bedrockHud=bedrockUI&&(BEDROCK_UI_HUD_KEYS[bedrockUI[1]] ||
+     (/^hotbar_[0-8]$/.test(bedrockUI[1])?'hotbar:slot'+bedrockUI[1].slice(-1):null));
    const entityDefinition=relative?.match(/^entity\/([a-z0-9_-]+)\.entity\.json$/);
    const matchSound=relative?.match(/^sounds\/([a-z0-9_./-]+)\.ogg$/);
    const matchMeta=relative?.match(/^textures\/(?:block|blocks)\/(?:[a-z0-9_-]+\/)*([a-z0-9_]+)\.png\.mcmeta$/);
@@ -969,12 +971,9 @@ async function loadFiles(fileList){
    let key=png?.[1]||null;
    if(png&&/(?:^|\/)textures\/(?:item|items)\//.test(name))key='item:'+png[1];
    if(png&&/(?:^|\/)textures\/ui\//.test(name)){
-     const ui=png[1],map={
-       heart:'heart:full',heart_half:'heart:half',heart_background:'heart:empty',
-       hunger_full:'food:full',hunger_half:'food:half',hunger_background:'food:empty',
-       selected_hotbar_slot:'hotbar:selected',hotbar:'hotbar:background'
-     };
-     const mapped=map[ui]||(/^hotbar_[0-8]$/.test(ui)?'hotbar:slot'+ui.slice(-1):null);
+     const ui=png[1];
+     const mapped=BEDROCK_UI_HUD_KEYS[ui]||
+       (/^hotbar_[0-8]$/.test(ui)?'hotbar:slot'+ui.slice(-1):null);
      if(mapped)key='hud:'+mapped;
    }
    if(png&&/(?:^|\/)textures\/gui\/sprites\/hud\//.test(name)){
