@@ -417,9 +417,10 @@ body.in-nether #game-wrap{background:#290f19}
 .mw-stat-half{position:absolute;left:0;top:0;width:50%;height:100%;overflow:hidden;color:#f23b44}
 #hunger-text .mw-stat-half{color:#b77a35}
 /* Render pack slot art as real square pixels, not stretched strips under opaque CSS. */
-#hotbar.mw-pack-hotbar{background-color:transparent!important;border-color:transparent!important;box-shadow:none!important;padding:3px!important}
-#hotbar.mw-pack-hotbar .hot-item{background-color:transparent!important;border-color:transparent!important;box-shadow:none!important}
-#hotbar.mw-pack-hotbar .hot-item.active{border-color:transparent!important;box-shadow:none!important}
+/* Partial packs and selection-only imports must retain original fallback slot tiles. */
+#hotbar.mw-pack-bar-image,#hotbar.mw-pack-hotbar-slots{background-color:transparent!important;border-color:transparent!important;box-shadow:none!important;padding:3px!important}
+#hotbar.mw-pack-bar-image .hot-item:not(.mw-pack-slot){background-color:transparent!important;border-color:transparent!important;box-shadow:none!important}
+#hotbar .hot-item.active.mw-pack-slot,#hotbar.mw-pack-bar-image .hot-item.active{border-color:transparent!important;box-shadow:none!important}
 #hotbar .hot-item.mw-pack-slot{image-rendering:pixelated!important}
 #hotbar .hot-item.active.mw-pack-selected::after{image-rendering:pixelated!important}
 /* Imported transparent sprites should never sit on a colored placeholder tile. */
@@ -2198,10 +2199,12 @@ body.in-nether #game-wrap{background:#290f19}
     const root=$('hotbar');
     if(!root)return;
     const allSlots=slots.length===9&&slots.every(Boolean);
+    // Do not overlay a full-bar sheet with individually imported slot sprites.
+    const useBackground=!!background&&!allSlots&&!genericSlot&&!slots.some(Boolean);
     root.classList.toggle('mw-pack-hotbar',!!background||!!selected||!!genericSlot||slots.some(Boolean));
     root.classList.toggle('mw-pack-hotbar-slots',allSlots);
-    root.classList.toggle('mw-pack-bar-image',!!background&&!allSlots&&!genericSlot);
-    root.style.setProperty('--mw-pack-hotbar-bg',background&&!allSlots?'url("'+background+'")':'none');
+    root.classList.toggle('mw-pack-bar-image',useBackground);
+    root.style.setProperty('--mw-pack-hotbar-bg',useBackground?'url("'+background+'")':'none');
     root.style.setProperty('--mw-pack-hotbar-selected',selected?'url("'+selected+'")':'none');
     root.querySelectorAll('.hot-item').forEach((item,i)=>{
       item.classList.toggle('mw-pack-selected',!!selected&&item.classList.contains('active'));

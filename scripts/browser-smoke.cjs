@@ -45,8 +45,8 @@ function generatedPng(height,channel,width=16){
  return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),
   pngChunk('IHDR',ihdr),pngChunk('IDAT',deflateSync(rows)),pngChunk('IEND',Buffer.alloc(0))]);
 }
-function makeTestArchive(){
- const files=[
+function makeTestArchive(mode='full'){
+ let files=[
    ['resource_pack/textures/blocks/stone.png',generatedPng(16,80)],
    ['resource_pack/textures/entity/cow/cow.png',generatedPng(128,180,256)],
    ['resource_pack/textures/items/diamond.png',generatedPng(32,225,32)],
@@ -77,6 +77,8 @@ function makeTestArchive(){
      frames:[3,1,0,2],ticks_per_frame:1,blend_frames:false}
    ]))]
  ];
+ if(mode==='selected-only')files=files.filter(([name])=>name.endsWith('/selected_hotbar_slot.png'));
+ if(mode==='partial-slots')files=files.filter(([name])=>name.endsWith('/hotbar_0.png'));
  const local=[],central=[];let offset=0;
  for(const [filename,data] of files){
    const name=Buffer.from(filename),head=Buffer.alloc(30+name.length),dir=Buffer.alloc(46+name.length);
@@ -327,6 +329,34 @@ async function go(browser,name,mobile){
     name+': Survival heart/hunger sprites or accessible labels are incorrect');
   if(mobile)assert.equal(survival.fits,true,
     name+': Survival hearts/hunger overflow the mobile viewport');
+  // A resource pack may provide only a selection border or one slot PNG.
+  // Unprovided slot backgrounds must remain usable in desktop and touch HUDs.
+  await page.evaluate(async bytes=>{
+    const file=new File([new Uint8Array(bytes)],'selection-only.zip',{type:'application/zip'});
+    await window.MineWorldLocalTextures.loadFile(file);
+  },Array.from(makeTestArchive('selected-only')));
+  await page.waitForFunction(()=>document.querySelector('#hotbar .hot-item.active.mw-pack-selected'),
+    null,{timeout:15000});
+  assert.ok(await page.evaluate(()=>{
+    const bar=document.querySelector('#hotbar'),items=[...bar.querySelectorAll('.hot-item')];
+    return bar.classList.contains('mw-pack-hotbar')&&!bar.classList.contains('mw-pack-bar-image')&&
+      items.length===9&&items.every(item=>getComputedStyle(item).backgroundColor!=='rgba(0, 0, 0, 0)')&&
+      getComputedStyle(bar).backgroundColor!=='rgba(0, 0, 0, 0)'&&
+      getComputedStyle(items.find(item=>item.classList.contains('active')),'::after').backgroundImage.startsWith('url(');
+  }),name+': selection-only pack erased the fallback hotbar slots');
+  await page.evaluate(async bytes=>{
+    const file=new File([new Uint8Array(bytes)],'partial-slots.zip',{type:'application/zip'});
+    await window.MineWorldLocalTextures.loadFile(file);
+  },Array.from(makeTestArchive('partial-slots')));
+  await page.waitForFunction(()=>document.querySelectorAll('#hotbar .hot-item.mw-pack-slot').length===1,
+    null,{timeout:15000});
+  assert.ok(await page.evaluate(()=>{
+    const bar=document.querySelector('#hotbar'),items=[...bar.querySelectorAll('.hot-item')];
+    return bar.classList.contains('mw-pack-hotbar')&&!bar.classList.contains('mw-pack-bar-image')&&
+      items[0].classList.contains('mw-pack-slot')&&
+      items.slice(1).every(item=>!item.classList.contains('mw-pack-slot')&&
+        getComputedStyle(item).backgroundColor!=='rgba(0, 0, 0, 0)');
+  }),name+': partial slot pack hid the remaining fallback tiles');
   if(errors.length)throw Error(name+' browser console/runtime errors:\n'+errors.slice(0,8).join('\n'));
   process.stdout.write(name+': Bedrock ZIP import/persistent reload, real movement, menu actions, gameplay, pause and return passed\n');
  }finally{await context.close();}
