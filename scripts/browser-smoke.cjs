@@ -109,10 +109,16 @@ function makeTestArchive(mode='full'){
  return Buffer.concat([...local,...central,eocd]);
 }
 async function go(browser,name,mobile){
+ // Browser-recorded footage is trimmed into short HUD/interaction demos by CI.
+ // Synthetic fixtures only: never bundle the user's proprietary pack art.
+ const videoDir=path.join(root,'artifacts','recordings');
+ fs.mkdirSync(videoDir,{recursive:true});
  const context=await browser.newContext(mobile?{
-  viewport:{width:390,height:844},deviceScaleFactor:2,hasTouch:true,isMobile:true
- }:{viewport:{width:1280,height:800}});
- const page=await context.newPage(),errors=[];
+  viewport:{width:390,height:844},deviceScaleFactor:2,hasTouch:true,isMobile:true,
+  recordVideo:{dir:videoDir,size:{width:390,height:844}}
+ }:{viewport:{width:1280,height:800},
+  recordVideo:{dir:videoDir,size:{width:960,height:600}}});
+ const page=await context.newPage(),errors=[],video=page.video();
  page.on('pageerror',e=>errors.push(e.stack||e.message));
  page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text());});
  try{
@@ -458,9 +464,42 @@ async function go(browser,name,mobile){
       [...bar.querySelectorAll('.hot-item')].every(item=>
         getComputedStyle(item,'::before').backgroundColor!=='rgba(0, 0, 0, 0)');
   }),name+': invalid hotbar image replaced fallback slot tiles');
+  // Short end-of-run gameplay segment: restore an original synthetic pack,
+  // verify a half-heart from actual damage, select a slot, and open/close
+  // the crafting inventory through the same buttons players use.
+  await page.evaluate(async bytes=>{
+    const file=new File([new Uint8Array(bytes)],'hud-demo-original-fixture.zip',{type:'application/zip'});
+    await window.MineWorldLocalTextures.loadFile(file);
+  },Array.from(makeTestArchive()));
+  await page.waitForFunction(()=>
+    document.querySelectorAll('#health-text img.mw-pack-stat-art').length===10&&
+    document.querySelectorAll('#hotbar .hot-item.mw-pack-slot').length===9,
+    null,{timeout:15000});
+  await page.evaluate(()=>window.MineWorldBridge.applyDamage(1,'HUD verification'));
+  await page.waitForFunction(()=>
+    document.querySelectorAll('#health-text .mw-stat-icon.half').length===1,
+    null,{timeout:10000});
+  assert.match(await page.locator('#health-text').getAttribute('aria-label'),/Health: 19 of 20/,
+    name+': damage did not update the accessible half-heart HUD');
+  await page.waitForTimeout(650);
+  await page.locator('#hotbar .hot-item').nth(2).click({force:true});
+  await page.waitForFunction(()=>document.querySelector('#hotbar .hot-item:nth-child(3)')?.classList.contains('active'),
+    null,{timeout:8000});
+  await page.waitForTimeout(650);
+  await page.locator('#quick-inventory').click({force:true});
+  await page.waitForFunction(()=>!document.querySelector('#gear-panel')?.classList.contains('hidden'),
+    null,{timeout:8000});
+  assert.equal(await page.locator('#craft-grid .craft-cell').count(),4,
+    name+': inventory-only crafting grid should have four cells');
+  await page.waitForTimeout(850);
+  await page.locator('#close-gear').click({force:true});
+  await page.waitForTimeout(850);
   if(errors.length)throw Error(name+' browser console/runtime errors:\n'+errors.slice(0,8).join('\n'));
   process.stdout.write(name+': Bedrock ZIP import/persistent reload, real movement, menu actions, gameplay, pause and return passed\n');
- }finally{await context.close();}
+ }finally{
+   await context.close();
+   if(video)await video.saveAs(path.join(videoDir,mobile?'mobile-smoke.webm':'desktop-smoke.webm'));
+ }
 }
 (async()=>{
  await new Promise((ok,no)=>server.listen(0,'127.0.0.1',e=>e?no(e):ok()));
