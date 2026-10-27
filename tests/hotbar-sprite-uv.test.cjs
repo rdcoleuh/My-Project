@@ -30,7 +30,7 @@ test('rejects malformed sprite dimensions and non-bar Bedrock slot images',()=>{
 });
 test('resource importer slices a player-owned hotbar image and keeps fallback for incompatible sheets',()=>{
  const source=read('local-resource-pack.js'),html=read('index.html'),sw=read('sw.js');
- assert.ok(source.includes("source.entries.has('hud:hotbar:background')"));
+ assert.ok(read('hotbar-sprite-uv.js').includes("entries.has('hud:hotbar:background')"));
  assert.ok(source.includes('window.MineWorldHotbarUV?.slotRect'));
  assert.ok(source.includes('ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height'));
  assert.ok(html.includes('mw-pack-bar-image'));

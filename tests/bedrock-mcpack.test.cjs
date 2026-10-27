@@ -40,6 +40,7 @@ function boot(){
   URL:{createObjectURL:()=> 'blob:local',revokeObjectURL(){}},
   Image,Blob,Uint8Array,Uint8ClampedArray,TextDecoder,ArrayBuffer,DataView,Math,Number,JSON,
   console,queueMicrotask,performance:{now:()=>0}};
+ vm.runInNewContext(read('hotbar-sprite-uv.js'),ctx);
  vm.runInNewContext(read('local-resource-pack.js'),ctx);
  return {pack:win.MineWorldLocalTextures,draws};
 }
@@ -139,11 +140,14 @@ test('selected Bedrock UI folder and .mcpack resolve identical HUD aliases',asyn
  await b.pack.loadFiles(folder);
  for(const key of archive.filter(key=>key.startsWith('hud:'))){
   const [,kind,fill]=key.split(':');
-  assert.equal(await b.pack.hudIcon(kind,fill),'data:image/png;base64,local',
+  const expected=kind==='hotbar'&&fill==='background'?null:'data:image/png;base64,local';
+  assert.equal(await b.pack.hudIcon(kind,fill),expected,
    'folder import must resolve '+key+' just like ZIP import');
  }
  for(const fill of ['full','half','empty'])for(const kind of ['heart','food'])
   assert.equal(await b.pack.hudIcon(kind,fill),'data:image/png;base64,local');
- for(const fill of ['slot','slot0','slot4','slot8','selected','background'])
+ for(const fill of ['slot','slot0','slot4','slot8','selected'])
   assert.equal(await b.pack.hudIcon('hotbar',fill),'data:image/png;base64,local');
+ assert.equal(await b.pack.hudIcon('hotbar','background'),null,
+  'a square 16x16 sprite is not a nine-slot background sheet');
 });
