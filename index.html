@@ -2218,21 +2218,25 @@ body.in-nether #game-wrap{background:#290f19}
     ui.title=xp.xp+' total XP · Level '+xp.level;
   }
   window.addEventListener('mineworld-pack-hud-changed',()=>{updateHotbar();updateSurvivalHUD();});
-  let hotbarArtGeneration=-1,hotbarArtTask=null;
+  let hotbarArtGeneration=-1,hotbarArtTask=null,hotbarArtSource=null;
   async function refreshPackHotbarArt(){
     const source=window.MineWorldLocalTextures;
     const generation=source?.generation??-1;
-    if(generation!==hotbarArtGeneration||!hotbarArtTask){
+    if(source!==hotbarArtSource||generation!==hotbarArtGeneration||!hotbarArtTask){
+      hotbarArtSource=source;
       hotbarArtGeneration=generation;
-      hotbarArtTask=Promise.all([
-        source?.hudIcon?.('hotbar','background'),
-        source?.hudIcon?.('hotbar','selected'),
-        source?.hudIcon?.('hotbar','slot'),
-        ...Array.from({length:9},(_,i)=>source?.hudIcon?.('hotbar','slot'+i))
-      ]).catch(()=>Array(12).fill(null));
+      // Isolate broken/missing pack sprites: one rejected PNG must not
+      // discard valid slots, selection artwork, or the other eight cells.
+      const requests=[
+        ()=>source?.hudIcon?.('hotbar','background'),
+        ()=>source?.hudIcon?.('hotbar','selected'),
+        ()=>source?.hudIcon?.('hotbar','slot'),
+        ...Array.from({length:9},(_,i)=>()=>source?.hudIcon?.('hotbar','slot'+i))
+      ];
+      hotbarArtTask=Promise.all(requests.map(request=>Promise.resolve().then(request).catch(()=>null)));
     }
     const [background,selected,genericSlot,...slots]=await hotbarArtTask;
-    if(generation!==(window.MineWorldLocalTextures?.generation??-1))return;
+    if(source!==window.MineWorldLocalTextures||generation!==(window.MineWorldLocalTextures?.generation??-1))return;
     const root=$('hotbar');
     if(!root)return;
     const allSlots=slots.length===9&&slots.every(Boolean);
@@ -2255,10 +2259,11 @@ body.in-nether #game-wrap{background:#290f19}
   // Cache six possible imported stat sprites per resource-pack generation.
   // A 20-icon HUD should not request/decode the same PNG twenty times.
   let statArtGeneration=-1;
+  let statArtSource=null;
   const statArtPromises=new Map();
   function cachedStatArt(pack,glyph,fill){
     const generation=pack.generation??-1;
-    if(generation!==statArtGeneration){statArtGeneration=generation;statArtPromises.clear();}
+    if(pack!==statArtSource||generation!==statArtGeneration){statArtSource=pack;statArtGeneration=generation;statArtPromises.clear();}
     const key=glyph+':'+fill;
     if(!statArtPromises.has(key))
       statArtPromises.set(key,Promise.resolve().then(()=>pack.hudIcon(glyph,fill)).catch(()=>null));
@@ -2299,7 +2304,7 @@ body.in-nether #game-wrap{background:#290f19}
             src=await cachedStatArt(pack,glyph,'full');
             clipped=!!src;
           }
-          if(!src||!icon.isConnected||generation!==(window.MineWorldLocalTextures?.generation??-1))return;
+          if(!src||!icon.isConnected||pack!==window.MineWorldLocalTextures||generation!==(window.MineWorldLocalTextures?.generation??-1))return;
           const image=document.createElement('img');
           image.src=src;image.alt='';image.className='mw-pack-stat-art';
           if(clipped){
