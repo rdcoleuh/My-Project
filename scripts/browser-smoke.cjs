@@ -336,6 +336,8 @@ async function go(browser,name,mobile){
     name+': Survival hearts/hunger overflow the mobile viewport');
   // A resource pack may provide only a selection border or one slot PNG.
   // Unprovided slot backgrounds must remain usable in desktop and touch HUDs.
+  // The classic fallback tile is intentionally painted on ::before, while
+  // the larger touch button itself stays transparent for pixel-perfect art.
   await page.evaluate(async bytes=>{
     const file=new File([new Uint8Array(bytes)],'selection-only.zip',{type:'application/zip'});
     await window.MineWorldLocalTextures.loadFile(file);
@@ -345,7 +347,7 @@ async function go(browser,name,mobile){
   assert.ok(await page.evaluate(()=>{
     const bar=document.querySelector('#hotbar'),items=[...bar.querySelectorAll('.hot-item')];
     return bar.classList.contains('mw-pack-hotbar')&&!bar.classList.contains('mw-pack-bar-image')&&
-      items.length===9&&items.every(item=>getComputedStyle(item).backgroundColor!=='rgba(0, 0, 0, 0)')&&
+      items.length===9&&items.every(item=>getComputedStyle(item,'::before').backgroundColor!=='rgba(0, 0, 0, 0)')&&
       getComputedStyle(bar).backgroundColor!=='rgba(0, 0, 0, 0)'&&
       getComputedStyle(items.find(item=>item.classList.contains('active')),'::after').backgroundImage.startsWith('url(');
   }),name+': selection-only pack erased the fallback hotbar slots');
@@ -360,7 +362,7 @@ async function go(browser,name,mobile){
     return bar.classList.contains('mw-pack-hotbar')&&!bar.classList.contains('mw-pack-bar-image')&&
       items[0].classList.contains('mw-pack-slot')&&
       items.slice(1).every(item=>!item.classList.contains('mw-pack-slot')&&
-        getComputedStyle(item).backgroundColor!=='rgba(0, 0, 0, 0)');
+        getComputedStyle(item,'::before').backgroundColor!=='rgba(0, 0, 0, 0)');
   }),name+': partial slot pack hid the remaining fallback tiles');
   // Both bordered Java and seamless Bedrock nine-cell sheets must decode
   // into nine crisp local slot sprites without bundling any copyrighted art.
