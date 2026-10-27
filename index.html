@@ -1894,7 +1894,13 @@ body.in-nether #game-wrap{background:#290f19}
     if(paused||window.MineWorldMultiplayer?.isTyping?.())return false;
     if(!stack&&aimMob&&interactFarmAnimal(aimMob))return true;
     if(!stack&&aim?.b===169){cancelMining();useBed(aim);return;}
-    if(!stack&&gameMode==='survival'&&aim?.b===168){cancelMining();openGear();return;}
+    if(!stack&&gameMode==='survival'&&aim?.b===168){
+      // Interacting with a targeted crafting table must open its 3×3 grid,
+      // even if the nearby-station memo was populated before placement.
+      cancelMining();craftBenchMemo.until=0;openGear();
+      if(craftSize!==3){craftSize=3;craftCells=Array(9).fill(null);preferredCraft=null;renderCraftingGrid();}
+      return true;
+    }
     if(!stack&&gameMode==='survival'&&aim?.b===119){cancelMining();openTreasureChest(aim.x,aim.y,aim.z);return;}
     if(!stack&&aim?.b===126){cancelMining();switchDimension(dimension==='end'?'overworld':'end');return;}
     if(!stack&&aim?.b===87){cancelMining();switchDimension(dimension==='nether'?'overworld':'nether');return;}
