@@ -163,3 +163,39 @@ test('one-pixel full HUD sprite cannot synthesize an invisible half icon',async(
  assert.equal(await b.pack.hudIcon('heart','half'),null,'caller should clip the full sprite instead');
  assert.equal(b.draws.length,before,'no blank half-icon canvas is allocated');
 });
+
+
+test('broken explicit and generic hotbar slots recover from a valid imported nine-cell sheet',async()=>{
+ const b=boot(182,22),bad=Uint8Array.from([0,1,2,3]);
+ const entries=[
+  ['hotbar.png','assets/minecraft/textures/gui/sprites/hud/hotbar.png',png],
+  ['hotbar_0.png','textures/ui/hotbar_0.png',bad],
+  ['hotbar_slot.png','textures/ui/hotbar_slot.png',bad]
+ ].map(([name,webkitRelativePath,data])=>({
+  name,webkitRelativePath,size:data.length,arrayBuffer:async()=>data.buffer
+ }));
+ await b.pack.loadFiles(entries);
+ const before=b.draws.length;
+ assert.equal(await b.pack.hudIcon('hotbar','slot0'),'data:image/png;base64,owned');
+ assert.equal(await b.pack.hudIcon('hotbar','slot1'),'data:image/png;base64,owned');
+ const slices=b.draws.slice(before).filter(args=>args.length===9);
+ assert.equal(slices.length,2);
+ assert.deepEqual(slices.map(args=>[args[1],args[2],args[3],args[4]]),
+  [[1,1,20,20],[21,1,20,20]]);
+ assert.equal(await b.pack.hudIcon('hotbar','slot0'),'data:image/png;base64,owned');
+ assert.equal(b.draws.length,before+2,'recovered slot is cached');
+});
+test('bad explicit numbered slot recovers from a valid generic slot without a bar sheet',async()=>{
+ const b=boot(20,20),bad=Uint8Array.from([0,1,2,3]);
+ const entries=[
+  ['hotbar_3.png','textures/ui/hotbar_3.png',bad],
+  ['hotbar_slot.png','textures/ui/hotbar_slot.png',png]
+ ].map(([name,webkitRelativePath,data])=>({
+  name,webkitRelativePath,size:data.length,arrayBuffer:async()=>data.buffer
+ }));
+ await b.pack.loadFiles(entries);
+ const before=b.draws.length;
+ assert.equal(await b.pack.hudIcon('hotbar','slot3'),'data:image/png;base64,owned');
+ assert.ok(b.draws.slice(before).some(args=>args.length===3),
+  'generic square sprite is drawn without incorrectly slicing a sheet');
+});

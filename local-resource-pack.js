@@ -1117,69 +1117,78 @@ function itemName(key){
  return ITEM_ALIASES[key]||key.replace(/([a-z0-9])([A-Z])/g,'$1_$2').toLowerCase();
 }
 function hudIcon(kind,fill){
- const source=state.itemArchive;
- if(!source||!['heart','food','hotbar'].includes(kind)||
-   !/^(full|half|empty|background|selected|slot|slot[0-8])$/.test(fill))return Promise.resolve(null);
- const key='hud:'+kind+':'+fill;
- const derivedSlot=kind==='hotbar'&&
-   !!window.MineWorldHotbarUV?.shouldDeriveSlot(source.entries,fill);
- // Missing half sprite: crop the player's full sprite over their empty icon.
- // Preserve source pixel edges; CSS clipping remains a fallback without empty art.
- const derivedHalf=kind!=='hotbar'&&fill==='half'&&!source.entries.has(key)&&
-   source.entries.has('hud:'+kind+':full')&&source.entries.has('hud:'+kind+':empty');
- if(!source.entries.has(key)&&!derivedSlot&&!derivedHalf)return Promise.resolve(null);
- if(state.itemCache.has(key))return state.itemCache.get(key);
- const generation=state.itemGeneration;
- const promise=(async()=>{
-   const image=await smallSpriteFromPng(await source.get(derivedSlot?'hud:hotbar:background':
-     derivedHalf?'hud:'+kind+':full':key));
-   if(generation!==state.itemGeneration)return null;
-   // Prevent huge HUD canvas allocations from tiny, malicious PNG files.
-   if(!Number.isInteger(image.width)||!Number.isInteger(image.height)||
-      image.width<1||image.height<1||image.width>4096||image.height>4096||
-      image.width*image.height>1024*1024)return null;
-   // A full hotbar background must be a genuine nine-cell sheet. A square
-   // Bedrock GUI sprite or unrelated atlas must never stretch across nine slots.
-   // Individual imported slot/selection images remain independently supported.
-   if(kind==='hotbar'&&fill==='background'&&
-      !window.MineWorldHotbarUV?.slotRect(image.width,image.height,0))return null;
-   // A mistaken GUI-strip alias must not be stretched into one square button.
-   // Numbered slots derived from a validated bar are already square.
-   if(kind==='hotbar'&&!derivedSlot&&fill!=='background'&&
-      !window.MineWorldHotbarUV?.validSlotSprite(image.width,image.height))return null;
-   const rect=derivedSlot?window.MineWorldHotbarUV?.slotRect(image.width,image.height,Number(fill.slice(-1))):null;
-   if(derivedSlot&&!rect)return null;
-   const backgroundKey='hud:'+kind+':empty';
-   // Empty art is optional decoration, not a dependency of a valid full or
-   // half icon. One damaged PNG in a partially imported pack must not hide
-   // the player's other HUD sprites.
-   let underlay=null;
-   if(kind!=='hotbar'&&fill!=='empty'&&source.entries.has(backgroundKey)){
-     try{underlay=await smallSpriteFromPng(await source.get(backgroundKey));}
-     catch(error){console.warn('Ignoring damaged local HUD underlay '+backgroundKey,error);}
-   }
-   if(generation!==state.itemGeneration)return null;
-   // A one-pixel-wide source cannot supply either half. Return null so the
-   // HUD can clip the intact full sprite instead of displaying a blank icon.
-   if(derivedHalf&&image.width<2)return null;
-   const canvas=document.createElement('canvas');
-   canvas.width=rect?rect.width:image.width;canvas.height=rect?rect.height:image.height;
-   const ctx=canvas.getContext('2d',{alpha:true});
-   if(!ctx)return null;
-   ctx.imageSmoothingEnabled=false;
-   if(underlay)ctx.drawImage(underlay,0,0,canvas.width,canvas.height);
-   if(derivedHalf){
-     const half=Math.floor(image.width/2);
-     // A synthesized food half uses the right-hand pixels; hearts use left.
-     // Never flip a player's explicitly authored half icon.
-     const fromX=kind==='food'?image.width-half:0;
-     ctx.drawImage(image,fromX,0,half,image.height,fromX,0,half,canvas.height);
-   }else if(rect)ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,0,0,canvas.width,canvas.height);
-   else ctx.drawImage(image,0,0);
-   return generation===state.itemGeneration?canvas.toDataURL('image/png'):null;
- })().catch(error=>{console.warn('Ignoring damaged local HUD image '+key,error);return null;});
- state.itemCache.set(key,promise);
- return promise;
+  const source=state.itemArchive;
+  if(!source||!['heart','food','hotbar'].includes(kind)||
+    !/^(full|half|empty|background|selected|slot|slot[0-8])$/.test(fill))return Promise.resolve(null);
+  const key='hud:'+kind+':'+fill;
+  const numberedSlot=kind==='hotbar'&&/^slot[0-8]$/.test(fill);
+  const derivedSlot=kind==='hotbar'&&
+    !!window.MineWorldHotbarUV?.shouldDeriveSlot(source.entries,fill);
+  // A bad explicit slot or generic slot must not suppress a valid imported
+  // nine-cell bar. Try authored art first, then generic art, then the sheet.
+  // Each candidate is decoded and dimension-checked independently.
+  const slotCandidates=numberedSlot?
+    [key,'hud:hotbar:slot','hud:hotbar:background'].filter(candidate=>source.entries.has(candidate)):null;
+  const derivedHalf=kind!=='hotbar'&&fill==='half'&&!source.entries.has(key)&&
+    source.entries.has('hud:'+kind+':full')&&source.entries.has('hud:'+kind+':empty');
+  if(!source.entries.has(key)&&!derivedSlot&&!derivedHalf&&!slotCandidates?.length)return Promise.resolve(null);
+  if(state.itemCache.has(key))return state.itemCache.get(key);
+  const generation=state.itemGeneration;
+  const promise=(async()=>{
+    let image=null,rect=null;
+    if(numberedSlot){
+      for(const candidate of slotCandidates){
+        try{
+          const attempt=await smallSpriteFromPng(await source.get(candidate));
+          if(generation!==state.itemGeneration)return null;
+          const sliced=candidate==='hud:hotbar:background';
+          const candidateRect=sliced?
+            window.MineWorldHotbarUV?.slotRect(attempt.width,attempt.height,Number(fill.slice(-1))):null;
+          if(sliced?!candidateRect:
+             !window.MineWorldHotbarUV?.validSlotSprite(attempt.width,attempt.height))continue;
+          image=attempt;rect=candidateRect;break;
+        }catch(error){console.warn('Skipping damaged local hotbar candidate '+candidate,error);}
+      }
+      if(!image)return null;
+    }else{
+      image=await smallSpriteFromPng(await source.get(derivedHalf?'hud:'+kind+':full':key));
+      if(generation!==state.itemGeneration)return null;
+    }
+    // Prevent huge HUD canvas allocations from tiny, malicious PNG files.
+    if(!Number.isInteger(image.width)||!Number.isInteger(image.height)||
+       image.width<1||image.height<1||image.width>4096||image.height>4096||
+       image.width*image.height>1024*1024)return null;
+    // A full background must be a genuine nine-cell sheet, while individual
+    // selection and generic slot images must be approximately square.
+    if(kind==='hotbar'&&!numberedSlot&&fill==='background'&&
+       !window.MineWorldHotbarUV?.slotRect(image.width,image.height,0))return null;
+    if(kind==='hotbar'&&!numberedSlot&&fill!=='background'&&
+       !window.MineWorldHotbarUV?.validSlotSprite(image.width,image.height))return null;
+    const backgroundKey='hud:'+kind+':empty';
+    // Damaged optional underlays must never hide otherwise valid HUD artwork.
+    let underlay=null;
+    if(kind!=='hotbar'&&fill!=='empty'&&source.entries.has(backgroundKey)){
+      try{underlay=await smallSpriteFromPng(await source.get(backgroundKey));}
+      catch(error){console.warn('Ignoring damaged local HUD underlay '+backgroundKey,error);}
+    }
+    if(generation!==state.itemGeneration)return null;
+    if(derivedHalf&&image.width<2)return null;
+    const canvas=document.createElement('canvas');
+    canvas.width=rect?rect.width:image.width;canvas.height=rect?rect.height:image.height;
+    const ctx=canvas.getContext('2d',{alpha:true});
+    if(!ctx)return null;
+    ctx.imageSmoothingEnabled=false;
+    if(underlay)ctx.drawImage(underlay,0,0,canvas.width,canvas.height);
+    if(derivedHalf){
+      const half=Math.floor(image.width/2);
+      const fromX=kind==='food'?image.width-half:0;
+      ctx.drawImage(image,fromX,0,half,image.height,fromX,0,half,canvas.height);
+    }else if(rect)ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,0,0,canvas.width,canvas.height);
+    else ctx.drawImage(image,0,0);
+    return generation===state.itemGeneration?canvas.toDataURL('image/png'):null;
+  })().catch(error=>{console.warn('Ignoring damaged local HUD image '+key,error);return null;});
+  state.itemCache.set(key,promise);
+  return promise;
 }
 // Bedrock uses a handful of different vanilla item filenames from Java.
 // Resolve only within the player's selected archive; Java names win when present.
