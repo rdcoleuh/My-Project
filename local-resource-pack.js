@@ -1121,8 +1121,8 @@ function hudIcon(kind,fill){
  if(!source||!['heart','food','hotbar'].includes(kind)||
    !/^(full|half|empty|background|selected|slot|slot[0-8])$/.test(fill))return Promise.resolve(null);
  const key='hud:'+kind+':'+fill;
- const derivedSlot=kind==='hotbar'&&/^slot[0-8]$/.test(fill)&&
-   !source.entries.has(key)&&source.entries.has('hud:hotbar:background');
+ const derivedSlot=kind==='hotbar'&&
+   !!window.MineWorldHotbarUV?.shouldDeriveSlot(source.entries,fill);
  // Missing half sprite: crop the player's full sprite over their empty icon.
  // Preserve source pixel edges; CSS clipping remains a fallback without empty art.
  const derivedHalf=kind!=='hotbar'&&fill==='half'&&!source.entries.has(key)&&
@@ -1143,6 +1143,10 @@ function hudIcon(kind,fill){
    // Individual imported slot/selection images remain independently supported.
    if(kind==='hotbar'&&fill==='background'&&
       !window.MineWorldHotbarUV?.slotRect(image.width,image.height,0))return null;
+   // A mistaken GUI-strip alias must not be stretched into one square button.
+   // Numbered slots derived from a validated bar are already square.
+   if(kind==='hotbar'&&!derivedSlot&&fill!=='background'&&
+      !window.MineWorldHotbarUV?.validSlotSprite(image.width,image.height))return null;
    const rect=derivedSlot?window.MineWorldHotbarUV?.slotRect(image.width,image.height,Number(fill.slice(-1))):null;
    if(derivedSlot&&!rect)return null;
    const backgroundKey='hud:'+kind+':empty';

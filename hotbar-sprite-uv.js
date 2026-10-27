@@ -22,5 +22,20 @@ function slotRect(width,height,index){
  if(x<0||y<0||right>width||bottom>height||right<=x||bottom<=y)return null;
  return Object.freeze({x,y,width:right-x,height:bottom-y});
 }
-window.MineWorldHotbarUV=Object.freeze({slotRect});
+// An explicitly supplied generic slot is authoritative for all unnumbered
+// positions. A sliced bar is a fallback only when neither a numbered slot
+// nor a generic slot exists in the player's pack.
+function shouldDeriveSlot(entries,slot){
+ if(!entries||typeof entries.has!=='function'||!/^slot[0-8]$/.test(slot))return false;
+ return entries.has('hud:hotbar:background')&&
+   !entries.has('hud:hotbar:'+slot)&&!entries.has('hud:hotbar:slot');
+}
+// Ignore incorrectly mapped GUI strips instead of squashing them into a
+// single selection or slot. Allow small borders on legitimate square sprites.
+function validSlotSprite(width,height){
+ return Number.isInteger(width)&&Number.isInteger(height)&&
+   width>=2&&height>=2&&width<=1024&&height<=1024&&
+   Math.max(width,height)/Math.min(width,height)<=1.25;
+}
+window.MineWorldHotbarUV=Object.freeze({slotRect,shouldDeriveSlot,validSlotSprite});
 })();

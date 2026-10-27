@@ -39,3 +39,29 @@ test('resource importer slices a player-owned hotbar image and keeps fallback fo
  assert.ok(sw.includes("'./hotbar-sprite-uv.js'"));
  assert.ok(html.includes('packGeneration!==window.MineWorldLocalTextures?.generation'));
 });
+
+test('generic slot artwork overrides slicing of the same imported bar sheet',()=>{
+ const entries=new Map([
+  ['hud:hotbar:background',true],['hud:hotbar:slot',true],
+  ['hud:hotbar:slot0',true]
+ ]);
+ for(let i=0;i<9;i++)assert.equal(uv.shouldDeriveSlot(entries,'slot'+i),false);
+ entries.delete('hud:hotbar:slot');
+ assert.equal(uv.shouldDeriveSlot(entries,'slot0'),false);
+ for(let i=1;i<9;i++)assert.equal(uv.shouldDeriveSlot(entries,'slot'+i),true);
+ assert.equal(uv.shouldDeriveSlot(entries,'selected'),false);
+ assert.equal(uv.shouldDeriveSlot(null,'slot1'),false);
+ entries.delete('hud:hotbar:background');
+ assert.equal(uv.shouldDeriveSlot(entries,'slot1'),false);
+});
+test('single imported slot and selection images must be approximately square',()=>{
+ for(const dims of [[20,20],[24,24],[22,24],[64,64],[128,128],[256,256]])
+  assert.equal(uv.validSlotSprite(...dims),true,JSON.stringify(dims));
+ for(const dims of [[182,22],[180,20],[20,40],[0,0],[1025,1025],[NaN,20],[20.5,20]])
+  assert.equal(uv.validSlotSprite(...dims),false,JSON.stringify(dims));
+});
+test('importer applies explicit-slot precedence and malformed GUI strip fallback',()=>{
+ const source=read('local-resource-pack.js');
+ assert.ok(source.includes('shouldDeriveSlot(source.entries,fill)'));
+ assert.ok(source.includes('validSlotSprite(image.width,image.height)'));
+});
