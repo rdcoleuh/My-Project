@@ -7,16 +7,20 @@ test('original pixel art provides 10 full half and empty hearts/food, each 11x11
   assert.ok([...data].some(x=>x>0));
  }
 });
-test('half icons color only left half and preserve dark right side',()=>{
+test('half hearts fill left and half hunger icons fill right without altering transparent edges',()=>{
  const a=art();for(const kind of ['heart','food']){
   const full=a.pixels(kind,'full'),half=a.pixels(kind,'half'),empty=a.pixels(kind,'empty');
-  let left=0,right=0;
+  let filled=0,unfilled=0;
   for(let y=0;y<11;y++)for(let x=0;x<11;x++){
    const p=(y*11+x)*4;
-   if(x<5){if(full[p]!==empty[p]&&half[p]===full[p])left++;}
-   else if(full[p]!==empty[p]&&half[p]===empty[p])right++;
+   if(full[p]===empty[p])continue;
+   const onFilledSide=kind==='heart'?x<5:x>=6;
+   const onEmptySide=kind==='heart'?x>=6:x<5;
+   if(onFilledSide&&half[p]===full[p])filled++;
+   if(onEmptySide&&half[p]===empty[p])unfilled++;
   }
-  assert.ok(left>0,kind+' left colored');assert.ok(right>0,kind+' right empty');
+  assert.ok(filled>0,kind+' filled half is visible');
+  assert.ok(unfilled>0,kind+' unfilled half retains its outline');
  }
 });
 test('hotbar imports are sharp, selected remains visible without imported selection art',()=>{
