@@ -3609,8 +3609,13 @@ body.in-nether #game-wrap{background:#290f19}
       }else if(m.step<=0){m.step=1.4+Math.random()*4;m.heading+=-1.5+Math.random()*3;}
       const chase=aggressive&&!!target&&dist<=25;
       const pursuing=aggressive&&!target&&!!m.lastSeen;
+      // Keep ranged mobs at a useful distance, retreat when cornered, and
+      // prevent creepers from walking through players during their fuse.
+      const intent=chase?mobAI.targetIntent(m.kind,dist,true,m.anger,nightTime()):'idle';
+      if(intent==='retreat'&&target)m.heading=Math.atan2(m.z-target.z,m.x-target.x);
+      const holding=chase&&(intent==='ranged'||intent==='fuse'||(intent==='melee'&&dist<.9));
       const flight=m.fleeTime>0?1.75:1,approach=m.following?1.12:1;
-      const pace=(m.waitingForFood||(chase&&dist<.9)?0:
+      const pace=(m.waitingForFood||holding?0:
         ((chase||pursuing||m.fleeTime>0)?type.speed:(!m.anger?.34:.8)*type.speed)*dt*flight*approach);
       // Probe ahead with the actual collision hitbox, including slopes and
       // low ceilings. Steer around walls instead of walking into them forever.
