@@ -7,7 +7,7 @@ const vm=require('node:vm');
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 const craft=html.slice(html.indexOf('function renderCraftingGrid(){'),html.indexOf('function placeCraftingTable(){'));
 const hotbar=html.slice(html.indexOf('function updateHotbar(){'),html.indexOf('function toast(s)'));
-const place=html.slice(html.indexOf('function performPlace('),html.indexOf('function breakBlockNow('));
+const place=html.slice(html.indexOf('function performPlace('),html.indexOf('function performPlace(')+4000);
 const helper=html.match(/function hotbarIconRequestCurrent\(pack,generation,node\)\{[\s\S]*?\n  \}/);
 test('crafting item sprites reject stale packs and detached cells',()=>{
  assert.ok(helper,'pack identity guard exists');
