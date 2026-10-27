@@ -35,9 +35,7 @@ jobs:
           for device in desktop mobile; do
             source="artifacts/recordings/${device}-smoke.webm"
             if [ -f "$source" ]; then
-              ffmpeg -y -loglevel error -sseof -9 -i "$source" -t 9 -an \\
-                -c:v libvpx -deadline realtime -cpu-used 8 -b:v 1300k \\
-                "artifacts/clips/${device}-hud-and-inventory.webm"
+              ffmpeg -y -loglevel error -sseof -9 -i "$source" -t 9 -an -c:v libvpx -deadline realtime -cpu-used 8 -b:v 1300k "artifacts/clips/${device}-hud-and-inventory.webm"
             fi
           done
       - name: Upload visible gameplay recordings
