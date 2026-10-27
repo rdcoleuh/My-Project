@@ -1138,6 +1138,11 @@ function hudIcon(kind,fill){
    if(!Number.isInteger(image.width)||!Number.isInteger(image.height)||
       image.width<1||image.height<1||image.width>4096||image.height>4096||
       image.width*image.height>1024*1024)return null;
+   // A full hotbar background must be a genuine nine-cell sheet. A square
+   // Bedrock GUI sprite or unrelated atlas must never stretch across nine slots.
+   // Individual imported slot/selection images remain independently supported.
+   if(kind==='hotbar'&&fill==='background'&&
+      !window.MineWorldHotbarUV?.slotRect(image.width,image.height,0))return null;
    const rect=derivedSlot?window.MineWorldHotbarUV?.slotRect(image.width,image.height,Number(fill.slice(-1))):null;
    if(derivedSlot&&!rect)return null;
    const backgroundKey='hud:'+kind+':empty';
