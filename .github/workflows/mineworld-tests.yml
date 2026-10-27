@@ -26,6 +26,8 @@ jobs:
         run: node --test tests/*.test.cjs
       - name: Install temporary browser smoke runner
         run: npm install --no-save --no-package-lock --ignore-scripts playwright@1.56.1
+      - name: Install Playwright video recorder
+        run: npx playwright install ffmpeg
       - name: Verify menu and gameplay in desktop and mobile Chrome
         run: node scripts/browser-smoke.cjs
       - name: Trim focused HUD gameplay demonstrations
