@@ -151,17 +151,17 @@ test('corrupt optional empty-heart PNG does not hide a valid full or synthesized
  assert.equal(operations.length,2,'full and half art render without a corrupt optional backing');
  assert.equal(operations[1].length,9,'synthesized half crops the valid full sprite');
 });
-test('one-pixel full HUD sprite cannot synthesize an invisible half icon',async()=>{
+test('one-pixel-wide HUD artwork is rejected instead of stretched into a heart',async()=>{
  const b=boot(1,16);
  const files=['full','container'].map(name=>({
   name:name+'.png',webkitRelativePath:'pack/assets/minecraft/textures/gui/sprites/hud/heart/'+name+'.png',
   size:png.length,arrayBuffer:async()=>png.buffer
  }));
  await b.pack.loadFiles(files);
- assert.equal(await b.pack.hudIcon('heart','full'),'data:image/png;base64,owned');
  const before=b.draws.length;
- assert.equal(await b.pack.hudIcon('heart','half'),null,'caller should clip the full sprite instead');
- assert.equal(b.draws.length,before,'no blank half-icon canvas is allocated');
+ assert.equal(await b.pack.hudIcon('heart','full'),null,'malformed full glyph uses procedural fallback');
+ assert.equal(await b.pack.hudIcon('heart','half'),null,'malformed full glyph cannot synthesize a half');
+ assert.equal(b.draws.length,before,'no stretched or blank HUD canvas is allocated');
 });
 
 
