@@ -138,7 +138,7 @@ test('game wires sound events, imported texture atlas, original save keys and of
  }
  for(const key of ["sound?.play('break'","sound?.play('place'",
   "sound?.play('jump'","sound?.play('hurt'","sound?.play('pickup'",
-  "MineWorldResourcePackContext","MineWorldLocalTextures?.active",
+  "MineWorldResourcePackContext","const localPack=window.MineWorldLocalTextures",
   "worldLibrary.key(mode,'original')","mineworld-selfhost-v1"])
   assert.ok(html.includes(key),'missing '+key);
  assert.ok(read('block-guide.js').includes('MineWorldLocalTextures?.drawFace'));
