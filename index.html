@@ -2269,15 +2269,21 @@ body.in-nether #game-wrap{background:#290f19}
       statArtPromises.set(key,Promise.resolve().then(()=>pack.hudIcon(glyph,fill)).catch(()=>null));
     return statArtPromises.get(key);
   }
+  // A replacement pack can have the same generation as the previous one.
+  // Track its object identity separately so unchanged stats still repaint.
+  let statRenderedPack=null;
   function updateSurvivalHUD(){
     updateExperienceHUD();
+    const currentPack=window.MineWorldLocalTextures;
+    const packChanged=currentPack!==statRenderedPack;
+    statRenderedPack=currentPack;
     $('survival-hud').classList.toggle('hidden',gameMode!=='survival');
     // Ten discrete two-point HUD icons, preserving accessible numeric descriptions.
     const paintStat=(node,value,symbol,emptySymbol,kind)=>{
       const points=window.MineWorldHudArt?.points?.(value)??Math.max(0,Math.min(20,Math.floor(Number(value)||0)));
       const states=window.MineWorldHudArt?.slots?.(points);
-      const signature=kind+':'+points+':'+(window.MineWorldLocalTextures?.generation??-1);
-      if(node.dataset.mwStatSignature===signature)return;
+      const signature=kind+':'+points+':'+(currentPack?.generation??-1);
+      if(!packChanged&&node.dataset.mwStatSignature===signature)return;
       node.dataset.mwStatSignature=signature;
       node.replaceChildren();
       node.setAttribute('role','img');
@@ -2296,11 +2302,13 @@ body.in-nether #game-wrap{background:#290f19}
         node.appendChild(icon);
         // Imported local art takes priority. If a pack has no half sprite,
         // clip its full sprite over the original half/empty fallback.
-        const pack=window.MineWorldLocalTextures;
+        const pack=currentPack;
         const generation=pack?.generation??-1;
         if(pack?.hudIcon)cachedStatArt(pack,glyph,fill).then(async src=>{
           let clipped=false;
           if(!src&&remaining>=1&&remaining<2){
+            // Avoid decoding a second sprite for a pack that was already replaced.
+            if(pack!==window.MineWorldLocalTextures||generation!==(window.MineWorldLocalTextures?.generation??-1))return;
             src=await cachedStatArt(pack,glyph,'full');
             clipped=!!src;
           }
