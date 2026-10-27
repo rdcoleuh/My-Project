@@ -77,6 +77,11 @@ function makeTestArchive(mode='full'){
      frames:[3,1,0,2],ticks_per_frame:1,blend_frames:false}
    ]))]
  ];
+ if(mode==='sheet-180'||mode==='sheet-182'){
+  const bordered=mode==='sheet-182';
+  files=[['resource_pack/textures/ui/hotbar.png',
+    generatedPng(bordered?22:20,120,bordered?182:180)]];
+ }
  if(mode==='selected-only')files=files.filter(([name])=>name.endsWith('/selected_hotbar_slot.png'));
  if(mode==='partial-slots')files=files.filter(([name])=>name.endsWith('/hotbar_0.png'));
  const local=[],central=[];let offset=0;
@@ -357,6 +362,25 @@ async function go(browser,name,mobile){
       items.slice(1).every(item=>!item.classList.contains('mw-pack-slot')&&
         getComputedStyle(item).backgroundColor!=='rgba(0, 0, 0, 0)');
   }),name+': partial slot pack hid the remaining fallback tiles');
+  // Both bordered Java and seamless Bedrock nine-cell sheets must decode
+  // into nine crisp local slot sprites without bundling any copyrighted art.
+  for(const mode of ['sheet-180','sheet-182']){
+    await page.evaluate(async bytes=>{
+      const file=new File([new Uint8Array(bytes)],'sheet-fixture.zip',{type:'application/zip'});
+      await window.MineWorldLocalTextures.loadFile(file);
+    },Array.from(makeTestArchive(mode)));
+    await page.waitForFunction(()=>document.querySelectorAll('#hotbar .hot-item.mw-pack-slot').length===9,
+      null,{timeout:15000});
+    assert.ok(await page.evaluate(async()=>{
+      const bar=document.querySelector('#hotbar'),items=[...bar.querySelectorAll('.hot-item')];
+      const pack=window.MineWorldLocalTextures;
+      const first=await pack.hudIcon('hotbar','slot0'),last=await pack.hudIcon('hotbar','slot8');
+      const img=new Image();img.src=first;await img.decode();
+      return bar.classList.contains('mw-pack-hotbar-slots')&&items.length===9&&
+        items.every(item=>getComputedStyle(item).backgroundImage.startsWith('url('))&&
+        img.naturalWidth===20&&img.naturalHeight===20&&first!==last;
+    }),name+': '+mode+' imported sheet did not produce nine distinct square slot textures');
+  }
   if(errors.length)throw Error(name+' browser console/runtime errors:\n'+errors.slice(0,8).join('\n'));
   process.stdout.write(name+': Bedrock ZIP import/persistent reload, real movement, menu actions, gameplay, pause and return passed\n');
  }finally{await context.close();}

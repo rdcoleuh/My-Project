@@ -12,8 +12,18 @@ test('Java hotbar sheet yields nine crisp non-overlapping slot interiors at 1x, 
   }
  }
 });
+test('seamless 180x20 nine-cell sheets preserve exact pixel edges at 1x, 2x and 4x',()=>{
+ for(const scale of [1,2,4]){
+  const rects=Array.from({length:9},(_,i)=>uv.slotRect(180*scale,20*scale,i));
+  for(let i=0;i<9;i++){
+   const r=rects[i];
+   assert.deepEqual({...r},{x:20*i*scale,y:0,width:20*scale,height:20*scale});
+   if(i)assert.equal(r.x,rects[i-1].x+rects[i-1].width);
+  }
+ }
+});
 test('rejects malformed sprite dimensions and non-bar Bedrock slot images',()=>{
- for(const dims of [[20,20],[180,20],[182,16],[0,0],[182.5,22],[364,40]]){
+ for(const dims of [[20,20],[180,22],[182,16],[0,0],[182.5,22],[364,40]]){
   assert.equal(uv.slotRect(...dims,0),null,JSON.stringify(dims));
  }
  for(const index of [-1,9,1.5,NaN])assert.equal(uv.slotRect(182,22,index),null);
