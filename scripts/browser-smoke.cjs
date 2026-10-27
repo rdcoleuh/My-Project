@@ -497,7 +497,40 @@ async function go(browser,name,mobile){
     name+': inventory-only crafting grid should have four cells');
   await page.waitForTimeout(850);
   await page.locator('#close-gear').click({force:true});
-  await page.waitForTimeout(850);
+  await page.waitForTimeout(550);
+  // Regression: a workbench added by another player must immediately enable
+  // the 3x3 grid, even if the earlier backpack visit cached "no workbench".
+  // The edit is synthetic and confined to this disposable test world.
+  const bench=await page.evaluate(()=>{
+    const bridge=window.MineWorldBridge,p=bridge.getPlayer();
+    const W=bridge.getSnapshot().worldSize;
+    const x=Math.floor(p.x)+2,z=Math.floor(p.z),y=Math.max(1,Math.min(47,Math.floor(p.y)));
+    const id=(x*W+z)*48+y;
+    return {id,placed:bridge.remoteEdit(id,168)};
+  });
+  assert.equal(bench.placed,true,name+': failed to place remote crafting-table fixture');
+  if(mobile)await page.locator('#quick-inventory').click({force:true});
+  else await page.keyboard.press('e');
+  await page.waitForFunction(()=>!document.querySelector('#gear-panel')?.classList.contains('hidden'),
+    null,{timeout:8000});
+  assert.equal(await page.locator('#craft-grid .craft-cell').count(),9,
+    name+': remote workbench placement did not immediately open a 3x3 grid');
+  assert.match(await page.locator('#craft-heading').textContent(),/3 × 3/,
+    name+': workbench heading disagrees with the actual grid');
+  await page.waitForTimeout(950);
+  await page.locator('#close-gear').click({force:true});
+  await page.waitForTimeout(350);
+  assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),bench.id),
+    true,name+': failed to remove remote crafting-table fixture');
+  if(mobile)await page.locator('#quick-inventory').click({force:true});
+  else await page.keyboard.press('e');
+  await page.waitForFunction(()=>!document.querySelector('#gear-panel')?.classList.contains('hidden'),
+    null,{timeout:8000});
+  assert.equal(await page.locator('#craft-grid .craft-cell').count(),4,
+    name+': removed remote workbench left a stale 3x3 crafting grid');
+  await page.waitForTimeout(950);
+  await page.locator('#close-gear').click({force:true});
+  await page.waitForTimeout(450);
   if(errors.length)throw Error(name+' browser console/runtime errors:\n'+errors.slice(0,8).join('\n'));
   process.stdout.write(name+': Bedrock ZIP import/persistent reload, real movement, menu actions, gameplay, pause and return passed\n');
  }finally{
