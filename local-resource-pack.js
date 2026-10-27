@@ -1198,6 +1198,15 @@ function itemIcon(key){
  state.itemCache.set(path,promise);
  return promise;
 }
+function drawAtlasTile(ctx,tile){
+ if(!state.active||!state.canvas||!ctx||!Number.isInteger(tile)||tile<0||tile>=1024)return false;
+ const size=state.tilePixels;
+ if(!Number.isFinite(size)||size<=0)return false;
+ ctx.clearRect(0,0,16,16);
+ ctx.imageSmoothingEnabled=false;
+ ctx.drawImage(state.canvas,(tile%16)*size,Math.floor(tile/16)*size,size,size,0,0,16,16);
+ return true;
+}
 function drawFace(ctx,id,face){
  if(!state.active||!state.canvas)return false;
  const alt=window.MineWorldAtlas?.alternateFaces?.[id];
@@ -1217,7 +1226,7 @@ const exposed={
  get generation(){return state.itemGeneration;},
  get grassTint(){return [...state.tint.grass];},
  get foliageTint(){return [...state.tint.foliage];},
- loadFile,loadFiles,clear,setDefaultPack,drawFace,textureName,updateAnimation,itemIcon,itemName,blockItemIcon,hudIcon,
+ loadFile,loadFiles,clear,setDefaultPack,drawFace,drawAtlasTile,textureName,updateAnimation,itemIcon,itemName,blockItemIcon,hudIcon,
  mountDefaultUI,mountOptionsUI,
  get availableItemTextures(){return state.lastResult?.items||0;},
  hasImportedFace(id,face){return state.active&&Number.isInteger(id)&&Number.isInteger(face)&&face>=0&&face<3&&state.importedFaces.has(id*3+face);},
