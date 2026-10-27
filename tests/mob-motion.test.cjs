@@ -37,7 +37,7 @@ test('hostile animation preserves original mob skin UV assignments and save form
 
 test('cave spiders use articulated eight-leg rendering instead of humanoid limbs',()=>{
  const html=read('index.html');
- assert.match(html,/const spider=m\\.kind==='spider'\\|\\|m\\.kind==='cave_spider',creeper=m\\.kind==='creeper'/);
+ assert.ok(html.includes("const spider=m.kind==='spider'||m.kind==='cave_spider',creeper=m.kind==='creeper';"));
  const motion=load('mob-motion.js').MineWorldMobMotion;
  const moving=motion.pose({kind:'cave_spider',id:3,moving:true},.5);
  assert.notEqual(moving.spiderStride,0);
