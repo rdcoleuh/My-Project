@@ -51,7 +51,7 @@ test('direct workbench entry forces a 3x3 grid before gear rendering',()=>{
  const enter=html.slice(html.indexOf('function enterCraftStation('),html.indexOf('function renderCraftingGrid(){'));
  const context={craftSize:2,craftCells:Array(9).fill('old'),preferredCraft:'old',
   nearbyCraftTable:()=>false,renderCraftingGrid:()=>{context.drawnSize=context.craftSize;}};
- vm.runInNewContext(enter+'\\nthis.enter=enterCraftStation;',context);
+ vm.runInNewContext(enter+'\nthis.enter=enterCraftStation;',context);
  context.enter(true);
  assert.equal(context.craftSize,3);
  assert.equal(context.drawnSize,3);
@@ -60,6 +60,6 @@ test('direct workbench entry forces a 3x3 grid before gear rendering',()=>{
  context.enter(false);
  assert.equal(context.craftSize,2);
  assert.equal(context.drawnSize,2);
- assert.match(html,/function openGear\\(forceTable=false\\)[^\\n]*enterCraftStation\\(forceTable\\);renderGear\\(\\)/);
- assert.match(place,/craftBenchMemo\\.until=0;openGear\\(true\\)/);
+ assert.match(html,/function openGear\(forceTable=false\)[^\n]*enterCraftStation\(forceTable\);renderGear\(\)/);
+ assert.match(place,/craftBenchMemo\.until=0;openGear\(true\)/);
 });
