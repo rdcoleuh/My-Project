@@ -77,10 +77,10 @@ function makeTestArchive(mode='full'){
      frames:[3,1,0,2],ticks_per_frame:1,blend_frames:false}
    ]))]
  ];
- if(mode==='sheet-180'||mode==='sheet-182'){
-  const bordered=mode==='sheet-182';
+ if(['sheet-180','sheet-182','sheet-invalid'].includes(mode)){
+  const bordered=mode==='sheet-182',invalid=mode==='sheet-invalid';
   files=[['resource_pack/textures/ui/hotbar.png',
-    generatedPng(bordered?22:20,120,bordered?182:180,true)]];
+    generatedPng(invalid?20:bordered?22:20,120,invalid?20:bordered?182:180,true)]];
  }
  if(mode==='selected-only')files=files.filter(([name])=>name.endsWith('/selected_hotbar_slot.png'));
  if(mode==='partial-slots')files=files.filter(([name])=>name.endsWith('/hotbar_0.png'));
@@ -349,7 +349,8 @@ async function go(browser,name,mobile){
     const style=getComputedStyle(badge);
     const good=badge.parentElement===slot&&style.display!=='none'&&
       rect.width>0&&rect.height>0&&rect.left>=outer.left-1&&
-      rect.right<=outer.right+1&&rect.top>=outer.top-1&&rect.bottom<=outer.bottom+1;
+      rect.right<=outer.right+1&&rect.top>outer.top+outer.height/2&&
+      outer.bottom-rect.bottom>=0&&outer.bottom-rect.bottom<=5;
     badge.remove();return good;
   });
   assert.equal(countBadge,true,name+': 64-stack badge is hidden or clipped by hotbar art');
@@ -402,6 +403,20 @@ async function go(browser,name,mobile){
         img.naturalWidth===20&&img.naturalHeight===20&&first!==last;
     }),name+': '+mode+' imported sheet did not produce nine distinct square slot textures');
   }
+  // A square GUI sprite named hotbar.png must not erase procedural slot tiles.
+  await page.evaluate(async bytes=>{
+    const file=new File([new Uint8Array(bytes)],'invalid-sheet.zip',{type:'application/zip'});
+    await window.MineWorldLocalTextures.loadFile(file);
+  },Array.from(makeTestArchive('sheet-invalid')));
+  await page.waitForFunction(()=>!document.querySelector('#hotbar').classList.contains('mw-pack-hotbar-slots'),
+    null,{timeout:15000});
+  assert.ok(await page.evaluate(async()=>{
+    const bar=document.querySelector('#hotbar'),pack=window.MineWorldLocalTextures;
+    const art=await pack.hudIcon('hotbar','background');
+    return !art&&!bar.classList.contains('mw-pack-bar-image')&&
+      [...bar.querySelectorAll('.hot-item')].every(item=>
+        getComputedStyle(item,'::before').backgroundColor!=='rgba(0, 0, 0, 0)');
+  }),name+': invalid hotbar image replaced fallback slot tiles');
   if(errors.length)throw Error(name+' browser console/runtime errors:\n'+errors.slice(0,8).join('\n'));
   process.stdout.write(name+': Bedrock ZIP import/persistent reload, real movement, menu actions, gameplay, pause and return passed\n');
  }finally{await context.close();}
