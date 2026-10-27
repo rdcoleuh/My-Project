@@ -3754,9 +3754,9 @@ body.in-nether #game-wrap{background:#290f19}
           if(target.id===null){if(playerHitCooldown<=0){damage(amount,type.name+' attack');playerHitCooldown=.85}}
           else network?.damagePlayer(target.id,amount,type.name+' attack');
           m.attack=1.75;
-        }else if(['skeleton','wither_skeleton','blaze','ghast','wither'].includes(m.kind)&&dist<11&&dist>=2){
+        }else if(['skeleton','stray','pillager','blaze','ghast','wither'].includes(m.kind)&&dist<11&&dist>=2){
           const amount=difficulty==='hard'?5:(['ghast','blaze','wither'].includes(m.kind)?4:2);
-          if(target.id===null){if(playerHitCooldown<=0){damage(amount,'Skeleton arrow');playerHitCooldown=.85}}
+          if(target.id===null){if(playerHitCooldown<=0){damage(amount,m.kind==='pillager'?'Crossbow bolt':(['blaze','ghast','wither'].includes(m.kind)?'Fireball':'Skeleton arrow'));playerHitCooldown=.85}}
           else network?.damagePlayer(target.id,amount,'Skeleton arrow');
           m.attack=['ghast','wither','blaze'].includes(m.kind)?2.7:3.8;
         }

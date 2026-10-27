@@ -56,7 +56,7 @@
   if(!Number.isFinite(distance)||distance<0||distance>25||!visible)return 'idle';
   if((kind==='spider'||kind==='cave_spider')&&!spiderAggressive(kind,isNight,anger))return 'idle';
   if(kind==='creeper')return distance<2.8?'fuse':'approach';
-  if(kind==='skeleton')return distance<5?'retreat':distance<=10?'ranged':'approach';
+  if(['skeleton','stray','pillager'].includes(kind))return distance<5?'retreat':distance<=10?'ranged':'approach';
   return distance<=1.6?'melee':'approach';
  }
  window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,pursuitPoint,steerHeading,withinSight,targetIntent});

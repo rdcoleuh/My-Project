@@ -91,3 +91,19 @@ test('last-seen pursuit uses actual elapsed time after background pauses',()=>{
  assert.equal(rules.pursuitPoint(seen,null,-10).ttl,2,
    'a negative delta must not extend or reduce pursuit memory');
 });
+
+
+test('strays and pillagers keep ranged spacing; wither skeletons remain melee attackers',()=>{
+ for(const kind of ['skeleton','stray','pillager']){
+  assert.equal(rules.targetIntent(kind,4,true),'retreat',kind+' backs off at close range');
+  assert.equal(rules.targetIntent(kind,7,true),'ranged',kind+' fires from range');
+  assert.equal(rules.targetIntent(kind,15,true),'approach',kind+' closes from a distance');
+  assert.equal(rules.targetIntent(kind,7,false),'idle','no invisible ranged attacks');
+ }
+ assert.equal(rules.targetIntent('wither_skeleton',7,true),'approach');
+ assert.equal(rules.targetIntent('wither_skeleton',1,true),'melee');
+ const html=read('index.html');
+ assert.ok(html.includes("['skeleton','stray','pillager','blaze','ghast','wither'].includes(m.kind)"));
+ assert.ok(!html.includes("['skeleton','wither_skeleton','blaze','ghast','wither'].includes(m.kind)"));
+ assert.ok(html.includes("'Crossbow bolt'"),'pillager hits have the correct attack label');
+});
