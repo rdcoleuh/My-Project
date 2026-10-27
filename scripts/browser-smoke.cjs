@@ -543,7 +543,12 @@ async function go(browser,name,mobile){
     document.querySelectorAll('#health-text img.mw-pack-stat-art').length===10&&
     document.querySelectorAll('#hotbar .hot-item.mw-pack-slot').length===9,
     null,{timeout:15000});
-  await page.evaluate(()=>window.MineWorldBridge.applyDamage(1,'HUD verification'));
+  // Longer mobile smoke runs can lose health to wandering mobs. Trigger a
+  // real respawn before the damage demonstration so it always starts at 20.
+  await page.evaluate(()=>{
+    window.MineWorldBridge.applyDamage(20,'HUD test respawn');
+    window.MineWorldBridge.applyDamage(1,'HUD verification');
+  });
   await page.waitForFunction(()=>
     document.querySelectorAll('#health-text .mw-stat-icon.half').length===1,
     null,{timeout:10000});
