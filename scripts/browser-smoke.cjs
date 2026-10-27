@@ -543,17 +543,25 @@ async function go(browser,name,mobile){
     document.querySelectorAll('#health-text img.mw-pack-stat-art').length===10&&
     document.querySelectorAll('#hotbar .hot-item.mw-pack-slot').length===9,
     null,{timeout:15000});
-  // Longer mobile smoke runs can lose health to wandering mobs. Trigger a
-  // real respawn before the damage demonstration so it always starts at 20.
-  await page.evaluate(()=>{
+  // Suspend mob attacks while checking damage, then resume the real game.
+  // Otherwise a long mobile texture-import test can heal or kill the player
+  // before the asynchronous Playwright assertion samples the HUD.
+  await page.evaluate(()=>document.querySelector('#menu-toggle').click());
+  await page.waitForFunction(()=>!document.querySelector('#pause').classList.contains('hidden'),
+    null,{timeout:8000});
+  const damageHud=await page.evaluate(()=>{
+    const mode=window.MineWorldBridge.getMode();
     window.MineWorldBridge.applyDamage(20,'HUD test respawn');
     window.MineWorldBridge.applyDamage(1,'HUD verification');
+    const health=document.querySelector('#health-text');
+    return {mode,label:health.getAttribute('aria-label'),
+      half:health.querySelectorAll('.mw-stat-icon.half').length};
   });
-  await page.waitForFunction(()=>
-    document.querySelectorAll('#health-text .mw-stat-icon.half').length===1,
-    null,{timeout:10000});
-  assert.match(await page.locator('#health-text').getAttribute('aria-label'),/Health: 19 of 20/,
+  assert.equal(damageHud.mode,'survival',name+': expected survival damage test '+JSON.stringify(damageHud));
+  assert.equal(damageHud.half,1,name+': actual damage did not display a half heart '+JSON.stringify(damageHud));
+  assert.match(damageHud.label,/Health: 19 of 20/,
     name+': damage did not update the accessible half-heart HUD');
+  await page.evaluate(()=>document.querySelector('#resume-btn').click());
   await page.waitForTimeout(650);
   // Desktop pointer lock redirects mouse clicks to the canvas: players use
   // number keys there. Touch players tap the hotbar directly.
