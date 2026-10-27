@@ -30,11 +30,15 @@ jobs:
         run: npx playwright install ffmpeg
       - name: Verify menu and gameplay in desktop and mobile Chrome
         run: node scripts/browser-smoke.cjs
-      - name: Install system FFmpeg for short clip editing
+      - name: Ensure FFmpeg is available for short clips
         if: always()
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg
+          if command -v ffmpeg >/dev/null 2>&1; then
+            ffmpeg -version | head -n 1
+          else
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq ffmpeg
+          fi
       - name: Trim short HUD and crafting-table gameplay demonstrations
         if: always()
         run: |
