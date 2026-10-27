@@ -415,7 +415,7 @@ async function go(browser,name,mobile){
     },Array.from(makeTestArchive(mode)));
     await page.waitForFunction(()=>document.querySelectorAll('#hotbar .hot-item.mw-pack-slot').length===9,
       null,{timeout:15000});
-    assert.ok(await page.evaluate(async()=>{
+    assert.ok(await page.evaluate(async mode=>{
       const bar=document.querySelector('#hotbar'),items=[...bar.querySelectorAll('.hot-item')];
       const pack=window.MineWorldLocalTextures;
       const first=await pack.hudIcon('hotbar','slot0'),last=await pack.hudIcon('hotbar','slot8');
@@ -425,7 +425,7 @@ async function go(browser,name,mobile){
         img.naturalWidth===(mode==='legacy-widgets-hd'?40:20)&&
         img.naturalHeight===(mode==='legacy-widgets-hd'?40:20)&&first!==last&&
         bar.querySelectorAll('.mw-pack-selected').length===1;
-    }),name+': '+mode+' imported sheet did not produce nine distinct square slot textures');
+    },mode),name+': '+mode+' imported sheet did not produce nine distinct square slot textures');
   }
   // A separately supplied generic slot takes precedence over a sheet-derived
   // slot; explicit player artwork must not be silently replaced by the sheet.
