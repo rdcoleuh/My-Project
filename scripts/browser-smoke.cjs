@@ -328,9 +328,13 @@ async function go(browser,name,mobile){
       labels:heart.getAttribute('aria-label')?.startsWith('Health: ')&&
         food.getAttribute('aria-label')?.startsWith('Hunger: '),
       sharp:imgs.every(img=>getComputedStyle(img).imageRendering==='pixelated'),
+      foodReversed:getComputedStyle(food).flexDirection==='row-reverse',
+      foodFirstRight:food.firstElementChild?.getBoundingClientRect().left>
+        food.lastElementChild?.getBoundingClientRect().left,
       fits:box.left>=-2&&box.right<=innerWidth+2};
   });
-  assert.ok(survival.hearts===10&&survival.hunger===10&&survival.labels&&survival.sharp,
+  assert.ok(survival.hearts===10&&survival.hunger===10&&survival.labels&&survival.sharp&&
+    survival.foodReversed&&survival.foodFirstRight,
     name+': Survival heart/hunger sprites or accessible labels are incorrect');
   if(mobile)assert.equal(survival.fits,true,
     name+': Survival hearts/hunger overflow the mobile viewport');

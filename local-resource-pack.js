@@ -1139,8 +1139,11 @@ function hudIcon(kind,fill){
    ctx.imageSmoothingEnabled=false;
    if(underlay)ctx.drawImage(underlay,0,0,canvas.width,canvas.height);
    if(derivedHalf){
-     const half=Math.ceil(image.width/2);
-     ctx.drawImage(image,0,0,half,image.height,0,0,half,canvas.height);
+     const half=Math.floor(image.width/2);
+     // A synthesized food half uses the right-hand pixels; hearts use left.
+     // Never flip a player's explicitly authored half icon.
+     const fromX=kind==='food'?image.width-half:0;
+     ctx.drawImage(image,fromX,0,half,image.height,fromX,0,half,canvas.height);
    }else if(rect)ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,0,0,canvas.width,canvas.height);
    else ctx.drawImage(image,0,0);
    return generation===state.itemGeneration?canvas.toDataURL('image/png'):null;

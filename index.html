@@ -469,6 +469,9 @@ body.in-nether #game-wrap{background:#290f19}
 /* Compact gameplay HUD: smaller hearts/drumsticks and more room for the world. */
 #survival-hud{gap:3px 7px!important;padding:3px 7px!important;max-width:calc(100vw - 16px)!important}
 #health-text,#hunger-text{gap:0!important;line-height:1!important}
+/* Hearts deplete from the right; hunger depletes from the left. Keep DOM
+   order and accessible 0-20 labels unchanged while reversing food visually. */
+#hunger-text{flex-direction:row-reverse!important}
 #health-text .mw-stat-icon,#hunger-text .mw-stat-icon{
  width:14px!important;height:14px!important;flex:0 0 14px!important;
  font-size:16px!important;line-height:14px!important;
@@ -503,6 +506,8 @@ body.in-nether #game-wrap{background:#290f19}
 #health-text .mw-pack-stat-clipped,#hunger-text .mw-pack-stat-clipped{
  position:absolute;inset:0;clip-path:inset(0 50% 0 0);pointer-events:none;
 }
+/* If the imported pack has only a full food sprite, reveal its right half. */
+#hunger-text .mw-pack-stat-clipped{clip-path:inset(0 0 0 50%)!important}
 /* Preserve the square pixel grid of player-owned slot and selection PNGs
    even when the clickable hotbar button is taller on a narrow touchscreen. */
 #hotbar .hot-item.mw-pack-slot{

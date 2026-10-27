@@ -23,7 +23,11 @@ function pixels(kind,fill){
  const data=new Uint8ClampedArray(11*11*4),colors=palette[kind];
  for(let y=0;y<11;y++)for(let x=0;x<11;x++){
   const value=Number(rows[y][x]);
-  const shade=value===2?(fill==='full'||(fill==='half'&&x<5)?2:4):value;
+  // Hearts fill left-to-right; hunger fills right-to-left in the classic HUD.
+  // The center column remains empty on a half icon so odd values never
+  // visually overstate the underlying 0-20 survival stat.
+  const filledHalf=kind==='food'?x>=6:x<5;
+  const shade=value===2?(fill==='full'||(fill==='half'&&filledHalf)?2:4):value;
   data.set(colors[shade],(y*11+x)*4);
  }
  return data;
