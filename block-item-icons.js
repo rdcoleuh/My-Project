@@ -27,17 +27,7 @@ function paint(canvas,blockId){
   const active=window.MineWorldLocalTextures?.active;
   const directionalTile=active?resolveFaceTile(blockId,face):null;
   let drawn=false;
-  if(directionalTile!==null){
-   const atlas=window.MineWorldAtlas;
-   const source=atlas?.canvas;
-   if(source&&typeof ctx.drawImage==='function'){
-    const size=source.width/16;
-    if(Number.isFinite(size)&&size>0){
-     ctx.drawImage(source,(directionalTile%16)*size,Math.floor(directionalTile/16)*size,size,size,0,0,16,16);
-     drawn=true;
-    }
-   }
-  }
+  if(directionalTile!==null)drawn=!!window.MineWorldLocalTextures?.drawAtlasTile?.(ctx,directionalTile);
   if(!drawn)drawn=!!active&&!!window.MineWorldLocalTextures.drawFace(ctx,blockId,face);
   if(!drawn){
    const colors=ctx.createImageData(16,16);
