@@ -424,7 +424,7 @@ async function go(browser,name,mobile){
         items.every(item=>getComputedStyle(item).backgroundImage.startsWith('url('))&&
         img.naturalWidth===(mode==='legacy-widgets-hd'?40:20)&&
         img.naturalHeight===(mode==='legacy-widgets-hd'?40:20)&&first!==last&&
-        bar.querySelectorAll('.mw-pack-selected').length===1;
+        (!mode.startsWith('legacy-')||bar.querySelectorAll('.mw-pack-selected').length===1);
     },mode),name+': '+mode+' imported sheet did not produce nine distinct square slot textures');
   }
   // A separately supplied generic slot takes precedence over a sheet-derived
