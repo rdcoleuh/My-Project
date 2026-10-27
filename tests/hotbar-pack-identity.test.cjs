@@ -1,0 +1,40 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
+const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+const update=html.slice(html.indexOf('function hotbarIconRequestCurrent('),html.indexOf('function toast('));
+const helper=update.match(/function hotbarIconRequestCurrent\(pack,generation,node\)\{[\s\S]*?\n  \}/);
+assert.ok(helper,'hotbar async pack identity guard must exist');
+const context={window:{MineWorldLocalTextures:null},check:null};
+vm.runInNewContext(helper[0]+'\ncheck=hotbarIconRequestCurrent;',context);
+const check=context.check;
+test('delayed hotbar item art cannot overwrite a different pack with the same generation',()=>{
+ const oldPack={generation:3},replacement={generation:3};
+ const node={isConnected:true};
+ context.window.MineWorldLocalTextures=oldPack;
+ assert.equal(check(oldPack,3,node),true);
+ context.window.MineWorldLocalTextures=replacement;
+ assert.equal(check(oldPack,3,node),false);
+ assert.equal(check(replacement,3,node),true);
+});
+test('hotbar image responses are rejected after generation changes or slot detaches',()=>{
+ const pack={generation:8},node={isConnected:true};
+ context.window.MineWorldLocalTextures=pack;
+ assert.equal(check(pack,8,node),true);
+ pack.generation=9;
+ assert.equal(check(pack,8,node),false);
+ assert.equal(check(pack,9,node),true);
+ node.isConnected=false;
+ assert.equal(check(pack,9,node),false);
+ assert.equal(check(null,9,node),false);
+});
+test('both block and non-block async hotbar icons enforce source identity before DOM mutation',()=>{
+ assert.match(update,/hotbarIconRequestCurrent\(localPack,packGeneration,swatch\)/);
+ assert.match(update,/const itemPack=window\.MineWorldLocalTextures;/);
+ assert.match(update,/itemPack\?\.itemIcon\?\.\(key\)/);
+ assert.match(update,/hotbarIconRequestCurrent\(itemPack,packGeneration,icon\)/);
+ assert.ok(!update.includes('packGeneration!==window.MineWorldLocalTextures?.generation'));
+});

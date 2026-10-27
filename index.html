@@ -2102,6 +2102,11 @@ body.in-nether #game-wrap{background:#290f19}
     paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock();
     window.MineWorldJavaInventoryScreen?.openCreative();
   }
+  // Async item PNGs may resolve after the user switches to another pack.
+  // Pack generation alone is not enough: a replacement pack can reuse it.
+  function hotbarIconRequestCurrent(pack,generation,node){
+    return !!node?.isConnected&&pack===window.MineWorldLocalTextures&&generation===pack?.generation;
+  }
   function updateHotbar(){
     const root=$('hotbar');root.replaceChildren();
     const survival=gameMode==='survival';
@@ -2142,7 +2147,7 @@ body.in-nether #game-wrap{background:#290f19}
         if(localPack?.hasPack&&(flatBlock||!importedBlockFaces)){
           const packGeneration=localPack.generation;
           window.MineWorldLocalTextures.blockItemIcon?.(id).then(src=>{
-            if(!src||!swatch.isConnected||packGeneration!==window.MineWorldLocalTextures?.generation)return;
+            if(!src||!hotbarIconRequestCurrent(localPack,packGeneration,swatch))return;
             const art=document.createElement('img');
             art.src=src;art.alt='';art.className='mw-block-pack-icon';
             if(sprite.isConnected)sprite.replaceWith(art);
@@ -2163,9 +2168,10 @@ body.in-nether #game-wrap{background:#290f19}
         icon.textContent=key?stackIcon(key):'';
         // Hotbar uses the same player-owned PNGs as Java-style inventory.
         if(key&&!key.startsWith('block:')){
-          const packGeneration=window.MineWorldLocalTextures?.generation;
-          window.MineWorldLocalTextures?.itemIcon?.(key).then(src=>{
-            if(!src||!icon.isConnected||packGeneration!==window.MineWorldLocalTextures?.generation)return;
+          const itemPack=window.MineWorldLocalTextures;
+          const packGeneration=itemPack?.generation;
+          itemPack?.itemIcon?.(key).then(src=>{
+            if(!src||!hotbarIconRequestCurrent(itemPack,packGeneration,icon))return;
             const art=document.createElement('img');
             art.src=src;art.alt='';art.width=art.height=30;
             art.style.cssText='width:30px;height:30px;object-fit:contain;image-rendering:pixelated;';
