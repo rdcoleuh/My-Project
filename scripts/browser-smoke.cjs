@@ -91,7 +91,7 @@ function makeTestArchive(mode='full'){
     generatedPng(mode==='legacy-icons-hd'?512:256,170,mode==='legacy-icons-hd'?512:256,true)]
  ];
  if(mode==='malformed-stat-sprites')files=[
-  ...['heart','heart_half','heart_background','hunger_full','hunger_half','hunger_background']
+  ...['heart','heart_background','hunger_full','hunger_background']
     .map((name,i)=>['resource_pack/textures/ui/'+name+'.png',generatedPng(22,30+i*25,182)]),
   ['assets/minecraft/textures/gui/icons.png',generatedPng(256,170,256,true)]
  ];

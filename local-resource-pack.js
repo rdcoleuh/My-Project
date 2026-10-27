@@ -1214,7 +1214,7 @@ function hudIcon(kind,fill){
       }catch(error){console.warn('Ignoring damaged local HUD underlay '+backgroundKey,error);}
     }
     if(generation!==state.itemGeneration)return null;
-    if(derivedHalf&&image.width<2)return null;
+    if(derivedHalf&&!legacyStat&&image.width<2)return null;
     const canvas=document.createElement('canvas');
     canvas.width=rect?rect.width:image.width;canvas.height=rect?rect.height:image.height;
     const ctx=canvas.getContext('2d',{alpha:true});
@@ -1225,7 +1225,7 @@ function hudIcon(kind,fill){
       const emptyRect=window.MineWorldHotbarUV?.legacyStatRect(image.width,image.height,kind,'empty');
       if(emptyRect)ctx.drawImage(image,emptyRect.x,emptyRect.y,emptyRect.width,emptyRect.height,0,0,canvas.width,canvas.height);
     }
-    if(derivedHalf){
+    if(derivedHalf&&!legacyStat){
       const half=Math.floor(image.width/2);
       const fromX=kind==='food'?image.width-half:0;
       ctx.drawImage(image,fromX,0,half,image.height,fromX,0,half,canvas.height);
