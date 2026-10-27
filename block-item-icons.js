@@ -5,6 +5,13 @@
 (()=>{
 'use strict';
 const clamp=v=>Math.max(0,Math.min(255,Math.round(v)));
+// The thumbnail camera sees the north and east walls, not two arbitrary atlas sides.
+const VISIBLE_FACES=Object.freeze([{index:0,normal:[0,1,0]},{index:1,normal:[0,0,-1]},{index:2,normal:[1,0,0]}]);
+function resolveFaceTile(id,face){
+ const normal=VISIBLE_FACES[face].normal;
+ const directional=window.MineWorldJavaDirectionalFaces?.tile?.(id,normal);
+ return Number.isInteger(directional)?directional:null;
+}
 function paint(canvas,blockId){
  if(!canvas||typeof canvas.getContext!=='function'||!Number.isInteger(blockId)||blockId<1||blockId>169)return false;
  const out=canvas.getContext('2d',{alpha:true});
@@ -18,7 +25,12 @@ function paint(canvas,blockId){
   if(!ctx)return false;
   ctx.imageSmoothingEnabled=false;
   const active=window.MineWorldLocalTextures?.active;
-  const drawn=!!active&&!!window.MineWorldLocalTextures.drawFace(ctx,blockId,face);
+  const directionalTile=active?resolveFaceTile(blockId,face):null;
+  let drawn=false;
+  if(directionalTile!==null&&window.MineWorldLocalTextures?.drawAtlasTile){
+   drawn=!!window.MineWorldLocalTextures.drawAtlasTile(ctx,directionalTile);
+  }
+  if(!drawn)drawn=!!active&&!!window.MineWorldLocalTextures.drawFace(ctx,blockId,face);
   if(!drawn){
    const colors=ctx.createImageData(16,16);
    const art=window.MineWorldPixelMaterials?.paint;
@@ -65,5 +77,5 @@ function paint(canvas,blockId){
  out.putImageData(img,0,0);
  return true;
 }
-window.MineWorldBlockItemIcons=Object.freeze({paint});
+window.MineWorldBlockItemIcons=Object.freeze({paint,resolveFaceTile});
 })();
