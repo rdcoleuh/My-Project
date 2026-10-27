@@ -13,5 +13,7 @@ test('HUD uses imported full, half and empty icons with procedural fallback',()=
  assert.ok(src.includes("const glyph=kind==='Health'?'heart':'food'"));
  assert.ok(src.includes('image-rendering:pixelated'));
  assert.ok(src.includes('MineWorldHudArt?.paint(glyph,fill)'));
- assert.ok(src.includes("src=await pack.hudIcon(glyph,'full')"));
+ assert.ok(src.includes("src=await cachedStatArt(pack,glyph,'full')"));
+ assert.ok(src.includes('statArtPromises.set(key'));
+ assert.ok(src.includes('generation!==statArtGeneration'));
 });

@@ -23,7 +23,8 @@ test('hotbar imports are sharp, selected remains visible without imported select
  const s=read('index.html'),sw=read('sw.js');
  assert.ok(s.includes('active:not(.mw-pack-selected)'));
  assert.ok(s.includes("button.setAttribute('aria-pressed',String(i===selection))"));
- assert.ok(s.includes("src=await pack.hudIcon(glyph,'full')"));
+ assert.ok(s.includes("src=await cachedStatArt(pack,glyph,'full')"));
+ assert.ok(s.includes('if(generation!==statArtGeneration)'));
  assert.ok(s.includes('mw-pack-stat-clipped'));
  assert.ok(s.includes('src="./classic-hud-art.js"'));
  assert.ok(sw.includes("'./classic-hud-art.js'"));

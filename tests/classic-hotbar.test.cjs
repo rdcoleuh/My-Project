@@ -10,7 +10,8 @@ test('classic hotbar retains nine inventory-backed slots and imported item icons
 test('health and hunger display ten half-capable icons with accessible totals',()=>{
  assert.match(html,/for\(let i=0;i<10;i\+\+\)/);
  assert.match(html,/remaining>=1&&remaining<2/);
- assert.match(html,/aria-label',kind\+': '/);
+ assert.match(html,/MineWorldHudArt\?\.description\?\.\(kind,points\)/);
+ assert.match(html,/node\.setAttribute\('aria-label',/);
  assert.match(html,/paintStat\(\$\('health-text'\),health/);
  assert.match(html,/paintStat\(\$\('hunger-text'\),hunger/);
 });
