@@ -12,8 +12,8 @@ function slotRect(width,height,index){
  // sheets both contain nine 20-pixel cells. Require matching dimensions
  // so unrelated GUI art cannot be misinterpreted as a nine-slot bar.
  const bordered=width/182, seamless=width/180;
- const java=bordered>=0.5&&Math.abs(height-22*bordered)<=0.51;
- const bedrock=seamless>=0.5&&Math.abs(height-20*seamless)<=0.51;
+ const java=bordered>=0.5&&Math.abs(height-22*bordered)<0.01;
+ const bedrock=seamless>=0.5&&Math.abs(height-20*seamless)<0.01;
  if(!java&&!bedrock)return null;
  const scale=java?bordered:seamless,edge=java?1:0;
  const x=Math.round((edge+20*index)*scale),y=Math.round(edge*scale);
