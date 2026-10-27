@@ -35,14 +35,15 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
-      - name: Trim focused HUD gameplay demonstrations
+      - name: Trim short HUD and crafting-table gameplay demonstrations
         if: always()
         run: |
           mkdir -p artifacts/clips
           for device in desktop mobile; do
             source="artifacts/recordings/${device}-smoke.webm"
             if [ -f "$source" ]; then
-              ffmpeg -y -loglevel error -sseof -9 -i "$source" -t 9 -an -c:v libvpx -deadline realtime -cpu-used 8 -b:v 1300k "artifacts/clips/${device}-hud-and-inventory.webm"
+              ffmpeg -y -loglevel error -sseof -14 -i "$source" -t 8 -an -c:v libvpx -deadline realtime -cpu-used 8 -b:v 1300k "artifacts/clips/${device}-hud-and-inventory.webm"
+              ffmpeg -y -loglevel error -sseof -8 -i "$source" -t 8 -an -c:v libvpx -deadline realtime -cpu-used 8 -b:v 1300k "artifacts/clips/${device}-workbench-regression.webm"
             fi
           done
       - name: Upload visible gameplay recordings
