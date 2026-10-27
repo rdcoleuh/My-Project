@@ -19,14 +19,14 @@ function zip(files){
  return Uint8Array.from(Buffer.concat([...local,...central,end])).buffer;
 }
 function boot(imageWidth=16,imageHeight=16){
- const draws=[];
+ const draws=[];let decoded=0;
  class Canvas{
   constructor(){this.width=256;this.height=1024;}
   getContext(){return {imageSmoothingEnabled:true,clearRect(){},drawImage(...args){draws.push(args)},
    getImageData(_x,_y,w,h){return {data:new Uint8ClampedArray(w*h*4)}},putImageData(){}};}
   toDataURL(){return 'data:image/png;base64,owned';}
  }
- class Image{constructor(){this.width=imageWidth;this.height=imageHeight;}
+ class Image{constructor(){decoded++;this.width=imageWidth;this.height=imageHeight;}
   set src(_){queueMicrotask(()=>this.onload?.());}}
  const gl={TEXTURE0:1,TEXTURE_2D:2,RGBA:3,UNSIGNED_BYTE:4,UNPACK_FLIP_Y_WEBGL:5,
   TEXTURE_MIN_FILTER:6,TEXTURE_MAG_FILTER:7,NEAREST:8,
@@ -41,7 +41,7 @@ function boot(imageWidth=16,imageHeight=16){
   Uint8ClampedArray,TextDecoder,ArrayBuffer,DataView,Math,Number,JSON,console,queueMicrotask,
   performance:{now:()=>0}};
  vm.runInNewContext(read('local-resource-pack.js'),context);
- return {pack:window.MineWorldLocalTextures,draws};
+ return {pack:window.MineWorldLocalTextures,draws,get decoded(){return decoded}};
 }
 test('Java GUI-only folder is accepted and missing half-heart uses the imported empty backing',async()=>{
  const b=boot();
@@ -89,4 +89,26 @@ test('oversized decoded HUD artwork is skipped without a canvas allocation',asyn
  const before=b.draws.length;
  assert.equal(await b.pack.hudIcon('heart','full'),null);
  assert.equal(b.draws.length,before);
+});
+
+test('oversized PNG headers are rejected before decoding imported HUD and item artwork',async()=>{
+ const b=boot(),huge=Uint8Array.from(png);
+ // PNG IHDR: 10000 x 10000, despite a tiny compressed file.
+ huge.set([0,0,39,16],16);huge.set([0,0,39,16],20);
+ const files=[
+  {name:'heart.png',webkitRelativePath:'textures/ui/heart.png'},
+  {name:'diamond.png',webkitRelativePath:'textures/items/diamond.png'}
+ ].map(file=>({...file,size:huge.length,arrayBuffer:async()=>huge.buffer}));
+ await b.pack.loadFiles(files);
+ const before=b.decoded;
+ assert.equal(await b.pack.hudIcon('heart','full'),null);
+ assert.equal(await b.pack.itemIcon('diamond'),null);
+ assert.equal(b.decoded,before,'malicious PNG headers must never reach Image decoding');
+});
+test('valid imported item icon still uses a small nearest-neighbor canvas',async()=>{
+ const b=boot(),file={name:'diamond.png',webkitRelativePath:'textures/items/diamond.png',
+   size:png.length,arrayBuffer:async()=>png.buffer};
+ await b.pack.loadFiles([file]);
+ assert.equal(await b.pack.itemIcon('diamond'),'data:image/png;base64,owned');
+ assert.ok(b.draws.some(args=>args.length===9),'valid sprite is drawn with explicit source and destination rectangles');
 });

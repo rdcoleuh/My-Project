@@ -378,6 +378,18 @@ function imageFromPng(bytes){
    image.src=url;
  });
 }
+// HUD and hotbar icons are tiny on screen. Reject pathological PNG headers
+// *before* Image decodes them, avoiding multi-megabyte mobile bitmap allocations.
+// Full terrain/entity textures still use the separate, existing import path.
+function smallSpriteFromPng(bytes){
+ if(!bytes||bytes.length<24||bytes[12]!==73||bytes[13]!==72||bytes[14]!==68||bytes[15]!==82)
+   return Promise.reject(new Error('Invalid PNG sprite header.'));
+ const dimension=i=>bytes[i]*16777216+bytes[i+1]*65536+bytes[i+2]*256+bytes[i+3];
+ const width=dimension(16),height=dimension(20);
+ if(width<1||height<1||width>4096||height>4096||width*height>1024*1024)
+   return Promise.reject(new Error('HUD or item sprite exceeds the 1-megapixel mobile limit.'));
+ return imageFromPng(bytes);
+}
 function imageFromURL(src){
  return new Promise((resolve,reject)=>{
    const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>reject(new Error('Could not restore original textures.'));
@@ -1119,7 +1131,7 @@ function hudIcon(kind,fill){
  if(state.itemCache.has(key))return state.itemCache.get(key);
  const generation=state.itemGeneration;
  const promise=(async()=>{
-   const image=await imageFromPng(await source.get(derivedSlot?'hud:hotbar:background':
+   const image=await smallSpriteFromPng(await source.get(derivedSlot?'hud:hotbar:background':
      derivedHalf?'hud:'+kind+':full':key));
    if(generation!==state.itemGeneration)return null;
    // Prevent huge HUD canvas allocations from tiny, malicious PNG files.
@@ -1130,7 +1142,7 @@ function hudIcon(kind,fill){
    if(derivedSlot&&!rect)return null;
    const backgroundKey='hud:'+kind+':empty';
    const underlay=kind!=='hotbar'&&fill!=='empty'&&source.entries.has(backgroundKey)?
-     await imageFromPng(await source.get(backgroundKey)):null;
+     await smallSpriteFromPng(await source.get(backgroundKey)):null;
    if(generation!==state.itemGeneration)return null;
    const canvas=document.createElement('canvas');
    canvas.width=rect?rect.width:image.width;canvas.height=rect?rect.height:image.height;
@@ -1179,10 +1191,16 @@ function itemIcon(key){
  if(state.itemCache.has(path))return state.itemCache.get(path);
  const generation=state.itemGeneration;
  const promise=(async()=>{
-   const image=await imageFromPng(await source.get(path));
+   const image=await smallSpriteFromPng(await source.get(path));
+   if(!Number.isInteger(image.width)||!Number.isInteger(image.height)||
+      image.width<1||image.height<1||image.width>4096||image.height>4096||
+      image.width*image.height>1024*1024)return null;
    if(generation!==state.itemGeneration)return null;
    const rect=await itemFrameRect(source,path,image);
    if(generation!==state.itemGeneration)return null;
+   if(!rect||![rect.x,rect.y,rect.width,rect.height].every(Number.isFinite)||
+      rect.width<1||rect.height<1||rect.x<0||rect.y<0||
+      rect.x+rect.width>image.width||rect.y+rect.height>image.height)return null;
    // Preserve native pixels from the first authored frame (up to 32px).
    const size=Math.min(32,Math.max(16,Math.floor(Math.max(rect.width,rect.height))));
    const canvas=document.createElement('canvas');canvas.width=canvas.height=size;
