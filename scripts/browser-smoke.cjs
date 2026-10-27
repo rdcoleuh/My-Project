@@ -90,6 +90,14 @@ function makeTestArchive(mode='full'){
   ['assets/minecraft/textures/gui/icons.png',
     generatedPng(mode==='legacy-icons-hd'?512:256,170,mode==='legacy-icons-hd'?512:256,true)]
  ];
+ if(mode==='malformed-stat-sprites')files=[
+  ...['heart','heart_half','heart_background','hunger_full','hunger_half','hunger_background']
+    .map((name,i)=>['resource_pack/textures/ui/'+name+'.png',generatedPng(22,30+i*25,182)]),
+  ['assets/minecraft/textures/gui/icons.png',generatedPng(256,170,256,true)]
+ ];
+ if(mode==='malformed-stat-no-legacy')files=[
+  ['resource_pack/textures/ui/heart.png',generatedPng(22,180,182)]
+ ];
  if(mode==='sheet-generic')files=[
   ['resource_pack/textures/ui/hotbar.png',generatedPng(20,120,180,true)],
   ['resource_pack/textures/ui/hotbar_slot.png',generatedPng(20,180,20)]
@@ -459,6 +467,28 @@ async function go(browser,name,mobile){
         document.querySelector('#hunger-text')?.getAttribute('aria-label')?.includes('of 20');
     },mode),name+': '+mode+' legacy Java heart/hunger atlas was not decoded or displayed');
   }
+  // Invalid modern HUD strips must fall back to imported legacy icons instead
+  // of becoming horizontally stretched hearts or hiding the procedural HUD.
+  await page.evaluate(async bytes=>{
+    await window.MineWorldLocalTextures.loadFile(new File(
+      [new Uint8Array(bytes)],'malformed-stats.zip',{type:'application/zip'}));
+  },Array.from(makeTestArchive('malformed-stat-sprites')));
+  assert.ok(await page.evaluate(async()=>{
+    const pack=window.MineWorldLocalTextures;
+    const icons=await Promise.all(['full','half','empty'].flatMap(fill=>[
+      pack.hudIcon('heart',fill),pack.hudIcon('food',fill)]));
+    if(icons.some(src=>!src))return false;
+    return (await Promise.all(icons.map(async src=>{
+      const img=new Image();img.src=src;await img.decode();
+      return img.naturalWidth===9&&img.naturalHeight===9;
+    }))).every(Boolean);
+  }),name+': malformed modern HUD strips suppressed valid legacy atlas artwork');
+  await page.evaluate(async bytes=>{
+    await window.MineWorldLocalTextures.loadFile(new File(
+      [new Uint8Array(bytes)],'malformed-stat-no-legacy.zip',{type:'application/zip'}));
+  },Array.from(makeTestArchive('malformed-stat-no-legacy')));
+  assert.equal(await page.evaluate(()=>window.MineWorldLocalTextures.hudIcon('heart','full')),null,
+    name+': malformed HUD strip should use procedural fallback without a legacy atlas');
   // A separately supplied generic slot takes precedence over a sheet-derived
   // slot; explicit player artwork must not be silently replaced by the sheet.
   await page.evaluate(async bytes=>{

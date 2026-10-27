@@ -65,3 +65,14 @@ test('importer applies explicit-slot precedence and malformed GUI strip fallback
  assert.ok(source.includes('shouldDeriveSlot(source.entries,fill)'));
  assert.ok(source.includes('validSlotSprite(image.width,image.height)'));
 });
+
+test('imported survival icons reject stretched GUI strips but accept pixel-scaled square sprites',()=>{
+ for(const dims of [[9,9],[18,18],[16,16],[32,32],[9,10],[128,128]])
+  assert.equal(uv.validStatSprite(...dims),true,JSON.stringify(dims));
+ for(const dims of [[182,22],[180,20],[9,20],[0,0],[1025,1025],[NaN,9],[9.5,9]])
+  assert.equal(uv.validStatSprite(...dims),false,JSON.stringify(dims));
+ const source=read('local-resource-pack.js');
+ assert.ok(source.includes('validStatSprite(image.width,image.height)'));
+ assert.ok(source.includes('validStatSprite(underlay.width,underlay.height)'));
+ assert.ok(source.includes("image=await smallSpriteFromPng(await source.get('hud:legacy-icons'))"));
+});

@@ -59,10 +59,17 @@ function shouldDeriveSlot(entries,slot){
 }
 // Ignore incorrectly mapped GUI strips instead of squashing them into a
 // single selection or slot. Allow small borders on legitimate square sprites.
+// A single survival glyph must be approximately square. Reject mislabeled
+// GUI strips before CSS can stretch them into hearts or drumsticks.
+function validStatSprite(width,height){
+ return Number.isInteger(width)&&Number.isInteger(height)&&
+   width>=2&&height>=2&&width<=1024&&height<=1024&&
+   Math.max(width,height)/Math.min(width,height)<=1.25;
+}
 function validSlotSprite(width,height){
  return Number.isInteger(width)&&Number.isInteger(height)&&
    width>=2&&height>=2&&width<=1024&&height<=1024&&
    Math.max(width,height)/Math.min(width,height)<=1.25;
 }
-window.MineWorldHotbarUV=Object.freeze({slotRect,legacyRect,legacyStatRect,shouldDeriveSlot,validSlotSprite});
+window.MineWorldHotbarUV=Object.freeze({slotRect,legacyRect,legacyStatRect,shouldDeriveSlot,validSlotSprite,validStatSprite});
 })();

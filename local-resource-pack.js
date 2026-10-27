@@ -1144,8 +1144,8 @@ function hudIcon(kind,fill){
     source.entries.has('hud:'+kind+':full')&&source.entries.has('hud:'+kind+':empty');
   // Prefer modern individual sprites; a missing older stat sprite can be
   // cropped from the user's legacy gui/icons.png atlas.
-  const legacyStat=kind!=='hotbar'&&!source.entries.has(key)&&!derivedHalf&&
-    source.entries.has('hud:legacy-icons');
+  const hasLegacyStat=kind!=='hotbar'&&source.entries.has('hud:legacy-icons');
+  let legacyStat=kind!=='hotbar'&&!source.entries.has(key)&&!derivedHalf&&hasLegacyStat;
   if(!source.entries.has(key)&&!derivedSlot&&!derivedHalf&&!legacyStat&&!slotCandidates?.length)return Promise.resolve(null);
   if(state.itemCache.has(key))return state.itemCache.get(key);
   const generation=state.itemGeneration;
@@ -1170,8 +1170,24 @@ function hudIcon(kind,fill){
       }
       if(!image)return null;
     }else{
-      image=await smallSpriteFromPng(await source.get(legacyStat?'hud:legacy-icons':derivedHalf?'hud:'+kind+':full':key));
+      // Broken modern sprites must not stretch across the HUD or suppress
+      // usable artwork in an older imported gui/icons.png atlas.
+      const candidate=legacyStat?'hud:legacy-icons':derivedHalf?'hud:'+kind+':full':key;
+      try{
+        image=await smallSpriteFromPng(await source.get(candidate));
+      }catch(error){
+        if(!hasLegacyStat||legacyStat)throw error;
+        image=await smallSpriteFromPng(await source.get('hud:legacy-icons'));
+        legacyStat=true;
+      }
       if(generation!==state.itemGeneration)return null;
+      if(kind!=='hotbar'&&!legacyStat&&
+         !window.MineWorldHotbarUV?.validStatSprite(image.width,image.height)){
+        if(!hasLegacyStat)return null;
+        image=await smallSpriteFromPng(await source.get('hud:legacy-icons'));
+        legacyStat=true;
+        if(generation!==state.itemGeneration)return null;
+      }
       if(legacyStat){
         rect=window.MineWorldHotbarUV?.legacyStatRect(image.width,image.height,kind,fill);
         if(!rect)return null;
@@ -1191,8 +1207,11 @@ function hudIcon(kind,fill){
     // Damaged optional underlays must never hide otherwise valid HUD artwork.
     let underlay=null;
     if(!legacyStat&&kind!=='hotbar'&&fill!=='empty'&&source.entries.has(backgroundKey)){
-      try{underlay=await smallSpriteFromPng(await source.get(backgroundKey));}
-      catch(error){console.warn('Ignoring damaged local HUD underlay '+backgroundKey,error);}
+      try{
+        underlay=await smallSpriteFromPng(await source.get(backgroundKey));
+        if(!window.MineWorldHotbarUV?.validStatSprite(underlay.width,underlay.height))
+          underlay=null;
+      }catch(error){console.warn('Ignoring damaged local HUD underlay '+backgroundKey,error);}
     }
     if(generation!==state.itemGeneration)return null;
     if(derivedHalf&&image.width<2)return null;
