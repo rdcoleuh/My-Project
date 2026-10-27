@@ -427,7 +427,7 @@ async function go(browser,name,mobile){
     const bar=document.querySelector('#hotbar'),pack=window.MineWorldLocalTextures;
     const [generic,derived]=await Promise.all([
       pack.hudIcon('hotbar','slot'),pack.hudIcon('hotbar','slot0')]);
-    return !!generic&&!derived&&!bar.classList.contains('mw-pack-hotbar-slots')&&
+    return !!generic&&derived===generic&&bar.classList.contains('mw-pack-hotbar-slots')&&
       !bar.classList.contains('mw-pack-bar-image')&&
       [...bar.querySelectorAll('.hot-item')].every(item=>
         item.classList.contains('mw-pack-slot')&&
