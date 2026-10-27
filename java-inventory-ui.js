@@ -188,13 +188,13 @@ function install(api){
  search.setAttribute('aria-label','Search creative blocks');
  const status=node(modal,'p','mw-java-help','Click a block to assign it to your selected hotbar slot; keys 1–9 change selection.');
  const packButton=node(modal,'button','mw-java-close','Import Java ZIP/JAR or Bedrock .mcpack from Files');packButton.type='button';packButton.addEventListener('click',pickPack);
- const categories=node(modal,'div','mw-java-tabs');
+ const categories=node(modal,'div','mw-java-tabs mw-bedrock-side-tabs');categories.setAttribute('role','tablist');categories.setAttribute('aria-label','Creative inventory categories');
  const types=[
   ['all','All'],['building','Building'],['nature','Nature'],
   ['ores','Ores'],['nether','Nether'],['end','End'],['stations','Stations']
  ];
  for(const [id,label] of types){
-  const b=node(categories,'button','mw-java-tab',label);b.type='button';
+  const b=node(categories,'button','mw-java-tab',label);b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-label',label+' category');
   b.addEventListener('click',()=>{creativeTab=id;creativePage=0;renderCreative();});
  }
  const paging=node(modal,'div','mw-java-nav');
@@ -204,11 +204,11 @@ function install(api){
  prevPage.addEventListener('click',()=>{creativePage=Math.max(0,creativePage-1);renderCreative();});
  nextPage.addEventListener('click',()=>{creativePage++;renderCreative();});
  const hotPreview=node(modal,'div','mw-java-hot-preview');
- const collection=node(modal,'div','mw-java-creative-grid');
+ const collection=node(modal,'div','mw-java-creative-grid');modal.classList.add('mw-bedrock-inventory');const style=doc.createElement('style');style.textContent='.mw-bedrock-inventory{position:relative;padding-left:110px!important}.mw-bedrock-side-tabs{position:absolute;left:8px;top:72px;bottom:14px;width:94px;display:flex!important;flex-direction:column;align-items:stretch;gap:5px;overflow-y:auto}.mw-bedrock-side-tabs .mw-java-tab{min-height:43px;flex:none;text-align:left;padding:8px 5px;touch-action:manipulation}.mw-bedrock-side-tabs .mw-java-tab[aria-selected="true"]{outline:2px solid white}@media(max-width:520px){.mw-bedrock-inventory{padding-left:80px!important}.mw-bedrock-side-tabs{width:68px;left:5px;top:62px}.mw-bedrock-side-tabs .mw-java-tab{font-size:10px;min-height:42px}}';doc.head.appendChild(style);
  function renderCreative(){
   const query=search.value.trim().toLowerCase();
   collection.replaceChildren();hotPreview.replaceChildren();
-  for(const b of categories.querySelectorAll('button'))b.classList.toggle('mw-active',b.textContent===types.find(t=>t[0]===creativeTab)?.[1]);
+  for(const b of categories.querySelectorAll('button')){const active=b.textContent===types.find(t=>t[0]===creativeTab)?.[1];b.classList.toggle('mw-active',active);b.setAttribute('aria-selected',String(active));}
   const matches=[];
   for(let id=1;id<=169;id++){
    const name=api.blockName(id);
