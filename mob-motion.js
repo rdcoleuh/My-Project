@@ -10,7 +10,7 @@
   const stride=moving?Math.sin(t*8.6+id*.61)*.48:0;
   // Skeletons swing their arms while walking; zombies hold them out
   // and exaggerate alternating strikes. Both use the same joint system.
-  const zombie=/zombie|husk|drowned|piglin|wither_skeleton/.test(kind);
+  const zombie=/zombie|husk|drowned|piglin/.test(kind);
   const armRest=zombie?-.66:0;
   const limp=kind==='spider'||kind==='cave_spider'? .22:.55;
   return Object.freeze({

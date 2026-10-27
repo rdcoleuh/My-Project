@@ -4005,7 +4005,7 @@ body.in-nether #game-wrap{background:#290f19}
       }
       if(extraMobs?.draw(m,(px,py,pz,w,h,d,color)=>cube(px,py,pz,w,h,d,color),dayClock))continue;
       if(hostile){
-        const spider=m.kind==='spider',creeper=m.kind==='creeper';
+        const spider=m.kind==='spider'||m.kind==='cave_spider',creeper=m.kind==='creeper';
         cube(x-.32,y+(spider?.25:.65),z-.23,.64,spider?.45:creeper?1.17:.84,.46,type.body,'body');
         cube(x-.26,y+(spider?.43:creeper?1.8:1.48),z-.26,.52,spider?.35:.52,.52,type.head,'head');
         const motion=window.MineWorldMobMotion?.pose(m,dayClock)||{

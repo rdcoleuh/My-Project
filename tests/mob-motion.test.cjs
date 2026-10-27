@@ -34,3 +34,20 @@ test('hostile animation preserves original mob skin UV assignments and save form
  assert.match(sw,/\.\/mob-motion\.js/);
  assert.doesNotMatch(read('mob-motion.js'),/localStorage|fetch\(|\.png|\.jar/);
 });
+
+test('cave spiders use articulated eight-leg rendering instead of humanoid limbs',()=>{
+ const html=read('index.html');
+ assert.match(html,/const spider=m\\.kind==='spider'\\|\\|m\\.kind==='cave_spider',creeper=m\\.kind==='creeper'/);
+ const motion=load('mob-motion.js').MineWorldMobMotion;
+ const moving=motion.pose({kind:'cave_spider',id:3,moving:true},.5);
+ assert.notEqual(moving.spiderStride,0);
+ assert.equal(motion.pose({kind:'cave_spider',id:3,moving:false},.5).spiderStride,0);
+});
+test('wither skeletons keep skeleton arm posture rather than zombie arms',()=>{
+ const pose=load('mob-motion.js').MineWorldMobMotion.pose;
+ const skeleton=pose({kind:'wither_skeleton',moving:false},0);
+ const zombie=pose({kind:'zombie',moving:false},0);
+ assert.equal(skeleton.armL,0);
+ assert.equal(skeleton.armR,0);
+ assert.ok(zombie.armL<0&&zombie.armR<0);
+});
