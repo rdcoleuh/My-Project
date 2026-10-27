@@ -1915,6 +1915,7 @@ body.in-nether #game-wrap{background:#290f19}
     const p=destination.point,id=Number(held.slice(6)),b=id===119?120:id;
     if(dimension==='nether'&&b===7){toast('💨 Water evaporates in the Nether');return;}
     if(setBlock(p.x,p.y,p.z,b)){
+      if(b===168)craftBenchMemo.until=0; // A newly placed table is immediately usable.
       if(gameMode==='survival'){addResource(held,-1,survivalHotbar[selection]);updateHotbar();}
       sound?.play('place',NAMES[b]);toast((stack?'Stacked ':'Placed ')+NAMES[b]);timers.place=.2;
       return true;
@@ -2114,7 +2115,11 @@ body.in-nether #game-wrap{background:#290f19}
     return !!node?.isConnected&&pack===window.MineWorldLocalTextures&&generation===pack?.generation;
   }
   function updateHotbar(){
-    const root=$('hotbar');root.replaceChildren();
+    const root=$('hotbar');
+    // Rebuilding slots must not strand keyboard/switch users on <body>.
+    const focusedSlot=document.activeElement?.parentElement===root
+      ?Array.prototype.indexOf.call(root.children,document.activeElement):-1;
+    root.replaceChildren();
     const survival=gameMode==='survival';
     if(survival)syncSurvivalHotbar();
     for(let i=0;i<9;i++){
@@ -2197,6 +2202,7 @@ body.in-nether #game-wrap{background:#290f19}
     const offhandHud=$('offhand-hud');if(offhandHud){offhandHud.style.display=survival?'flex':'none';const item=survival?javaInventory.stackAt('offhand'):null;offhandHud.firstChild.textContent=item?stackIcon(item.key):'🛡';offhandHud.title=item?'Offhand: '+itemLabel(item.key)+' ×'+item.qty+' (F)':'Offhand empty · press F to swap';}
     hotbarSignature=survival?stackSignature():'creative:'+hotbarPage;
     refreshPackHotbarArt();
+    if(focusedSlot>=0)root.children[focusedSlot]?.focus({preventScroll:true});
   }
   function toast(s){let x=$('toast');x.textContent=s;x.classList.add('show');notifications++;const n=notifications;setTimeout(()=>{if(n===notifications)x.classList.remove('show')},1250)}
   function gainExperience(points){
@@ -3161,12 +3167,30 @@ body.in-nether #game-wrap{background:#290f19}
         icon.textContent=stackIcon(slot.key);
         const blockId=slot.key.startsWith('block:')?Number(slot.key.slice(6)):null;
         if(Number.isInteger(blockId)){
-          const img=document.createElement('canvas');img.width=img.height=32;
-          img.style.cssText='width:32px;height:32px;image-rendering:pixelated';
-          if(window.MineWorldBlockItemIcons?.paint(img,blockId)){icon.replaceChildren(img);}
+          const preview=document.createElement('canvas');preview.width=preview.height=32;
+          preview.style.cssText='width:32px;height:32px;image-rendering:pixelated';
+          if(window.MineWorldBlockItemIcons?.paint(preview,blockId))icon.replaceChildren(preview);
+          // Match hotbar precedence: retain imported three-face terrain models
+          // for full cubes, but use player-owned item sprites for flat blocks
+          // and packs that supply item art without terrain faces.
+          const craftPack=window.MineWorldLocalTextures;
+          const craftGeneration=craftPack?.generation;
+          const flatCraftBlock=/\b(?:rail|torch|ladder|vine|flower|grass|fern|sapling|door|trapdoor|carpet|pane|sign|banner|button|pressure plate|lever|repeater|comparator|redstone|lily pad|sea pickle|mushroom|candle)\b/i.test(itemLabel(slot.key));
+          const hasCraftFaces=[0,1,2].some(face=>craftPack?.hasImportedFace?.(blockId,face));
+          if(craftPack?.hasPack&&(flatCraftBlock||!hasCraftFaces)){
+            craftPack.blockItemIcon?.(blockId).then(src=>{
+              if(!src||!hotbarIconRequestCurrent(craftPack,craftGeneration,icon))return;
+              const art=document.createElement('img');art.src=src;art.alt='';
+              art.width=art.height=32;
+              art.style.cssText='width:32px;height:32px;object-fit:contain;image-rendering:pixelated';
+              icon.replaceChildren(art);
+            }).catch(()=>{});
+          }
         }else{
-          window.MineWorldLocalTextures?.itemIcon?.(slot.key).then(src=>{
-            if(!src||!icon.isConnected)return;
+          const craftPack=window.MineWorldLocalTextures;
+          const craftGeneration=craftPack?.generation;
+          craftPack?.itemIcon?.(slot.key).then(src=>{
+            if(!src||!hotbarIconRequestCurrent(craftPack,craftGeneration,icon))return;
             const img=document.createElement('img');
             img.src=src;img.alt='';img.width=img.height=24;
             img.style.cssText='width:24px;height:24px;image-rendering:pixelated;object-fit:contain';
