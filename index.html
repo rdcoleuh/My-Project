@@ -512,6 +512,30 @@ body.in-nether #game-wrap{background:#290f19}
 #hotbar .hot-item.active.mw-pack-selected::after{
  background-size:contain!important;background-position:center!important;
 }
+
+/* Classic-style square pixel slots; retain a taller accessible touch target.
+   Imported GUI art replaces the fallback tile without stretching the PNG. */
+#hotbar .hot-item{background-color:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0!important;touch-action:manipulation}
+#hotbar:not(.mw-pack-bar-image) .hot-item:not(.mw-pack-slot)::before{
+ content:"";position:absolute;left:0;right:0;top:50%;aspect-ratio:1/1;transform:translateY(-50%);
+ background:#787878;border:1px solid #171717;box-shadow:inset 2px 2px #bcbcbc,inset -2px -2px #303030;
+ pointer-events:none;image-rendering:pixelated
+}
+#hotbar:not(.mw-pack-bar-image) .hot-item.active:not(.mw-pack-selected):not(.mw-pack-slot)::before{
+ border:2px solid #fff;box-shadow:0 0 0 1px #161616,inset 1px 1px #f9f9f9
+}
+#hotbar.mw-pack-hotbar .hot-item.active:not(.mw-pack-selected){outline:0!important;box-shadow:none!important}
+#hotbar .hot-item.active.mw-pack-slot:not(.mw-pack-selected)::after{
+ content:"";position:absolute;left:-2px;right:-2px;top:50%;aspect-ratio:1/1;
+ transform:translateY(-50%);border:2px solid #fff;box-shadow:0 0 0 1px #181818;
+ pointer-events:none;z-index:2
+}
+#hotbar .hot-item:focus-visible{outline:2px solid #ffe998!important;outline-offset:2px!important}
+#hotbar.mw-pack-bar-image{background-size:100% auto!important;background-position:center!important;image-rendering:pixelated!important}
+#hotbar:not(.mw-pack-bar-image):not(.mw-pack-hotbar-slots){
+ background:#282828e8!important;border:2px solid #171717!important;border-radius:2px!important;
+ backdrop-filter:none!important;box-shadow:inset 1px 1px #a5a5a5!important
+}
 </style>
 </head>
 <body>
@@ -2215,38 +2239,51 @@ body.in-nether #game-wrap{background:#290f19}
   }
   window.addEventListener('mineworld-pack-hud-changed',()=>{refreshPackHotbarArt();});
 
+  // Cache six possible imported stat sprites per resource-pack generation.
+  // A 20-icon HUD should not request/decode the same PNG twenty times.
+  let statArtGeneration=-1;
+  const statArtPromises=new Map();
+  function cachedStatArt(pack,glyph,fill){
+    const generation=pack.generation??-1;
+    if(generation!==statArtGeneration){statArtGeneration=generation;statArtPromises.clear();}
+    const key=glyph+':'+fill;
+    if(!statArtPromises.has(key))
+      statArtPromises.set(key,Promise.resolve().then(()=>pack.hudIcon(glyph,fill)).catch(()=>null));
+    return statArtPromises.get(key);
+  }
   function updateSurvivalHUD(){
     updateExperienceHUD();
     $('survival-hud').classList.toggle('hidden',gameMode!=='survival');
     // Ten discrete two-point HUD icons, preserving accessible numeric descriptions.
     const paintStat=(node,value,symbol,emptySymbol,kind)=>{
-      const points=Math.max(0,Math.min(20,Number(value)||0));
+      const points=window.MineWorldHudArt?.points?.(value)??Math.max(0,Math.min(20,Math.floor(Number(value)||0)));
+      const states=window.MineWorldHudArt?.slots?.(points);
       const signature=kind+':'+points+':'+(window.MineWorldLocalTextures?.generation??-1);
       if(node.dataset.mwStatSignature===signature)return;
       node.dataset.mwStatSignature=signature;
       node.replaceChildren();
       node.setAttribute('role','img');
-      node.setAttribute('aria-label',kind+': '+Math.ceil(points)+' of 20');
-      node.title=kind+': '+Math.ceil(points)+'/20';
+      node.setAttribute('aria-label',window.MineWorldHudArt?.description?.(kind,points)||kind+': '+points+' of 20');
+      node.title=kind+': '+points+'/20';
       for(let i=0;i<10;i++){
         const icon=document.createElement('span');
         const remaining=Math.max(0,Math.min(2,points-i*2));
-        icon.className='mw-stat-icon '+(remaining>=2?'full':remaining>=1?'half':'empty');
+        const fill=states?.[i]||(remaining>=2?'full':remaining>=1?'half':'empty');
+        icon.className='mw-stat-icon '+fill;
         icon.setAttribute('aria-hidden','true');
-        const fill=remaining>=2?'full':remaining>=1?'half':'empty';
         const glyph=kind==='Health'?'heart':'food';
         const fallback=window.MineWorldHudArt?.paint(glyph,fill);
         if(fallback)icon.appendChild(fallback);
-        else icon.textContent=remaining>=2?symbol:emptySymbol;
+        else icon.textContent=fill==='full'?symbol:emptySymbol;
         node.appendChild(icon);
         // Imported local art takes priority. If a pack has no half sprite,
         // clip its full sprite over the original half/empty fallback.
         const pack=window.MineWorldLocalTextures;
         const generation=pack?.generation??-1;
-        if(pack?.hudIcon)Promise.resolve(pack.hudIcon(glyph,fill)).then(async src=>{
+        if(pack?.hudIcon)cachedStatArt(pack,glyph,fill).then(async src=>{
           let clipped=false;
           if(!src&&remaining>=1&&remaining<2){
-            src=await pack.hudIcon(glyph,'full');
+            src=await cachedStatArt(pack,glyph,'full');
             clipped=!!src;
           }
           if(!src||!icon.isConnected||generation!==(window.MineWorldLocalTextures?.generation??-1))return;
@@ -2261,7 +2298,7 @@ body.in-nether #game-wrap{background:#290f19}
     };
     paintStat($('health-text'),health,'♥','♡','Health');
     paintStat($('hunger-text'),hunger,'◆','◇','Hunger');
-    $('hunger-text').title+=' · Saturation: '+hungerSaturation.toFixed(1)+' · exhaustion: '+hungerDrain.toFixed(2);
+    $('hunger-text').title='Hunger: '+(window.MineWorldHudArt?.points?.(hunger)??hunger)+'/20 · Saturation: '+hungerSaturation.toFixed(1)+' · exhaustion: '+hungerDrain.toFixed(2);
     $('eat-btn').textContent='Eat '+(bag.cooked?'🍖 '+bag.cooked:bag.raw?'🥩 '+bag.raw:'🍄 '+inventory[17]);$('weapon-readout').textContent=equipped==='none'?'✊ Fists':(equipped==='sword'?'⚔ ':equipped==='hoe'?'🌾 ':equipped==='axe'?'🪓 ':'⛏ ')+(tools[equipped]==='none'?'Hands':tools[equipped]+' '+equipped);
   }
   function setGameMode(next){
