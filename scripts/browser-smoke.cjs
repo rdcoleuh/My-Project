@@ -482,11 +482,15 @@ async function go(browser,name,mobile){
   assert.match(await page.locator('#health-text').getAttribute('aria-label'),/Health: 19 of 20/,
     name+': damage did not update the accessible half-heart HUD');
   await page.waitForTimeout(650);
-  await page.locator('#hotbar .hot-item').nth(2).click({force:true});
+  // Desktop pointer lock redirects mouse clicks to the canvas: players use
+  // number keys there. Touch players tap the hotbar directly.
+  if(mobile)await page.locator('#hotbar .hot-item').nth(2).click({force:true});
+  else await page.keyboard.press('3');
   await page.waitForFunction(()=>document.querySelector('#hotbar .hot-item:nth-child(3)')?.classList.contains('active'),
     null,{timeout:8000});
   await page.waitForTimeout(650);
-  await page.locator('#quick-inventory').click({force:true});
+  if(mobile)await page.locator('#quick-inventory').click({force:true});
+  else await page.keyboard.press('e');
   await page.waitForFunction(()=>!document.querySelector('#gear-panel')?.classList.contains('hidden'),
     null,{timeout:8000});
   assert.equal(await page.locator('#craft-grid .craft-cell').count(),4,
