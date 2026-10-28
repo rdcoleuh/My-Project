@@ -3,7 +3,10 @@
 const RECIPES=Object.freeze({rawIron:'iron',rawGold:'gold',rawCopper:'copper',raw:'cooked',chicken:'cookedChicken',mutton:'cookedMutton',fish:'cookedFish',potato:'bakedPotato',kelp:'driedKelp',ancientDebris:'netheriteScrap','block:85':'netheriteScrap','block:4':'block:9','block:61':'block:3','block:5':'charcoal'});
 const FUEL=Object.freeze({coal:80,charcoal:80,'block:5':15,'block:11':15,'block:52':15,sticks:5,bamboo:2.5,'block:15':15,'block:30':15,'block:32':15});
 const COOK=10,key=k=>typeof k==='string'&&(/^[a-zA-Z][a-zA-Z0-9]*$/.test(k)||/^block:[1-9]\d{0,2}$/.test(k));
-const pos=p=>p&&['overworld','nether','end'].includes(p.dimension)&&[p.x,p.y,p.z].every(n=>Number.isInteger(n)&&n>=0&&n<=10000);
+// Keep the legacy Y=0..47 range and permit future deep-world furnaces.
+// X/Z remain inside the current 10,000-block world; Y is absolute, not an array offset.
+const pos=p=>p&&['overworld','nether','end'].includes(p.dimension)&&
+  [p.x,p.y,p.z].every(Number.isInteger)&&p.x>=0&&p.x<10000&&p.z>=0&&p.z<10000&&p.y>=-64&&p.y<=319;
 const id=p=>p.dimension+':'+p.x+','+p.y+','+p.z;
 const blank=p=>({dimension:p.dimension,x:p.x,y:p.y,z:p.z,input:null,fuel:null,output:null,burn:0,burnTotal:0,progress:0});
 const slot=s=>s&&key(s.key)&&Number.isInteger(s.qty)&&s.qty>0&&s.qty<=64?{key:s.key,qty:s.qty}:null;

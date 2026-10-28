@@ -162,8 +162,8 @@
    // Seeded biome-specific groundcover and reeds.
    for(let x=x0;x<x0+CHUNK;x++)for(let z=z0;z<z0+CHUNK;z++){
      if(x<1||z<1||x>=WORLD-1||z>=WORLD-1)continue;
-     const biome=BIOMES[zone(x,z)],top=terrainAt(x,z,SEA,H),kind=biome.tree;
-     if(top>=H-4)continue;
+     const biome=BIOMES[zone(x,z)],top=terrainAt(x,z,SEA,H,minY),kind=biome.tree;
+     if(top>=minY+H-4)continue;
      if(kind==='flowers'&&rnd(x,z,441)>.67&&get(x,top+1,z)===0){put(x,top+1,z,rnd(x,z,442)>.4?16:17);}
      else if(kind==='reeds'&&rnd(x,z,443)>.84&&top<=SEA+2){put(x,top+1,z,45);put(x,top+2,z,45);}
      else if(/Meadow|Flower Forest|Cherry Grove/.test(biome.name)&&rnd(x,z,444)>.94){put(x,top+1,z,16,true);}
@@ -173,7 +173,7 @@
    const stampTree=(x,z,kind)=>{
      const top=terrainAt(x,z,SEA,H,minY),base=top+1;
      if(top<=SEA&& !['mangrove','kelp'].includes(kind))return;
-     if(base>H-10)return;
+     if(base>minY+H-10)return;
      const trunk=(id,height)=>{for(let j=0;j<height;j++)put(x,base+j,z,id);};
      const crown=(tx,ty,tz,id,radius=2)=>{
        for(let dx=-radius;dx<=radius;dx++)for(let dz=-radius;dz<=radius;dz++)for(let dy=-1;dy<=2;dy++){
@@ -261,7 +261,7 @@
      const baseX=cx*CHUNK,baseZ=cz*CHUNK;
      for(const [index,block] of edits){
        const x=Math.floor(index/(WORLD*H)),z=Math.floor(index/H)%WORLD,y=index%H+minY;
-       if(x>=baseX&&x<baseX+CHUNK&&z>=baseZ&&z<baseZ+CHUNK&&y>=0&&y<H)put(x,y,z,block);
+       if(x>=baseX&&x<baseX+CHUNK&&z>=baseZ&&z<baseZ+CHUNK&&y>=minY&&y<minY+H)put(x,y,z,block);
      }
    }
    return data;

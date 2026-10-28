@@ -53,3 +53,19 @@ test('live game retains legacy world saves until a versioned migration exists',(
  assert.match(html,/world-depth\.js/);
  assert.match(fs.readFileSync(path.join(root,'sw.js'),'utf8'),/world-depth\.js/);
 });
+test('deep chunk replays negative-Y edits after caves and ore generation',()=>{
+ const c=api.create({width:10000,depth:10000,minY:-64,maxY:319});
+ const cx=312,cz=312,x=cx*16+2,z=cz*16+3,y=-32;
+ const edits=new Map([[c.index(x,y,z),11],[c.index(x,y+1,z),0]]);
+ const data=ctx.window.MineWorldBiomes.generateChunk({cx,cz,H:384,minY:-64,SEA:63,edits});
+ const at=yy=>data[(2*16+3)*384+(yy+64)];
+ assert.equal(at(y),11,'placed block survives chunk regeneration below Y=0');
+ assert.equal(at(y+1),0,'mined block survives chunk regeneration below Y=0');
+});
+test('legacy chunk edits remain valid with unchanged coordinate encoding',()=>{
+ const c=api.create({width:10000,depth:10000,minY:0,maxY:47});
+ const cx=312,cz=312,x=cx*16+1,z=cz*16+1,y=6;
+ const edits=new Map([[c.index(x,y,z),11]]);
+ const data=ctx.window.MineWorldBiomes.generateChunk({cx,cz,H:48,SEA:14,minY:0,edits});
+ assert.equal(data[(1*16+1)*48+y],11);
+});

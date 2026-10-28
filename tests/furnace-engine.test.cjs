@@ -37,3 +37,17 @@ test('prototype names cannot be inserted as recipes or fuel',()=>{
  f.restore([{...p,input:{key:'constructor',qty:1},fuel:{key:'toString',qty:1}}]);
  assert.equal(f.get(p).input,null);assert.equal(f.get(p).fuel,null);
 });
+
+test('future deep-world furnaces accept negative-Y positions and persist their contents',()=>{
+ const deep={dimension:'overworld',x:5000,y:-32,z:5000};
+ const f=api.create();assert.equal(f.insert(deep,'input','rawIron',2),2);
+ assert.equal(f.insert(deep,'fuel','coal',1),1);
+ assert.equal(f.tick(10).completed,1);
+ const saved=JSON.parse(JSON.stringify(f.snapshot()));
+ const restored=api.create();restored.restore(saved);
+ assert.equal(restored.get(deep).output.key,'iron');
+ assert.equal(restored.get(deep).input.qty,1);
+ assert.equal(restored.get({...deep,y:-65}),null);
+ assert.equal(restored.insert({...deep,y:320},'fuel','coal',1),0);
+ assert.equal(restored.insert({...deep,x:10000},'fuel','coal',1),0);
+});
