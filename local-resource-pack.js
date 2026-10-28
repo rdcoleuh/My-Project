@@ -324,7 +324,9 @@ function readArchive(buffer){
    if(legacyIcons&&hudFileSafe)
      keep('hud:legacy-icons',{method,size,expanded,local},priority);
    if(hud&&hudFileSafe)
-     keep('hud:'+hud[1]+':'+hud[2],{method,size,expanded,local},priority);
+     // hud is [kind, variant], not a regex match with a leading full path.
+      // The old indices created hud:full:undefined for modern Java ZIPs.
+      keep('hud:'+hud[0]+':'+hud[1],{method,size,expanded,local},priority);
    if(bedrockHud&&hudFileSafe)
      keep('hud:'+bedrockHud,{method,size,expanded,local},priority);
    if(entity&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8))

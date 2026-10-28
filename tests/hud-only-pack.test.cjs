@@ -289,6 +289,8 @@ test('ZIP/JAR resource packs retain large player-imported HUD PNGs within the sa
   ['assets/minecraft/textures/gui/widgets.png',1100000,256,256,'hotbar','selected'],
   ['assets/minecraft/textures/gui/icons.png',1100000,256,256,'heart','full'],
   ['assets/minecraft/textures/gui/sprites/hud/heart/full.png',300000,16,16,'heart','full'],
+  ['assets/minecraft/textures/gui/sprites/hud/food_full.png',300000,16,16,'food','full'],
+  ['assets/minecraft/textures/gui/sprites/hud/hotbar.png',300000,182,22,'hotbar','background'],
   ['textures/ui/hunger_full.png',300000,16,16,'food','full']
  ];
  for(const [name,size,width,height,kind,fill] of cases){
