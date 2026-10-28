@@ -403,6 +403,13 @@ async function go(browser,name,mobile){
     name+': Survival heart/hunger sprites or accessible labels are incorrect');
   if(mobile)assert.equal(survival.fits,true,
     name+': Survival hearts/hunger overflow the mobile viewport');
+  // Capture the actual running survival HUD with the synthetic imported
+  // texture fixture. These screenshots are not user-owned Minecraft artwork.
+  const screenshotDir=path.join(root,'artifacts','screenshots');
+  fs.mkdirSync(screenshotDir,{recursive:true});
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-survival-synthetic-pack.png':'desktop-survival-synthetic-pack.png'),
+    animations:'disabled'});
   // The actual desktop/touch layout must not crop stack counts behind icons.
   const countBadge=await page.evaluate(()=>{
     const slot=document.querySelector('#hotbar .hot-item');
