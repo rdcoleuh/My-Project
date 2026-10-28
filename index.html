@@ -3568,8 +3568,9 @@ body.in-nether #game-wrap{background:#290f19}
       const x=SPAWN-24+rand(i*29,seed+i*3)*48,z=SPAWN-24+rand(i*17,seed+i*11)*48;
       if(Math.hypot(x-SPAWN,z-SPAWN)<=6)continue;
       const biome=window.MineWorldBiomes.biomeAt(x,z)?.name||'Plains';
-      const special=extraMobs&&rand(i*13,seed+91)>.61?
-        extraMobs.pickBiome(biome,seed+i*2027):null;
+      const aquatic=extraMobs?.pickAquatic(biome,seed+i*2027);
+      const special=aquatic||(extraMobs&&rand(i*13,seed+91)>.61?
+        extraMobs.pickBiome(biome,seed+i*2027):null);
       spawnOne(special||animals.pickNatural(biome,seed+i*2027),x,z);
     }
   }
@@ -3667,8 +3668,9 @@ body.in-nether #game-wrap{background:#290f19}
           {const nearby=living[Math.floor(Math.random()*living.length)]||player;
             const x=clamp(nearby.x+Math.random()*35-17,3,W-4),z=clamp(nearby.z+Math.random()*35-17,3,D-4);
             const biome=window.MineWorldBiomes.biomeAt(x,z)?.name||'Plains';
-            const special=extraMobs&&Math.random()<.42?
-              extraMobs.pickBiome(biome,Math.random()*100000):null;
+            const aquatic=extraMobs?.pickAquatic(biome,Math.random()*100000);
+            const special=aquatic||(extraMobs&&Math.random()<.42?
+              extraMobs.pickBiome(biome,Math.random()*100000):null);
             spawnOne(special||animals.pickNatural(biome,Math.random()*100000),x,z);
           }
         }

@@ -66,3 +66,35 @@ test('creatures integrate with real game rendering, sampling, safe spawns and ol
  }
  assert.ok(!read('mob-expansion.js').includes('textures/entity/'),'No copied vanilla mob texture assets');
 });
+
+test('water-biome spawning selects aquatic species, not land animals',()=>{
+ assert.equal(mobs.pickAquatic('Open Ocean',0),'cod');
+ assert.equal(mobs.pickAquatic('Open Ocean',1),'squid');
+ assert.equal(mobs.pickAquatic('Warm Ocean',0),'tropical_fish');
+ assert.equal(mobs.pickAquatic('Warm Ocean',1),'pufferfish');
+ assert.equal(mobs.pickAquatic('River',0),'salmon');
+ assert.equal(mobs.pickAquatic('Frozen River',0),'salmon');
+ assert.equal(mobs.pickAquatic('Swamp',0),null);
+ assert.equal(mobs.pickAquatic('Mushroom Fields',0),null);
+ assert.equal(mobs.pickAquatic('Open Ocean',Infinity),'cod');
+ for(let seed=0;seed<12;seed++){
+   const kind=mobs.pickAquatic('Warm Ocean',seed);
+   assert.ok(mobs.isAquatic(kind),kind+' must require water');
+ }
+ const html=read('index.html');
+ assert.ok(html.includes('extraMobs?.pickAquatic(biome,seed+i*2027)'));
+ assert.ok(html.includes('extraMobs?.pickAquatic(biome,Math.random()*100000)'));
+ assert.ok(html.includes('if(wet<0)return null;'),'water-column check must reject dry spawns');
+});
+test('rare mobs retain special acquisition rules and drowned are hostile',()=>{
+ assert.equal(mobs.catalog.drowned.kind,'hostile');
+ assert.equal(mobs.pickBiome('River',0,true),'drowned');
+ assert.equal(mobs.pickBiome('Warm Ocean',0,true),'drowned');
+ assert.equal(mobs.eligible('sniffer','Warm Ocean'),false,'sniffers hatch from eggs, not biome rolls');
+ for(const biome of ['Plains','Meadow','Forest','Desert']){
+   for(let seed=0;seed<20;seed++)
+     assert.notEqual(mobs.pickBiome(biome,seed,true),'phantom','phantoms require insomnia');
+ }
+ assert.ok(mobs.catalog.sniffer,'creative summoning must remain available');
+ assert.ok(mobs.catalog.phantom,'creative summoning must remain available');
+});

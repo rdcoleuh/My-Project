@@ -40,7 +40,7 @@ add('sulfur_cube','passive',12,.7,0,'slime',[.90,.81,.23],'experience');
 add('bee','neutral',10,.85,2,'bee',[.93,.75,.21],'experience');
 add('cave_spider','neutral',12,1.35,2,'spider',[.11,.30,.50],'string');
 add('dolphin','neutral',10,1.35,2,'fish',[.39,.61,.72],'fish');
-add('drowned','neutral',20,.95,3,'biped',[.19,.42,.39],'raw');
+add('drowned','hostile',20,.95,3,'biped',[.19,.42,.39],'raw');
 add('fox','neutral',10,1.2,2,'fox',[.92,.40,.18],'leather');
 add('goat','neutral',10,1.25,2,'goat',[.87,.85,.78],'raw');
 add('iron_golem','neutral',40,.9,7,'golem',[.74,.73,.65],'iron');
@@ -78,14 +78,33 @@ const SPAWNABLE_PASSIVE=[
  ['frog',/swamp|mangrove/],['goat',/mountain|peak|slope|grove|windswept/],
  ['fox',/taiga|snowy|grove/],['wolf',/forest|taiga|grove/],
  ['bee',/flower|meadow|forest|plains/],['panda',/jungle/],
- ['parrot',/jungle/],['ocelot',/jungle/],['sniffer',/warm.ocean/]
+ ['parrot',/jungle/],['ocelot',/jungle/]
 ];
 const SPAWNABLE_HOSTILE=[
  ['husk',/desert/],['parched',/desert|badlands/],['stray',/snow|frozen|ice/],
  ['bogged',/swamp|mangrove/],['witch',/swamp/],['slime',/swamp/],
  ['silverfish',/mountain|cave/],['zombie_villager',/plains|forest|savanna/],
- ['phantom',/plains|meadow/]
+ ['drowned',/ocean|river/]
 ];
+// Water-column spawns are selected separately from land wildlife. Never
+// naturally spawn egg-only sniffers or insomnia-only phantoms from a biome roll.
+// Species-specific depth/light and group-weight rules remain future work.
+const SPAWNABLE_AQUATIC=[
+ ['tropical_fish',/warm.ocean|lukewarm.ocean/],
+ ['pufferfish',/warm.ocean|lukewarm.ocean/],
+ ['salmon',/river|cold.ocean|frozen.ocean/],
+ ['cod',/ocean/],
+ ['squid',/ocean|river/],
+ ['dolphin',/^(?!.*frozen).*ocean/]
+];
+function pickAquatic(biome,seed){
+ const name=String(biome||'').toLowerCase();
+ const pool=SPAWNABLE_AQUATIC.filter(([kind,pattern])=>pattern.test(name)).map(([kind])=>kind);
+ if(!pool.length)return null;
+ const value=Number(seed);
+ const index=Number.isFinite(value)?Math.abs(Math.trunc(value))%pool.length:0;
+ return pool[index];
+}
 function pickBiome(biome,seed,hostile=false){
  const pool=(hostile?SPAWNABLE_HOSTILE:SPAWNABLE_PASSIVE)
   .filter(v=>v[1].test(String(biome).toLowerCase())).map(v=>v[0]);
@@ -256,7 +275,7 @@ function mountUI(){
  return true;
 }
 window.MineWorldMobExpansion=Object.freeze({
- catalog,draw,mountUI,pickBiome,isAquatic:kind=>WATER.has(kind),
+ catalog,draw,mountUI,pickBiome,pickAquatic,isAquatic:kind=>WATER.has(kind),
  count:Object.keys(catalog).length,
  eligible:(kind,biome)=>SPAWNABLE_PASSIVE.some(([id,re])=>id===kind&&re.test(String(biome).toLowerCase()))
 });
