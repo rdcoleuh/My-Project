@@ -33,6 +33,12 @@
    }
    return open/3;
  }
+ // Transparent solid blocks such as glass permit sight but still provide
+ // explosion cover. Keep blast occlusion separate from mob vision so a
+ // creeper cannot damage a player through a glass wall.
+ function blastBlockPassable(block){
+   return block===0||block===7||(block>=139&&block<=154);
+ }
  // Short-lived pursuit keeps a monster searching the last *seen* location
  // when a player rounds a corner; it never grants invisible melee attacks.
  function pursuitPoint(last,visible,dt){
@@ -149,5 +155,5 @@
   if(['skeleton','stray','pillager','blaze','ghast','wither'].includes(kind))return distance<5?'retreat':distance<=10?'ranged':'approach';
   return distance<=1.6?'melee':'approach';
  }
- window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,blastExposure,pursuitPoint,steerHeading,rayClear,withinSight,attackInReach,targetIntent});
+ window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,blastExposure,blastBlockPassable,pursuitPoint,steerHeading,rayClear,withinSight,attackInReach,targetIntent});
 })();

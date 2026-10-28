@@ -65,7 +65,6 @@ jobs:
             artifacts/clips/*.webm
             artifacts/recordings/*.webm
             artifacts/screenshots/*.png
-            qa/mob-attack-reach-2026-10-28.md
-            qa/creeper-blast-cover-2026-10-28.md
+            qa/*.md
           if-no-files-found: warn
           retention-days: 7

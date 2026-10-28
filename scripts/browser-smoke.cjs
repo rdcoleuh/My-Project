@@ -187,10 +187,14 @@ async function go(browser,name,mobile){
       blastBlocked:ai.blastExposure({x:1.1,y:0,z:1.5},{x:3.9,y:0,z:1.5},
         (x,y,z)=>!(x===2&&(y===0||y===1)&&z===1)),
       blastCovered:ai.blastExposure({x:1.1,y:0,z:1.5},{x:3.9,y:0,z:1.5},
-        (x,y,z)=>!(x===2&&y===0&&z===1))};
+        (x,y,z)=>!(x===2&&y===0&&z===1)),
+      blastGlass:ai.blastExposure({x:1.1,y:0,z:1.5},{x:3.9,y:0,z:1.5},
+        (x,y,z)=>ai.blastBlockPassable(x===2&&(y===0||y===1)&&z===1?9:0)),
+      blastPartialGlass:ai.blastExposure({x:1.1,y:0,z:1.5},{x:3.9,y:0,z:1.5},
+        (x,y,z)=>ai.blastBlockPassable(x===2&&y===0&&z===1?9:0))};
   });
   assert.deepEqual(reach,{meleeNear:true,meleeAbove:false,rangedNear:true,
-    rangedAbove:false,ghastSpacing:'ranged',blastOpen:1,blastBlocked:0,blastCovered:1/3},
+    rangedAbove:false,ghastSpacing:'ranged',blastOpen:1,blastBlocked:0,blastCovered:1/3,blastGlass:0,blastPartialGlass:1/3},
     name+': mob combat reach and flying ranged spacing regressed');
   // From the actual title screen: choose a local ZIP, apply exact pixels,
   // save it as default, then reload the same browser and auto-restore it.

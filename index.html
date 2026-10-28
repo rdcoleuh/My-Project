@@ -3576,6 +3576,9 @@ body.in-nether #game-wrap{background:#290f19}
     // Air, water, glass and small crops do not occlude these rays.
     return block===0||block===7||block===9||(block>=139&&block<=154);
   }
+  function mobBlastPassable(x,y,z){
+    return mobAI.blastBlockPassable(get(x,y,z));
+  }
   function mobHasLineOfSight(m,p){
     if(!m||!p||(p.dimension||'overworld')!==dimension)return false;
     const dims=entityHitboxes.dimensions(m.kind,!!m.baby,m.hitboxState||'');
@@ -3772,7 +3775,7 @@ body.in-nether #game-wrap{background:#290f19}
           const mul=difficulty==='hard'?1.65:difficulty==='easy'?.65:1;
           for(const p of living){
             const distance=Math.hypot(m.x-p.x,m.y-p.y,m.z-p.z);
-            const exposure=distance<3?mobAI.blastExposure(m,p,mobVisionPassable):0;
+            const exposure=distance<3?mobAI.blastExposure(m,p,mobBlastPassable):0;
             const amount=Math.ceil(mobAI.explosionDamage(distance,3,8,exposure)*mul);
             if(amount<=0)continue;
             if(p.id===null){if(playerHitCooldown<=0){damage(amount,'Creeper explosion');playerHitCooldown=.85;}}

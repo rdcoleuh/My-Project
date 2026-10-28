@@ -158,3 +158,23 @@ test('creeper explosions respect opaque cover and attenuate partial exposure',()
    'live creeper explosion damage must use occlusion, not just proximity');
  assert.ok(html.includes('mobAI.explosionDamage(distance,3,8,exposure)'));
 });
+
+test('transparent glass blocks explosion exposure even though it permits mob sight',()=>{
+ const mob={x:1.1,y:0,z:1.5},target={x:3.9,y:0,z:1.5};
+ const glassWall=(x,y,z)=>x===2&&(y===0||y===1)&&z===1?9:0;
+ const glassHalf=(x,y,z)=>x===2&&y===0&&z===1?9:0;
+ const pass=(map)=>(x,y,z)=>rules.blastBlockPassable(map(x,y,z));
+ assert.equal(rules.blastBlockPassable(0),true);
+ assert.equal(rules.blastBlockPassable(7),true,'water stays non-occluding in the current damage model');
+ assert.equal(rules.blastBlockPassable(139),true,'small crops do not shield blast damage');
+ assert.equal(rules.blastBlockPassable(9),false,'glass is a solid explosion shield');
+ assert.equal(rules.blastBlockPassable(1),false);
+ assert.equal(rules.blastExposure(mob,target,pass(glassWall)),0,'glass wall shields player');
+ assert.equal(rules.blastExposure(mob,target,pass(glassHalf)),1/3,'partial glass cover reduces damage');
+ assert.equal(rules.blastExposure(mob,target,pass(()=>0)),1,'air has full exposure');
+ const html=read('index.html');
+ assert.ok(html.includes('return mobAI.blastBlockPassable(get(x,y,z))'),
+   'live world blast checks must use the block-type occlusion helper');
+ assert.ok(html.includes('mobAI.blastExposure(m,p,mobBlastPassable)'),
+   'creeper blast must not reuse glass-transparent mob vision');
+});
