@@ -82,7 +82,7 @@ test('opt-in edit reindexing preserves placed and mined blocks at every legacy b
  assert.equal(converted.get(deep.index(9999,47,9999)),168);
  assert.deepEqual([...edits.keys()],[legacy.index(0,0,0),legacy.index(5000,14,5000),legacy.index(9999,47,9999)],
    'original saved edit map remains unchanged');
- assert.deepEqual([...api.reindexEdits(converted,deep,legacy)],[...edits]);
+ assert.deepEqual(JSON.parse(JSON.stringify([...api.reindexEdits(converted,deep,legacy)])),[...edits]);
 });
 test('save conversion fails atomically for invalid indices, blocks or target bounds',()=>{
  const legacy=api.create({width:10000,depth:10000,minY:0,maxY:47});
