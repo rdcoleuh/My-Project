@@ -13,6 +13,8 @@ const FOOD={
 const NATURAL=['cow','sheep','pig','chicken','horse','donkey','llama','camel'];
 function habitat(kind,biomeName=''){
  const biome=String(biomeName).toLowerCase();
+ // Ordinary Overworld livestock do not spawn naturally in mushroom fields.
+ if(/mushroom/.test(biome))return false;
  if(kind==='camel')return /desert/.test(biome);
  if(kind==='llama')return /mountain|hill|windswept|savanna/.test(biome);
  if(kind==='horse'||kind==='donkey')return /plains|savanna|meadow|field/.test(biome);
