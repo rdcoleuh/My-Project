@@ -30,3 +30,10 @@ test('game loads furnace modules, persists block inventories and ticks smelting'
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
  assert.ok(sw.includes("'./furnace-engine.js'")&&sw.includes("'./furnace-ui.js'"));
 });
+
+test('prototype names cannot be inserted as recipes or fuel',()=>{
+ const f=api.create();assert.equal(f.insert(p,'input','constructor',1),0);
+ assert.equal(f.insert(p,'fuel','toString',1),0);
+ f.restore([{...p,input:{key:'constructor',qty:1},fuel:{key:'toString',qty:1}}]);
+ assert.equal(f.get(p).input,null);assert.equal(f.get(p).fuel,null);
+});

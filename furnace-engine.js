@@ -13,7 +13,7 @@ function create(){
  function ensure(p){if(!pos(p))return null;if(!get(p))machines.set(id(p),blank(p));return get(p);}
  function insert(p,which,item,n=1){
   if(!['input','fuel'].includes(which)||!key(item)||!Number.isInteger(n)||n<1)return 0;
-  if(which==='input'&&!RECIPES[item]||which==='fuel'&&!FUEL[item])return 0;
+  if(which==='input'&&!Object.hasOwn(RECIPES,item)||which==='fuel'&&!Object.hasOwn(FUEL,item))return 0;
   const m=ensure(p);if(!m||m[which]&&m[which].key!==item)return 0;
   const moved=Math.min(n,64-(m[which]?.qty||0));
   if(moved)m[which]={key:item,qty:(m[which]?.qty||0)+moved};return moved;
@@ -29,7 +29,7 @@ function create(){
   for(const m of machines.values()){
    let remaining=Math.max(0,Math.min(60,Number(seconds)||0));
    while(remaining>1e-7){
-    const product=m.input&&RECIPES[m.input.key];
+    const product=m.input&&Object.hasOwn(RECIPES,m.input.key)&&RECIPES[m.input.key];
     if(!product||m.output&&(m.output.key!==product||m.output.qty>=64)){
      if(m.progress){m.progress=0;changed=true;}
      if(m.burn){m.burn=Math.max(0,m.burn-remaining);changed=true;}break;
@@ -55,8 +55,8 @@ function create(){
  function restore(records){machines.clear();if(!Array.isArray(records))return;
   for(const r of records.slice(0,256)){if(!pos(r))continue;const m=blank(r);
    m.input=slot(r.input);m.fuel=slot(r.fuel);m.output=slot(r.output);
-   if(m.input&&!RECIPES[m.input.key])m.input=null;
-   if(m.fuel&&!FUEL[m.fuel.key])m.fuel=null;
+   if(m.input&&!Object.hasOwn(RECIPES,m.input.key))m.input=null;
+   if(m.fuel&&!Object.hasOwn(FUEL,m.fuel.key))m.fuel=null;
    if(m.output&&!Object.values(RECIPES).includes(m.output.key))m.output=null;
    m.burn=Math.max(0,Math.min(1000,Number(r.burn)||0));
    m.burnTotal=Math.max(0,Math.min(1000,Number(r.burnTotal)||0));
