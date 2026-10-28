@@ -50,7 +50,7 @@
  }
  function zone(x,z){return sampleZone(x,z).index;}
  function biomeAt(x,z){const index=zone(x,z);return {...BIOMES[index],index};}
- function terrainAt(x,z,sea=14,H=48){
+ function terrainAt(x,z,sea=14,H=48,minY=0){
    const q=sampleZone(x,z),biome=BIOMES[q.index],neighbor=BIOMES[q.other];
    const blend=q.blend*q.blend*(3-2*q.blend);
    const height=neighbor.height+(biome.height-neighbor.height)*blend;
@@ -63,7 +63,7 @@
    if(peak){const ridge=Math.abs(noise(x,z,85,89)-.5);y+=Math.pow(ridge*2,1.75)*10*blend;}
    if(/Badlands/.test(biome.name))y+=(noise(x,z,66,86)-.5)*5*blend;
    if(biome.water){const marine=sea-4+(noise(x,z,78,87)-.5)*4;const depth=.45+.55*blend;y=y*(1-depth)+marine*depth;}
-   return clamp(Math.floor(y),4,H-9);
+   return clamp(Math.floor(y),minY+4,minY+H-9);
  }
  const cacheAtlas=new Map();
  function atlasDestination(biomeIndex){
@@ -128,10 +128,10 @@
     ruinedPortal:'Ruined Portal',bridge:'Stone Bridge',swampHut:'Mangrove Cabin',
     witchHut:'Witch Hut',jungleTemple:'Jungle Temple',camp:'Bamboo Camp',mushroomHut:'Mushroom House'
   };
- function generateChunk({cx,cz,H=48,SEA=14,edits=null}){
+ function generateChunk({cx,cz,H=48,SEA=14,minY=0,edits=null}){
    const data=new Uint8Array(CHUNK*CHUNK*H), x0=cx*CHUNK,z0=cz*CHUNK;
-   const within=(x,y,z)=>x>=x0&&x<x0+CHUNK&&z>=z0&&z<z0+CHUNK&&y>=0&&y<H;
-   const offset=(x,y,z)=>((x-x0)*CHUNK+(z-z0))*H+y;
+   const within=(x,y,z)=>x>=x0&&x<x0+CHUNK&&z>=z0&&z<z0+CHUNK&&y>=minY&&y<minY+H;
+   const offset=(x,y,z)=>((x-x0)*CHUNK+(z-z0))*H+(y-minY);
    const put=(x,y,z,block,onlyAir=false)=>{
      if(!within(x,y,z))return;
      const i=offset(x,y,z);if(!onlyAir||data[i]===0)data[i]=block;
@@ -140,24 +140,25 @@
    const heights=new Int16Array(CHUNK*CHUNK);
    for(let dx=0;dx<CHUNK;dx++)for(let dz=0;dz<CHUNK;dz++){
      const x=x0+dx,z=z0+dz;if(x>=WORLD||z>=WORLD)continue;
-     const biome=BIOMES[zone(x,z)],top=terrainAt(x,z,SEA,H);
+     const biome=BIOMES[zone(x,z)],top=terrainAt(x,z,SEA,H,minY);
      heights[dx*CHUNK+dz]=top;
-     for(let y=0;y<=top;y++){
+     for(let y=minY;y<=top;y++){
        let b=y===top?biome.top:y>=top-3?biome.under:3;
-       if(y<top-5&&y>3)b=y<8?58:b;
+       if(minY<0&&y<0)b=58;
+       else if(y<top-5&&y>minY+3)b=y<minY+8?58:b;
        if(/Badlands/.test(biome.name)&&y<top&&y>top-8)b=(y%4===0?27:25);
        put(x,y,z,b);
      }
      for(let y=top+1;y<=SEA;y++)put(x,y,z,biome.name==='Frozen Ocean'?22:7);
      // A fast repeatable tunnel carve, bounded below surface and not through structures.
-     for(let y=4;y<Math.min(top-4,H-6);y++){
+     for(let y=minY+4;y<Math.min(top-4,minY+H-6);y++){
        const cave=noise(x+y*1.8,z-y*1.7,23,610)*.7+noise(x-y*2.6,z+y*2.3,10,611)*.3;
        if(cave>.745)put(x,y,z,0);
      }
    }
    // Seeded mineral veins are distributed across depth bands and neighboring chunk edges.
    // This runs after cave carving and before structures; saved edits are reapplied last.
-   window.MineWorldOres.generate({data,cx,cz,H,sea:SEA,biomeAt,terrainAt,protectedEdits:null});
+   window.MineWorldOres.generate({data,cx,cz,H,minY,sea:SEA,biomeAt,terrainAt,protectedEdits:null});
    // Seeded biome-specific groundcover and reeds.
    for(let x=x0;x<x0+CHUNK;x++)for(let z=z0;z<z0+CHUNK;z++){
      if(x<1||z<1||x>=WORLD-1||z>=WORLD-1)continue;
@@ -170,7 +171,7 @@
    }
    // Tree placement samples beyond the edges so canopy crosses adjacent chunks consistently.
    const stampTree=(x,z,kind)=>{
-     const top=terrainAt(x,z,SEA,H),base=top+1;
+     const top=terrainAt(x,z,SEA,H,minY),base=top+1;
      if(top<=SEA&& !['mangrove','kelp'].includes(kind))return;
      if(base>H-10)return;
      const trunk=(id,height)=>{for(let j=0;j<height;j++)put(x,base+j,z,id);};
@@ -214,7 +215,7 @@
      const ax=gx*SPACING+40+(hash(gx,gz,180)%100),az=gz*SPACING+40+(hash(gx,gz,181)%100);
      if(ax<10||ax>=WORLD-10||az<10||az>=WORLD-10)continue;
      const biome=BIOMES[zone(ax,az)];if(!biome.feature||rnd(gx,gz,182)>.67)continue;
-     const ty=terrainAt(ax,az,SEA,H)+1;
+     const ty=terrainAt(ax,az,SEA,H,minY)+1;
      const feature=biome.feature;
      const sandstone=/desert|well|temple/.test(feature),wood=/village|cabin|camp|hut|shipwreck|manor|pavilion/.test(feature);
      const wall=sandstone?24:wood?11:53,trim=wood?5:61,roof=wood?30:3;
@@ -249,7 +250,7 @@
        const stations=[155,156,157,158,159,160,161,162,163,164,165,166,167];
        stations.forEach((block,j)=>{
          const sx=ax-7+(j%7)*2,sz=az+8+Math.floor(j/7)*3;
-         const sy=Math.max(ty,terrainAt(sx,sz,SEA,H)+1);
+         const sy=Math.max(ty,terrainAt(sx,sz,SEA,H,minY)+1);
          put(sx,sy,sz,block);
        });
      }
@@ -259,7 +260,7 @@
      // Each loaded chunk indexes its own edits directly, rather than scanning all edits.
      const baseX=cx*CHUNK,baseZ=cz*CHUNK;
      for(const [index,block] of edits){
-       const x=Math.floor(index/(WORLD*H)),z=Math.floor(index/H)%WORLD,y=index%H;
+       const x=Math.floor(index/(WORLD*H)),z=Math.floor(index/H)%WORLD,y=index%H+minY;
        if(x>=baseX&&x<baseX+CHUNK&&z>=baseZ&&z<baseZ+CHUNK&&y>=0&&y<H)put(x,y,z,block);
      }
    }

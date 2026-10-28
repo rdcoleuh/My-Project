@@ -1125,6 +1125,7 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./structure-loot.js"></script>
 <script src="./end-world.js"></script>
 <script src="./overworld-ores.js"></script>
+<script src="./world-depth.js"></script>
 <script src="./world-chunks.js"></script>
 <script src="./survival-catalog.js"></script>
 <script src="./nether-world.js"></script>
@@ -1306,10 +1307,12 @@ body.in-nether #game-wrap{background:#290f19}
   let dynamicResolution=isTouch?2.2:2.35;
   const minResolution=1,maxResolution=isTouch?2.55:2.8;
   let sky=[.57,.78,.91],cameraFov=72;
-  const idx=(x,y,z)=>(x*D+z)*H+y;
-  const inside=(x,y,z)=>Number.isInteger(x)&&Number.isInteger(y)&&Number.isInteger(z)&&x>=0&&x<W&&z>=0&&z<D&&y>=0&&y<H;
+  // Keep existing saves and gameplay in legacy 0..47 coordinates while the
+  // opt-in deep generator and future versioned migration are validated.
+  const vertical=window.MineWorldWorldDepth.create({width:W,depth:D,minY:0,maxY:H-1,chunkSize:CHUNK});
+  const idx=vertical.index,inside=vertical.inside;
   const chunkKey=(cx,cz)=>cx+','+cz;
-  const chunkIndex=(x,y,z)=>((x%CHUNK)*CHUNK+(z%CHUNK))*H+y;
+  const chunkIndex=vertical.chunkIndex;
   function markAdjacentMeshesDirty(cx,cz){
     for(const dx of [-1,0,1])for(const dz of [-1,0,1]){
       if(dx===0&&dz===0)continue;

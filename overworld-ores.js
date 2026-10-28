@@ -18,6 +18,14 @@
     {name:'Diamond',stone:99,deep:107,min:3,max:15,peak:6,chance:.13,radius:1,tier:'Iron',drop:'Diamond',color:'#66e9e3'},
     {name:'Emerald',stone:100,deep:108,min:8,max:39,peak:26,chance:.25,radius:0,tier:'Iron',drop:'Emerald',color:'#38d46b'}
   ];
+  // Deep-world Y bands are independent of the original compressed 48-layer
+  // distributions. The legacy bands remain unchanged for existing saves.
+  const DEEP_BANDS=Object.freeze({
+    Coal:{min:0,max:192,peak:96},Iron:{min:-64,max:192,peak:16},
+    Copper:{min:-16,max:112,peak:48},Gold:{min:-64,max:32,peak:-16},
+    Redstone:{min:-64,max:16,peak:-56},'Lapis Lazuli':{min:-64,max:64,peak:0},
+    Diamond:{min:-64,max:16,peak:-58},Emerald:{min:-16,max:256,peak:128}
+  });
   const idMap=new Map();for(const spec of TYPES){idMap.set(spec.stone,spec);idMap.set(spec.deep,spec);}
   function setSeed(s){seed=(Math.floor(Number(s))||85721)>>>0;return seed;}
   function hash(x,y,z,t){
@@ -35,13 +43,13 @@
     if(ore.name==='Emerald')w=/Peaks|Grove|Slopes|Meadow|Mountain|Stony/.test(biome)?w*2.4:w*.045;
     return Math.min(2.5,w);
   }
-  function generate({data,cx,cz,H=48,sea=14,biomeAt,terrainAt,protectedEdits}){
+  function generate({data,cx,cz,H=48,minY=0,sea=14,biomeAt,terrainAt,protectedEdits}){
     const x0=cx*CHUNK,z0=cz*CHUNK;
-    const at=(x,y,z)=>((x-x0)*CHUNK+(z-z0))*H+y;
-    const inside=(x,y,z)=>x>=x0&&x<x0+CHUNK&&z>=z0&&z<z0+CHUNK&&x>=0&&x<WORLD&&z>=0&&z<WORLD&&y>2&&y<H;
+    const at=(x,y,z)=>((x-x0)*CHUNK+(z-z0))*H+(y-minY);
+    const inside=(x,y,z)=>x>=x0&&x<x0+CHUNK&&z>=z0&&z<z0+CHUNK&&x>=0&&x<WORLD&&z>=0&&z<WORLD&&y>minY+2&&y<minY+H;
     const cell=5;
     for(let type=0;type<TYPES.length;type++){
-      const ore=TYPES[type];
+      const base=TYPES[type],ore=minY<0?{...base,...DEEP_BANDS[base.name]}:base;
       for(let gx=Math.floor((x0-ore.radius)/cell);gx<=Math.floor((x0+CHUNK-1+ore.radius)/cell);gx++)
       for(let gz=Math.floor((z0-ore.radius)/cell);gz<=Math.floor((z0+CHUNK-1+ore.radius)/cell);gz++)
       for(let gy=Math.floor(ore.min/cell);gy<=Math.ceil(ore.max/cell);gy++){
@@ -57,7 +65,7 @@
           if(ox*ox+oy*oy+oz*oz>radius*radius+.3)continue;
           const x=anchorX+ox,y=anchorY+oy,z=anchorZ+oz;
           if(!inside(x,y,z))continue;
-          if(y>=terrainAt(x,z,sea,H)-3)continue;
+          if(y>=terrainAt(x,z,sea,H,minY)-3)continue;
           if(chance(x,y,z,type*15+5)<.13)continue;
           const i=at(x,y,z),rock=data[i];
           if(rock!==3&&rock!==58)continue;
@@ -68,7 +76,7 @@
     // Ground truth: preserve manually mined or built blocks in regenerated chunks.
     if(protectedEdits&&protectedEdits.size){
       for(const [index,block] of protectedEdits){
-        const x=Math.floor(index/(WORLD*H)),z=Math.floor(index/H)%WORLD,y=index%H;
+        const x=Math.floor(index/(WORLD*H)),z=Math.floor(index/H)%WORLD,y=index%H+minY;
         if(inside(x,y,z))data[at(x,y,z)]=block;
       }
     }
