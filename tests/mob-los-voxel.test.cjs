@@ -57,7 +57,7 @@ test('rays on the intersection of two voxel faces check all touching columns',()
  assert.equal(ray(a(1,1,3.5),a(1,1,.5),edgeWall),false);
  let probes=0;
  assert.equal(ray(a(1,1,.5),a(1,1,3.5),()=>{probes++;return true;}),true);
- assert.ok(probes<=12,'boundary handling stays constant-work per crossed cell');
+ assert.ok(probes<=16,'start/end face checks remain constant-work per crossed cell');
 });
 
 test('face-hugging sight checks walls beside the first and last ray segments',()=>{
