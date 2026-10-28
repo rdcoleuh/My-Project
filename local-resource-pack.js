@@ -1270,8 +1270,11 @@ function hudIcon(kind,fill){
       ctx.drawImage(image,fromX,0,half,image.height,fromX,0,half,canvas.height);
     }else if(rect)ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,0,0,canvas.width,canvas.height);
     else ctx.drawImage(image,0,0);
-    if(!window.MineWorldHotbarUV?.hasVisibleAlpha(
-      ctx.getImageData(0,0,canvas.width,canvas.height).data))return null;
+    // Browser 2D contexts expose getImageData. Lightweight Node test
+    // canvas doubles may omit it; leave their existing decode tests intact.
+    if(typeof ctx.getImageData==='function'&&
+       !window.MineWorldHotbarUV?.hasVisibleAlpha(
+         ctx.getImageData(0,0,canvas.width,canvas.height).data))return null;
     // destination-over preserves the original source-over compositing:
     // imported transparent pixels reveal the optional empty glyph behind.
     if(underlay||(legacyStat&&fill!=='empty')){
