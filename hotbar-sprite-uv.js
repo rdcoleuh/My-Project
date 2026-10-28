@@ -73,5 +73,13 @@ function validSlotSprite(width,height){
    width>=2&&height>=2&&width<=1024&&height<=1024&&
    Math.max(width,height)/Math.min(width,height)<=1.25;
 }
-window.MineWorldHotbarUV=Object.freeze({slotRect,legacyRect,legacyStatRect,shouldDeriveSlot,validSlotSprite,validStatSprite});
+// Reject transparent placeholders rather than hiding MineWorld's procedural
+// HUD. Scan the actual alpha channel, not RGB (transparent PNGs may have
+// arbitrary color bytes). Called once per decoded, cached player-owned sprite.
+function hasVisibleAlpha(rgba){
+ if(!rgba||!Number.isInteger(rgba.length)||rgba.length===0||rgba.length%4!==0)return false;
+ for(let i=3;i<rgba.length;i+=4)if(rgba[i]>0)return true;
+ return false;
+}
+window.MineWorldHotbarUV=Object.freeze({slotRect,legacyRect,legacyStatRect,shouldDeriveSlot,validSlotSprite,validStatSprite,hasVisibleAlpha});
 })();

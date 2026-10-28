@@ -34,13 +34,13 @@ function pngChunk(name,data){
  size.writeUInt32BE(data.length);crc.writeUInt32BE(crc32(Buffer.concat([typ,data])));
  return Buffer.concat([size,typ,data,crc]);
 }
-function generatedPng(height,channel,width=16,perColumn=false){
+function generatedPng(height,channel,width=16,perColumn=false,alpha=255){
  const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(width,0);ihdr.writeUInt32BE(height,4);
  ihdr[8]=8;ihdr[9]=6;
  const rows=Buffer.alloc(height*(1+width*4));
  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
   const pos=y*(1+width*4)+1+x*4;
-  rows[pos]=perColumn?(110+x)%255:110;rows[pos+1]=(channel+y*8)%255;rows[pos+2]=140;rows[pos+3]=255;
+  rows[pos]=perColumn?(110+x)%255:110;rows[pos+1]=(channel+y*8)%255;rows[pos+2]=140;rows[pos+3]=alpha;
  }
  return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),
   pngChunk('IHDR',ihdr),pngChunk('IDAT',deflateSync(rows)),pngChunk('IEND',Buffer.alloc(0))]);
@@ -97,6 +97,16 @@ function makeTestArchive(mode='full'){
  ];
  if(mode==='malformed-stat-no-legacy')files=[
   ['resource_pack/textures/ui/heart.png',generatedPng(22,180,182)]
+ ];
+ // Independently generated transparent PNG placeholders must not suppress
+ // the original survival icons or the selected hotbar frame.
+ if(mode==='transparent-hud')files=[
+  ['resource_pack/textures/ui/heart.png',generatedPng(9,200,9,false,0)],
+  ['resource_pack/textures/ui/heart_background.png',generatedPng(9,40,9)],
+  ['resource_pack/textures/ui/hunger_full.png',generatedPng(9,170,9,false,0)],
+  ['resource_pack/textures/ui/hunger_background.png',generatedPng(9,40,9)],
+  ['resource_pack/textures/ui/hotbar.png',generatedPng(20,110,180,false,0)],
+  ['resource_pack/textures/ui/selected_hotbar_slot.png',generatedPng(24,180,24,false,0)]
  ];
  if(mode==='sheet-generic')files=[
   ['resource_pack/textures/ui/hotbar.png',generatedPng(20,120,180,true)],
@@ -548,6 +558,18 @@ async function go(browser,name,mobile){
   },Array.from(makeTestArchive('malformed-stat-no-legacy')));
   assert.equal(await page.evaluate(()=>window.MineWorldLocalTextures.hudIcon('heart','full')),null,
     name+': malformed HUD strip should use procedural fallback without a legacy atlas');
+  await page.evaluate(async bytes=>{
+    await window.MineWorldLocalTextures.loadFile(new File(
+      [new Uint8Array(bytes)],'transparent-hud-synthetic.zip',{type:'application/zip'}));
+  },Array.from(makeTestArchive('transparent-hud')));
+  assert.ok(await page.evaluate(async()=>{
+    const pack=window.MineWorldLocalTextures;
+    const names=[['heart','full'],['heart','half'],['food','full'],['food','half'],
+      ['hotbar','background'],['hotbar','selected']];
+    return (await Promise.all(names.map(([kind,fill])=>pack.hudIcon(kind,fill)))).every(src=>src===null)&&
+      document.querySelectorAll('#health-text .mw-stat-fallback').length===10&&
+      document.querySelectorAll('#hunger-text .mw-stat-fallback').length===10;
+  }),name+': transparent synthetic HUD placeholders suppressed procedural fallback');
   // A separately supplied generic slot takes precedence over a sheet-derived
   // slot; explicit player artwork must not be silently replaced by the sheet.
   await page.evaluate(async bytes=>{

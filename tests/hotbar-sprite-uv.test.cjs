@@ -86,6 +86,18 @@ test('legacy fallback for a missing half glyph must use the atlas crop, not a ha
  assert.ok(smoke.includes("pack.hudIcon('heart',fill),pack.hudIcon('food',fill)"));
 });
 
+test('fully transparent player-imported HUD placeholders retain procedural fallback',()=>{
+ const rgba=new Uint8ClampedArray([255,10,20,0,0,0,0,0]);
+ assert.equal(uv.hasVisibleAlpha(rgba),false,'transparent RGB values do not count');
+ assert.equal(uv.hasVisibleAlpha(new Uint8ClampedArray([0,0,0,1])),true);
+ assert.equal(uv.hasVisibleAlpha(new Uint8ClampedArray([0,0,0,255])),true);
+ for(const invalid of [null,[],new Uint8ClampedArray(0),new Uint8ClampedArray(3)])
+  assert.equal(uv.hasVisibleAlpha(invalid),false);
+ const importer=read('local-resource-pack.js'),smoke=read('scripts/browser-smoke.cjs');
+ assert.ok(importer.includes('ctx.getImageData(0,0,canvas.width,canvas.height).data'));
+ assert.ok(importer.includes("ctx.globalCompositeOperation='destination-over'"));
+ assert.ok(smoke.includes("makeTestArchive('transparent-hud')"));
+});
 test('fractionally scaled nine-cell strips are rejected instead of resampled into blurry slots',()=>{
  for(const [w,h] of [[91,11],[273,33],[90,10],[270,30],[455,55],[450,50]]){
   for(let i=0;i<9;i++)assert.equal(uv.slotRect(w,h,i),null,
