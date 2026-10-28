@@ -136,6 +136,13 @@ function makeTestArchive(mode='full'){
   ['resource_pack/textures/ui/heart.png',generatedPng(9,205,9)],
   ['resource_pack/textures/ui/hunger_full.png',generatedPng(9,170,9)]
  ];
+ // Independently generated item placeholders: a blank Java item must not
+ // suppress a visible Bedrock alias or MineWorld's original fallback icon.
+ if(mode==='transparent-item')files=[
+  ['assets/minecraft/textures/item/beef.png',generatedPng(16,110,16,false,0)],
+  ['resource_pack/textures/items/beef_raw.png',generatedPng(16,155)],
+  ['assets/minecraft/textures/item/cooked_beef.png',generatedPng(16,110,16,false,0)]
+ ];
  if(mode==='selected-only')files=files.filter(([name])=>name.endsWith('/selected_hotbar_slot.png'));
  if(mode==='partial-slots')files=files.filter(([name])=>name.endsWith('/hotbar_0.png'));
  const local=[],central=[];let offset=0;
@@ -766,6 +773,29 @@ async function go(browser,name,mobile){
       JSON.stringify(halfLayer));
   await page.screenshot({path:path.join(screenshotDir,
     mobile?'mobile-half-heart-no-empty-synthetic.png':'desktop-half-heart-no-empty-synthetic.png'),
+    animations:'disabled'});
+  // Inspect real decoded pixels in desktop/mobile Chrome with a synthetic
+  // Java+Bedrock item pack. This is not the player's proprietary pack.
+  await page.evaluate(async bytes=>{
+    const file=new File([new Uint8Array(bytes)],'transparent-item-original-fixture.zip',{type:'application/zip'});
+    await window.MineWorldLocalTextures.loadFile(file);
+  },Array.from(makeTestArchive('transparent-item')));
+  const itemRecovery=await page.evaluate(async()=>{
+    const pack=window.MineWorldLocalTextures;
+    const [visible,blank]=await Promise.all([pack.itemIcon('raw'),pack.itemIcon('cooked')]);
+    if(!visible||blank!==null)return {recovered:!!visible,blank};
+    const image=new Image();image.src=visible;await image.decode();
+    const canvas=document.createElement('canvas');
+    canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+    const ctx=canvas.getContext('2d',{willReadFrequently:true});
+    ctx.drawImage(image,0,0);
+    return {recovered:window.MineWorldHotbarUV.hasVisibleAlpha(
+      ctx.getImageData(0,0,canvas.width,canvas.height).data),blank};
+  });
+  assert.deepEqual(itemRecovery,{recovered:true,blank:null},
+    name+': transparent Java item did not recover Bedrock alias or preserve fallback');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-transparent-item-synthetic.png':'desktop-transparent-item-synthetic.png'),
     animations:'disabled'});
   await page.evaluate(()=>document.querySelector('#resume-btn').click());
   await page.waitForTimeout(650);

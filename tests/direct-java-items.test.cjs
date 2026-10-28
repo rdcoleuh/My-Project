@@ -3,12 +3,12 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
 const PNG=Buffer.from([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,16,0,0,0,16]);
-function boot(){
+function boot({alphas=[255]}={}){
  const draws=[],uploads=[],urls=[];
  class Canvas{
   constructor(){this.width=16;this.height=16;}
   getContext(){return {imageSmoothingEnabled:false,clearRect(){},drawImage(...args){draws.push(args);},
-    getImageData(_x,_y,w,h){return {data:new Uint8ClampedArray(w*h*4)};},putImageData(){}};}
+    getImageData(_x,_y,w,h){const data=new Uint8ClampedArray(w*h*4);const alpha=alphas[Math.min(Math.max(0,draws.length-1),alphas.length-1)]??255;for(let i=3;i<data.length;i+=4)data[i]=alpha;return {data};},putImageData(){}};}
   toDataURL(){return 'data:image/png;base64,localItem';}
  }
  class Image{
@@ -22,7 +22,8 @@ function boot(){
  const win={MineWorldResourcePackContext:{gl,texture:{},baseURL:'data:image/png;base64,original'},
   MineWorldAtlas:{dataURL:'data:image/png;base64,original'},
   MineWorldBlockGuide:{names:Array(170).fill('unknown_block')},
-  MineWorldSound:{clearSamples(){}},MineWorldBridge:{refreshTextureUI(){}}};
+  MineWorldSound:{clearSamples(){}},MineWorldBridge:{refreshTextureUI(){}},
+  MineWorldHotbarUV:{hasVisibleAlpha(data){for(let i=3;i<data.length;i+=4)if(data[i])return true;return false;}}};
  const ctx={window:win,document:{createElement:()=>new Canvas(),querySelector:()=>null},
   URL:{createObjectURL:()=>{const k='blob:item:'+urls.length;urls.push(k);return k},revokeObjectURL(){}},
   Image,Blob,Uint8Array,Uint8ClampedArray,TextDecoder,ArrayBuffer,DataView,
@@ -103,4 +104,23 @@ test('real inventory shows direct local item sprites and keeps blocks unchanged'
    'all block icons must address the current full-height atlas');
  assert.ok(read('java-inventory.css').includes('background-size:1600% 6400%'),
    'atlas background scaling must use all 64 rows, not the former 32 rows');
+});
+
+test('transparent imported item PNG is rejected and cached without replacing the fallback icon',async()=>{
+ const b=boot({alphas:[0]});
+ await b.pack.loadFiles([file('cooked_beef.png','Pack/assets/minecraft/textures/item')]);
+ assert.equal(await b.pack.itemIcon('cooked'),null);
+ assert.equal(await b.pack.itemIcon('cooked'),null);
+ assert.equal(b.draws.length,1,'a rejected transparent candidate is decoded only once');
+});
+test('transparent Java item recovers a visible Bedrock alias in the same owned pack',async()=>{
+ const b=boot({alphas:[0,255]});
+ await b.pack.loadFiles([
+  file('beef.png','Pack/assets/minecraft/textures/item'),
+  file('beef_raw.png','Pack/textures/items')
+ ]);
+ assert.equal(await b.pack.itemIcon('raw'),'data:image/png;base64,localItem');
+ assert.equal(b.draws.length,2,'transparent first candidate is skipped for visible alias');
+ assert.equal(await b.pack.itemIcon('raw'),'data:image/png;base64,localItem');
+ assert.equal(b.draws.length,2,'resolved alias is cached');
 });

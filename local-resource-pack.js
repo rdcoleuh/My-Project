@@ -1345,45 +1345,68 @@ function blockItemIcon(id){
  const raw=names[id]||'';
  const name=String(raw).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
  const mapped=mappings.get(id)?.[0];
- const candidates=[name,mapped].filter(Boolean);
- const found=candidates.find(n=>source.entries.has('item:'+n));
- return found?itemIcon(found):Promise.resolve(null);
+ const candidates=[...new Set([name,mapped].filter(Boolean))];
+ // A transparent or damaged first block-item sprite must not hide a
+ // usable alternate from the same player-owned pack.
+ return (async()=>{
+  for(const candidate of candidates){
+   if(!source.entries.has('item:'+candidate))continue;
+   const icon=await itemIcon(candidate);
+   if(icon)return icon;
+  }
+  return null;
+ })();
 }
 function itemIcon(key){
  const name=itemName(key),source=state.itemArchive;
  if(!name||!source)return Promise.resolve(null);
- const path=['item:'+name,...(BEDROCK_ITEM_ALIASES[key]||[]).map(n=>'item:'+n)]
-   .find(candidate=>source.entries.has(candidate));
- if(!path)return Promise.resolve(null);
- if(state.itemCache.has(path))return state.itemCache.get(path);
+ const candidates=[...new Set(['item:'+name,...(BEDROCK_ITEM_ALIASES[key]||[]).map(n=>'item:'+n)])]
+   .filter(candidate=>source.entries.has(candidate));
+ if(!candidates.length)return Promise.resolve(null);
+ // Cache the resolved request, not the first filename: that filename may
+ // contain a fully transparent placeholder while an alias is visible.
+ const cacheKey='resolved-item:'+key;
+ if(state.itemCache.has(cacheKey))return state.itemCache.get(cacheKey);
  const generation=state.itemGeneration;
  const promise=(async()=>{
-   const image=await smallSpriteFromPng(await source.get(path));
-   if(!Number.isInteger(image.width)||!Number.isInteger(image.height)||
-      image.width<1||image.height<1||image.width>4096||image.height>4096||
-      image.width*image.height>1024*1024)return null;
-   if(generation!==state.itemGeneration)return null;
-   const rect=await itemFrameRect(source,path,image);
-   if(generation!==state.itemGeneration)return null;
-   if(!rect||![rect.x,rect.y,rect.width,rect.height].every(Number.isFinite)||
-      rect.width<1||rect.height<1||rect.x<0||rect.y<0||
-      rect.x+rect.width>image.width||rect.y+rect.height>image.height)return null;
-   // Preserve native pixels from the first authored frame (up to 32px).
-   const size=Math.min(32,Math.max(16,Math.floor(Math.max(rect.width,rect.height))));
-   const canvas=document.createElement('canvas');canvas.width=canvas.height=size;
-   const ctx=canvas.getContext('2d',{alpha:true});
-   if(!ctx)return null;
-   ctx.imageSmoothingEnabled=false;
-   ctx.clearRect(0,0,size,size);
-   const scale=Math.min(size/rect.width,size/rect.height);
-   const width=Math.max(1,Math.round(rect.width*scale));
-   const height=Math.max(1,Math.round(rect.height*scale));
-   // Non-square custom frames are centered instead of squeezed.
-   ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,
-     Math.floor((size-width)/2),Math.floor((size-height)/2),width,height);
-   return generation===state.itemGeneration?canvas.toDataURL('image/png'):null;
- })().catch(error=>{console.warn('Skipping invalid local Java item '+name,error);return null;});
- state.itemCache.set(path,promise);
+  for(const path of candidates){
+   try{
+    const image=await smallSpriteFromPng(await source.get(path));
+    if(generation!==state.itemGeneration)return null;
+    if(!Number.isInteger(image.width)||!Number.isInteger(image.height)||
+       image.width<1||image.height<1||image.width>4096||image.height>4096||
+       image.width*image.height>1024*1024)continue;
+    const rect=await itemFrameRect(source,path,image);
+    if(generation!==state.itemGeneration)return null;
+    if(!rect||![rect.x,rect.y,rect.width,rect.height].every(Number.isFinite)||
+       rect.width<1||rect.height<1||rect.x<0||rect.y<0||
+       rect.x+rect.width>image.width||rect.y+rect.height>image.height)continue;
+    // Preserve native pixels from the first authored frame (up to 32px).
+    const size=Math.min(32,Math.max(16,Math.floor(Math.max(rect.width,rect.height))));
+    const canvas=document.createElement('canvas');canvas.width=canvas.height=size;
+    const ctx=canvas.getContext('2d',{alpha:true,willReadFrequently:true});
+    if(!ctx)continue;
+    ctx.imageSmoothingEnabled=false;
+    ctx.clearRect(0,0,size,size);
+    const scale=Math.min(size/rect.width,size/rect.height);
+    const width=Math.max(1,Math.round(rect.width*scale));
+    const height=Math.max(1,Math.round(rect.height*scale));
+    ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,
+      Math.floor((size-width)/2),Math.floor((size-height)/2),width,height);
+    // Inspect the final cropped/centered sprite, not the source atlas:
+    // transparent animation frames and blank placeholders must fall back.
+    const hasVisibleAlpha=window.MineWorldHotbarUV?.hasVisibleAlpha;
+    if(typeof hasVisibleAlpha==='function'&&typeof ctx.getImageData==='function'&&
+       !hasVisibleAlpha(ctx.getImageData(0,0,size,size).data))continue;
+    if(generation!==state.itemGeneration)return null;
+    return canvas.toDataURL('image/png');
+   }catch(error){
+    console.warn('Skipping invalid local Java item candidate '+path,error);
+   }
+  }
+  return null;
+ })();
+ state.itemCache.set(cacheKey,promise);
  return promise;
 }
 function drawAtlasTile(ctx,tile){
