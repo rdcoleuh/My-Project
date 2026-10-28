@@ -108,6 +108,20 @@ function makeTestArchive(mode='full'){
   ['resource_pack/textures/ui/hotbar.png',generatedPng(20,110,180,false,0)],
   ['resource_pack/textures/ui/selected_hotbar_slot.png',generatedPng(24,180,24,false,0)]
  ];
+ // A transparent authored half, numbered slot or selection must not hide
+ // other visible textures in the same independently generated test pack.
+ if(mode==='transparent-priority')files=[
+  ['resource_pack/textures/ui/heart_half.png',generatedPng(9,200,9,false,0)],
+  ['resource_pack/textures/ui/heart.png',generatedPng(9,205,9)],
+  ['resource_pack/textures/ui/heart_background.png',generatedPng(9,40,9)],
+  ['resource_pack/textures/ui/hunger_half.png',generatedPng(9,140,9,false,0)],
+  ['resource_pack/textures/ui/hunger_full.png',generatedPng(9,170,9)],
+  ['resource_pack/textures/ui/hunger_background.png',generatedPng(9,55,9)],
+  ['resource_pack/textures/ui/hotbar_3.png',generatedPng(20,120,20,false,0)],
+  ['resource_pack/textures/ui/hotbar_slot.png',generatedPng(20,130,20)],
+  ['resource_pack/textures/ui/selected_hotbar_slot.png',generatedPng(24,200,24,false,0)],
+  ['assets/minecraft/textures/gui/widgets.png',generatedPng(256,160,256,true)]
+ ];
  if(mode==='sheet-generic')files=[
   ['resource_pack/textures/ui/hotbar.png',generatedPng(20,120,180,true)],
   ['resource_pack/textures/ui/hotbar_slot.png',generatedPng(20,180,20)]
@@ -690,6 +704,40 @@ async function go(browser,name,mobile){
   assert.equal(damageHud.half,1,name+': actual damage did not display a half heart '+JSON.stringify(damageHud));
   assert.match(damageHud.label,/Health: 19 of 20/,
     name+': damage did not update the accessible half-heart HUD');
+  // In real desktop and touch Chrome, transparent explicit sprites must
+  // yield to other visible player-imported artwork in the same ZIP.
+  await page.evaluate(async bytes=>{
+    const file=new File([new Uint8Array(bytes)],'transparent-priority-original-fixture.zip',
+      {type:'application/zip'});
+    await window.MineWorldLocalTextures.loadFile(file);
+  },Array.from(makeTestArchive('transparent-priority')));
+  await page.waitForFunction(()=>document.querySelectorAll('#hotbar .hot-item.mw-pack-slot').length===9,
+    null,{timeout:15000});
+  await page.waitForFunction(()=>!!document.querySelector(
+    '#health-text .mw-stat-icon.half img.mw-pack-stat-art'),null,{timeout:15000});
+  const priority=await page.evaluate(async()=>{
+    const pack=window.MineWorldLocalTextures;
+    const [heart,food,slot,slotGeneric,selected]=await Promise.all([
+      pack.hudIcon('heart','half'),pack.hudIcon('food','half'),
+      pack.hudIcon('hotbar','slot3'),pack.hudIcon('hotbar','slot'),
+      pack.hudIcon('hotbar','selected')]);
+    if(!heart||!food||!slot||!slotGeneric||!selected||slot!==slotGeneric)return false;
+    const visible=async src=>{
+      const image=new Image();image.src=src;await image.decode();
+      const canvas=document.createElement('canvas');
+      canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+      const ctx=canvas.getContext('2d',{willReadFrequently:true});
+      ctx.drawImage(image,0,0);
+      const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+      return window.MineWorldHotbarUV.hasVisibleAlpha(data);
+    };
+    return (await Promise.all([heart,food,slot,selected].map(visible))).every(Boolean)&&
+      document.querySelector('#health-text .mw-stat-icon.half img.mw-pack-stat-art')!==null;
+  });
+  assert.equal(priority,true,name+': transparent explicit sprites hid visible imported fallback art');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-transparent-priority-synthetic.png':'desktop-transparent-priority-synthetic.png'),
+    animations:'disabled'});
   // A full-only imported sprite synthesizes a transparent half PNG. Verify
   // that the actual running browser preserves MineWorld's empty outline
   // behind the imported artwork (desktop and touch-sized Chrome).

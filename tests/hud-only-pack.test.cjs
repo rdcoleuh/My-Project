@@ -18,16 +18,24 @@ function zip(files){
  end.writeUInt32LE(central.reduce((n,b)=>n+b.length,0),12);end.writeUInt32LE(offset,16);
  return Uint8Array.from(Buffer.concat([...local,...central,end])).buffer;
 }
-function boot(imageWidth=16,imageHeight=16){
+function boot(imageWidth=16,imageHeight=16,alphaByDecode=null){
  const draws=[];let decoded=0;
  class Canvas{
-  constructor(){this.width=256;this.height=1024;}
-  getContext(){return {imageSmoothingEnabled:true,clearRect(){},drawImage(...args){draws.push(args)},
-   getImageData(_x,_y,w,h){return {data:new Uint8ClampedArray(w*h*4)}},putImageData(){}};}
+  constructor(){this.width=256;this.height=1024;this._alpha=0;}
+  getContext(){const canvas=this;return {imageSmoothingEnabled:true,
+   clearRect(){canvas._alpha=0;},
+   drawImage(...args){draws.push(args);canvas._alpha=args[0]?.__alpha??255;},
+   getImageData(_x,_y,w,h){
+    const data=new Uint8ClampedArray(w*h*4);
+    if(alphaByDecode)for(let i=3;i<data.length;i+=4)data[i]=canvas._alpha;
+    return {data};
+   },putImageData(){}};}
   toDataURL(){return 'data:image/png;base64,owned';}
  }
  class Image{constructor(){
   decoded++;
+  this.__alpha=Array.isArray(alphaByDecode)?
+    alphaByDecode[Math.min(decoded-1,alphaByDecode.length-1)]:255;
   this.width=Array.isArray(imageWidth)?imageWidth[Math.min(decoded-1,imageWidth.length-1)]:imageWidth;
   this.height=Array.isArray(imageHeight)?imageHeight[Math.min(decoded-1,imageHeight.length-1)]:imageHeight;
  }
@@ -41,6 +49,7 @@ function boot(imageWidth=16,imageHeight=16){
   MineWorldBlockGuide:{names:Array(170).fill('unknown_block')},
   MineWorldBridge:{refreshTextureUI(){}},MineWorldSound:{clearSamples(){}}};
  const context={window,document:{createElement:()=>new Canvas(),querySelector:()=>null},
+  HTMLCanvasElement:alphaByDecode?Canvas:undefined,
   Image,URL:{createObjectURL:()=> 'blob:owned',revokeObjectURL(){}},Blob,Uint8Array,
   Uint8ClampedArray,TextDecoder,ArrayBuffer,DataView,Math,Number,JSON,console,queueMicrotask,
   performance:{now:()=>0}};
@@ -352,4 +361,41 @@ test('integer-scaled imported food underlay is retained without fractional texel
  assert.equal(ops[0].length,5,'empty icon is scaled to an exact 32px backing');
  assert.deepEqual(ops[0].slice(1),[0,0,32,32]);
  assert.equal(ops[1].length,3,'full icon remains at its native resolution');
+});
+
+test('transparent authored half-heart recovers from visible full and empty sprites',async()=>{
+ const b=boot(9,9,[0,255,255]);
+ const files=['half','full','container'].map(name=>({
+  name:name+'.png',webkitRelativePath:'assets/minecraft/textures/gui/sprites/hud/heart/'+name+'.png',
+  size:png.length,arrayBuffer:async()=>png.buffer
+ }));
+ await b.pack.loadFiles(files);
+ assert.equal(await b.pack.hudIcon('heart','half'),'data:image/png;base64,owned');
+ assert.ok(b.draws.some(args=>args.length===9&&args[3]===4&&args[7]===4),
+  'visible full-heart pixels are cropped to a half after rejecting the transparent half');
+});
+test('transparent numbered hotbar slot recovers from visible generic slot',async()=>{
+ const b=boot(20,20,[0,255]);
+ const files=[
+  ['hotbar_3.png','textures/ui/hotbar_3.png'],
+  ['hotbar_slot.png','textures/ui/hotbar_slot.png']
+ ].map(([name,webkitRelativePath])=>({
+  name,webkitRelativePath,size:png.length,arrayBuffer:async()=>png.buffer
+ }));
+ await b.pack.loadFiles(files);
+ assert.equal(await b.pack.hudIcon('hotbar','slot3'),'data:image/png;base64,owned');
+ assert.equal(b.decoded,2,'both transparent and visible candidate were inspected');
+});
+test('transparent selected-slot sprite recovers from imported legacy widgets atlas',async()=>{
+ const b=boot([24,256],[24,256],[0,255]);
+ const files=[
+  ['selected_hotbar_slot.png','textures/ui/selected_hotbar_slot.png'],
+  ['widgets.png','assets/minecraft/textures/gui/widgets.png']
+ ].map(([name,webkitRelativePath])=>({
+  name,webkitRelativePath,size:png.length,arrayBuffer:async()=>png.buffer
+ }));
+ await b.pack.loadFiles(files);
+ assert.equal(await b.pack.hudIcon('hotbar','selected'),'data:image/png;base64,owned');
+ assert.ok(b.draws.some(args=>args.length===9&&args[3]===24&&args[4]===24),
+  'the visible legacy selection rectangle is used');
 });

@@ -1144,6 +1144,24 @@ function hudIcon(kind,fill){
   // A bad explicit slot or generic slot must not suppress a valid imported
   // nine-cell bar. Try authored art first, then generic art, then the sheet.
   // Each candidate is decoded and dimension-checked independently.
+  // A transparent authored sprite is not a valid candidate when a generic,
+  // sheet-derived, or legacy replacement is available. Probe only the
+  // requested atlas rectangle to bound temporary mobile canvas allocations.
+  const visibleCandidate=(sprite,crop=null)=>{
+    if(typeof HTMLCanvasElement!=='function')return true;
+    const width=crop?.width??sprite.width,height=crop?.height??sprite.height;
+    if(!Number.isInteger(width)||!Number.isInteger(height)||
+       width<1||height<1||width*height>1024*1024)return false;
+    const probe=document.createElement('canvas');
+    probe.width=width;probe.height=height;
+    const context=probe.getContext('2d',{alpha:true,willReadFrequently:true});
+    if(!context||typeof context.getImageData!=='function')return true;
+    context.imageSmoothingEnabled=false;
+    if(crop)context.drawImage(sprite,crop.x,crop.y,crop.width,crop.height,0,0,width,height);
+    else context.drawImage(sprite,0,0);
+    return window.MineWorldHotbarUV?.hasVisibleAlpha?.(
+      context.getImageData(0,0,width,height).data)??true;
+  };
   const legacyKey='hud:hotbar:legacy-widgets';
   const slotCandidates=numberedSlot?
     [key,'hud:hotbar:slot','hud:hotbar:background',legacyKey]
@@ -1182,6 +1200,7 @@ function hudIcon(kind,fill){
           else if(candidate==='hud:hotbar:background'){
             if(!window.MineWorldHotbarUV?.slotRect(attempt.width,attempt.height,0))continue;
           }else if(!window.MineWorldHotbarUV?.validSlotSprite(attempt.width,attempt.height))continue;
+          if(!visibleCandidate(attempt,candidateRect))continue;
           image=attempt;rect=candidateRect;break;
         }catch(error){console.warn('Skipping damaged local hotbar candidate '+candidate,error);}
       }
@@ -1195,6 +1214,9 @@ function hudIcon(kind,fill){
         try{
           const full=await smallSpriteFromPng(await source.get('hud:'+kind+':full'));
           if(!window.MineWorldHotbarUV?.validStatSprite(full.width,full.height))return false;
+          const width=Math.floor(full.width/2);
+          if(!visibleCandidate(full,{x:kind==='food'?full.width-width:0,y:0,
+            width,height:full.height}))return false;
           image=full;derivedHalf=true;return true;
         }catch{return false;}
       };
@@ -1217,6 +1239,22 @@ function hudIcon(kind,fill){
           image=await smallSpriteFromPng(await source.get('hud:legacy-icons'),4*1024*1024);
           legacyStat=true;
         }
+        if(generation!==state.itemGeneration)return null;
+      }
+      // A valid-sized but fully transparent modern heart/hunger sprite must
+      // not suppress an imported full/empty pair or older gui/icons.png.
+      // For synthesized halves, inspect only the filled side, not the
+      // unused transparent half of the source image.
+      const halfWidth=Math.floor(image.width/2);
+      const halfCrop=derivedHalf&&!legacyStat?
+        {x:kind==='food'?image.width-halfWidth:0,y:0,width:halfWidth,height:image.height}:null;
+      if(kind!=='hotbar'&&!legacyStat&&!visibleCandidate(image,halfCrop)){
+        if(fill==='half'&&!derivedHalf&&await tryFullHalf()){
+          // Use the visible half of the player's valid full sprite.
+        }else if(hasLegacyStat){
+          image=await smallSpriteFromPng(await source.get('hud:legacy-icons'),4*1024*1024);
+          legacyStat=true;derivedHalf=false;
+        }else return null;
         if(generation!==state.itemGeneration)return null;
       }
       if(legacyStat){
