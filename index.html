@@ -3332,7 +3332,7 @@ body.in-nether #game-wrap{background:#290f19}
   function setDifficulty(level){
     if(!['peaceful','easy','normal','hard'].includes(level))return;
     difficulty=level;$('home-difficulty').value=level;$('pause-difficulty').value=level;
-    if(level==='peaceful')mobs=mobs.filter(m=>SPECIES[m.kind].kind!=='hostile'&&SPECIES[m.kind].kind!=='boss');
+    if(level==='peaceful')mobs=mobs.filter(m=>SPECIES[m.kind]&&mobAI.peacefulDisposition(m.kind,SPECIES[m.kind].kind)!=='despawn');
     markSave();toast('Difficulty: '+level[0].toUpperCase()+level.slice(1));
   }
   function respawn(){
@@ -3504,6 +3504,8 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function spawnOne(kind,x,z){
     if(!(kind in SPECIES)||mobs.length>=26)return null;
+    // Prevent forbidden Peaceful mobs from briefly appearing via spawn tools.
+    if(difficulty==='peaceful'&&mobAI.peacefulDisposition(kind,SPECIES[kind].kind)==='despawn')return null;
     x=clamp(x,2,W-3);z=clamp(z,2,D-3);
     let y=topAt(x,z)+1;
     // Aquatic mobs require an actual water column; never strand fish on the ground.
@@ -3668,7 +3670,7 @@ body.in-nether #game-wrap{background:#290f19}
         }
       }
     }
-    if(difficulty==='peaceful')mobs=mobs.filter(m=>SPECIES[m.kind].kind!=='hostile'&&SPECIES[m.kind].kind!=='boss');
+    if(difficulty==='peaceful')mobs=mobs.filter(m=>SPECIES[m.kind]&&mobAI.peacefulDisposition(m.kind,SPECIES[m.kind].kind)!=='despawn');
     // The host keeps animals ridden by remote peers aligned with their shared position states.
     // This is a best-effort peer-hosted sync, not a dedicated authoritative vehicle server.
     const remoteRiders=(network?.getCombatants()||[]).filter(p=>p.riding&&RIDE_KINDS[p.riding]&&(p.dimension||'overworld')===dimension);
@@ -3708,12 +3710,12 @@ body.in-nether #game-wrap{background:#290f19}
         const c=window.MineWorldEnd.CENTER;
         const a=dayClock*.30+m.id*.17;
         m.x=c+Math.cos(a)*24;m.z=c+Math.sin(a)*24;m.y=32+Math.sin(dayClock*.75)*2;
-        if(Math.hypot(player.x-m.x,player.z-m.z)<7&&m.attack<=0){damage(5,'Dragon breath');m.attack=2.6;}
+        if(difficulty!=='peaceful'&&Math.hypot(player.x-m.x,player.z-m.z)<7&&m.attack<=0){damage(5,'Dragon breath');m.attack=2.6;}
         continue;
       }
       let target=null,dist=Infinity;
-      const aggressive=type.kind==='hostile'||type.kind==='boss'||(type.kind==='neutral'&&m.anger>0)||
-        mobAI.spiderAggressive(m.kind,nightTime(),m.anger);
+      const aggressive=difficulty!=='peaceful'&&(type.kind==='hostile'||type.kind==='boss'||(type.kind==='neutral'&&m.anger>0)||
+        mobAI.spiderAggressive(m.kind,nightTime(),m.anger));
       if(aggressive){
         target=mobVisibleTarget(m,living,dt);
         if(target){

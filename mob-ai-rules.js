@@ -155,5 +155,17 @@
   if(['skeleton','stray','pillager','blaze','ghast','wither'].includes(kind))return distance<5?'retreat':distance<=10?'ranged':'approach';
   return distance<=1.6?'melee':'approach';
  }
- window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,blastExposure,blastBlockPassable,pursuitPoint,steerHeading,rayClear,withinSight,attackInReach,targetIntent});
+ // Peaceful difficulty is not simply a spawn toggle: existing monsters must
+ // disappear, while selected neutral mobs and End residents remain harmless.
+ // Keep this classification independent of rendering and saved entity data.
+ const PEACEFUL_NEUTRAL_DESPAWN=new Set(['spider','cave_spider','enderman','zombified_piglin']);
+ function peacefulDisposition(kind,classification='passive'){
+   if(typeof kind!=='string'||!kind)return 'despawn';
+   // The Ender Dragon and shulkers remain in Peaceful, but deal no damage.
+   // Piglins also remain and are non-aggressive in this difficulty.
+   if(kind==='ender_dragon'||kind==='shulker'||kind==='piglin')return 'passive';
+   if(PEACEFUL_NEUTRAL_DESPAWN.has(kind))return 'despawn';
+   return classification==='hostile'||classification==='boss'?'despawn':'passive';
+ }
+ window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,blastExposure,blastBlockPassable,pursuitPoint,steerHeading,rayClear,withinSight,attackInReach,targetIntent,peacefulDisposition});
 })();
