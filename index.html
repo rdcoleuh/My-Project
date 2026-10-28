@@ -3580,14 +3580,13 @@ body.in-nether #game-wrap{background:#290f19}
     const distance=Math.hypot(dx,dy,dz);
     const detection=p.id===null&&isCrouching?15:25;
     if(distance>detection||distance<.001)return false;
-    const steps=Math.ceil(distance/.65);
-    for(let i=2;i<steps-1;i++){
-      const t=i/steps;
-      const block=get(Math.floor(mx+dx*t),Math.floor(my+dy*t),Math.floor(mz+dz*t));
-      // Air, flowing water, transparent glass and small crops don't occlude vision.
-      if(block!==0&&block!==7&&block!==9&&!(block>=139&&block<=154))return false;
-    }
-    return true;
+    return mobAI.rayClear(
+      {x:mx,y:my,z:mz},{x:tx,y:ty,z:tz},
+      (x,y,z)=>{
+        const block=get(x,y,z);
+        // Air, water, glass and small crops do not occlude vision.
+        return block===0||block===7||block===9||(block>=139&&block<=154);
+      },detection);
   }
   function mobVisibleTarget(m,players,dt){
     m.sightClock=(m.sightClock??0)-dt;

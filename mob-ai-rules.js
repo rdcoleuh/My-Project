@@ -46,6 +46,43 @@
    }
    return null;
  }
+ // Supercover voxel traversal: visit every block touched by the eye ray,
+ // including diagonal corner neighbors. Coarse samples could skip a thin wall
+ // and let mobs detect or attack players through solid blocks.
+ function rayClear(a,b,passable,maxDistance=25){
+   if(!a||!b||typeof passable!=='function'||
+      ![a.x,a.y,a.z,b.x,b.y,b.z,maxDistance].every(Number.isFinite)||
+      maxDistance<=0)return false;
+   const start=[a.x,a.y,a.z],finish=[b.x,b.y,b.z];
+   const delta=finish.map((v,i)=>v-start[i]);
+   const distance=Math.hypot(...delta);
+   if(distance<.001||distance>maxDistance)return false;
+   const cell=start.map(Math.floor),end=finish.map(Math.floor);
+   const step=delta.map(Math.sign);
+   const next=delta.map((v,i)=>v>0?(cell[i]+1-start[i])/v:
+     v<0?(start[i]-cell[i])/-v:Infinity);
+   const interval=delta.map(v=>v===0?Infinity:1/Math.abs(v));
+   // Each iteration crosses at least one voxel boundary; no unbounded loop.
+   const limit=end.reduce((sum,v,i)=>sum+Math.abs(v-cell[i]),3);
+   for(let visit=0;visit<limit;visit++){
+     if(cell.every((v,i)=>v===end[i]))return true;
+     const t=Math.min(...next);
+     if(!Number.isFinite(t)||t>1+1e-10)return false;
+     const crossed=[];
+     for(let axis=0;axis<3;axis++)if(next[axis]<=t+1e-12)crossed.push(axis);
+     // Prevent corner-peeking: test every voxel touching a tied boundary.
+     for(let mask=1;mask<(1<<crossed.length);mask++){
+       const candidate=cell.slice();
+       for(let bit=0;bit<crossed.length;bit++)
+         if(mask&(1<<bit))candidate[crossed[bit]]+=step[crossed[bit]];
+       // Ignore the target's own voxel, which may contain its hitbox.
+       if(candidate.every((v,i)=>v===end[i]))continue;
+       if(!passable(...candidate))return false;
+     }
+     for(const axis of crossed){cell[axis]+=step[axis];next[axis]+=interval[axis];}
+   }
+   return false;
+ }
  // Pure visibility and target-selection helpers for callers to opt into.
  function withinSight(a,b,maxDistance=25){
   if(!a||!b||![a.x,a.y,a.z,b.x,b.y,b.z,maxDistance].every(Number.isFinite)||maxDistance<=0)return false;
@@ -59,5 +96,5 @@
   if(['skeleton','stray','pillager'].includes(kind))return distance<5?'retreat':distance<=10?'ranged':'approach';
   return distance<=1.6?'melee':'approach';
  }
- window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,pursuitPoint,steerHeading,withinSight,targetIntent});
+ window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,pursuitPoint,steerHeading,rayClear,withinSight,targetIntent});
 })();

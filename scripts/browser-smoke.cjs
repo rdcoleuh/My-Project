@@ -151,6 +151,19 @@ async function go(browser,name,mobile){
   assert.equal(initial.menu,true);
   assert.equal(initial.blockers,false);
   assert.equal(initial.mobPanel,true,name+': mob catalog panel not present');
+  // Exercise the same supercover visibility helper in real desktop/mobile
+  // Chrome. The synthetic wall fixture is original test data, not gameplay.
+  const sight=await page.evaluate(()=>{
+    const ai=window.MineWorldMobAIRules;
+    const a={x:1.5,y:1.5,z:1.5},b={x:3.5,y:1.5,z:1.5};
+    const wall=(x,y,z)=>!(x===2&&y===1&&z===1);
+    return {blocked:ai.rayClear(a,b,wall),
+      open:ai.rayClear(a,b,()=>true),
+      corner:ai.rayClear({x:.5,y:.5,z:.5},{x:2.5,y:2.5,z:.5},
+        (x,y,z)=>!(x===1&&y===0&&z===0))};
+  });
+  assert.deepEqual(sight,{blocked:false,open:true,corner:false},
+    name+': mobs must not see through thin walls or diagonal corners');
   // From the actual title screen: choose a local ZIP, apply exact pixels,
   // save it as default, then reload the same browser and auto-restore it.
   assert.equal(await page.locator('#mw-bedrock-default-button').count(),1,
