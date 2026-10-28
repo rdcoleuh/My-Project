@@ -388,13 +388,13 @@ function imageFromPng(bytes){
 // HUD and hotbar icons are tiny on screen. Reject pathological PNG headers
 // *before* Image decodes them, avoiding multi-megabyte mobile bitmap allocations.
 // Full terrain/entity textures still use the separate, existing import path.
-function smallSpriteFromPng(bytes){
+function smallSpriteFromPng(bytes,maxPixels=1024*1024){
  if(!bytes||bytes.length<24||bytes[12]!==73||bytes[13]!==72||bytes[14]!==68||bytes[15]!==82)
    return Promise.reject(new Error('Invalid PNG sprite header.'));
  const dimension=i=>bytes[i]*16777216+bytes[i+1]*65536+bytes[i+2]*256+bytes[i+3];
  const width=dimension(16),height=dimension(20);
- if(width<1||height<1||width>4096||height>4096||width*height>1024*1024)
-   return Promise.reject(new Error('HUD or item sprite exceeds the 1-megapixel mobile limit.'));
+ if(width<1||height<1||width>4096||height>4096||width*height>maxPixels)
+   return Promise.reject(new Error('HUD or item sprite exceeds the permitted pixel limit.'));
  return imageFromPng(bytes);
 }
 function imageFromURL(src){
@@ -1160,7 +1160,8 @@ function hudIcon(kind,fill){
     if(slotCandidates){
       for(const candidate of slotCandidates){
         try{
-          const attempt=await smallSpriteFromPng(await source.get(candidate));
+          const attempt=await smallSpriteFromPng(await source.get(candidate),
+            candidate===legacyKey?4*1024*1024:1024*1024);
           if(generation!==state.itemGeneration)return null;
           const legacy=candidate===legacyKey;
           const sliced=numberedSlot&&candidate==='hud:hotbar:background';
@@ -1189,11 +1190,12 @@ function hudIcon(kind,fill){
       };
       const candidate=legacyStat?'hud:legacy-icons':derivedHalf?'hud:'+kind+':full':key;
       try{
-        image=await smallSpriteFromPng(await source.get(candidate));
+        image=await smallSpriteFromPng(await source.get(candidate),
+          candidate==='hud:legacy-icons'?4*1024*1024:1024*1024);
       }catch(error){
         if(!await tryFullHalf()){
           if(!hasLegacyStat||legacyStat)throw error;
-          image=await smallSpriteFromPng(await source.get('hud:legacy-icons'));
+          image=await smallSpriteFromPng(await source.get('hud:legacy-icons'),4*1024*1024);
           legacyStat=true;
         }
       }
@@ -1202,7 +1204,7 @@ function hudIcon(kind,fill){
          !window.MineWorldHotbarUV?.validStatSprite(image.width,image.height)){
         if(!await tryFullHalf()){
           if(!hasLegacyStat)return null;
-          image=await smallSpriteFromPng(await source.get('hud:legacy-icons'));
+          image=await smallSpriteFromPng(await source.get('hud:legacy-icons'),4*1024*1024);
           legacyStat=true;
         }
         if(generation!==state.itemGeneration)return null;
@@ -1215,7 +1217,7 @@ function hudIcon(kind,fill){
     // Prevent huge HUD canvas allocations from tiny, malicious PNG files.
     if(!Number.isInteger(image.width)||!Number.isInteger(image.height)||
        image.width<1||image.height<1||image.width>4096||image.height>4096||
-       image.width*image.height>1024*1024)return null;
+       image.width*image.height>(rect?4*1024*1024:1024*1024))return null;
     // A full background must be a genuine nine-cell sheet, while individual
     // selection and generic slot images must be approximately square.
     if(kind==='hotbar'&&!numberedSlot&&fill==='background'&&!rect&&

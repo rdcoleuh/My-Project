@@ -85,3 +85,15 @@ test('legacy fallback for a missing half glyph must use the atlas crop, not a ha
  assert.ok(smoke.includes("makeTestArchive('malformed-stat-sprites')"));
  assert.ok(smoke.includes("pack.hudIcon('heart',fill),pack.hudIcon('food',fill)"));
 });
+
+test('fractionally scaled nine-cell strips are rejected instead of resampled into blurry slots',()=>{
+ for(const [w,h] of [[91,11],[273,33],[90,10],[270,30],[455,55],[450,50]]){
+  for(let i=0;i<9;i++)assert.equal(uv.slotRect(w,h,i),null,
+   'fractional source '+w+'x'+h+' must not be cropped');
+ }
+ for(const [w,h] of [[182*3,22*3],[180*3,20*3]]){
+  const rect=uv.slotRect(w,h,8);
+  assert.equal(rect.width,60);
+  assert.equal(rect.height,60);
+ }
+});

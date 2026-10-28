@@ -11,9 +11,11 @@ function slotRect(width,height,index){
  // Java's bordered 182x22 sheet and Bedrock-style seamless 180x20
  // sheets both contain nine 20-pixel cells. Require matching dimensions
  // so unrelated GUI art cannot be misinterpreted as a nine-slot bar.
+ // Only integral native-pixel scales preserve every source texel and border.
+ // Fractional GUI sheets would require resampling and blur or uneven cells.
  const bordered=width/182, seamless=width/180;
- const java=bordered>=0.5&&Math.abs(height-22*bordered)<0.01;
- const bedrock=seamless>=0.5&&Math.abs(height-20*seamless)<0.01;
+ const java=Number.isInteger(bordered)&&bordered>=1&&height===22*bordered;
+ const bedrock=Number.isInteger(seamless)&&seamless>=1&&height===20*seamless;
  if(!java&&!bedrock)return null;
  const scale=java?bordered:seamless,edge=java?1:0;
  const x=Math.round((edge+20*index)*scale),y=Math.round(edge*scale);

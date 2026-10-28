@@ -254,3 +254,30 @@ test('broken half-food sprite recovers from full-only imported food artwork',asy
  assert.equal(await b.pack.hudIcon('food','half'),'data:image/png;base64,owned');
  assert.equal(b.draws.length,before+1,'recovered food sprite is cached');
 });
+
+function eightTimesLegacyFile(name){
+ const hd=Uint8Array.from(png);
+ hd.set([0,0,8,0],16);hd.set([0,0,8,0],20);
+ return {name:name+'.png',webkitRelativePath:'pack/assets/minecraft/textures/gui/'+name+'.png',
+  size:hd.length,arrayBuffer:async()=>hd.buffer};
+}
+test('8x imported legacy icons atlas crops native 72px hearts instead of rejecting a 4MP source',async()=>{
+ const b=boot(2048,2048);
+ const result=await b.pack.loadFiles([eightTimesLegacyFile('icons')]);
+ assert.equal(result.hudAssets,1);
+ assert.equal(await b.pack.hudIcon('heart','full'),'data:image/png;base64,owned');
+ const draws=b.draws.filter(args=>args.length===9);
+ assert.ok(draws.some(args=>args[1]===52*8&&args[2]===0&&args[3]===72&&args[4]===72),
+  'full heart comes from the correct native-resolution atlas cell');
+ assert.ok(draws.some(args=>args[1]===16*8&&args[3]===72),
+  'empty-heart backing comes from the same imported atlas');
+});
+test('8x imported legacy widgets atlas preserves crisp slot and selection rectangles',async()=>{
+ const b=boot(2048,2048);
+ const result=await b.pack.loadFiles([eightTimesLegacyFile('widgets')]);
+ assert.equal(result.hudAssets,1);
+ assert.equal(await b.pack.hudIcon('hotbar','selected'),'data:image/png;base64,owned');
+ assert.equal(await b.pack.hudIcon('hotbar','slot8'),'data:image/png;base64,owned');
+ assert.ok(b.draws.some(args=>args.length===9&&args[1]===161*8&&args[2]===8&&
+  args[3]===160&&args[4]===160),'last slot uses 8x native source texels');
+});
