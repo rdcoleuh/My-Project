@@ -1128,6 +1128,8 @@ body.in-nether #game-wrap{background:#290f19}
 <script src="./world-chunks.js"></script>
 <script src="./survival-catalog.js"></script>
 <script src="./nether-world.js"></script>
+<script src="./furnace-engine.js"></script>
+<script src="./furnace-ui.js"></script>
 <script>
 /* MineWorld — original browser voxel sandbox; no Minecraft game code or third-party runtime. */
 (() => {
@@ -1509,7 +1511,7 @@ body.in-nether #game-wrap{background:#290f19}
   // A 10,000-block-wide world is never allocated at once. Every chunk is deterministic.
   function terrain(x,z){return dimension==='nether'?window.MineWorldNether.surfaceAt(x,z):dimension==='end'?Math.max(1,window.MineWorldEnd.surfaceAt(x,z)):window.MineWorldBiomes.terrainAt(x,z,SEA,H)}
   function generate(){
-    experienceTotal=0;bedSpawn=null;worldWeather=survivalRules.newWeather(seed);
+    experienceTotal=0;bedSpawn=null;worldWeather=survivalRules.newWeather(seed);furnaces.clear();
     droppedItems.length=0;cameraMode=0;advancementEngine.restore(null);
     window.MineWorldBiomes.setSeed(seed);window.MineWorldNether.setSeed(seed);window.MineWorldEnd.setSeed(seed);dimension='overworld';document.body.classList.remove('in-nether','in-end');overworldEdits=new Map();netherEdits=new Map();endEdits=new Map();savedEdits=overworldEdits;overworldPosition=netherPosition=endPosition=null;dragonDefeated=false;eyesPlaced=0;netherPortalBuilt=false;netherPortalPosition=null;for(const k of Object.keys(villagerProgress))delete villagerProgress[k];unloadAllChunks();
     const top=terrain(SPAWN,SPAWN);
@@ -1558,6 +1560,10 @@ body.in-nether #game-wrap{background:#290f19}
       }))return false;
     }
     const before=get(x,y,z);if(before===b)return false;
+    if(before===20&&b!==20){
+      const contents=furnaces.remove({dimension,x,y,z});
+      if(gameMode==='survival'&&!remote)for(const item of contents)dropMinedResource(item.key,item.qty,x,y,z);
+    }
     // Placing or removing a crafting table invalidates 3x3 detection for
     // mining, placement, crafting and world updates alike.
     if(before===168||b===168)craftBenchMemo.until=0;
@@ -1909,6 +1915,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(paused||window.MineWorldMultiplayer?.isTyping?.())return false;
     if(!stack&&aimMob&&interactFarmAnimal(aimMob))return true;
     if(!stack&&aim?.b===169){cancelMining();useBed(aim);return;}
+    if(!stack&&aim?.b===20){openFurnace(aim);return true;}
     if(!stack&&gameMode==='survival'&&aim?.b===168){
       // Interacting with a targeted crafting table must open its 3×3 grid,
       // even if the nearby-station memo was populated before placement.
@@ -1937,13 +1944,28 @@ body.in-nether #game-wrap{background:#290f19}
     if(stack)toast('Move clear of this block to stack on top');
     return false;
   }
+
+  const furnaces=window.MineWorldFurnace.create();
+  const snapshotFurnaces=()=>furnaces.snapshot();
+  const furnaceUI=window.MineWorldFurnaceUI.create({
+    engine:furnaces,count:amount,totals:inventoryTotals,change:addResource,label:itemLabel,toast,
+    onChange:()=>{markSave();updateHotbar();},
+    onPause:()=>{cancelMining();mouseMiningHeld=false;touchHold.mine=false;paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock();},
+    onResume:()=>{markSave();save();if(started)start();else $('welcome').classList.remove('hidden');}
+  });
+  function openFurnace(target){
+    if(gameMode!=='survival'){toast('Furnaces operate in Survival mode');return;}
+    if(window.MineWorldMultiplayer?.isShared()){toast('Furnace inventories currently work in private worlds');return;}
+    furnaceUI.open({dimension,x:target.x,y:target.y,z:target.z});
+  }
+  let furnaceSaveClock=0;
   function markSave(){dirtySave=true}
   function save(){
     if(window.MineWorldMultiplayer?.isShared())return false;
     try{
       reconcileItemStacks();
       const edits=[...savedEdits.entries()];
-      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,experienceTotal,bedSpawn,weather:worldWeather,inventory:[...inventory],itemStacks:stackStore.snapshot(),survivalHotbar:[...survivalHotbar],javaInventory:javaInventory.snapshot(),creativeHotbar:[...HOT9],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,saturation:hungerSaturation,exhaustion:hungerDrain,bag,tools,equipped,difficulty,dayClock,cameraMode,advancements:advancementEngine.snapshot(),
+      const payload=JSON.stringify({seed,seedLabel,worldSize:W,edits:[...overworldEdits.entries()],netherEdits:[...netherEdits.entries()],endEdits:[...endEdits.entries()],dimension,overworldPosition,netherPosition,endPosition,dragonDefeated,eyesPlaced,netherPortalBuilt,netherPortalPosition,villagerProgress,gameMode,experienceTotal,bedSpawn,weather:worldWeather,furnaces:snapshotFurnaces(),inventory:[...inventory],itemStacks:stackStore.snapshot(),survivalHotbar:[...survivalHotbar],javaInventory:javaInventory.snapshot(),creativeHotbar:[...HOT9],player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly},health,hunger,saturation:hungerSaturation,exhaustion:hungerDrain,bag,tools,equipped,difficulty,dayClock,cameraMode,advancements:advancementEngine.snapshot(),
         farmAnimals:dimension==='overworld'?snapshotFarmAnimals():preservedFarmAnimals,
         droppedItems:droppedItems.slice(0,80),armor:{...armor},inventoryOrder:[...inventoryOrder],vehicles:vehicles.slice(0,80),tamedMounts:[...stabledMounts,...mobs.filter(m=>(m.tamed||m.saddled)&&RIDE_KINDS[m.kind]).map(m=>({kind:m.kind,x:m.x,y:m.y,z:m.z,dimension:m.dimension,tamed:!!m.tamed,saddled:!!m.saddled}))].slice(0,60),version:13});
       localStorage.setItem(slotKey(gameMode),payload);localStorage.setItem(LAST_SLOT,gameMode);dirtySave=false;$('status').textContent='● Saved · '+(W.toLocaleString())+'² world';return true;
@@ -1957,7 +1979,7 @@ body.in-nether #game-wrap{background:#290f19}
       if((s.version||0)<6&&!localStorage.getItem('mineworld-backup-before-nether'))localStorage.setItem('mineworld-backup-before-nether',data);
       if((s.version||0)<12){try{const backup="mineworld-backup-before-hunger-v12-"+slot;if(!localStorage.getItem(backup))localStorage.setItem(backup,data);}catch(_){/* Device storage might be limited. */}}
       if((s.version||0)<9){try{const backup='mineworld-backup-before-biome-v37-'+slot;if(!localStorage.getItem(backup))localStorage.setItem(backup,data);}catch(_){/* Backups need available device storage. */}}
-      seed=s.seed;seedLabel=String(s.seedLabel||s.seed);generate();advancementEngine.restore(s.advancements);overworldEdits.clear();
+      seed=s.seed;seedLabel=String(s.seedLabel||s.seed);generate();furnaces.restore(s.furnaces);advancementEngine.restore(s.advancements);overworldEdits.clear();
       const legacy=(s.version||0)<5,oldW=(s.version||0)<4?64:96,oldH=(s.version||0)<4?27:36;
       for(let [i,b] of s.edits){
         if(legacy){const oldX=Math.floor(i/(oldW*oldH)),oldZ=Math.floor(i/oldH)%oldW,oldY=i%oldH;
@@ -4345,6 +4367,11 @@ body.in-nether #game-wrap{background:#290f19}
     gl.uniform1f(uTextured,textured?1:0);
   }
   function render(t){requestAnimationFrame(render);const frameMs=t-lastTime;let dt=clamp(frameMs/1000,0,.05);lastTime=t;
+    if(gameMode==='survival'&&(!paused||furnaceUI.isOpen)){
+      const r=furnaces.tick(dt);
+      if(r.changed){furnaceSaveClock+=dt;if(furnaceSaveClock>=1){markSave();furnaceSaveClock=0;}}
+      furnaceUI.tick(dt);
+    }
     if(paused)return;
     // Java-style cooldown feedback beside the crosshair. Uses the same
     // weapon speed and timestamp as damage; no changes to save data.
