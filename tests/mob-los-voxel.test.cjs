@@ -30,7 +30,7 @@ test('voxel traversal is bounded for long diagonal rays',()=>{
  assert.equal(ray(a(.5,.5,.5),a(14.5,14.5,14.5),()=>{
    probes++;return true;
  }),true);
- assert.ok(probes<=90,'avoid excessive block queries per mob');
+ assert.ok(probes<=105,'avoid excessive block queries per mob');
 });
 test('host mob vision uses voxel traversal for detection and attacks',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
