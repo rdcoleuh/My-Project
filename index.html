@@ -535,6 +535,16 @@ body.in-nether #game-wrap{background:#290f19}
  transform:translateY(-50%);border:2px solid #fff;box-shadow:0 0 0 1px #181818;
  pointer-events:none;z-index:2
 }
+/* A partial pack may supply a complete nine-cell bar but no selection PNG
+   and no individual slot sprites. The earlier generic outline reset must
+   not leave its selected cell invisible. Center a square procedural frame
+   over the active cell without stretching or obscuring imported bar art. */
+#hotbar.mw-pack-bar-image .hot-item.active:not(.mw-pack-selected):not(.mw-pack-slot)::after{
+ content:"";position:absolute;left:0;right:0;top:50%;aspect-ratio:1/1;
+ transform:translateY(-50%);box-sizing:border-box;
+ border:2px solid #fff;box-shadow:0 0 0 1px #181818,inset 1px 1px #f9f9f9;
+ pointer-events:none;z-index:2
+}
 /* Stack badges stay outside clipped item artwork, above the selection frame. */
 #hotbar .hot-item > .hot-stack-number{
  /* Override the generic top-aligned slot index on desktop as well as touch. */

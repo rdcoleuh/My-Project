@@ -570,6 +570,51 @@ async function go(browser,name,mobile){
     const selected=await pack.hudIcon('hotbar','selected');
     return !selected;
   }),name+': malformed imported selection was not rejected');
+  // A deliberately partial synthetic HUD adapter exposes only a valid bar
+  // background. Verify the selected cell remains visible even without the
+  // optional selection PNG or individually decoded slot sprites. This is
+  // original test artwork, not a player's imported resource pack.
+  const originalPack=await page.evaluate(()=>{
+    const original=window.MineWorldLocalTextures;
+    window.__mineworldSmokePackOriginal=original;
+    const canvas=document.createElement('canvas');canvas.width=180;canvas.height=20;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#555';ctx.fillRect(0,0,180,20);
+    ctx.strokeStyle='#aaa';
+    for(let i=0;i<9;i++)ctx.strokeRect(i*20+.5,.5,19,19);
+    const background=canvas.toDataURL('image/png');
+    window.MineWorldLocalTextures={
+      generation:987654,hasPack:true,
+      hudIcon:async(kind,fill)=>kind==='hotbar'&&fill==='background'?background:null
+    };
+    window.dispatchEvent(new Event('mineworld-pack-hud-changed'));
+    return !!original;
+  });
+  assert.ok(originalPack,name+': cannot restore resource pack after HUD fallback test');
+  try{
+    await page.waitForFunction(()=>document.querySelector('#hotbar')?.classList.contains('mw-pack-bar-image'),
+      null,{timeout:15000});
+    assert.ok(await page.evaluate(()=>{
+      const bar=document.querySelector('#hotbar');
+      const selected=bar.querySelector('.hot-item.active');
+      const frame=selected&&getComputedStyle(selected,'::after');
+      return !!selected&&selected.getAttribute('aria-pressed')==='true'&&
+        !selected.classList.contains('mw-pack-selected')&&
+        !selected.classList.contains('mw-pack-slot')&&
+        frame.content!=='none'&&frame.borderTopWidth==='2px'&&
+        parseFloat(frame.width)>0&&parseFloat(frame.height)>0&&
+        Math.abs(parseFloat(frame.width)-parseFloat(frame.height))<=1;
+    }),name+': a background-only HUD pack lost the selected-slot outline');
+    await page.screenshot({path:path.join(screenshotDir,
+      mobile?'mobile-background-only-selection-synthetic.png':'desktop-background-only-selection-synthetic.png'),
+      animations:'disabled'});
+  }finally{
+    await page.evaluate(()=>{
+      window.MineWorldLocalTextures=window.__mineworldSmokePackOriginal;
+      delete window.__mineworldSmokePackOriginal;
+      window.dispatchEvent(new Event('mineworld-pack-hud-changed'));
+    });
+  }
   // A square GUI sprite named hotbar.png must not erase procedural slot tiles.
   await page.evaluate(async bytes=>{
     const file=new File([new Uint8Array(bytes)],'invalid-sheet.zip',{type:'application/zip'});
