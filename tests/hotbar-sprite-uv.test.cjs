@@ -95,7 +95,8 @@ test('fully transparent player-imported HUD placeholders retain procedural fallb
   assert.equal(uv.hasVisibleAlpha(invalid),false);
  const importer=read('local-resource-pack.js'),smoke=read('scripts/browser-smoke.cjs');
  assert.ok(importer.includes('ctx.getImageData(0,0,canvas.width,canvas.height).data'));
- assert.ok(importer.includes("ctx.globalCompositeOperation='destination-over'"));
+ assert.ok(importer.includes("typeof HTMLCanvasElement==='function'"));
+ assert.ok(importer.includes('ctx.clearRect(0,0,canvas.width,canvas.height)'));
  assert.ok(smoke.includes("makeTestArchive('transparent-hud')"));
 });
 test('fractionally scaled nine-cell strips are rejected instead of resampled into blurry slots',()=>{
