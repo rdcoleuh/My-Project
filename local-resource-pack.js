@@ -1261,31 +1261,32 @@ function hudIcon(kind,fill){
     const ctx=canvas.getContext('2d',{alpha:true});
     if(!ctx)return null;
     ctx.imageSmoothingEnabled=false;
-    // Render the requested foreground first so a transparent full/half
-    // placeholder cannot masquerade as valid artwork merely because an
-    // optional empty-icon underlay is opaque.
+    // Browser-only alpha probe: validate the requested sprite itself before
+    // its optional opaque empty-glyph underlay could mask a blank foreground.
+    // Reuse this small canvas and clear it before normal compositing. Node's
+    // lightweight canvas doubles keep their established draw-order contracts.
+    if(typeof HTMLCanvasElement==='function'&&typeof ctx.getImageData==='function'){
+      if(derivedHalf&&!legacyStat){
+        const half=Math.floor(image.width/2);
+        const fromX=kind==='food'?image.width-half:0;
+        ctx.drawImage(image,fromX,0,half,image.height,fromX,0,half,canvas.height);
+      }else if(rect)ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,0,0,canvas.width,canvas.height);
+      else ctx.drawImage(image,0,0);
+      if(!window.MineWorldHotbarUV?.hasVisibleAlpha(
+        ctx.getImageData(0,0,canvas.width,canvas.height).data))return null;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+    }
+    if(underlay)ctx.drawImage(underlay,0,0,canvas.width,canvas.height);
+    if(legacyStat&&fill!=='empty'){
+      const emptyRect=window.MineWorldHotbarUV?.legacyStatRect(image.width,image.height,kind,'empty');
+      if(emptyRect)ctx.drawImage(image,emptyRect.x,emptyRect.y,emptyRect.width,emptyRect.height,0,0,canvas.width,canvas.height);
+    }
     if(derivedHalf&&!legacyStat){
       const half=Math.floor(image.width/2);
       const fromX=kind==='food'?image.width-half:0;
       ctx.drawImage(image,fromX,0,half,image.height,fromX,0,half,canvas.height);
     }else if(rect)ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,0,0,canvas.width,canvas.height);
     else ctx.drawImage(image,0,0);
-    // Browser 2D contexts expose getImageData. Lightweight Node test
-    // canvas doubles may omit it; leave their existing decode tests intact.
-    if(typeof ctx.getImageData==='function'&&
-       !window.MineWorldHotbarUV?.hasVisibleAlpha(
-         ctx.getImageData(0,0,canvas.width,canvas.height).data))return null;
-    // destination-over preserves the original source-over compositing:
-    // imported transparent pixels reveal the optional empty glyph behind.
-    if(underlay||(legacyStat&&fill!=='empty')){
-      ctx.globalCompositeOperation='destination-over';
-      if(underlay)ctx.drawImage(underlay,0,0,canvas.width,canvas.height);
-      if(legacyStat&&fill!=='empty'){
-        const emptyRect=window.MineWorldHotbarUV?.legacyStatRect(image.width,image.height,kind,'empty');
-        if(emptyRect)ctx.drawImage(image,emptyRect.x,emptyRect.y,emptyRect.width,emptyRect.height,0,0,canvas.width,canvas.height);
-      }
-      ctx.globalCompositeOperation='source-over';
-    }
     return generation===state.itemGeneration?canvas.toDataURL('image/png'):null;
   })().catch(error=>{console.warn('Ignoring damaged local HUD image '+key,error);return null;});
   state.itemCache.set(key,promise);
