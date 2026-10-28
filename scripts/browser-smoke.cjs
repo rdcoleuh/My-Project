@@ -164,9 +164,15 @@ async function go(browser,name,mobile){
       face:ai.rayClear({x:1,y:1.5,z:.5},{x:1,y:1.5,z:3.5},
         (x,y,z)=>!(x===0&&y===1&&z===2)),
       edge:ai.rayClear({x:1,y:1,z:.5},{x:1,y:1,z:3.5},
-        (x,y,z)=>!(x===0&&y===0&&z===2))};
+        (x,y,z)=>!(x===0&&y===0&&z===2)),
+      firstFace:ai.rayClear({x:1,y:1.5,z:.5},{x:1,y:1.5,z:1.5},
+        (x,y,z)=>!(x===0&&y===1&&z===0)),
+      lastFace:ai.rayClear({x:1,y:1.5,z:.5},{x:1,y:1.5,z:1.5},
+        (x,y,z)=>!(x===0&&y===1&&z===1)),
+      lastEdge:ai.rayClear({x:1,y:1,z:.5},{x:1,y:1,z:1.5},
+        (x,y,z)=>!(x===0&&y===0&&z===1))};
   });
-  assert.deepEqual(sight,{blocked:false,open:true,corner:false,face:false,edge:false},
+  assert.deepEqual(sight,{blocked:false,open:true,corner:false,face:false,edge:false,firstFace:false,lastFace:false,lastEdge:false},
     name+': mobs must not see through thin walls or diagonal corners or along voxel faces');
   // From the actual title screen: choose a local ZIP, apply exact pixels,
   // save it as default, then reload the same browser and auto-restore it.

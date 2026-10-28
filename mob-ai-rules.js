@@ -65,15 +65,29 @@
    const faceAxes=[];
    for(let i=0;i<3;i++)if(delta[i]===0&&Number.isInteger(start[i]))faceAxes.push(i);
    function clearCandidate(candidate){
-     // The target voxel may contain its hitbox, so it is intentionally ignored.
-     if(candidate.every((v,i)=>v===end[i]))return true;
+     // Ignore the target's own voxel, but not solid neighbors sharing a
+     // stationary face/edge with the ray. Skipping the whole endpoint let
+     // mobs see through walls beside the last segment of a face-hugging ray.
+     const endpoint=candidate.every((v,i)=>v===end[i]);
      for(let mask=0;mask<(1<<faceAxes.length);mask++){
+       if(endpoint&&mask===0)continue;
        const touched=candidate.slice();
        for(let bit=0;bit<faceAxes.length;bit++)
          if(mask&(1<<bit))touched[faceAxes[bit]]--;
        if(!passable(...touched))return false;
      }
      return true;
+   }
+   // The starting voxel holds the mob's eye, but a solid voxel sharing
+   // its stationary face can already block the initial ray segment.
+   // Do not probe the mob's own voxel (it may overlap a hitbox).
+   if(faceAxes.length){
+     for(let mask=1;mask<(1<<faceAxes.length);mask++){
+       const touched=cell.slice();
+       for(let bit=0;bit<faceAxes.length;bit++)
+         if(mask&(1<<bit))touched[faceAxes[bit]]--;
+       if(!passable(...touched))return false;
+     }
    }
    // Each iteration crosses at least one voxel boundary; no unbounded loop.
    const limit=end.reduce((sum,v,i)=>sum+Math.abs(v-cell[i]),3);

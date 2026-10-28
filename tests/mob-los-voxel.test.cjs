@@ -59,3 +59,25 @@ test('rays on the intersection of two voxel faces check all touching columns',()
  assert.equal(ray(a(1,1,.5),a(1,1,3.5),()=>{probes++;return true;}),true);
  assert.ok(probes<=12,'boundary handling stays constant-work per crossed cell');
 });
+
+test('face-hugging sight checks walls beside the first and last ray segments',()=>{
+ const source={x:1,y:1.5,z:.5},target={x:1,y:1.5,z:1.5};
+ const startWall=(x,y,z)=>!(x===0&&y===1&&z===0);
+ const endWall=(x,y,z)=>!(x===0&&y===1&&z===1);
+ for(const wall of [startWall,endWall]){
+  assert.equal(ray(source,target,wall),false,'boundary wall must occlude sight');
+  assert.equal(ray(target,source,wall),false,'reverse sight must be blocked too');
+ }
+ assert.equal(ray(source,target,()=>true),true,'open boundary remains visible');
+ assert.equal(ray({x:1.001,y:1.5,z:.5},{x:1.001,y:1.5,z:1.5},endWall),true,
+  'interior ray should not be blocked by a neighboring wall');
+});
+test('endpoint edge checks all touching neighbors without probing the target voxel',()=>{
+ const source={x:1,y:1,z:.5},target={x:1,y:1,z:1.5};
+ const cornerWall=(x,y,z)=>!(x===0&&y===0&&z===1);
+ assert.equal(ray(source,target,cornerWall),false);
+ assert.equal(ray(target,source,cornerWall),false);
+ assert.equal(ray(source,target,()=>true),true);
+ assert.equal(ray({x:.5,y:1.5,z:.5},{x:1.5,y:1.5,z:.5},()=>false),true,
+  'the occupied target voxel remains exempt from collision probes');
+});
