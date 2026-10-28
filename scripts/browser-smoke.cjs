@@ -570,6 +570,9 @@ async function go(browser,name,mobile){
       document.querySelectorAll('#health-text .mw-stat-fallback').length===10&&
       document.querySelectorAll('#hunger-text .mw-stat-fallback').length===10;
   }),name+': transparent synthetic HUD placeholders suppressed procedural fallback');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-transparent-hud-synthetic.png':'desktop-transparent-hud-synthetic.png'),
+    animations:'disabled'});
   // A separately supplied generic slot takes precedence over a sheet-derived
   // slot; explicit player artwork must not be silently replaced by the sheet.
   await page.evaluate(async bytes=>{
