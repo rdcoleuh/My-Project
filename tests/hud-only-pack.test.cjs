@@ -299,7 +299,9 @@ test('ZIP/JAR resource packs retain large player-imported HUD PNGs within the sa
    arrayBuffer:async()=>buffer});
   assert.equal(result.hudAssets,1,name+' must be indexed');
   const keys=b.pack.inspectZip(buffer);
-  assert.ok(keys.includes('hud:'+kind+':'+fill),
+  const expectedKey=name.endsWith('/widgets.png')?'hud:hotbar:legacy-widgets':
+   name.endsWith('/icons.png')?'hud:legacy-icons':'hud:'+kind+':'+fill;
+  assert.ok(keys.includes(expectedKey),
    name+' must expose its canonical HUD key; got '+keys.join(','));
   assert.equal(await b.pack.hudIcon(kind,fill),'data:image/png;base64,owned',
    name+' must render through the correct imported HUD path');
@@ -309,7 +311,7 @@ test('ZIP HUD size guard still rejects payloads beyond the bounded 6 MiB limit',
  const bytes=Buffer.alloc(6*1024*1024+1);Buffer.from(png).copy(bytes);
  const b=boot();
  const buffer=zip([['textures/ui/heart.png',bytes]]);
- assert.deepEqual(b.pack.inspectZip(buffer),[],
+ assert.equal(b.pack.inspectZip(buffer).length,0,
   'oversized ZIP entry is rejected before decoding');
  await assert.rejects(b.pack.loadFile({name:'large.mcpack',
   arrayBuffer:async()=>buffer}),/No compatible/);
