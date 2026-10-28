@@ -1396,7 +1396,7 @@ function itemIcon(key){
     // Inspect the final cropped/centered sprite, not the source atlas:
     // transparent animation frames and blank placeholders must fall back.
     const hasVisibleAlpha=window.MineWorldHotbarUV?.hasVisibleAlpha;
-    if(typeof hasVisibleAlpha==='function'&&typeof ctx.getImageData==='function'&&
+    if(typeof HTMLCanvasElement==='function'&&typeof hasVisibleAlpha==='function'&&typeof ctx.getImageData==='function'&&
        !hasVisibleAlpha(ctx.getImageData(0,0,size,size).data))continue;
     if(generation!==state.itemGeneration)return null;
     return canvas.toDataURL('image/png');

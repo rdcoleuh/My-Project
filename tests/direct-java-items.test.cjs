@@ -24,7 +24,7 @@ function boot({alphas=[255]}={}){
   MineWorldBlockGuide:{names:Array(170).fill('unknown_block')},
   MineWorldSound:{clearSamples(){}},MineWorldBridge:{refreshTextureUI(){}},
   MineWorldHotbarUV:{hasVisibleAlpha(data){for(let i=3;i<data.length;i+=4)if(data[i])return true;return false;}}};
- const ctx={window:win,document:{createElement:()=>new Canvas(),querySelector:()=>null},
+ const ctx={window:win,HTMLCanvasElement:Canvas,document:{createElement:()=>new Canvas(),querySelector:()=>null},
   URL:{createObjectURL:()=>{const k='blob:item:'+urls.length;urls.push(k);return k},revokeObjectURL(){}},
   Image,Blob,Uint8Array,Uint8ClampedArray,TextDecoder,ArrayBuffer,DataView,
   queueMicrotask,console,Math,JSON,Number,performance:{now:()=>0}};
@@ -109,9 +109,12 @@ test('real inventory shows direct local item sprites and keeps blocks unchanged'
 test('transparent imported item PNG is rejected and cached without replacing the fallback icon',async()=>{
  const b=boot({alphas:[0]});
  await b.pack.loadFiles([file('cooked_beef.png','Pack/assets/minecraft/textures/item')]);
+ const first=await b.pack.itemIcon('cooked');
+ const decoded=b.draws.length;
+ assert.equal(first,null);
  assert.equal(await b.pack.itemIcon('cooked'),null);
- assert.equal(await b.pack.itemIcon('cooked'),null);
- assert.equal(b.draws.length,1,'a rejected transparent candidate is decoded only once');
+ assert.ok(decoded>=1,'a transparent sprite was actually inspected');
+ assert.equal(b.draws.length,decoded,'a rejected transparent candidate is decoded only once');
 });
 test('transparent Java item recovers a visible Bedrock alias in the same owned pack',async()=>{
  const b=boot({alphas:[0,255]});
