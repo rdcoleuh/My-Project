@@ -1142,8 +1142,11 @@ function hudIcon(kind,fill){
       [key,legacyKey].filter(candidate=>source.entries.has(candidate)):null;
   // A damaged explicitly named half glyph should not hide the valid full
   // and empty art in the same player-imported pack.
+  // A full glyph alone is sufficient to synthesize a half icon. The empty
+  // glyph is an optional underlay, not a prerequisite: many partial Java
+  // and Bedrock packs intentionally provide only their filled stat sprites.
   const canDeriveHalf=kind!=='hotbar'&&fill==='half'&&
-    source.entries.has('hud:'+kind+':full')&&source.entries.has('hud:'+kind+':empty');
+    source.entries.has('hud:'+kind+':full');
   let derivedHalf=canDeriveHalf&&!source.entries.has(key);
   // Prefer modern individual sprites; a missing older stat sprite can be
   // cropped from the user's legacy gui/icons.png atlas.

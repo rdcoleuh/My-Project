@@ -222,3 +222,35 @@ test('corrupt explicit half-heart recovers crisp imported full and empty sprites
  assert.equal(await b.pack.hudIcon('heart','half'),'data:image/png;base64,owned');
  assert.equal(b.draws.length,before+2,'recovered artwork is cached');
 });
+
+
+test('full-only stat pack derives half hearts without an empty underlay',async()=>{
+ const b=boot(),file={name:'full.png',
+  webkitRelativePath:'pack/assets/minecraft/textures/gui/sprites/hud/heart/full.png',
+  size:png.length,arrayBuffer:async()=>png.buffer};
+ await b.pack.loadFiles([file]);
+ const before=b.draws.length;
+ assert.equal(await b.pack.hudIcon('heart','half'),'data:image/png;base64,owned');
+ const ops=b.draws.slice(before);
+ assert.equal(ops.length,1,'no empty-heart sprite is needed to synthesize a half');
+ assert.deepEqual([ops[0][1],ops[0][3],ops[0][5],ops[0][7]],[0,8,0,8],
+  'half heart uses the left eight source pixels without stretching');
+});
+
+test('broken half-food sprite recovers from full-only imported food artwork',async()=>{
+ const b=boot(),bad=Uint8Array.from([1,2,3,4,5]);
+ const entries=[
+  ['food_full.png',png],['food_half.png',bad]
+ ].map(([name,data])=>({name,
+  webkitRelativePath:'pack/assets/minecraft/textures/gui/sprites/hud/'+name,
+  size:data.length,arrayBuffer:async()=>data.buffer}));
+ await b.pack.loadFiles(entries);
+ const before=b.draws.length;
+ assert.equal(await b.pack.hudIcon('food','half'),'data:image/png;base64,owned');
+ const ops=b.draws.slice(before);
+ assert.equal(ops.length,1,'damaged explicit half is replaced by the full food sprite');
+ assert.deepEqual([ops[0][1],ops[0][3],ops[0][5],ops[0][7]],[8,8,8,8],
+  'half food uses the right half of the sprite');
+ assert.equal(await b.pack.hudIcon('food','half'),'data:image/png;base64,owned');
+ assert.equal(b.draws.length,before+1,'recovered food sprite is cached');
+});
