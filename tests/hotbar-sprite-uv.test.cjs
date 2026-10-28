@@ -74,7 +74,7 @@ test('imported survival icons reject stretched GUI strips but accept pixel-scale
  const source=read('local-resource-pack.js');
  assert.ok(source.includes('validStatSprite(image.width,image.height)'));
  assert.ok(source.includes('validStatSprite(underlay.width,underlay.height)'));
- assert.ok(source.includes("image=await smallSpriteFromPng(await source.get('hud:legacy-icons'))"));
+ assert.ok(source.includes("image=await smallSpriteFromPng(await source.get('hud:legacy-icons'),4*1024*1024)"));
 });
 
 test('legacy fallback for a missing half glyph must use the atlas crop, not a half of the atlas',()=>{

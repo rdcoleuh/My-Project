@@ -991,6 +991,10 @@ async function loadFiles(fileList){
    const png=leaf.match(/^([a-z0-9_]+)\.png$/),ogg=leaf.match(/^([a-z0-9_]+)\.ogg$/),meta=leaf.match(/^([a-z0-9_]+)\.png\.mcmeta$/);
    let key=png?.[1]||null;
    if(png&&/(?:^|\/)textures\/(?:item|items)\//.test(name))key='item:'+png[1];
+   // Folder imports must recognize legacy Java GUI atlases just like ZIP/JAR imports.
+   // Keep these player-supplied bitmaps local; no artwork is bundled.
+   if(png&&/(?:^|\/)textures\/gui\/(icons|widgets)\.png$/.test(name))
+     key=png[1]==='icons'?'hud:legacy-icons':'hud:hotbar:legacy-widgets';
    if(png&&/(?:^|\/)textures\/ui\//.test(name)){
      const ui=png[1];
      const mapped=BEDROCK_UI_HUD_KEYS[ui]||
