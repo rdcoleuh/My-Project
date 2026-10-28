@@ -408,6 +408,8 @@ body.in-nether #game-wrap{background:#290f19}
 #health-text .mw-stat-icon.full{color:#f23b44}#hunger-text .mw-stat-icon.full{color:#b77a35}
 .mw-stat-icon.empty{color:#474747}
 .mw-pack-stat-art{display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+/* Keep original empty outlines visible beneath transparent imported half sprites. */
+.mw-pack-stat-layer{position:absolute;inset:0;pointer-events:none}
 #hotbar.mw-pack-hotbar{background-image:var(--mw-pack-hotbar-bg)!important;background-repeat:no-repeat!important;background-size:100% 100%!important}
 #hotbar .hot-item{position:relative}
 #hotbar .hot-item.mw-pack-slot{background-image:var(--mw-pack-slot-bg)!important;background-color:transparent!important;background-size:100% 100%!important;background-repeat:no-repeat!important;border-color:transparent!important;box-shadow:none!important}
@@ -2345,8 +2347,13 @@ body.in-nether #game-wrap{background:#290f19}
           if(!src||!icon.isConnected||pack!==window.MineWorldLocalTextures||generation!==(window.MineWorldLocalTextures?.generation??-1))return;
           const image=document.createElement('img');
           image.src=src;image.alt='';image.className='mw-pack-stat-art';
-          if(clipped){
-            image.classList.add('mw-pack-stat-clipped');
+          // Player packs often provide only a filled sprite. The derived
+          // half image is transparent on its unfilled side; preserve the
+          // original empty outline underneath rather than erasing it.
+          // Explicit half sprites may also contain transparent pixels.
+          if(fill==='half'){
+            image.classList.add('mw-pack-stat-layer');
+            if(clipped)image.classList.add('mw-pack-stat-clipped');
             icon.appendChild(image);
           }else icon.replaceChildren(image);
         }).catch(()=>{});

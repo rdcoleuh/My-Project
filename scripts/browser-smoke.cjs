@@ -105,6 +105,13 @@ function makeTestArchive(mode='full'){
  if(mode==='malformed-selected')files=[
   ['resource_pack/textures/ui/selected_hotbar_slot.png',generatedPng(22,180,182,true)]
  ];
+ // Independently generated half-sprite fixture with no empty/half artwork.
+ // The renderer must retain its original empty outline beneath transparent
+ // imported half icons. No Minecraft bitmaps are bundled.
+ if(mode==='half-no-empty')files=[
+  ['resource_pack/textures/ui/heart.png',generatedPng(9,205,9)],
+  ['resource_pack/textures/ui/hunger_full.png',generatedPng(9,170,9)]
+ ];
  if(mode==='selected-only')files=files.filter(([name])=>name.endsWith('/selected_hotbar_slot.png'));
  if(mode==='partial-slots')files=files.filter(([name])=>name.endsWith('/hotbar_0.png'));
  const local=[],central=[];let offset=0;
@@ -658,6 +665,35 @@ async function go(browser,name,mobile){
   assert.equal(damageHud.half,1,name+': actual damage did not display a half heart '+JSON.stringify(damageHud));
   assert.match(damageHud.label,/Health: 19 of 20/,
     name+': damage did not update the accessible half-heart HUD');
+  // A full-only imported sprite synthesizes a transparent half PNG. Verify
+  // that the actual running browser preserves MineWorld's empty outline
+  // behind the imported artwork (desktop and touch-sized Chrome).
+  await page.evaluate(async bytes=>{
+    const file=new File([new Uint8Array(bytes)],'half-no-empty-original-fixture.zip',{type:'application/zip'});
+    await window.MineWorldLocalTextures.loadFile(file);
+  },Array.from(makeTestArchive('half-no-empty')));
+  await page.waitForFunction(()=>{
+    const half=document.querySelector('#health-text .mw-stat-icon.half');
+    return !!half?.querySelector('canvas.mw-stat-fallback')&&
+      !!half?.querySelector('img.mw-pack-stat-art.mw-pack-stat-layer');
+  },null,{timeout:15000});
+  const halfLayer=await page.evaluate(()=>{
+    const icon=document.querySelector('#health-text .mw-stat-icon.half');
+    const fallback=icon.querySelector('canvas.mw-stat-fallback');
+    const image=icon.querySelector('img.mw-pack-stat-layer');
+    const pixel=fallback.getContext('2d').getImageData(7,3,1,1).data;
+    const css=getComputedStyle(image);
+    return {count:icon.children.length,outlineAlpha:pixel[3],
+      positioned:css.position==='absolute',sharp:css.imageRendering==='pixelated',
+      label:document.querySelector('#health-text').getAttribute('aria-label')};
+  });
+  assert.ok(halfLayer.count===2&&halfLayer.outlineAlpha===255&&
+    halfLayer.positioned&&halfLayer.sharp&&halfLayer.label==='Health: 19 of 20',
+    name+': transparent imported half heart erased its original empty outline: '+
+      JSON.stringify(halfLayer));
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-half-heart-no-empty-synthetic.png':'desktop-half-heart-no-empty-synthetic.png'),
+    animations:'disabled'});
   await page.evaluate(()=>document.querySelector('#resume-btn').click());
   await page.waitForTimeout(650);
   // Desktop pointer lock redirects mouse clicks to the canvas: players use
