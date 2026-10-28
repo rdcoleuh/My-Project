@@ -1242,6 +1242,16 @@ function hudIcon(kind,fill){
         underlay=await smallSpriteFromPng(await source.get(backgroundKey));
         if(!window.MineWorldHotbarUV?.validStatSprite(underlay.width,underlay.height))
           underlay=null;
+        else {
+          // Full and empty glyphs may come from different pack resolutions.
+          // Composite only when their pixels align at an integral scale.
+          // Otherwise the empty backing is optional: omit it rather than
+          // stretching unrelated 9px art over a 16px heart or hunger icon.
+          const ratio=image.width/underlay.width;
+          if(image.height/underlay.height!==ratio||
+             !(ratio>=1?Number.isInteger(ratio):Number.isInteger(1/ratio)))
+            underlay=null;
+        }
       }catch(error){console.warn('Ignoring damaged local HUD underlay '+backgroundKey,error);}
     }
     if(generation!==state.itemGeneration)return null;

@@ -26,7 +26,11 @@ function boot(imageWidth=16,imageHeight=16){
    getImageData(_x,_y,w,h){return {data:new Uint8ClampedArray(w*h*4)}},putImageData(){}};}
   toDataURL(){return 'data:image/png;base64,owned';}
  }
- class Image{constructor(){decoded++;this.width=imageWidth;this.height=imageHeight;}
+ class Image{constructor(){
+  decoded++;
+  this.width=Array.isArray(imageWidth)?imageWidth[Math.min(decoded-1,imageWidth.length-1)]:imageWidth;
+  this.height=Array.isArray(imageHeight)?imageHeight[Math.min(decoded-1,imageHeight.length-1)]:imageHeight;
+ }
   set src(_){queueMicrotask(()=>this.onload?.());}}
  const gl={TEXTURE0:1,TEXTURE_2D:2,RGBA:3,UNSIGNED_BYTE:4,UNPACK_FLIP_Y_WEBGL:5,
   TEXTURE_MIN_FILTER:6,TEXTURE_MAG_FILTER:7,NEAREST:8,
@@ -318,4 +322,34 @@ test('ZIP HUD size guard still rejects payloads beyond the bounded 6 MiB limit',
  await assert.rejects(b.pack.loadFile({name:'large.mcpack',
   arrayBuffer:async()=>buffer}),/No compatible/);
  assert.equal(await b.pack.hudIcon('heart','full'),null);
+});
+
+test('mismatched imported empty-heart resolution cannot stretch across a full-heart sprite',async()=>{
+ const b=boot([16,9],[16,9]);
+ const files=['full','container'].map(name=>({
+  name:name+'.png',webkitRelativePath:'pack/assets/minecraft/textures/gui/sprites/hud/heart/'+name+'.png',
+  size:png.length,arrayBuffer:async()=>png.buffer
+ }));
+ await b.pack.loadFiles(files);
+ const before=b.draws.length;
+ assert.equal(await b.pack.hudIcon('heart','full'),'data:image/png;base64,owned');
+ const ops=b.draws.slice(before);
+ assert.equal(ops.length,1,'9px empty sprite must not stretch over a 16px heart');
+ assert.equal(ops[0].length,3,'valid full sprite still renders at native resolution');
+});
+
+test('integer-scaled imported food underlay is retained without fractional texels',async()=>{
+ const b=boot([32,16],[32,16]);
+ const files=['food_full','food_empty'].map(name=>({
+  name:name+'.png',webkitRelativePath:'pack/assets/minecraft/textures/gui/sprites/hud/'+name+'.png',
+  size:png.length,arrayBuffer:async()=>png.buffer
+ }));
+ await b.pack.loadFiles(files);
+ const before=b.draws.length;
+ assert.equal(await b.pack.hudIcon('food','full'),'data:image/png;base64,owned');
+ const ops=b.draws.slice(before);
+ assert.equal(ops.length,2,'2x resolution underlay remains composited');
+ assert.equal(ops[0].length,5,'empty icon is scaled to an exact 32px backing');
+ assert.deepEqual(ops[0].slice(1),[0,0,32,32]);
+ assert.equal(ops[1].length,3,'full icon remains at its native resolution');
 });
