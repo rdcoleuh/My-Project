@@ -174,6 +174,19 @@ async function go(browser,name,mobile){
   });
   assert.deepEqual(sight,{blocked:false,open:true,corner:false,face:false,edge:false,firstFace:false,lastFace:false,lastEdge:false},
     name+': mobs must not see through thin walls or diagonal corners or along voxel faces');
+  // Browser-level combat checks use independent coordinate fixtures. These
+  // are not recordings of an actual survival fight or a defeated boss.
+  const reach=await page.evaluate(()=>{
+    const ai=window.MineWorldMobAIRules,m={x:0,y:2,z:0};
+    return {meleeNear:ai.attackInReach(m,{x:1,y:3,z:0},'melee'),
+      meleeAbove:ai.attackInReach(m,{x:1,y:6,z:0},'melee'),
+      rangedNear:ai.attackInReach(m,{x:6,y:2,z:0},'ranged'),
+      rangedAbove:ai.attackInReach(m,{x:6,y:15,z:0},'ranged'),
+      ghastSpacing:ai.targetIntent('ghast',7,true)};
+  });
+  assert.deepEqual(reach,{meleeNear:true,meleeAbove:false,rangedNear:true,
+    rangedAbove:false,ghastSpacing:'ranged'},
+    name+': mob combat reach and flying ranged spacing regressed');
   // From the actual title screen: choose a local ZIP, apply exact pixels,
   // save it as default, then reload the same browser and auto-restore it.
   assert.equal(await page.locator('#mw-bedrock-default-button').count(),1,

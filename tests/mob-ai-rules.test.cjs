@@ -107,3 +107,35 @@ test('strays and pillagers keep ranged spacing; wither skeletons remain melee at
  assert.ok(!html.includes("['skeleton','wither_skeleton','blaze','ghast','wither'].includes(m.kind)"));
  assert.ok(html.includes("'Crossbow bolt'"),'pillager hits have the correct attack label');
 });
+
+test('melee reach checks vertical separation instead of horizontal distance alone',()=>{
+ const mob={x:5,y:2,z:7};
+ assert.equal(rules.attackInReach(mob,{x:5.5,y:3,z:7.5},'melee'),true);
+ assert.equal(rules.attackInReach(mob,{x:5.5,y:5,z:7.5},'melee'),false,
+   'a mob cannot strike a player three blocks above it');
+ assert.equal(rules.attackInReach(mob,{x:5.5,y:-1,z:7.5},'melee'),false);
+ assert.equal(rules.attackInReach(mob,{x:Infinity,y:2,z:7},'melee'),false);
+ assert.equal(rules.attackInReach(mob,null,'melee'),false);
+ const html=read('index.html');
+ assert.ok(html.includes("if(mobAI.attackInReach(m,target,'melee'))"),
+   'host combat must use 3D melee reach');
+});
+test('ranged attacks use true three-dimensional range and minimum spacing',()=>{
+ const mob={x:0,y:2,z:0};
+ assert.equal(rules.attackInReach(mob,{x:6,y:2,z:0},'ranged'),true);
+ assert.equal(rules.attackInReach(mob,{x:6,y:13,z:0},'ranged'),false,
+   'a high flying mob cannot hit from beyond its actual attack range');
+ assert.equal(rules.attackInReach(mob,{x:1,y:2,z:0},'ranged'),false);
+ assert.equal(rules.attackInReach(mob,{x:2,y:2,z:0},'unknown'),false);
+ const html=read('index.html');
+ assert.ok(html.includes("&&mobAI.attackInReach(m,target,'ranged'))"),
+   'host projectiles must use 3D range');
+});
+test('blaze ghast and wither hold ranged distance instead of rushing into melee',()=>{
+ for(const kind of ['blaze','ghast','wither']){
+   assert.equal(rules.targetIntent(kind,3,true),'retreat',kind);
+   assert.equal(rules.targetIntent(kind,7,true),'ranged',kind);
+   assert.equal(rules.targetIntent(kind,12,true),'approach',kind);
+   assert.equal(rules.targetIntent(kind,7,false),'idle',kind);
+ }
+});

@@ -117,12 +117,23 @@
   const dx=a.x-b.x,dy=a.y-b.y,dz=a.z-b.z;
   return dx*dx+dy*dy+dz*dz<=maxDistance*maxDistance;
  }
+ // Visual detection is not physical attack reach. Horizontal-only distance
+ // previously allowed hits from several blocks above or below the player.
+ // Feet positions match the host simulation's mob/player coordinates.
+ function attackInReach(mob,target,mode){
+   if(!mob||!target||![mob.x,mob.y,mob.z,target.x,target.y,target.z].every(Number.isFinite))return false;
+   const dx=mob.x-target.x,dy=mob.y-target.y,dz=mob.z-target.z;
+   const horizontal=Math.hypot(dx,dz);
+   if(mode==='melee')return horizontal<1.55&&Math.abs(dy)<=1.75;
+   if(mode==='ranged')return horizontal>=2&&Math.hypot(dx,dy,dz)<11;
+   return false;
+ }
  function targetIntent(kind,distance,visible,anger=0,isNight=false){
   if(!Number.isFinite(distance)||distance<0||distance>25||!visible)return 'idle';
   if((kind==='spider'||kind==='cave_spider')&&!spiderAggressive(kind,isNight,anger))return 'idle';
   if(kind==='creeper')return distance<2.8?'fuse':'approach';
-  if(['skeleton','stray','pillager'].includes(kind))return distance<5?'retreat':distance<=10?'ranged':'approach';
+  if(['skeleton','stray','pillager','blaze','ghast','wither'].includes(kind))return distance<5?'retreat':distance<=10?'ranged':'approach';
   return distance<=1.6?'melee':'approach';
  }
- window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,pursuitPoint,steerHeading,rayClear,withinSight,targetIntent});
+ window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,pursuitPoint,steerHeading,rayClear,withinSight,attackInReach,targetIntent});
 })();

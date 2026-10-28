@@ -3782,12 +3782,12 @@ body.in-nether #game-wrap{background:#290f19}
       }
       if(chase&&m.attack<=0&&mobHasLineOfSight(m,target)){
         const mul=difficulty==='hard'?1.65:difficulty==='easy'?.65:1;
-        if(dist<1.55){
+        if(mobAI.attackInReach(m,target,'melee')){
           const amount=Math.ceil(type.damage*mul);
           if(target.id===null){if(playerHitCooldown<=0){damage(amount,type.name+' attack');playerHitCooldown=.85}}
           else network?.damagePlayer(target.id,amount,type.name+' attack');
           m.attack=1.75;
-        }else if(['skeleton','stray','pillager','blaze','ghast','wither'].includes(m.kind)&&dist<11&&dist>=2){
+        }else if(['skeleton','stray','pillager','blaze','ghast','wither'].includes(m.kind)&&mobAI.attackInReach(m,target,'ranged')){
           const amount=difficulty==='hard'?5:(['ghast','blaze','wither'].includes(m.kind)?4:2);
           if(target.id===null){if(playerHitCooldown<=0){damage(amount,m.kind==='pillager'?'Crossbow bolt':(['blaze','ghast','wither'].includes(m.kind)?'Fireball':'Skeleton arrow'));playerHitCooldown=.85}}
           else network?.damagePlayer(target.id,amount,'Skeleton arrow');
