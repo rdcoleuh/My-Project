@@ -4368,9 +4368,12 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function render(t){requestAnimationFrame(render);const frameMs=t-lastTime;let dt=clamp(frameMs/1000,0,.05);lastTime=t;
     if(gameMode==='survival'&&(!paused||furnaceUI.isOpen)){
-      const r=furnaces.tick(dt);
-      if(r.changed){furnaceSaveClock+=dt;if(furnaceSaveClock>=1){markSave();furnaceSaveClock=0;}}
-      furnaceUI.tick(dt);
+      // Smelting uses elapsed real time, not physics-clamped frame time.
+      // Low-FPS mobile browsers must not take minutes to cook one item.
+      const furnaceDt=clamp(frameMs/1000,0,1);
+      const r=furnaces.tick(furnaceDt);
+      if(r.changed){furnaceSaveClock+=furnaceDt;if(furnaceSaveClock>=1){markSave();furnaceSaveClock=0;}}
+      furnaceUI.tick(furnaceDt);
     }
     if(paused)return;
     // Java-style cooldown feedback beside the crosshair. Uses the same

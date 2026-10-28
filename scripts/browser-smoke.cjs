@@ -856,7 +856,7 @@ async function go(browser,name,mobile){
     const id=(x*W+z)*48+y;
     const granted=bridge.grantLoot('rawIron',2)&&bridge.grantLoot('coal',1);
     const placed=bridge.remoteEdit(id,20);
-    return {id,granted,placed,opened:bridge.openFurnaceAt(x,y,z)};
+    return {id,x,y,z,granted,placed,opened:bridge.openFurnaceAt(x,y,z)};
   });
   assert.equal(furnaceFixture.granted,true,name+': furnace fixture resources unavailable');
   assert.equal(furnaceFixture.placed,true,name+': furnace block fixture placement failed');
@@ -865,11 +865,11 @@ async function go(browser,name,mobile){
   await page.locator('#mw-furnace-put-input').click({force:true});
   await page.locator('#mw-furnace-fuel').selectOption('coal');
   await page.locator('#mw-furnace-put-fuel').click({force:true});
-  await page.waitForTimeout(10700);
-  const smelted=await page.evaluate(()=>window.MineWorldBridge.getFurnaceState(
-    Math.floor(window.MineWorldBridge.getPlayer().x)+2,
-    Math.max(1,Math.min(47,Math.floor(window.MineWorldBridge.getPlayer().y))),
-    Math.floor(window.MineWorldBridge.getPlayer().z)));
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.output?.key==='iron',
+    furnaceFixture,{timeout:30000});
+  const smelted=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
   assert.equal(smelted?.output?.key,'iron',name+': furnace failed to smelt iron in browser');
   assert.equal(smelted?.output?.qty,1,name+': furnace output count incorrect');
   await page.locator('#mw-furnace-output').click({force:true});

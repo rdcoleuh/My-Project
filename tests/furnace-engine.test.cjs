@@ -25,7 +25,7 @@ test('restore sanitizes invalid slots, coordinates and progress',()=>{
 
 test('game loads furnace modules, persists block inventories and ticks smelting',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
- for(const snippet of ['furnaces:snapshotFurnaces()','furnaces.restore(s.furnaces)','furnaces.tick(dt)','openFurnace(aim)','furnaces.remove({dimension,x,y,z})','./furnace-engine.js','./furnace-ui.js'])
+ for(const snippet of ['furnaces:snapshotFurnaces()','furnaces.restore(s.furnaces)','furnaces.tick(furnaceDt)','openFurnace(aim)','furnaces.remove({dimension,x,y,z})','./furnace-engine.js','./furnace-ui.js'])
   assert.ok(html.includes(snippet),snippet);
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
  assert.ok(sw.includes("'./furnace-engine.js'")&&sw.includes("'./furnace-ui.js'"));
