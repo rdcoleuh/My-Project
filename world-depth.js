@@ -32,5 +32,26 @@ function create({width=10000,depth=10000,minY=0,maxY=47,chunkSize=16}={}){
   };
   return Object.freeze({width,depth,minY,maxY,height,chunkSize,volume,inside,index,decode,chunkIndex,networkIndex,decodeNetwork});
 }
-window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,create});
+// Explicit, non-mutating conversion of edit indices for a future versioned save
+// migration. Coordinates are absolute; only the serialized index changes.
+// A rejected edit aborts the entire conversion rather than losing user blocks.
+function reindexEdits(edits,source,target){
+  if(Object.prototype.toString.call(edits)!=='[object Map]')throw new TypeError('Expected a Map of saved edits');
+  if(!source||!target||source.width!==target.width||source.depth!==target.depth||
+     typeof source.decode!=='function'||typeof target.index!=='function'||typeof target.inside!=='function')
+    throw new RangeError('Incompatible world profiles');
+  const result=new Map();
+  for(const [oldIndex,block] of edits){
+    const point=source.decode(oldIndex);
+    if(!point||!target.inside(point.x,point.y,point.z))
+      throw new RangeError('Saved edit lies outside target world');
+    if(!Number.isSafeInteger(block)||block<0||block>255)
+      throw new RangeError('Invalid saved block identifier');
+    const nextIndex=target.index(point.x,point.y,point.z);
+    if(result.has(nextIndex))throw new RangeError('Saved edit index collision');
+    result.set(nextIndex,block);
+  }
+  return result;
+}
+window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,create,reindexEdits});
 })();

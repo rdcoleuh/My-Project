@@ -69,3 +69,39 @@ test('legacy chunk edits remain valid with unchanged coordinate encoding',()=>{
  const data=ctx.window.MineWorldBiomes.generateChunk({cx,cz,H:48,SEA:14,minY:0,edits});
  assert.equal(data[(1*16+1)*48+y],11);
 });
+
+test('opt-in edit reindexing preserves placed and mined blocks at every legacy boundary',()=>{
+ const legacy=api.create({width:10000,depth:10000,minY:0,maxY:47});
+ const deep=api.create({width:10000,depth:10000,minY:-64,maxY:319});
+ const edits=new Map([[legacy.index(0,0,0),11],[legacy.index(5000,14,5000),0],
+   [legacy.index(9999,47,9999),168]]);
+ const converted=api.reindexEdits(edits,legacy,deep);
+ assert.equal(converted.size,edits.size);
+ assert.equal(converted.get(deep.index(0,0,0)),11);
+ assert.equal(converted.get(deep.index(5000,14,5000)),0);
+ assert.equal(converted.get(deep.index(9999,47,9999)),168);
+ assert.deepEqual([...edits.keys()],[legacy.index(0,0,0),legacy.index(5000,14,5000),legacy.index(9999,47,9999)],
+   'original saved edit map remains unchanged');
+ assert.deepEqual([...api.reindexEdits(converted,deep,legacy)],[...edits]);
+});
+test('save conversion fails atomically for invalid indices, blocks or target bounds',()=>{
+ const legacy=api.create({width:10000,depth:10000,minY:0,maxY:47});
+ const deep=api.create({width:10000,depth:10000,minY:-64,maxY:319});
+ const source=new Map([[legacy.index(5000,0,5000),11],[legacy.volume,12]]);
+ assert.throws(()=>api.reindexEdits(source,legacy,deep),/outside target world/);
+ assert.equal(source.size,2,'failed migration does not mutate source');
+ assert.throws(()=>api.reindexEdits(new Map([[legacy.index(0,1,0),256]]),legacy,deep),/Invalid saved block/);
+ assert.throws(()=>api.reindexEdits(new Map([[deep.index(0,-64,0),11]]),deep,legacy),/outside target world/);
+ assert.throws(()=>api.reindexEdits(new Map(),legacy,api.create({width:9,depth:9})),/Incompatible/);
+});
+test('converted edits replay in the deep generator without rewriting source saves',()=>{
+ const legacy=api.create({width:10000,depth:10000,minY:0,maxY:47});
+ const deep=api.create({width:10000,depth:10000,minY:-64,maxY:319});
+ const cx=312,cz=312,x=cx*16+1,z=cz*16+1;
+ const original=new Map([[legacy.index(x,0,z),11],[legacy.index(x,15,z),0]]);
+ const converted=api.reindexEdits(original,legacy,deep);
+ const data=ctx.window.MineWorldBiomes.generateChunk({cx,cz,H:384,minY:-64,SEA:63,edits:converted});
+ assert.equal(data[(1*16+1)*384+64],11);
+ assert.equal(data[(1*16+1)*384+79],0);
+ assert.equal(original.get(legacy.index(x,0,z)),11);
+});
