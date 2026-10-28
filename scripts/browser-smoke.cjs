@@ -848,6 +848,35 @@ async function go(browser,name,mobile){
   await page.waitForTimeout(950);
   await page.locator('#close-gear').click({force:true});
   await page.waitForTimeout(450);
+  // Visible real browser furnace interaction in an isolated Survival world.
+  // Only synthetic resources are used; no user's texture pack is available.
+  const furnaceFixture=await page.evaluate(()=>{
+    const bridge=window.MineWorldBridge,p=bridge.getPlayer(),W=bridge.getSnapshot().worldSize;
+    const x=Math.floor(p.x)+2,z=Math.floor(p.z),y=Math.max(1,Math.min(47,Math.floor(p.y)));
+    const id=(x*W+z)*48+y;
+    const granted=bridge.grantLoot('rawIron',2)&&bridge.grantLoot('coal',1);
+    const placed=bridge.remoteEdit(id,20);
+    return {id,granted,placed,opened:bridge.openFurnaceAt(x,y,z)};
+  });
+  assert.equal(furnaceFixture.granted,true,name+': furnace fixture resources unavailable');
+  assert.equal(furnaceFixture.placed,true,name+': furnace block fixture placement failed');
+  assert.equal(furnaceFixture.opened,true,name+': furnace block interaction failed');
+  await page.locator('#mw-furnace-input').selectOption('rawIron');
+  await page.locator('#mw-furnace-put-input').click({force:true});
+  await page.locator('#mw-furnace-fuel').selectOption('coal');
+  await page.locator('#mw-furnace-put-fuel').click({force:true});
+  await page.waitForTimeout(10700);
+  const smelted=await page.evaluate(()=>window.MineWorldBridge.getFurnaceState(
+    Math.floor(window.MineWorldBridge.getPlayer().x)+2,
+    Math.max(1,Math.min(47,Math.floor(window.MineWorldBridge.getPlayer().y))),
+    Math.floor(window.MineWorldBridge.getPlayer().z)));
+  assert.equal(smelted?.output?.key,'iron',name+': furnace failed to smelt iron in browser');
+  assert.equal(smelted?.output?.qty,1,name+': furnace output count incorrect');
+  await page.locator('#mw-furnace-output').click({force:true});
+  await page.locator('#mw-furnace-close').click({force:true});
+  assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),furnaceFixture.id),
+    true,name+': furnace fixture cleanup failed');
+  await page.waitForTimeout(300);
   if(errors.length)throw Error(name+' browser console/runtime errors:\n'+errors.slice(0,8).join('\n'));
   process.stdout.write(name+': Bedrock ZIP import/persistent reload, real movement, menu actions, gameplay, pause and return passed\n');
  }finally{

@@ -27,7 +27,7 @@ test('host movement uses water-aware steering, safe knockback and hitbox checks'
   assert.match(html,/if\(canSwim&&collisionFree\(nx,m\.y,nz,m\.kind/);
   assert.ok(html.includes('m.y=Math.max(1,level+.2+Math.sin(dayClock*1.5+m.id)*.12)'),
     'preserve existing low-cost swim bobbing');
-  assert.ok(read('sw.js').includes('mineworld-6-78-aquatic-steering-165'),
+  assert.ok(read('sw.js').includes('mineworld-6-79-working-furnaces-166')&&read('sw.js').includes("'./mob-ai-rules.js'"),
     'returning players must receive the corrected movement code');
   assert.ok(html.includes('mineworld-selfhost-v1'),'existing save key must remain intact');
 });

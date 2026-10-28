@@ -4830,6 +4830,13 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
     deleteWorld:(mode,id)=>deleteNamedWorld(mode,id),
     duplicateWorld:(mode,id)=>{try{return worldLibrary.duplicate(mode,id)}catch(e){toast(e.message);return false}},
     getMode:()=>gameMode,
+    // Testable interaction entry point: only opens an actual furnace block.
+    openFurnaceAt:(x,y,z)=>{
+      if(!inside(x,y,z)||get(x,y,z)!==20||gameMode!=='survival')return false;
+      openFurnace({x,y,z});return true;
+    },
+    getFurnaceState:(x,y,z)=>furnaces.get({dimension,x,y,z}),
+
     getPlayer:()=>({x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,fly:player.fly,mode:gameMode,dimension,riding:mount?.kind||''}),
     getCombatProfile:()=>({mode:gameMode,equipped,weapon:tools[equipped]||'none'}),
     getMobs:mobSnapshot, setMobs:syncMobs, applyMobHit, grantLoot,
