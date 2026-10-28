@@ -155,6 +155,11 @@
   if(['skeleton','stray','pillager','blaze','ghast','wither'].includes(kind))return distance<5?'retreat':distance<=10?'ranged':'approach';
   return distance<=1.6?'melee':'approach';
  }
+ // Mushroom fields are naturally hostile-spawn-free, even at night.
+ // Spawn eggs, spawners and mobs walking in from outside use other paths.
+ function naturalHostileAllowed(biome){
+   return !/mushroom/.test(String(biome||'').toLowerCase());
+ }
  // Peaceful difficulty is not simply a spawn toggle: existing monsters must
  // disappear, while selected neutral mobs and End residents remain harmless.
  // Keep this classification independent of rendering and saved entity data.
@@ -167,5 +172,5 @@
    if(PEACEFUL_NEUTRAL_DESPAWN.has(kind))return 'despawn';
    return classification==='hostile'||classification==='boss'?'despawn':'passive';
  }
- window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,blastExposure,blastBlockPassable,pursuitPoint,steerHeading,rayClear,withinSight,attackInReach,targetIntent,peacefulDisposition});
+ window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,blastExposure,blastBlockPassable,pursuitPoint,steerHeading,rayClear,withinSight,attackInReach,targetIntent,peacefulDisposition,naturalHostileAllowed});
 })();

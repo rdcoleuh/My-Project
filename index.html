@@ -3643,6 +3643,10 @@ body.in-nether #game-wrap{background:#290f19}
             const target=living[Math.floor(Math.random()*living.length)];
             const a=Math.random()*Math.PI*2,r=12+Math.random()*11;
             const x=target.x+Math.cos(a)*r,z=target.z+Math.sin(a)*r;
+            // Natural hostile spawns are excluded inside mushroom fields.
+            // Monsters may still walk in from another biome or be summoned.
+            if(dimension==='overworld'&&!mobAI.naturalHostileAllowed(
+              window.MineWorldBiomes.biomeAt(x,z)?.name||''))continue;
             const kinds=dimension==='end'?['enderman','shulker','endermite']:dimension==='nether'?window.MineWorldNether.biomeAt(x,z).mobs:['zombie','skeleton','spider','creeper'];
             let kind=kinds[Math.floor(Math.random()*kinds.length)];
             if(dimension==='overworld'&&extraMobs&&Math.random()<.31){

@@ -17,10 +17,12 @@ function habitat(kind,biomeName=''){
  if(kind==='llama')return /mountain|hill|windswept|savanna/.test(biome);
  if(kind==='horse'||kind==='donkey')return /plains|savanna|meadow|field/.test(biome);
  if(['cow','pig','sheep','chicken'].includes(kind))
-  return !/desert|ocean|deep|frozen|ice|snowy/.test(biome);
+  return !/desert|ocean|deep|frozen|ice|snowy|mushroom/.test(biome);
  return false;
 }
 function pickNatural(biome,seed){
+ // Mushroom fields have their own natural cattle variant, not ordinary livestock.
+ if(/mushroom/.test(String(biome).toLowerCase()))return 'mooshroom';
  const preferred=NATURAL.filter(k=>habitat(k,biome));
  if(!preferred.length&&/ocean|river|frozen|ice|snowy|deep|mushroom/.test(String(biome).toLowerCase()))return null;
  const pool=preferred.length?preferred:['cow','sheep','pig','chicken'];
