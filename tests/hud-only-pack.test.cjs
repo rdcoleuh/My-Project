@@ -364,7 +364,8 @@ test('integer-scaled imported food underlay is retained without fractional texel
 });
 
 test('transparent authored half-heart recovers from visible full and empty sprites',async()=>{
- const b=boot(9,9,[0,255,255]);
+ // The first decoded image restores the base atlas; subsequent images are the HUD candidates.
+ const b=boot(9,9,[255,0,255,255]);
  const files=['half','full','container'].map(name=>({
   name:name+'.png',webkitRelativePath:'assets/minecraft/textures/gui/sprites/hud/heart/'+name+'.png',
   size:png.length,arrayBuffer:async()=>png.buffer
@@ -375,7 +376,7 @@ test('transparent authored half-heart recovers from visible full and empty sprit
   'visible full-heart pixels are cropped to a half after rejecting the transparent half');
 });
 test('transparent numbered hotbar slot recovers from visible generic slot',async()=>{
- const b=boot(20,20,[0,255]);
+ const b=boot(20,20,[255,0,255]);
  const files=[
   ['hotbar_3.png','textures/ui/hotbar_3.png'],
   ['hotbar_slot.png','textures/ui/hotbar_slot.png']
@@ -384,10 +385,10 @@ test('transparent numbered hotbar slot recovers from visible generic slot',async
  }));
  await b.pack.loadFiles(files);
  assert.equal(await b.pack.hudIcon('hotbar','slot3'),'data:image/png;base64,owned');
- assert.equal(b.decoded,2,'both transparent and visible candidate were inspected');
+ assert.equal(b.decoded,3,'bootstrap, transparent and visible candidate were inspected');
 });
 test('transparent selected-slot sprite recovers from imported legacy widgets atlas',async()=>{
- const b=boot([24,256],[24,256],[0,255]);
+ const b=boot([24,24,256],[24,24,256],[255,0,255]);
  const files=[
   ['selected_hotbar_slot.png','textures/ui/selected_hotbar_slot.png'],
   ['widgets.png','assets/minecraft/textures/gui/widgets.png']
