@@ -154,7 +154,7 @@ test('creeper explosions respect opaque cover and attenuate partial exposure',()
  assert.equal(rules.blastExposure(null,target,()=>true),0);
  assert.equal(rules.blastExposure(mob,target,null),0);
  const html=read('index.html');
- assert.ok(html.includes('mobAI.blastExposure(m,p,mobVisionPassable)'),
+ assert.ok(html.includes('mobAI.blastExposure(m,p,mobBlastPassable)'),
    'live creeper explosion damage must use occlusion, not just proximity');
  assert.ok(html.includes('mobAI.explosionDamage(distance,3,8,exposure)'));
 });
