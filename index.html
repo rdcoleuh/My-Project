@@ -3699,12 +3699,21 @@ body.in-nether #game-wrap{background:#290f19}
         }
       }
       if(m.tamed){m.step=4;m.moving=false;continue;}
+      const aquaticMob=!!extraMobs?.isAquatic(m.kind);
       if(m.knockX||m.knockZ){
         const kx=clamp(m.x+(m.knockX||0)*dt,1.6,W-1.6);
         const kz=clamp(m.z+(m.knockZ||0)*dt,1.6,D-1.6);
-        const floor=topAt(kx,kz)+1;
-        if(Math.abs(floor-m.y)<1.5&&get(Math.floor(kx),floor,Math.floor(kz))===0){
-          m.x=kx;m.z=kz;m.y=floor;
+        if(aquaticMob){
+          // Knockback must not teleport fish from water to the sea floor.
+          if(get(Math.floor(kx),Math.floor(m.y),Math.floor(kz))===7&&
+             collisionFree(kx,m.y,kz,m.kind,'',!!m.baby)){
+            m.x=kx;m.z=kz;
+          }
+        }else{
+          const floor=topAt(kx,kz)+1;
+          if(Math.abs(floor-m.y)<1.5&&get(Math.floor(kx),floor,Math.floor(kz))===0){
+            m.x=kx;m.z=kz;m.y=floor;
+          }
         }
         const friction=Math.max(0,1-dt*8);
         m.knockX=(m.knockX||0)*friction;m.knockZ=(m.knockZ||0)*friction;
@@ -3769,8 +3778,19 @@ body.in-nether #game-wrap{background:#290f19}
       // low ceilings. Steer around walls instead of walking into them forever.
       // Flying/swimming mobs retain their existing specialized locomotion.
       const flying=['ghast','blaze','happy_ghast','ghastling','wither'].includes(m.kind);
-      const swimming=!!extraMobs?.isAquatic(m.kind);
-      const steered=(!flying&&!swimming&&pace>.0001)?mobAI.steerHeading(m.heading,angle=>{
+      const swimming=aquaticMob;
+      // Water-aware local steering: fish must turn along channels rather than
+      // repeatedly swimming into dry banks or solid underwater obstacles.
+      // The same bounded eight-heading search keeps mobile CPU work small.
+      const swimSteered=(swimming&&pace>.0001)?mobAI.steerHeading(m.heading,angle=>{
+        const look=Math.max(.65,Math.min(1.5,pace*2.5));
+        const tx=clamp(m.x+Math.cos(angle)*look,1.6,W-1.6);
+        const tz=clamp(m.z+Math.sin(angle)*look,1.6,D-1.6);
+        return Math.hypot(tx-m.x,tz-m.z)>=look*.5&&
+          get(Math.floor(tx),Math.floor(m.y),Math.floor(tz))===7&&
+          collisionFree(tx,m.y,tz,m.kind,'',!!m.baby);
+      },m.id%2?1:-1):m.heading;
+      const steered=swimming?swimSteered:(!flying&&pace>.0001)?mobAI.steerHeading(m.heading,angle=>{
         const look=Math.max(.65,pace*2.5);
         const tx=clamp(m.x+Math.cos(angle)*look,1.6,W-1.6);
         const tz=clamp(m.z+Math.sin(angle)*look,1.6,D-1.6);
@@ -3787,7 +3807,9 @@ body.in-nether #game-wrap{background:#290f19}
       const ground=topAt(nx,nz)+1;
       if(extraMobs?.isAquatic(m.kind)){
         const level=Math.floor(m.y),canSwim=get(Math.floor(nx),level,Math.floor(nz))===7;
-        if(canSwim){m.x=nx;m.z=nz;m.y=Math.max(1,level+.2+Math.sin(dayClock*1.5+m.id)*.12);}
+        if(canSwim&&collisionFree(nx,m.y,nz,m.kind,'',!!m.baby)){
+          m.x=nx;m.z=nz;m.y=Math.max(1,level+.2+Math.sin(dayClock*1.5+m.id)*.12);
+        }
       }else if(Math.abs(ground-m.y)<1.25&&get(Math.floor(nx),ground,Math.floor(nz))===0&&
         collisionFree(nx,ground,nz,m.kind,'',!!m.baby)){m.x=nx;m.z=nz;m.y=ground}else if(['ghast','blaze','happy_ghast','ghastling','wither'].includes(m.kind)){m.x=nx;m.z=nz;m.y=Math.max(ground+3,Math.min(H-6,m.y+Math.sin(dayClock+m.id)*dt*.4));}
       m.moving=Math.hypot(m.x-beforeX,m.z-beforeZ)>.001;
