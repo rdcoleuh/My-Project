@@ -182,10 +182,15 @@ async function go(browser,name,mobile){
       meleeAbove:ai.attackInReach(m,{x:1,y:6,z:0},'melee'),
       rangedNear:ai.attackInReach(m,{x:6,y:2,z:0},'ranged'),
       rangedAbove:ai.attackInReach(m,{x:6,y:15,z:0},'ranged'),
-      ghastSpacing:ai.targetIntent('ghast',7,true)};
+      ghastSpacing:ai.targetIntent('ghast',7,true),
+      blastOpen:ai.blastExposure({x:1.1,y:0,z:1.5},{x:3.9,y:0,z:1.5},()=>true),
+      blastBlocked:ai.blastExposure({x:1.1,y:0,z:1.5},{x:3.9,y:0,z:1.5},
+        (x,y,z)=>!(x===2&&(y===0||y===1)&&z===1)),
+      blastCovered:ai.blastExposure({x:1.1,y:0,z:1.5},{x:3.9,y:0,z:1.5},
+        (x,y,z)=>!(x===2&&y===0&&z===1))};
   });
   assert.deepEqual(reach,{meleeNear:true,meleeAbove:false,rangedNear:true,
-    rangedAbove:false,ghastSpacing:'ranged'},
+    rangedAbove:false,ghastSpacing:'ranged',blastOpen:1,blastBlocked:0,blastCovered:1/3},
     name+': mob combat reach and flying ranged spacing regressed');
   // From the actual title screen: choose a local ZIP, apply exact pixels,
   // save it as default, then reload the same browser and auto-restore it.

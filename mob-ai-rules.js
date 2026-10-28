@@ -14,10 +14,24 @@
  function spiderAggressive(kind,isNight,anger){
    return (kind==='spider'||kind==='cave_spider')&&(!!isNight||(Number(anger)||0)>0);
  }
- function explosionDamage(distance,radius=3,base=8){
-   if(!(Number.isFinite(distance)&&distance>=0&&Number.isFinite(radius)&&radius>0))return 0;
-   if(distance>=radius)return 0;
-   return Math.max(1,Math.ceil(base*(1-distance/radius)));
+ function explosionDamage(distance,radius=3,base=8,exposure=1){
+   if(![distance,radius,base,exposure].every(Number.isFinite)||
+      distance<0||radius<=0||base<=0||distance>=radius||exposure<=0)return 0;
+   const fraction=Math.min(1,exposure);
+   return Math.max(1,Math.ceil(base*(1-distance/radius)*fraction));
+ }
+ // An explosion is evaluated only once, so three bounded voxel rays are
+ // affordable. Partial cover reduces damage; an opaque wall blocks all
+ // damage. Use feet, torso and head rather than eye-only visibility.
+ function blastExposure(mob,target,passable){
+   if(!mob||!target||typeof passable!=='function'||
+      ![mob.x,mob.y,mob.z,target.x,target.y,target.z].every(Number.isFinite))return 0;
+   const origin={x:mob.x,y:mob.y+.8,z:mob.z};
+   let open=0;
+   for(const height of [.25,.9,1.55]){
+     if(rayClear(origin,{x:target.x,y:target.y+height,z:target.z},passable,5))open++;
+   }
+   return open/3;
  }
  // Short-lived pursuit keeps a monster searching the last *seen* location
  // when a player rounds a corner; it never grants invisible melee attacks.
@@ -135,5 +149,5 @@
   if(['skeleton','stray','pillager','blaze','ghast','wither'].includes(kind))return distance<5?'retreat':distance<=10?'ranged':'approach';
   return distance<=1.6?'melee':'approach';
  }
- window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,pursuitPoint,steerHeading,rayClear,withinSight,attackInReach,targetIntent});
+ window.MineWorldMobAIRules=Object.freeze({FUSE_SECONDS,creeperTick,spiderAggressive,explosionDamage,blastExposure,pursuitPoint,steerHeading,rayClear,withinSight,attackInReach,targetIntent});
 })();

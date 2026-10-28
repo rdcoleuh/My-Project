@@ -3571,6 +3571,11 @@ body.in-nether #game-wrap{background:#290f19}
   function nightTime(){return survivalRules.sunlight(dayClock)<-.18}
   // Mob detection is limited to a 25-block three-dimensional sight radius.
   // Sample the voxel grid between eyes, so caves, walls and hills block aggro.
+  function mobVisionPassable(x,y,z){
+    const block=get(x,y,z);
+    // Air, water, glass and small crops do not occlude these rays.
+    return block===0||block===7||block===9||(block>=139&&block<=154);
+  }
   function mobHasLineOfSight(m,p){
     if(!m||!p||(p.dimension||'overworld')!==dimension)return false;
     const dims=entityHitboxes.dimensions(m.kind,!!m.baby,m.hitboxState||'');
@@ -3582,11 +3587,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(distance>detection||distance<.001)return false;
     return mobAI.rayClear(
       {x:mx,y:my,z:mz},{x:tx,y:ty,z:tz},
-      (x,y,z)=>{
-        const block=get(x,y,z);
-        // Air, water, glass and small crops do not occlude vision.
-        return block===0||block===7||block===9||(block>=139&&block<=154);
-      },detection);
+      mobVisionPassable,detection);
   }
   function mobVisibleTarget(m,players,dt){
     m.sightClock=(m.sightClock??0)-dt;
@@ -3771,7 +3772,8 @@ body.in-nether #game-wrap{background:#290f19}
           const mul=difficulty==='hard'?1.65:difficulty==='easy'?.65:1;
           for(const p of living){
             const distance=Math.hypot(m.x-p.x,m.y-p.y,m.z-p.z);
-            const amount=Math.ceil(mobAI.explosionDamage(distance)*mul);
+            const exposure=distance<3?mobAI.blastExposure(m,p,mobVisionPassable):0;
+            const amount=Math.ceil(mobAI.explosionDamage(distance,3,8,exposure)*mul);
             if(amount<=0)continue;
             if(p.id===null){if(playerHitCooldown<=0){damage(amount,'Creeper explosion');playerHitCooldown=.85;}}
             else network?.damagePlayer(p.id,amount,'Creeper explosion');

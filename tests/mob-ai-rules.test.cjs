@@ -63,7 +63,7 @@ test('host simulation uses validated pure mob rules; no changes to survival save
    assert.ok(sw.includes("'./"+name+"'"));
  }
  assert.ok(html.includes('mobAI.creeperTick(m.fuse||0,dt,close)'));
- assert.ok(html.includes('mobAI.explosionDamage(distance)'));
+ assert.ok(html.includes('mobAI.explosionDamage(distance,3,8,exposure)'));
  assert.ok(html.includes('mobAI.spiderAggressive(m.kind,nightTime(),m.anger)'));
  assert.ok(html.includes('mobAI.steerHeading(m.heading,angle=>'));
  assert.ok(html.includes('m.lastSeen=mobAI.pursuitPoint(m.lastSeen,null,dt)'));
@@ -138,4 +138,23 @@ test('blaze ghast and wither hold ranged distance instead of rushing into melee'
    assert.equal(rules.targetIntent(kind,12,true),'approach',kind);
    assert.equal(rules.targetIntent(kind,7,false),'idle',kind);
  }
+});
+
+test('creeper explosions respect opaque cover and attenuate partial exposure',()=>{
+ const mob={x:1.1,y:0,z:1.5},target={x:3.9,y:0,z:1.5};
+ const wall=(x,y,z)=>!(x===2&&(y===0||y===1)&&z===1);
+ const lowCover=(x,y,z)=>!(x===2&&y===0&&z===1);
+ assert.equal(rules.blastExposure(mob,target,()=>true),1);
+ assert.equal(rules.blastExposure(mob,target,wall),0,'solid wall shields all samples');
+ const partial=rules.blastExposure(mob,target,lowCover);
+ assert.equal(partial,1/3,'low cover blocks lower body but not the head');
+ assert.equal(rules.explosionDamage(1,3,8,0),0);
+ assert.ok(rules.explosionDamage(1,3,8,partial)<rules.explosionDamage(1,3,8,1));
+ assert.equal(rules.explosionDamage(1,3,0,1),0);
+ assert.equal(rules.blastExposure(null,target,()=>true),0);
+ assert.equal(rules.blastExposure(mob,target,null),0);
+ const html=read('index.html');
+ assert.ok(html.includes('mobAI.blastExposure(m,p,mobVisionPassable)'),
+   'live creeper explosion damage must use occlusion, not just proximity');
+ assert.ok(html.includes('mobAI.explosionDamage(distance,3,8,exposure)'));
 });
