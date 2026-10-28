@@ -62,6 +62,19 @@
    const next=delta.map((v,i)=>v>0?(cell[i]+1-start[i])/v:
      v<0?(start[i]-cell[i])/-v:Infinity);
    const interval=delta.map(v=>v===0?Infinity:1/Math.abs(v));
+   const faceAxes=[];
+   for(let i=0;i<3;i++)if(delta[i]===0&&Number.isInteger(start[i]))faceAxes.push(i);
+   function clearCandidate(candidate){
+     // The target voxel may contain its hitbox, so it is intentionally ignored.
+     if(candidate.every((v,i)=>v===end[i]))return true;
+     for(let mask=0;mask<(1<<faceAxes.length);mask++){
+       const touched=candidate.slice();
+       for(let bit=0;bit<faceAxes.length;bit++)
+         if(mask&(1<<bit))touched[faceAxes[bit]]--;
+       if(!passable(...touched))return false;
+     }
+     return true;
+   }
    // Each iteration crosses at least one voxel boundary; no unbounded loop.
    const limit=end.reduce((sum,v,i)=>sum+Math.abs(v-cell[i]),3);
    for(let visit=0;visit<limit;visit++){
@@ -70,14 +83,15 @@
      if(!Number.isFinite(t)||t>1+1e-10)return false;
      const crossed=[];
      for(let axis=0;axis<3;axis++)if(next[axis]<=t+1e-12)crossed.push(axis);
-     // Prevent corner-peeking: test every voxel touching a tied boundary.
+     // A ray exactly on a stationary voxel face or edge touches cells on
+   // both sides. Sampling only floor(position) allowed face-hugging sight
+   // through the neighboring solid block, especially on diagonal corridors.
+   // Prevent corner-peeking: test every voxel touching a tied boundary.
      for(let mask=1;mask<(1<<crossed.length);mask++){
        const candidate=cell.slice();
        for(let bit=0;bit<crossed.length;bit++)
          if(mask&(1<<bit))candidate[crossed[bit]]+=step[crossed[bit]];
-       // Ignore the target's own voxel, which may contain its hitbox.
-       if(candidate.every((v,i)=>v===end[i]))continue;
-       if(!passable(...candidate))return false;
+       if(!clearCandidate(candidate))return false;
      }
      for(const axis of crossed){cell[axis]+=step[axis];next[axis]+=interval[axis];}
    }

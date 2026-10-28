@@ -40,3 +40,22 @@ test('host mob vision uses voxel traversal for detection and attacks',()=>{
  assert.ok(fs.readFileSync(path.join(root,'scripts/browser-smoke.cjs'),'utf8')
    .includes('mobs must not see through thin walls or diagonal corners'));
 });
+
+test('rays exactly on a voxel face check solid cells on both sides',()=>{
+ const faceStart=a(1,1.5,.5),faceEnd=a(1,1.5,3.5);
+ const neighborWall=(x,y,z)=>!(x===0&&y===1&&z===2);
+ assert.equal(ray(faceStart,faceEnd,neighborWall),false,
+   'stationary x=1 face must not see through x=0 wall');
+ assert.equal(ray(faceEnd,faceStart,neighborWall),false,'reverse ray is equally blocked');
+ assert.equal(ray(a(1.001,1.5,.5),a(1.001,1.5,3.5),neighborWall),true,
+   'ray just inside the open voxel should remain visible');
+ assert.equal(ray(faceStart,faceEnd,()=>true),true);
+});
+test('rays on the intersection of two voxel faces check all touching columns',()=>{
+ const edgeWall=(x,y,z)=>!(x===0&&y===0&&z===2);
+ assert.equal(ray(a(1,1,.5),a(1,1,3.5),edgeWall),false);
+ assert.equal(ray(a(1,1,3.5),a(1,1,.5),edgeWall),false);
+ let probes=0;
+ assert.equal(ray(a(1,1,.5),a(1,1,3.5),()=>{probes++;return true;}),true);
+ assert.ok(probes<=12,'boundary handling stays constant-work per crossed cell');
+});
