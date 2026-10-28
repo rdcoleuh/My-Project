@@ -1140,8 +1140,11 @@ function hudIcon(kind,fill){
       .filter(candidate=>source.entries.has(candidate)):
     kind==='hotbar'&&['background','selected'].includes(fill)?
       [key,legacyKey].filter(candidate=>source.entries.has(candidate)):null;
-  const derivedHalf=kind!=='hotbar'&&fill==='half'&&!source.entries.has(key)&&
+  // A damaged explicitly named half glyph should not hide the valid full
+  // and empty art in the same player-imported pack.
+  const canDeriveHalf=kind!=='hotbar'&&fill==='half'&&
     source.entries.has('hud:'+kind+':full')&&source.entries.has('hud:'+kind+':empty');
+  let derivedHalf=canDeriveHalf&&!source.entries.has(key);
   // Prefer modern individual sprites; a missing older stat sprite can be
   // cropped from the user's legacy gui/icons.png atlas.
   const hasLegacyStat=kind!=='hotbar'&&source.entries.has('hud:legacy-icons');
@@ -1170,22 +1173,35 @@ function hudIcon(kind,fill){
       }
       if(!image)return null;
     }else{
-      // Broken modern sprites must not stretch across the HUD or suppress
-      // usable artwork in an older imported gui/icons.png atlas.
+      // Prefer the player's explicit stat art. If an authored half glyph
+      // is broken, recover from a valid full/empty pair before using the
+      // legacy atlas or falling back to MineWorld's original pixel art.
+      const tryFullHalf=async()=>{
+        if(!canDeriveHalf||derivedHalf)return false;
+        try{
+          const full=await smallSpriteFromPng(await source.get('hud:'+kind+':full'));
+          if(!window.MineWorldHotbarUV?.validStatSprite(full.width,full.height))return false;
+          image=full;derivedHalf=true;return true;
+        }catch{return false;}
+      };
       const candidate=legacyStat?'hud:legacy-icons':derivedHalf?'hud:'+kind+':full':key;
       try{
         image=await smallSpriteFromPng(await source.get(candidate));
       }catch(error){
-        if(!hasLegacyStat||legacyStat)throw error;
-        image=await smallSpriteFromPng(await source.get('hud:legacy-icons'));
-        legacyStat=true;
+        if(!await tryFullHalf()){
+          if(!hasLegacyStat||legacyStat)throw error;
+          image=await smallSpriteFromPng(await source.get('hud:legacy-icons'));
+          legacyStat=true;
+        }
       }
       if(generation!==state.itemGeneration)return null;
       if(kind!=='hotbar'&&!legacyStat&&
          !window.MineWorldHotbarUV?.validStatSprite(image.width,image.height)){
-        if(!hasLegacyStat)return null;
-        image=await smallSpriteFromPng(await source.get('hud:legacy-icons'));
-        legacyStat=true;
+        if(!await tryFullHalf()){
+          if(!hasLegacyStat)return null;
+          image=await smallSpriteFromPng(await source.get('hud:legacy-icons'));
+          legacyStat=true;
+        }
         if(generation!==state.itemGeneration)return null;
       }
       if(legacyStat){

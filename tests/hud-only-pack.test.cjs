@@ -199,3 +199,26 @@ test('bad explicit numbered slot recovers from a valid generic slot without a ba
  assert.ok(b.draws.slice(before).some(args=>args.length===3),
   'generic square sprite is drawn without incorrectly slicing a sheet');
 });
+
+test('corrupt explicit half-heart recovers crisp imported full and empty sprites',async()=>{
+ const b=boot(),bad=Uint8Array.from([1,2,3,4,5]);
+ const files=[
+  ['full.png','pack/assets/minecraft/textures/gui/sprites/hud/heart/full.png',png],
+  ['half.png','pack/assets/minecraft/textures/gui/sprites/hud/heart/half.png',bad],
+  ['container.png','pack/assets/minecraft/textures/gui/sprites/hud/heart/container.png',png]
+ ].map(([name,webkitRelativePath,data])=>({
+  name,webkitRelativePath,size:data.length,arrayBuffer:async()=>data.buffer
+ }));
+ const result=await b.pack.loadFiles(files);
+ assert.equal(result.hudAssets,3);
+ const before=b.draws.length;
+ assert.equal(await b.pack.hudIcon('heart','half'),'data:image/png;base64,owned');
+ const draws=b.draws.slice(before);
+ assert.equal(draws.length,2,'empty background and cropped full glyph are both rendered');
+ assert.equal(draws[0].length,5,'empty sprite remains the underlay');
+ assert.equal(draws[1].length,9,'the full sprite is cropped rather than stretched');
+ assert.equal(draws[1][3],8);
+ assert.equal(draws[1][7],8);
+ assert.equal(await b.pack.hudIcon('heart','half'),'data:image/png;base64,owned');
+ assert.equal(b.draws.length,before+2,'recovered artwork is cached');
+});
