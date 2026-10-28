@@ -281,3 +281,31 @@ test('8x imported legacy widgets atlas preserves crisp slot and selection rectan
  assert.ok(b.draws.some(args=>args.length===9&&args[1]===161*8&&args[2]===8&&
   args[3]===160&&args[4]===160),'last slot uses 8x native source texels');
 });
+
+test('ZIP/JAR resource packs retain large player-imported HUD PNGs within the safe decode limits',async()=>{
+ // Independently generated PNG-header fixtures. The mocked Image decoder
+ // verifies archive indexing and crop routing, not the artwork's pixels.
+ const cases=[
+  ['assets/minecraft/textures/gui/widgets.png',1100000,256,256,'hotbar','selected'],
+  ['assets/minecraft/textures/gui/icons.png',1100000,256,256,'heart','full'],
+  ['assets/minecraft/textures/gui/sprites/hud/heart/full.png',300000,16,16,'heart','full'],
+  ['textures/ui/hunger_full.png',300000,16,16,'food','full']
+ ];
+ for(const [name,size,width,height,kind,fill] of cases){
+  const bytes=Buffer.alloc(size);Buffer.from(png).copy(bytes);
+  const b=boot(width,height);
+  const result=await b.pack.loadFile({name:'player-owned.jar',
+   arrayBuffer:async()=>zip([[name,bytes]])});
+  assert.equal(result.hudAssets,1,name+' must be indexed');
+  assert.equal(await b.pack.hudIcon(kind,fill),'data:image/png;base64,owned',
+   name+' must render through the correct imported HUD path');
+ }
+});
+test('ZIP HUD size guard still rejects payloads beyond the bounded 6 MiB limit',async()=>{
+ const bytes=Buffer.alloc(6*1024*1024+1);Buffer.from(png).copy(bytes);
+ const b=boot();
+ const result=await b.pack.loadFile({name:'large.mcpack',
+  arrayBuffer:async()=>zip([['textures/ui/heart.png',bytes]])});
+ assert.equal(result.hudAssets,0);
+ assert.equal(await b.pack.hudIcon('heart','full'),null);
+});

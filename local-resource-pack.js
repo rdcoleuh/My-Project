@@ -315,13 +315,17 @@ function readArchive(buffer){
      keep('item:'+item[1],{method,size,expanded,local},priority);
    if(itemMeta&&size<131072&&expanded<131072&&(method===0||method===8))
      keep('meta:item:'+itemMeta[1],{method,size,expanded,local},priority);
-   if(legacyWidgets&&size<1024*1024&&expanded<1024*1024&&(method===0||method===8))
+   // Match the 6 MiB folder-import and bounded ZIP decompression limits.
+   // Earlier 1 MiB/256 KiB archive caps silently skipped valid HD GUI art.
+   // The PNG decoder still enforces strict pixel and aspect-ratio limits.
+   const hudFileSafe=size<6*1024*1024&&expanded<6*1024*1024&&(method===0||method===8);
+   if(legacyWidgets&&hudFileSafe)
      keep('hud:hotbar:legacy-widgets',{method,size,expanded,local},priority);
-   if(legacyIcons&&size<1024*1024&&expanded<1024*1024&&(method===0||method===8))
+   if(legacyIcons&&hudFileSafe)
      keep('hud:legacy-icons',{method,size,expanded,local},priority);
-   if(hud&&size<262144&&expanded<262144&&(method===0||method===8))
+   if(hud&&hudFileSafe)
      keep('hud:'+hud[1]+':'+hud[2],{method,size,expanded,local},priority);
-   if(bedrockHud&&size<262144&&expanded<262144&&(method===0||method===8))
+   if(bedrockHud&&hudFileSafe)
      keep('hud:'+bedrockHud,{method,size,expanded,local},priority);
    if(entity&&size<4*1024*1024&&expanded<6*1024*1024&&(method===0||method===8))
      keep('entity:'+entity[1],{method,size,expanded,local},priority);
