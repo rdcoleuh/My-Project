@@ -325,7 +325,7 @@ test('ZIP HUD size guard still rejects payloads beyond the bounded 6 MiB limit',
 });
 
 test('mismatched imported empty-heart resolution cannot stretch across a full-heart sprite',async()=>{
- const b=boot([16,9],[16,9]);
+ const b=boot([16,16,9],[16,16,9]);
  const files=['full','container'].map(name=>({
   name:name+'.png',webkitRelativePath:'pack/assets/minecraft/textures/gui/sprites/hud/heart/'+name+'.png',
   size:png.length,arrayBuffer:async()=>png.buffer
@@ -339,7 +339,7 @@ test('mismatched imported empty-heart resolution cannot stretch across a full-he
 });
 
 test('integer-scaled imported food underlay is retained without fractional texels',async()=>{
- const b=boot([32,16],[32,16]);
+ const b=boot([16,32,16],[16,32,16]);
  const files=['food_full','food_empty'].map(name=>({
   name:name+'.png',webkitRelativePath:'pack/assets/minecraft/textures/gui/sprites/hud/'+name+'.png',
   size:png.length,arrayBuffer:async()=>png.buffer
