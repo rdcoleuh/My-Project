@@ -184,6 +184,11 @@ function createSectionStore(options={}){
   }));
   const counts=countNonAirSections({data:options.data,height,chunkSize,sectionHeight});
   const flags=Uint8Array.from(counts,n=>n>0?1:0);
+  // A newly loaded section containing blocks needs its first mesh. Empty
+  // sections are skipped until an edit makes them visible.
+  const dirty=new Set();
+  for(let i=0;i<flags.length;i++)if(flags[i])dirty.add(i);
+  let revision=0;
   const location=(x,y,z)=>{
     if(![x,y,z].every(Number.isSafeInteger)||x<0||x>=chunkSize||
        z<0||z>=chunkSize||y<minY||y>maxY)return null;
@@ -209,8 +214,34 @@ function createSectionStore(options={}){
       section.block=null;section.uniform=false;
     }
     section.data[offset]=block;
+    // A block changed at the top or bottom of a slice can reveal/hide a face
+    // belonging to the neighboring slice. Invalidate both sides of the seam.
+    dirty.add(index);
+    if(y===section.minY&&index>0)dirty.add(index-1);
+    if(y===section.maxY&&index+1<sections.length)dirty.add(index+1);
+    revision++;
     return true;
   }
+  // Validate an entire edit batch before mutating anything. This is useful
+  // for replaying saved edits and remote changes without partial corruption.
+  // Each entry is [localX, absoluteY, localZ, blockId].
+  function applyEdits(edits){
+    if(!edits||typeof edits[Symbol.iterator]!=='function')
+      throw new TypeError('Expected iterable section edits');
+    const pending=[];
+    for(const entry of edits){
+      if(!Array.isArray(entry)||entry.length!==4||
+         !location(entry[0],entry[1],entry[2])||
+         !Number.isSafeInteger(entry[3])||entry[3]<0||entry[3]>255)
+        throw new RangeError('Invalid section edit batch');
+      pending.push(entry);
+    }
+    let changed=0;
+    for(const [x,y,z,block] of pending)if(set(x,y,z,block))changed++;
+    return changed;
+  }
+  function dirtySections(){return [...dirty].sort((a,b)=>a-b);}
+  function takeDirtySections(){const result=dirtySections();dirty.clear();return result;}
   // Recompress when a section is unloaded or after a batch of edits. Scanning
   // 4096 voxels after every block placement would harm mobile frame times.
   function compact(index){
@@ -253,10 +284,11 @@ function createSectionStore(options={}){
     return {sections:sections.length,uniform:sections.filter(s=>s.uniform).length,
       active:flags.reduce((n,v)=>n+(v?1:0),0),
       blocks:counts.reduce((n,v)=>n+v,0),
-      payloadBytes:sections.reduce((n,s)=>n+(s.uniform?1:s.data.byteLength),0)};
+      payloadBytes:sections.reduce((n,s)=>n+(s.uniform?1:s.data.byteLength),0),
+      dirty:dirty.size,revision};
   }
-  return Object.freeze({minY,maxY,height,chunkSize,sectionHeight,get,set,compact,
-    materialize,rebuild,near,stats});
+  return Object.freeze({minY,maxY,height,chunkSize,sectionHeight,get,set,applyEdits,
+    dirtySections,takeDirtySections,compact,materialize,rebuild,near,stats});
 }
 
  // Small occupancy flags for mesh culling, without copying full voxel arrays.
