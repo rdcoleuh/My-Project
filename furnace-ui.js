@@ -1,5 +1,49 @@
 /* MineWorld original accessible furnace UI. Uses the existing Survival inventory. */
 (()=>{'use strict';
+
+/* Inventory and furnace mutations are a single logical transfer. Reserve the
+ * source first: a failed inventory debit must never manufacture furnace items,
+ * and a failed inventory credit must never destroy smelted output. */
+function deposit(engine,api,position,which,item,limit){
+ if(!position||!['input','fuel'].includes(which)||typeof item!=='string'||
+    !Number.isInteger(limit)||limit<1)return 0;
+ const existing=engine.get(position)?.[which];
+ if(existing&&existing.key!==item)return 0;
+ const owned=api.count(item);
+ if(!Number.isInteger(owned)||owned<1)return 0;
+ const quantity=Math.min(limit,owned,64-(existing?.qty||0));
+ if(quantity<1)return 0;
+ const debit=api.change(item,-quantity);
+ if(debit!==-quantity){
+  if(Number.isInteger(debit)&&debit<0)api.change(item,-debit);
+  return 0;
+ }
+ let moved=0;
+ try{moved=engine.insert(position,which,item,quantity);}
+ catch(error){api.change(item,quantity);throw error;}
+ if(!Number.isInteger(moved)||moved<0||moved>quantity)
+  throw new Error('Invalid furnace deposit result');
+ if(moved<quantity)api.change(item,quantity-moved);
+ return moved;
+}
+function withdraw(engine,api,position,which){
+ if(!position||!['input','fuel','output'].includes(which))return {moved:0,full:false};
+ const existing=engine.get(position)?.[which];
+ if(!existing)return {moved:0,full:false};
+ const owned=api.count(existing.key);
+ const room=Number.isInteger(owned)?Math.max(0,65535-owned):0;
+ if(room<1)return {moved:0,full:true};
+ const quantity=Math.min(room,existing.qty);
+ const credit=api.change(existing.key,quantity);
+ if(!Number.isInteger(credit)||credit<=0)return {moved:0,full:false};
+ let out;
+ try{out=engine.take(position,which,credit);}
+ catch(error){api.change(existing.key,-credit);throw error;}
+ const moved=out?.key===existing.key&&Number.isInteger(out.qty)?
+  Math.max(0,Math.min(credit,out.qty)):0;
+ if(moved<credit)api.change(existing.key,moved-credit);
+ return {moved,full:false};
+}
 function create(api){
  const engine=api.engine;let current=null,panel=null,drawClock=0;
  function el(id){return panel.querySelector('#'+id);}
@@ -39,11 +83,11 @@ function create(api){
    for(const [suffix,limit] of [['',1],['-stack',64]]){
     el('mw-furnace-put-'+which+suffix).addEventListener('click',()=>{
      if(!current)return;const item=el('mw-furnace-'+which).value;
-     const owned=api.count(item);if(!item||owned<1)return;
-     const moved=engine.insert(current,which,item,Math.min(limit,owned));
-     if(moved){api.change(item,-moved);api.onChange();render();}
+     const moved=deposit(engine,api,current,which,item,limit);
+     if(moved){api.onChange();render();}
     });
    }
+   el('mw-furnace-'+which).addEventListener('change',render);
    el('mw-furnace-return-'+which).addEventListener('click',()=>take(which));
   }
   el('mw-furnace-output').addEventListener('click',()=>take('output'));
@@ -52,10 +96,10 @@ function create(api){
   },true);
  }
  function take(which){
-  if(!current)return;const s=engine.get(current)?.[which];if(!s)return;
-  const room=65535-api.count(s.key);if(room<1){api.toast('Inventory full');return;}
-  const out=engine.take(current,which,Math.min(room,s.qty));
-  if(out){api.change(out.key,out.qty);api.onChange();render();}
+  if(!current)return;
+  const result=withdraw(engine,api,current,which);
+  if(result.full){api.toast('Inventory full');return;}
+  if(result.moved){api.onChange();render();}
  }
  function render(){
   if(!current||!panel)return;
@@ -99,5 +143,5 @@ function create(api){
  function tick(dt){if(!current)return;drawClock+=dt;if(drawClock>=.25){drawClock=0;render();}}
  return {open,close,tick,get isOpen(){return !!current;}};
 }
-window.MineWorldFurnaceUI=Object.freeze({create});
+window.MineWorldFurnaceUI=Object.freeze({create,transfers:Object.freeze({deposit,withdraw})});
 })();
