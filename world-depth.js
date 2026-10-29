@@ -166,5 +166,29 @@ function sectionizeChunk({data,minY=0,height,chunkSize=16,sectionHeight=16}={}){
     sections:Object.freeze(sections),read,materialize,near});
 }
 
-window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk});
+
+ // Small occupancy flags for mesh culling, without copying full voxel arrays.
+ // Conservative occupied flags after block deletion are safe; false negatives
+ // after placement are not. The live setter marks newly occupied sections.
+ function scanNonAirSections({data,height,chunkSize=16,sectionHeight=16}={}){
+   if(Object.prototype.toString.call(data)!=='[object Uint8Array]'||
+     ![height,chunkSize,sectionHeight].every(Number.isSafeInteger)||
+     height<1||chunkSize<1||sectionHeight<1||
+     !Number.isSafeInteger(chunkSize*chunkSize*height)||
+     data.length!==chunkSize*chunkSize*height)
+     throw new RangeError('Invalid section occupancy data');
+   const occupied=new Uint8Array(Math.ceil(height/sectionHeight));
+   for(let section=0;section<occupied.length;section++){
+     const start=section*sectionHeight,span=Math.min(sectionHeight,height-start);
+     scan:for(let col=0;col<chunkSize*chunkSize;col++){
+       const base=col*height+start;
+       for(let y=0;y<span;y++)if(data[base+y]!==0){
+         occupied[section]=1;break scan;
+       }
+     }
+   }
+   return occupied;
+ }
+
+window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk,scanNonAirSections});
 })();

@@ -1354,7 +1354,9 @@ body.in-nether #game-wrap{background:#290f19}
       if(localEdits)for(const [i,b] of localEdits){const x=Math.floor(i/(D*H)),z=Math.floor(i/H)%D,y=i%H;
         data[chunkIndex(x,y,z)]=b;}
     }
-    chunk={cx,cz,data,vbo:null,count:0,dirty:true,last:performance.now()};
+    chunk={cx,cz,data,minY:0,
+      nonAirSections:window.MineWorldWorldDepth.scanNonAirSections({data,height:H,chunkSize:CHUNK}),
+      vbo:null,count:0,dirty:true,last:performance.now()};
     chunkCache.set(key,chunk);
     // Newly loaded adjacent chunks invalidate border faces, handled over subsequent frames.
     markAdjacentMeshesDirty(cx,cz);
@@ -1368,7 +1370,12 @@ body.in-nether #game-wrap{background:#290f19}
   const set=(x,y,z,b)=>{
     if(!inside(x,y,z))return;
     const chunk=loadChunk(Math.floor(x/CHUNK),Math.floor(z/CHUNK));
-    if(chunk){chunk.data[chunkIndex(x,y,z)]=b;chunk.dirty=true;}
+    if(chunk){
+      chunk.data[chunkIndex(x,y,z)]=b;
+      // Do not hide blocks placed into a previously all-air slice.
+      if(b!==0)chunk.nonAirSections[Math.floor((y-chunk.minY)/16)]=1;
+      chunk.dirty=true;
+    }
   };
   // No terrain generation or network access during chunk meshing.
   function blockForMesh(x,y,z){
@@ -1625,20 +1632,24 @@ body.in-nether #game-wrap{background:#290f19}
     }
   }
   function buildChunkMesh(chunk){
-    const {cx,cz,data}=chunk,ax=cx*CHUNK,az=cz*CHUNK;
+    const {cx,cz,data,minY=0,nonAirSections}=chunk,ax=cx*CHUNK,az=cz*CHUNK;
     const faces=[];
     const tintBiomes=dimension==='overworld'?Array.from({length:CHUNK*CHUNK},(_,i)=>window.MineWorldBiomes.biomeAt(ax+Math.floor(i/CHUNK),az+i%CHUNK).name):null;
-    for(let dx=0;dx<CHUNK;dx++)for(let dz=0;dz<CHUNK;dz++)for(let y=0;y<H;y++){
-      const x=ax+dx,z=az+dz,b=data[(dx*CHUNK+dz)*H+y];if(!b)continue;
-      for(const face of FACE){
-        const nx=x+face.n[0],ny=y+face.n[1],nz=z+face.n[2];
-        // Outside a chunk, read adjacent terrain without forcing an entire world mesh.
-        const near=nx>=ax&&nx<ax+CHUNK&&nz>=az&&nz<az+CHUNK&&ny>=0&&ny<H?
-          data[((nx-ax)*CHUNK+(nz-az))*H+ny]:blockForMesh(nx,ny,nz);
-        // Draw the face behind transparent glass so panes really reveal neighboring blocks.
-        if(near&&!(b!==7&&near===7)&&!(b===9&&near!==9)&&!(near===9&&b!==9)&&!(b>=139&&b<=154)&&!(window.MineWorldBlockModels.isPartial(near)||window.MineWorldBlockModels.isPartial(b)))continue;
-        if(b===7&&near===7)continue;
-        pushFace(faces,x,y,z,b,face,tintBiomes?tintBiomes[dx*CHUNK+dz]:'');
+    // Empty vertical slices are skipped; absolute Y is kept for geometry.
+    // The full chunk remains available for faces across section boundaries.
+    for(let section=0;section<nonAirSections.length;section++){
+      if(!nonAirSections[section])continue;
+      const startY=section*16,endY=Math.min(H,startY+16);
+      for(let dx=0;dx<CHUNK;dx++)for(let dz=0;dz<CHUNK;dz++)for(let localY=startY;localY<endY;localY++){
+        const x=ax+dx,z=az+dz,y=minY+localY,b=data[(dx*CHUNK+dz)*H+localY];if(!b)continue;
+        for(const face of FACE){
+          const nx=x+face.n[0],ny=y+face.n[1],nz=z+face.n[2];
+          const near=nx>=ax&&nx<ax+CHUNK&&nz>=az&&nz<az+CHUNK&&ny>=minY&&ny<minY+H?
+            data[((nx-ax)*CHUNK+(nz-az))*H+ny-minY]:blockForMesh(nx,ny,nz);
+          if(near&&!(b!==7&&near===7)&&!(b===9&&near!==9)&&!(near===9&&b!==9)&&!(b>=139&&b<=154)&&!(window.MineWorldBlockModels.isPartial(near)||window.MineWorldBlockModels.isPartial(b)))continue;
+          if(b===7&&near===7)continue;
+          pushFace(faces,x,y,z,b,face,tintBiomes?tintBiomes[dx*CHUNK+dz]:'');
+        }
       }
     }
     if(!chunk.vbo)chunk.vbo=gl.createBuffer();
