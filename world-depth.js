@@ -170,25 +170,49 @@ function sectionizeChunk({data,minY=0,height,chunkSize=16,sectionHeight=16}={}){
  // Small occupancy flags for mesh culling, without copying full voxel arrays.
  // Conservative occupied flags after block deletion are safe; false negatives
  // after placement are not. The live setter marks newly occupied sections.
- function scanNonAirSections({data,height,chunkSize=16,sectionHeight=16}={}){
+
+ // Exact per-section non-air counts let the live renderer clear stale
+ // occupancy flags after the final block in a section is mined. This is
+ // O(1) per edit, including multiplayer edits; full scans happen on load.
+ function countNonAirSections({data,height,chunkSize=16,sectionHeight=16}={}){
    if(Object.prototype.toString.call(data)!=='[object Uint8Array]'||
      ![height,chunkSize,sectionHeight].every(Number.isSafeInteger)||
      height<1||chunkSize<1||sectionHeight<1||
      !Number.isSafeInteger(chunkSize*chunkSize*height)||
      data.length!==chunkSize*chunkSize*height)
      throw new RangeError('Invalid section occupancy data');
-   const occupied=new Uint8Array(Math.ceil(height/sectionHeight));
-   for(let section=0;section<occupied.length;section++){
-     const start=section*sectionHeight,span=Math.min(sectionHeight,height-start);
-     scan:for(let col=0;col<chunkSize*chunkSize;col++){
-       const base=col*height+start;
-       for(let y=0;y<span;y++)if(data[base+y]!==0){
-         occupied[section]=1;break scan;
-       }
-     }
+   const counts=new Uint32Array(Math.ceil(height/sectionHeight));
+   for(let col=0;col<chunkSize*chunkSize;col++){
+     const base=col*height;
+     for(let y=0;y<height;y++)
+       if(data[base+y]!==0)counts[Math.floor(y/sectionHeight)]++;
    }
-   return occupied;
+   return counts;
+ }
+ function scanNonAirSections(options={}){
+   return Uint8Array.from(countNonAirSections(options),count=>count>0?1:0);
+ }
+ // y is local to the chunk (0..height-1), not an absolute world Y.
+ // No count change is needed when replacing one non-air block with another.
+ function updateSectionOccupancy(counts,flags,y,previous,next,sectionHeight=16){
+   if(Object.prototype.toString.call(counts)!=='[object Uint32Array]'||
+     Object.prototype.toString.call(flags)!=='[object Uint8Array]'||
+     !Number.isSafeInteger(y)||y<0||
+     !Number.isSafeInteger(sectionHeight)||sectionHeight<1||
+     ![previous,next].every(n=>Number.isSafeInteger(n)&&n>=0&&n<=255)||
+     counts.length!==flags.length||Math.floor(y/sectionHeight)>=counts.length)
+     throw new RangeError('Invalid section occupancy update');
+   const section=Math.floor(y/sectionHeight);
+   if(previous===0&&next!==0){
+     if(counts[section]===4294967295)throw new RangeError('Section count overflow');
+     counts[section]++;
+   }else if(previous!==0&&next===0){
+     if(counts[section]===0)throw new RangeError('Section count underflow');
+     counts[section]--;
+   }
+   flags[section]=counts[section]>0?1:0;
+   return flags[section];
  }
 
-window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk,scanNonAirSections});
+window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk,scanNonAirSections,countNonAirSections,updateSectionOccupancy});
 })();

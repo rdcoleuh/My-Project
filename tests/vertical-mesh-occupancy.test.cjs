@@ -31,11 +31,52 @@ test('malformed occupancy input is rejected',()=>{
    {data:new Uint8Array(16*16*48),height:48,sectionHeight:0}])
    assert.throws(()=>scan(bad),/Invalid section occupancy/);
 });
-test('live renderer uses section flags and marks placements',()=>{
+test('live renderer tracks exact section counts for local and remote edits',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
- assert.ok(html.includes('nonAirSections:window.MineWorldWorldDepth.scanNonAirSections'));
- assert.ok(html.includes('if(b!==0)chunk.nonAirSections[Math.floor((y-chunk.minY)/16)]=1'));
+ assert.ok(html.includes('sectionBlockCounts=window.MineWorldWorldDepth.countNonAirSections'));
+ assert.ok(html.includes('nonAirSections:Uint8Array.from(sectionBlockCounts'));
+ assert.ok(html.includes('updateSectionOccupancy('));
+ assert.ok(html.includes('chunk.sectionBlockCounts,chunk.nonAirSections,y-chunk.minY,previous,b'));
+ assert.ok(html.includes('if(chunk){set(x,y,z,b);dirtyAround(x,z);}'));
+ assert.ok(!html.includes('if(chunk){chunk.data[chunkIndex(x,y,z)]=b;dirtyAround(x,z);}'));
  assert.ok(html.includes('if(!nonAirSections[section])continue'));
  assert.ok(html.includes('y=minY+localY'));
  assert.ok(html.includes('ny-minY]:blockForMesh'));
+});
+
+test('exact occupancy clears on last mined block and restores on placement',()=>{
+ const api=ctx.window.MineWorldWorldDepth;
+ const height=384,minY=-64,data=new Uint8Array(16*16*height);
+ const at=(x,y,z)=>(x*16+z)*height+(y-minY);
+ data[at(0,-64,0)]=58;
+ data[at(0,-64,1)]=58;
+ data[at(1,319,0)]=3;
+ const counts=api.countNonAirSections({data,height});
+ const flags=Uint8Array.from(counts,n=>n?1:0);
+ assert.equal(counts.length,24);
+ assert.equal(counts[0],2);assert.equal(counts[23],1);
+ api.updateSectionOccupancy(counts,flags,0,58,0);
+ assert.equal(counts[0],1);assert.equal(flags[0],1);
+ api.updateSectionOccupancy(counts,flags,0,58,0);
+ assert.equal(counts[0],0);assert.equal(flags[0],0);
+ api.updateSectionOccupancy(counts,flags,383,3,11);
+ assert.equal(counts[23],1);assert.equal(flags[23],1);
+ api.updateSectionOccupancy(counts,flags,383,11,0);
+ assert.equal(counts[23],0);assert.equal(flags[23],0);
+ api.updateSectionOccupancy(counts,flags,0,0,20);
+ assert.equal(counts[0],1);assert.equal(flags[0],1);
+});
+test('partial sections and invalid count updates are handled safely',()=>{
+ const api=ctx.window.MineWorldWorldDepth;
+ const data=new Uint8Array(2*2*35);
+ data[34]=9;
+ const counts=api.countNonAirSections({data,height:35,chunkSize:2});
+ const flags=api.scanNonAirSections({data,height:35,chunkSize:2});
+ assert.deepEqual([...counts],[0,0,1]);
+ api.updateSectionOccupancy(counts,flags,34,9,0);
+ assert.deepEqual([...flags],[0,0,0]);
+ assert.throws(()=>api.updateSectionOccupancy(counts,flags,34,9,0),/underflow/);
+ assert.throws(()=>api.updateSectionOccupancy(counts,flags,-1,0,1),/Invalid/);
+ assert.throws(()=>api.updateSectionOccupancy(counts,flags,35,0,1),/Invalid/);
+ assert.throws(()=>api.updateSectionOccupancy(counts,flags,0,0,256),/Invalid/);
 });

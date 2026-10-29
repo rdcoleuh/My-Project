@@ -1354,8 +1354,9 @@ body.in-nether #game-wrap{background:#290f19}
       if(localEdits)for(const [i,b] of localEdits){const x=Math.floor(i/(D*H)),z=Math.floor(i/H)%D,y=i%H;
         data[chunkIndex(x,y,z)]=b;}
     }
-    chunk={cx,cz,data,minY:0,
-      nonAirSections:window.MineWorldWorldDepth.scanNonAirSections({data,height:H,chunkSize:CHUNK}),
+    const sectionBlockCounts=window.MineWorldWorldDepth.countNonAirSections({data,height:H,chunkSize:CHUNK});
+    chunk={cx,cz,data,minY:0,sectionBlockCounts,
+      nonAirSections:Uint8Array.from(sectionBlockCounts,n=>n>0?1:0),
       vbo:null,count:0,dirty:true,last:performance.now()};
     chunkCache.set(key,chunk);
     // Newly loaded adjacent chunks invalidate border faces, handled over subsequent frames.
@@ -1371,9 +1372,12 @@ body.in-nether #game-wrap{background:#290f19}
     if(!inside(x,y,z))return;
     const chunk=loadChunk(Math.floor(x/CHUNK),Math.floor(z/CHUNK));
     if(chunk){
-      chunk.data[chunkIndex(x,y,z)]=b;
-      // Do not hide blocks placed into a previously all-air slice.
-      if(b!==0)chunk.nonAirSections[Math.floor((y-chunk.minY)/16)]=1;
+      const offset=chunkIndex(x,y,z),previous=chunk.data[offset];
+      if(previous===b)return;
+      chunk.data[offset]=b;
+      // Keep empty-section culling exact after mining, placement and replacement.
+      window.MineWorldWorldDepth.updateSectionOccupancy(
+        chunk.sectionBlockCounts,chunk.nonAirSections,y-chunk.minY,previous,b);
       chunk.dirty=true;
     }
   };
@@ -4893,7 +4897,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
       if(target===dimension&&(b===168||craftBenchMemo.value))craftBenchMemo.until=0;
       if(target!==dimension)return true;
       const chunk=chunkCache.get(chunkKey(Math.floor(x/CHUNK),Math.floor(z/CHUNK)));
-      if(chunk){chunk.data[chunkIndex(x,y,z)]=b;dirtyAround(x,z);}
+      if(chunk){set(x,y,z,b);dirtyAround(x,z);}
       markSave();return true;
     },
     getDimension:()=>dimension,
