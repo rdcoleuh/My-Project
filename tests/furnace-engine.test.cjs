@@ -51,3 +51,23 @@ test('future deep-world furnaces accept negative-Y positions and persist their c
  assert.equal(restored.insert({...deep,y:320},'fuel','coal',1),0);
  assert.equal(restored.insert({...deep,x:10000},'fuel','coal',1),0);
 });
+
+
+test('furnace saves preserve more than 256 independent machines without silent truncation',()=>{
+ const f=api.create();
+ for(let i=0;i<300;i++)assert.equal(f.insert({...p,x:i},'input','rawIron',1),1);
+ const saved=JSON.parse(JSON.stringify(f.snapshot()));
+ assert.equal(saved.length,300);
+ const restored=api.create();restored.restore(saved);
+ assert.equal(restored.snapshot().length,300);
+ assert.equal(restored.get({...p,x:299}).input.key,'rawIron');
+ assert.equal(restored.get({...p,x:0}).input.qty,1);
+});
+
+test('restoring a completed cook frame cannot leave the furnace permanently stalled',()=>{
+ const f=api.create();
+ f.restore([{...p,input:{key:'rawIron',qty:1},fuel:{key:'coal',qty:1},progress:10}]);
+ assert.equal(f.get(p).progress,0,'invalid completed frame is normalized');
+ assert.equal(f.tick(10).completed,1);
+ assert.equal(f.get(p).output.key,'iron');
+});

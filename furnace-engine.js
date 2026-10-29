@@ -54,16 +54,20 @@ function create(){
  }
  function remove(p){const m=get(p);if(!m)return [];machines.delete(id(p));
   return ['input','fuel','output'].map(k=>m[k]).filter(Boolean).map(s=>({...s}));}
- function snapshot(){return [...machines.values()].slice(0,256).map(m=>({...m,input:slot(m.input),fuel:slot(m.fuel),output:slot(m.output)}));}
+ // Never silently drop player-owned furnaces from a saved world.
+ function snapshot(){return [...machines.values()].map(m=>({...m,input:slot(m.input),fuel:slot(m.fuel),output:slot(m.output)}));}
  function restore(records){machines.clear();if(!Array.isArray(records))return;
-  for(const r of records.slice(0,256)){if(!pos(r))continue;const m=blank(r);
+  for(const r of records){if(!pos(r))continue;const m=blank(r);
    m.input=slot(r.input);m.fuel=slot(r.fuel);m.output=slot(r.output);
    if(m.input&&!Object.hasOwn(RECIPES,m.input.key))m.input=null;
    if(m.fuel&&!Object.hasOwn(FUEL,m.fuel.key))m.fuel=null;
    if(m.output&&!Object.values(RECIPES).includes(m.output.key))m.output=null;
    m.burn=Math.max(0,Math.min(1000,Number(r.burn)||0));
    m.burnTotal=Math.max(0,Math.min(1000,Number(r.burnTotal)||0));
+   // A completed cook frame cannot be resumed at exactly COOK: tick would
+   // otherwise take a zero-length step forever, leaving the furnace stuck.
    m.progress=Math.max(0,Math.min(COOK,Number(r.progress)||0));
+   if(m.progress>=COOK)m.progress=0;
    machines.set(id(m),m);
   }
  }
