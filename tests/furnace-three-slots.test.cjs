@@ -15,8 +15,10 @@ test('furnace has three labeled visual slots and independent live progress meter
 });
 test('furnace UI supports one item and a stack, without consuming more than owned',()=>{
  for(const name of ['input','fuel'])assert.ok(source.includes('mw-furnace-put-'+name+'-stack'));
- assert.match(source,/Math\.min\(limit,owned\)/);
- assert.match(source,/if\(moved\)\{api\.change\(item,-moved\)/);
+ assert.match(source,/Math\.min\(limit,owned,64-/);
+ assert.match(source,/const debit=api\.change\(item,-quantity\)/);
+ assert.match(source,/const moved=deposit\(engine,api,current,which,item,limit\)/);
+ assert.match(source,/if\(moved<quantity\)api\.change\(item,quantity-moved\)/);
  const context=vm.createContext({window:{}});
  vm.runInContext(fs.readFileSync(path.join(root,'furnace-engine.js'),'utf8'),context);
  const f=context.window.MineWorldFurnace.create();
