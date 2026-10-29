@@ -1180,7 +1180,7 @@ body.in-nether #game-wrap{background:#290f19}
   let activeChunks=autoAdjustChunks?Math.min(targetChunks,matchMedia('(pointer: coarse)').matches?18:32):targetChunks;
   let lastChunkX=-1,lastChunkZ=-1,streamQueue=[],streamClock=0;
   let currentFPS=0,frameSamples=0,frameTimeSum=0;
-  const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace','Snow','Ice','Packed Ice','Sandstone','Terracotta','Red Sand','Red Terracotta','Podzol','Coarse Dirt','Spruce Log','Spruce Leaves','Birch Log','Birch Leaves','Acacia Log','Acacia Leaves','Jungle Log','Jungle Leaves','Mangrove Log','Mangrove Leaves','Cherry Log','Cherry Leaves','Pale Oak Log','Pale Oak Leaves','Cactus','Bamboo','Moss','Mud','Red Mushroom Cap','Brown Mushroom Cap','Netherrack','Obsidian','Dark Planks','Stone Bricks','Chiseled Sandstone','Prismarine','Copper','Clay','Deepslate','Lantern','Hay Bale','Cobblestone','Glow Lichen','Dripstone','Sculk','Nether Rock','Lava','Basalt','Blackstone','Polished Blackstone','Soul Sand','Soul Soil','Nether Bricks','Nether Wart','Chiseled Nether Bricks','Crimson Nylium','Warped Nylium','Crimson Roots','Crimson Stem','Nether Wart Block','Warped Stem','Warped Wart Block','Warped Roots','Quartz Ore','Nether Gold Ore','Ancient Debris','Bone Block','Portal','Magma Block','Soul Fire','Shroomlight','Gilded Blackstone','Gravel','Twisting Vines','Weeping Vines','Copper Ore','Gold Ore','Redstone Ore','Lapis Ore','Diamond Ore','Emerald Ore','Deepslate Coal Ore','Deepslate Iron Ore','Deepslate Copper Ore','Deepslate Gold Ore','Deepslate Redstone Ore','Deepslate Lapis Ore','Deepslate Diamond Ore','Deepslate Emerald Ore','Redstone Lamp','Lapis Block','Emerald Block','Diamond Block','Copper Block','Gold Block','Iron Block','Coal Block','Redstone Block','Raw Mineral Crate','Treasure Chest','Opened Chest','End Stone','Chorus Plant','Chorus Flower','End Crystal','End Portal Frame','End Portal','End Gateway','End Rod','Dragon Egg','End Stone Bricks','Purpur Block','Purpur Pillar','Shulker Shell Block','Dragon Head','Netherite Block','Smithing Table','Farmland','Hydrated Farmland','Wheat Sprouts','Wheat Growing','Wheat Tall','Ripe Wheat','Carrot Sprouts','Carrot Growing','Carrot Tall','Ripe Carrots','Potato Sprouts','Potato Growing','Potato Tall','Ripe Potatoes','Beetroot Sprouts','Beetroot Growing','Beetroot Tall','Ripe Beetroot','Composter','Blast Furnace','Smoker','Cartography Table','Brewing Stand','Barrel','Fletching Table','Cauldron','Lectern','Stonecutter','Loom','Toolsmith Smithing Table','Grindstone','Crafting Table','Red Bed'];
+  const NAMES = ['Air','Grass','Dirt','Stone','Sand','Wood','Leaves','Water','Brick','Glass','Glowstone','Planks','Red Poplar Leaves','Amber Poplar Leaves','Golden Poplar Leaves','Poplar Log','Red Shrub','Mushroom','Coal Ore','Iron Ore','Furnace','Snow','Ice','Packed Ice','Sandstone','Terracotta','Red Sand','Red Terracotta','Podzol','Coarse Dirt','Spruce Log','Spruce Leaves','Birch Log','Birch Leaves','Acacia Log','Acacia Leaves','Jungle Log','Jungle Leaves','Mangrove Log','Mangrove Leaves','Cherry Log','Cherry Leaves','Pale Oak Log','Pale Oak Leaves','Cactus','Bamboo','Moss','Mud','Red Mushroom Cap','Brown Mushroom Cap','Netherrack','Obsidian','Dark Planks','Stone Bricks','Chiseled Sandstone','Prismarine','Copper','Clay','Deepslate','Lantern','Hay Bale','Cobblestone','Glow Lichen','Dripstone','Sculk','Nether Rock','Lava','Basalt','Blackstone','Polished Blackstone','Soul Sand','Soul Soil','Nether Bricks','Nether Wart','Chiseled Nether Bricks','Crimson Nylium','Warped Nylium','Crimson Roots','Crimson Stem','Nether Wart Block','Warped Stem','Warped Wart Block','Warped Roots','Quartz Ore','Nether Gold Ore','Ancient Debris','Bone Block','Portal','Magma Block','Soul Fire','Shroomlight','Gilded Blackstone','Gravel','Twisting Vines','Weeping Vines','Copper Ore','Gold Ore','Redstone Ore','Lapis Ore','Diamond Ore','Emerald Ore','Deepslate Coal Ore','Deepslate Iron Ore','Deepslate Copper Ore','Deepslate Gold Ore','Deepslate Redstone Ore','Deepslate Lapis Ore','Deepslate Diamond Ore','Deepslate Emerald Ore','Redstone Lamp','Lapis Block','Emerald Block','Diamond Block','Copper Block','Gold Block','Iron Block','Coal Block','Redstone Block','Raw Mineral Crate','Treasure Chest','Opened Chest','End Stone','Chorus Plant','Chorus Flower','End Crystal','End Portal Frame','End Portal','End Gateway','End Rod','Dragon Egg','End Stone Bricks','Purpur Block','Purpur Pillar','Shulker Shell Block','Dragon Head','Netherite Block','Smithing Table','Farmland','Hydrated Farmland','Wheat Sprouts','Wheat Growing','Wheat Tall','Ripe Wheat','Carrot Sprouts','Carrot Growing','Carrot Tall','Ripe Carrots','Potato Sprouts','Potato Growing','Potato Tall','Ripe Potatoes','Beetroot Sprouts','Beetroot Growing','Beetroot Tall','Ripe Beetroot','Composter','Blast Furnace','Smoker','Cartography Table','Brewing Stand','Barrel','Fletching Table','Cauldron','Lectern','Stonecutter','Loom','Toolsmith Smithing Table','Grindstone','Crafting Table','Red Bed','Bedrock'];
   const HOT=[1,2,3,5,12,13,14,15,11];
   const HOTSETS=[
     [1,2,3,5,6,4,8,9,10],
@@ -1195,13 +1195,13 @@ body.in-nether #game-wrap{background:#290f19}
     [86,87,88,89,90,91,92,93,94],
     [95,96,97,98,99,100,101,102,103],
     [104,105,106,107,108,109,110,111,112],
-    [113,114,115,116,117,118,168,169,58]
+    [113,114,115,116,117,118,168,169,170]
   ];
   const HOT9=[...HOTSETS[0]];
   const survivalHotbar=Array(9).fill(null);
   let hotbarPage=0,hotbarSignature='';
   const COLORS={1:[.36,.69,.28],2:[.52,.34,.22],3:[.52,.56,.57],4:[.85,.76,.50],5:[.48,.32,.18],6:[.28,.55,.23],7:[.26,.56,.82],8:[.72,.34,.25],9:[.62,.85,.90],10:[.93,.79,.33],11:[.65,.47,.27],12:[.74,.19,.16],13:[.90,.43,.10],14:[.89,.66,.18],15:[.59,.42,.31],16:[.68,.18,.28],17:[.73,.55,.35]};
-  const SWATCH={169:'#ae344a',168:'#b48a4e',1:'#65aa48',2:'#825332',3:'#8e9297',4:'#d9c180',5:'#8b633b',6:'#388b3a',7:'#368dd3',8:'#ba4b3e',9:'#a4d6e0',10:'#edca57',11:'#bd8d52',12:'#b94537',13:'#e98419',14:'#f2c34c',15:'#987e62',16:'#ab304c',17:'#bd9070',18:'#777b7c',19:'#a98c70',20:'#7d7872'};
+  const SWATCH={170:'#383d40',169:'#ae344a',168:'#b48a4e',1:'#65aa48',2:'#825332',3:'#8e9297',4:'#d9c180',5:'#8b633b',6:'#388b3a',7:'#368dd3',8:'#ba4b3e',9:'#a4d6e0',10:'#edca57',11:'#bd8d52',12:'#b94537',13:'#e98419',14:'#f2c34c',15:'#987e62',16:'#ab304c',17:'#bd9070',18:'#777b7c',19:'#a98c70',20:'#7d7872'};
   const FACE=[
     {n:[1,0,0],v:[[1,0,0],[1,1,0],[1,1,1],[1,0,1]],shade:.72},
     {n:[-1,0,0],v:[[0,0,1],[0,1,1],[0,1,0],[0,0,0]],shade:.72},
@@ -1798,6 +1798,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(!target||get(target.x,target.y,target.z)!==target.b)return false;
     if(target.b===168)craftBenchMemo.until=0;
     if(target.y===0){toast('The world foundation cannot be removed');return false;}
+    if(target.b===170&&gameMode!=='creative'){toast('Bedrock cannot be mined in Survival');return false;}
     const crop=window.MineWorldVillages.cropAt(target.b);
     if(crop){harvestCrop(target.x,target.y,target.z,crop);return true;}
     if(target.b===124&&dimension==='end'){
@@ -1848,6 +1849,7 @@ body.in-nether #game-wrap{background:#290f19}
       cancelMining();lastMineTapAt=performance.now();breakBlockNow(aim);return;
     }
     if(aim.y===0){toast('The world foundation cannot be removed');return;}
+    if(aim.b===170){cancelMining();toast('Bedrock cannot be mined in Survival');return;}
     const tier=miningTier();
     if(mineJob&&mineTargetSame(mineJob,aim)&&mineJob.dimension===dimension&&mineJob.tier===tier)return;
     mineJob={x:aim.x,y:aim.y,z:aim.z,b:aim.b,dimension,tier,elapsed:0,total:miningSeconds(aim.b,tier)};

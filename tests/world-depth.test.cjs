@@ -34,7 +34,7 @@ test('opt-in deep Overworld chunk has 384 layers and deepslate below Y 0',()=>{
  const data=ctx.window.MineWorldBiomes.generateChunk({cx,cz,H,minY,SEA});
  assert.equal(data.length,16*16*384);
  const at=(dx,y,dz)=>data[(dx*16+dz)*H+(y-minY)];
- assert.equal(at(0,-64,0),58,'deep floor currently uses deepslate pending bedrock block');
+ assert.equal(at(0,-64,0),170,'deep floor is bedrock, not mineable deepslate');
  assert.equal(at(0,-1,0),58,'negative layers use deepslate');
  const surface=ctx.window.MineWorldBiomes.terrainAt(cx*16,cz*16,SEA,H,minY);
  assert.ok(surface>=40&&surface<140,'surface near standard sea level');

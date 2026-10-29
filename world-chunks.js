@@ -159,6 +159,19 @@
    // Seeded mineral veins are distributed across depth bands and neighboring chunk edges.
    // This runs after cave carving and before structures; saved edits are reapplied last.
    window.MineWorldOres.generate({data,cx,cz,H,minY,sea:SEA,biomeAt,terrainAt,protectedEdits:null});
+   // Original deep-world bedrock: a continuous Y=-64 floor and an irregular
+   // four-layer transition. Place after caves/ores, before player edits.
+   // Legacy 48-layer worlds are intentionally unchanged.
+   if(minY===-64&&H===384){
+     for(let dx=0;dx<CHUNK;dx++)for(let dz=0;dz<CHUNK;dz++){
+       const x=x0+dx,z=z0+dz;
+       if(x>=WORLD||z>=WORLD)continue;
+       put(x,-64,z,170);
+       for(let layer=1;layer<=4;layer++)
+         if(rnd(x,z,3100+layer*37)<[0,.80,.55,.30,.10][layer])
+           put(x,-64+layer,z,170);
+     }
+   }
    // Seeded biome-specific groundcover and reeds.
    for(let x=x0;x<x0+CHUNK;x++)for(let z=z0;z<z0+CHUNK;z++){
      if(x<1||z<1||x>=WORLD-1||z>=WORLD-1)continue;

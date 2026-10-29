@@ -6,7 +6,7 @@
 'use strict';
 const engine=window.MineWorldPixelMaterials;if(!engine)return;
 const prior=engine.paint;
-const improvedIds=[1,2,3,4,8,11,24,26,28,29,52,53,61,92,137,138];
+const improvedIds=[1,2,3,4,8,11,24,26,28,29,52,53,61,92,137,138,170];
 const rgb=(r,g,b)=>[r,g,b,255],bound=v=>Math.max(0,Math.min(255,Math.round(v)));
 const C=(p,d=0)=>rgb(bound(p[0]+d),bound(p[1]+d),bound(p[2]+d));
 const h=(x,y,s)=>{
@@ -128,6 +128,14 @@ function farmland(x,y,hydrated,face){
  const c=groove?pal[0]:pick(pal,x,y,hydrated?871:870);
  return C(c,groove?-6:7);
 }
+// Independently designed dark foundation pixel tile, not a third-party bitmap.
+function bedrock(x,y){
+ const palette=[[24,27,30],[40,44,47],[59,64,66],[79,83,82]];
+ const patch=h(x>>2,y>>2,1700),grain=h(x>>1,y>>1,1701);
+ const index=patch<.25?0:patch<.54?1:patch<.83?2:3;
+ const seam=(x%4===0&&grain>.72)||(y%4===0&&grain<.16);
+ return C(palette[seam?Math.max(0,index-1):index],(h(x,y,1702)-.5)*8);
+}
 function paint(id,face,x,y){
  x&=15;y&=15;
  if(id===1)return face===0?grassTop(x,y):face===2?dirt(x,y):grassSide(x,y);
@@ -142,6 +150,7 @@ function paint(id,face,x,y){
  if(id===61)return cobble(x,y);
  if(id===92)return gravel(x,y);
  if(id===137||id===138)return farmland(x,y,id===138,face);
+ if(id===170)return bedrock(x,y);
  return prior(id,face,x,y);
 }
 engine.paint=paint;
