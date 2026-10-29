@@ -65,7 +65,7 @@ function syncSelect(select,keys,totals,label,doc){
 // Only player-imported PNGs or independently generated MineWorld block art.
 async function resolveSlotIcon(key,pack,doc){
  if(typeof key!=='string')return null;
- const block=/^block:([1-9]\\d*)$/.exec(key),id=block?Number(block[1]):null;
+ const block=/^block:([1-9]\d*)$/.exec(key),id=block?Number(block[1]):null;
  try{
   const imported=block?await pack?.blockItemIcon?.(id):await pack?.itemIcon?.(key);
   if(typeof imported==='string'&&imported.startsWith('data:image/png;base64,'))return imported;
