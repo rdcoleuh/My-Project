@@ -72,7 +72,7 @@ function createDimensionCodec({width=10000,depth=10000,chunkSize=16,
     if(!Number.isSafeInteger(total))throw new RangeError('Combined dimensions exceed safe index range');
   }
   const networkIndex=(x,y,z,dimension='overworld')=>{
-    const codec=codecs[dimension];
+    const codec=names.includes(dimension)?codecs[dimension]:null;
     return codec&&codec.inside(x,y,z)?offsets[dimension]+codec.index(x,y,z):null;
   };
   const decodeNetwork=n=>{
