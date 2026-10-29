@@ -73,9 +73,12 @@ function create(){
  function restore(records){machines.clear();if(!Array.isArray(records))return;
   for(const r of records){if(!pos(r))continue;const m=blank(r);
    m.input=slot(r.input);m.fuel=slot(r.fuel);m.output=slot(r.output);
-   if(m.input&&!Object.hasOwn(RECIPES,m.input.key))m.input=null;
-   if(m.fuel&&!Object.hasOwn(FUEL,m.fuel.key))m.fuel=null;
-   if(m.output&&!Object.values(RECIPES).includes(m.output.key))m.output=null;
+   // Preserve well-formed stacks even if this build no longer recognizes
+   // their recipe or fuel. Dropping unknown items on load permanently destroys
+   // materials from newer saves or older modded worlds. Unknown inputs cannot
+   // smelt and unknown fuel cannot ignite, but players can retrieve both.
+   // An unrecognized output must also remain intact and block incompatible
+   // smelting rather than being overwritten by a new product.
    m.burn=Math.max(0,Math.min(1000,Number(r.burn)||0));
    m.burnTotal=Math.max(0,Math.min(1000,Number(r.burnTotal)||0));
    // A completed cook frame cannot be resumed at exactly COOK: tick would
