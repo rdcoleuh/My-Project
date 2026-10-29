@@ -13,7 +13,7 @@ test('deep vertical sections preserve every block including negative Y and parti
  const copy=Buffer.from(data);
  const storage=sectionize({data,minY,height,chunkSize:size,sectionHeight:16});
  assert.equal(storage.sections.length,3);
- assert.deepEqual(storage.sections.map(s=>s.minY),[-19,-3,13]);
+ assert.deepEqual(Array.from(storage.sections,s=>s.minY),[-19,-3,13]);
  assert.equal(storage.sections[2].height,3);
  for(let x=0;x<size;x++)for(let z=0;z<size;z++)for(let y=minY;y<minY+height;y++)
    assert.equal(storage.read(x,y,z),data[(x*size+z)*height+y-minY]);
@@ -36,9 +36,9 @@ test('uniform air and stone sections compact losslessly and materialize as indep
 });
 test('section proximity uses absolute negative Y, clamps bounds and rejects invalid reads',()=>{
  const storage=sectionize({data:new Uint8Array(16*16*384),minY:-64,height:384});
- assert.deepEqual(storage.near(-64,1).map(s=>s.index),[0,1]);
- assert.deepEqual(storage.near(319,1).map(s=>s.index),[23,22]);
- assert.deepEqual(storage.near(0,2).map(s=>s.index),[4,3,5,2,6]);
+ assert.deepEqual(Array.from(storage.near(-64,1),s=>s.index),[0,1]);
+ assert.deepEqual(Array.from(storage.near(319,1),s=>s.index),[23,22]);
+ assert.deepEqual(Array.from(storage.near(0,2),s=>s.index),[4,3,5,2,6]);
  assert.equal(storage.read(0,-65,0),null);
  assert.equal(storage.read(16,0,0),null);
  assert.equal(storage.read(0,320,0),null);
