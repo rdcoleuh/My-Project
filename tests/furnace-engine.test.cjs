@@ -104,3 +104,34 @@ test('partially smelted saves cool correctly without fuel and resume with fuel',
  assert.equal(restored.tick(10).completed,1);
  assert.equal(restored.get(p).output.key,'iron');
 });
+
+test('a suspended browser frame catches up at most sixty seconds of smelting',()=>{
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+ assert.ok(html.includes('const furnaceDt=clamp(frameMs/1000,0,60);'),
+   'the live render loop must not discard elapsed furnace time after one second');
+ const f=api.create();
+ assert.equal(f.insert(p,'input','rawIron',9),9);
+ assert.equal(f.insert(p,'fuel','coal',1),1);
+ assert.equal(f.tick(3600).completed,6,'one resumed frame is bounded to sixty seconds');
+ assert.equal(f.get(p).output.qty,6);
+ assert.equal(f.get(p).input.qty,3);
+ assert.equal(f.get(p).burn,20);
+ const saved=JSON.parse(JSON.stringify(f.snapshot()));
+ const restored=api.create();restored.restore(saved);
+ assert.equal(restored.tick(20).completed,2,'remaining fuel resumes after saving');
+ assert.equal(restored.get(p).output.qty,8);
+ assert.equal(restored.get(p).input.qty,1);
+ assert.equal(restored.tick(60).completed,0,'no fuel means no free ninth item');
+ assert.equal(restored.get(p).output.qty,8);
+});
+
+test('a suspended browser frame cannot smelt more than a full output stack',()=>{
+ const f=api.create();
+ assert.equal(f.insert(p,'input','rawIron',64),64);
+ assert.equal(f.insert(p,'fuel','coal',1),1);
+ assert.equal(f.tick(3600).completed,6);
+ assert.equal(f.tick(3600).completed,2);
+ assert.equal(f.get(p).output.qty,8);
+ assert.equal(f.get(p).input.qty,56);
+ assert.equal(f.get(p).burn,0);
+});

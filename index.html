@@ -4391,8 +4391,9 @@ body.in-nether #game-wrap{background:#290f19}
   function render(t){requestAnimationFrame(render);const frameMs=t-lastTime;let dt=clamp(frameMs/1000,0,.05);lastTime=t;
     if(gameMode==='survival'&&(!paused||furnaceUI.isOpen)){
       // Smelting uses elapsed real time, not physics-clamped frame time.
-      // Low-FPS mobile browsers must not take minutes to cook one item.
-      const furnaceDt=clamp(frameMs/1000,0,1);
+      // Low-FPS or suspended tabs catch up by at most 60 seconds per frame.
+      // Keep physics capped separately; furnace-engine bounds its own work.
+      const furnaceDt=clamp(frameMs/1000,0,60);
       const r=furnaces.tick(furnaceDt);
       if(r.changed){furnaceSaveClock+=furnaceDt;if(furnaceSaveClock>=1){markSave();furnaceSaveClock=0;}}
       furnaceUI.tick(furnaceDt);
