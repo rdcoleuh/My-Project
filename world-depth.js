@@ -53,5 +53,63 @@ function reindexEdits(edits,source,target){
   }
   return result;
 }
-window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,create,reindexEdits});
+// A mixed-height world must not reuse the same dimension volume for every
+// network offset. The Overworld may be 384 layers while the Nether and End
+// remain 48; allocate each dimension its own non-overlapping index interval.
+// This is an opt-in codec and does not change live legacy saves or networking.
+function createDimensionCodec({width=10000,depth=10000,chunkSize=16,
+  overworld=OVERWORLD,nether=LEGACY,end=LEGACY}={}){
+  const names=['overworld','nether','end'];
+  const profiles={overworld,nether,end},codecs={},offsets={};
+  let total=0;
+  for(const name of names){
+    const p=profiles[name];
+    if(!p||!Number.isSafeInteger(p.minY)||!Number.isSafeInteger(p.maxY))
+      throw new RangeError('Invalid dimension profile');
+    const codec=create({width,depth,chunkSize,minY:p.minY,maxY:p.maxY});
+    offsets[name]=total;codecs[name]=codec;
+    total+=codec.volume;
+    if(!Number.isSafeInteger(total))throw new RangeError('Combined dimensions exceed safe index range');
+  }
+  const networkIndex=(x,y,z,dimension='overworld')=>{
+    const codec=codecs[dimension];
+    return codec&&codec.inside(x,y,z)?offsets[dimension]+codec.index(x,y,z):null;
+  };
+  const decodeNetwork=n=>{
+    if(!Number.isSafeInteger(n)||n<0||n>=total)return null;
+    for(let d=names.length-1;d>=0;d--){
+      const name=names[d];
+      if(n>=offsets[name]){
+        const point=codecs[name].decode(n-offsets[name]);
+        return point?{...point,dimension:name}:null;
+      }
+    }
+    return null;
+  };
+  return Object.freeze({width,depth,chunkSize,volume:total,
+    codecs:Object.freeze(codecs),offsets:Object.freeze(offsets),
+    networkIndex,decodeNetwork});
+}
+// Reindex all three dimensions atomically. A corrupt or out-of-bounds edit
+// aborts conversion; callers retain their untouched original save map.
+function reindexNetworkEdits(edits,source,target){
+  if(Object.prototype.toString.call(edits)!=='[object Map]')
+    throw new TypeError('Expected a Map of network edits');
+  if(!source||!target||source.width!==target.width||source.depth!==target.depth||
+    typeof source.decodeNetwork!=='function'||typeof target.networkIndex!=='function')
+    throw new RangeError('Incompatible dimension codecs');
+  const converted=new Map();
+  for(const [oldIndex,block] of edits){
+    const point=source.decodeNetwork(oldIndex);
+    if(!point)throw new RangeError('Saved network edit is invalid');
+    if(!Number.isSafeInteger(block)||block<0||block>255)
+      throw new RangeError('Invalid saved block identifier');
+    const next=target.networkIndex(point.x,point.y,point.z,point.dimension);
+    if(next===null)throw new RangeError('Saved network edit lies outside target dimension');
+    if(converted.has(next))throw new RangeError('Saved network edit index collision');
+    converted.set(next,block);
+  }
+  return converted;
+}
+window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,create,reindexEdits,createDimensionCodec,reindexNetworkEdits});
 })();
