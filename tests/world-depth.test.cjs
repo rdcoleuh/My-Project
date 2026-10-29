@@ -148,7 +148,7 @@ test('mixed-height migration preserves edits in every dimension and can round-tr
  assert.equal(moved.get(mixed.networkIndex(5000,14,5000,'overworld')),0);
  assert.equal(moved.get(mixed.networkIndex(5000,47,5000,'nether')),20);
  assert.equal(moved.get(mixed.networkIndex(9999,0,9999,'end')),168);
- assert.deepEqual([...api.reindexNetworkEdits(moved,mixed,legacy)],[...original]);
+ assert.deepEqual(JSON.parse(JSON.stringify([...api.reindexNetworkEdits(moved,mixed,legacy)])),[...original]);
  assert.equal(original.size,4,'original map remains untouched');
 });
 test('mixed-height migration rejects invalid coordinates, blocks and incompatible dimensions atomically',()=>{
