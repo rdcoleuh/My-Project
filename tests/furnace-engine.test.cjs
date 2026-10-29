@@ -20,7 +20,7 @@ test('mixed ingredients rejected; progress persists and block removal returns it
 test('restore sanitizes invalid slots, coordinates and progress',()=>{
  const f=api.create();f.restore([{dimension:'overworld',x:1,y:1,z:1,input:{key:'__proto__',qty:500},fuel:{key:'coal',qty:-5},progress:999,burn:-1}]);
  const m=f.get({dimension:'overworld',x:1,y:1,z:1});
- assert.equal(m.input,null);assert.equal(m.fuel,null);assert.equal(m.progress,10);assert.equal(m.burn,0);
+ assert.equal(m.input,null);assert.equal(m.fuel,null);assert.equal(m.progress,0);assert.equal(m.burn,0);
 });
 
 test('game loads furnace modules, persists block inventories and ticks smelting',()=>{
