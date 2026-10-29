@@ -6,6 +6,14 @@
 (()=>{'use strict';
 const FACE=Object.freeze({west:0,east:1,down:2,up:3,north:4,south:5});
 const SIDES=['west','east','north','south'];
+// MineWorld block IDs: transparent materials must not occlude opaque faces.
+// Same-type transparent neighbors still cull their internal interface.
+// This conservative staging rule can later use live material metadata.
+const NON_OCCLUDING=new Set([
+  6,7,9,12,13,14,22,23,31,33,35,37,39,41,43,45,59,62,66
+]);
+const defaultOccludes=(neighbor,block)=>neighbor!==0&&
+  (neighbor===block||!NON_OCCLUDING.has(neighbor));
 const isBytes=v=>Object.prototype.toString.call(v)==='[object Uint8Array]';
 function plan(snapshot,{occludes}={}){
  if(!snapshot||!isBytes(snapshot.data)||snapshot.chunkSize!==16||
@@ -24,7 +32,7 @@ function plan(snapshot,{occludes}={}){
    throw new RangeError('Invalid vertical neighbor plane');
  if(occludes!==undefined&&typeof occludes!=='function')
    throw new TypeError('Expected an occlusion predicate');
- const covered=occludes||((neighbor)=>neighbor!==0);
+ const covered=occludes||defaultOccludes;
  const data=snapshot.data,faces=[];
  const voxel=(x,z,y)=>data[(x*size+z)*height+y];
  const edge=(side,edgeIndex,y)=>snapshot[side]==null?0:snapshot[side][edgeIndex*height+y];

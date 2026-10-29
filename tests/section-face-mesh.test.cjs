@@ -57,3 +57,32 @@ test('cross-chunk planner builds only current claims and rejects stale neighbor 
  assert.equal(world.canInstall(0,0,center,job,result.snapshot),false);
  assert.equal(world.planMesh(0,0,job),null,'stale claim cannot create a new plan');
 });
+
+test('default deep-section planner retains opaque faces behind glass and water',()=>{
+ const s=blank();s.data[at(1,1,1)]=3;s.data[at(2,1,1)]=9;
+ const plan=mesh.plan(s);
+ assert.equal(plan.faceCount,11,'stone remains visible through glass; hidden glass backface is culled');
+ assert.ok([...plan.faces].some(face=>{
+  const f=mesh.unpack(face,-64);return f.x===1&&f.z===1&&f.localY===1&&f.face===1;
+ }), 'stone east face must remain present behind glass');
+ s.data[at(2,1,1)]=7;
+ assert.equal(mesh.plan(s).faceCount,11,'water must not erase an opaque wall face');
+ s.data[at(1,1,1)]=9;
+ assert.equal(mesh.plan(s).faceCount,12,'different transparent materials retain their interface');
+});
+test('matching translucent blocks still cull internal faces for mobile mesh budgets',()=>{
+ const s=blank();s.data[at(1,1,1)]=9;s.data[at(2,1,1)]=9;
+ assert.equal(mesh.plan(s).faceCount,10,'joined glass blocks have no internal face');
+ s.data[at(1,1,1)]=7;s.data[at(2,1,1)]=7;
+ assert.equal(mesh.plan(s).faceCount,10,'joined water blocks have no internal face');
+ s.data[at(1,1,1)]=6;s.data[at(2,1,1)]=6;
+ assert.equal(mesh.plan(s).faceCount,10,'joined leaves do not double their interior geometry');
+});
+test('neighbor chunk glass does not hide boundary stone; solid neighbor does',()=>{
+ const s=blank();s.data[at(0,0,0)]=3;
+ s.west=new Uint8Array(256);s.west[0]=9;
+ assert.equal(mesh.plan(s).faceCount,6,'imported glass in adjacent chunk must not erase stone face');
+ s.west[0]=3;
+ assert.equal(mesh.plan(s).faceCount,5,'solid neighbor still culls hidden stone face');
+ assert.equal(mesh.plan(s,{occludes:()=>true}).faceCount,0,'explicit caller predicate retains priority');
+});
