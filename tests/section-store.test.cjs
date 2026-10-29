@@ -200,3 +200,50 @@ test('abandoned mesh leases expire and retry without dropping dirty work',()=>{
  assert.throws(()=>store.reclaimStaleMeshClaims(Infinity),/timeout/);
  assert.throws(()=>store.reclaimStaleMeshClaims(1101,0),/timeout/);
 });
+
+
+test('claimed section meshes include detached upper and lower seam planes',()=>{
+ const data=new Uint8Array(2*2*48);
+ const at=(x,y,z)=>(x*2+z)*48+y+64;
+ data[at(1,-49,0)]=3;data[at(1,-48,0)]=4;data[at(0,-32,1)]=5;
+ const store=api.createSectionStore({data,height:48,minY:-64,chunkSize:2});
+ const lower=store.claimDirtySectionsNear(-64,0,1,100)[0];
+ const middle=store.claimDirtySectionsNear(-48,0,1,100)[0];
+ const upper=store.claimDirtySectionsNear(-32,0,1,100)[0];
+ const a=store.materializeClaimWithSeams(lower);
+ assert.equal(a.minY,-64);assert.equal(a.maxY,-49);assert.equal(a.chunkSize,2);
+ assert.equal(a.below,null,'world floor has no lower neighbor');
+ assert.deepEqual(Array.from(a.above),[0,0,4,0],'plane uses x-major, z-minor indexing');
+ const b=store.materializeClaimWithSeams(middle);
+ assert.deepEqual(Array.from(b.below),[0,0,3,0]);
+ assert.deepEqual(Array.from(b.above),[0,5,0,0]);
+ const c=store.materializeClaimWithSeams(upper);
+ assert.equal(c.above,null,'world ceiling has no upper neighbor');
+ a.above[2]=0;b.below[2]=0;b.data.fill(0);
+ assert.equal(store.get(1,-48,0),4,'neighbor plane is detached');
+ assert.equal(store.get(1,-49,0),3,'other plane is detached');
+ assert.equal(store.get(0,-32,1),5,'center snapshot is detached');
+ for(const job of [lower,middle,upper])assert.equal(store.ackDirtySection(job),true);
+});
+
+test('a seam edit invalidates in-flight mesh snapshots on both sides',()=>{
+ const data=new Uint8Array(2*2*32);
+ data[15]=3;data[16]=4;
+ const store=api.createSectionStore({data,height:32,minY:-64,chunkSize:2});
+ const lower=store.claimDirtySectionsNear(-64,0,1,100)[0];
+ const upper=store.claimDirtySectionsNear(-48,0,1,100)[0];
+ assert.equal(store.materializeClaimWithSeams(lower).above[0],4);
+ assert.equal(store.materializeClaimWithSeams(upper).below[0],3);
+ store.set(0,-48,0,9);
+ assert.equal(store.canInstallClaim(lower),false);
+ assert.equal(store.canInstallClaim(upper),false);
+ assert.equal(store.materializeClaimWithSeams(lower),null);
+ assert.equal(store.materializeClaimWithSeams(upper),null);
+ assert.equal(store.ackDirtySection(lower),false);
+ assert.equal(store.ackDirtySection(upper),false);
+ const retry=store.claimDirtySectionsNear(-64,1,2,101);
+ assert.deepEqual(Array.from(retry,job=>job.index),[0,1]);
+ assert.equal(store.materializeClaimWithSeams(retry[0]).above[0],9);
+ for(const job of retry)assert.equal(store.ackDirtySection(job),true);
+ assert.deepEqual(Array.from(store.dirtySections()),[]);
+});

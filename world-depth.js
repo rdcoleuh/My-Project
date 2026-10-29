@@ -359,6 +359,24 @@ function createSectionStore(options={}){
     return Object.freeze({index:job.index,revision:job.revision,
       minY:section.minY,maxY:section.maxY,data:materialize(job.index)});
   }
+  // Vertical-section meshes need neighboring Y planes to hide internal
+  // faces at seams. Copy only two planes, not entire adjacent sections.
+  // Every array is detached from the authoritative voxel store.
+  // Seam edits invalidate both section revisions before mesh installation.
+  function materializeClaimWithSeams(job){
+    const center=materializeClaim(job);
+    if(!center)return null;
+    const section=sections[job.index];
+    const plane=y=>{
+      const out=new Uint8Array(columns);
+      for(let x=0;x<chunkSize;x++)for(let z=0;z<chunkSize;z++)
+        out[x*chunkSize+z]=get(x,y,z);
+      return out;
+    };
+    return Object.freeze({...center,chunkSize,
+      below:section.minY>minY?plane(section.minY-1):null,
+      above:section.maxY<maxY?plane(section.maxY+1):null});
+  }
   function rebuild(){
     const result=new Uint8Array(columns*height);
     for(let i=0;i<sections.length;i++){
@@ -387,7 +405,7 @@ function createSectionStore(options={}){
   return Object.freeze({minY,maxY,height,chunkSize,sectionHeight,get,set,applyEdits,
     dirtySections,dirtySectionsNear,takeDirtySections,takeDirtySectionsNear,
     claimDirtySectionsNear,ackDirtySection,releaseDirtySection,
-    reclaimStaleMeshClaims,canInstallClaim:currentClaim,materializeClaim,
+    reclaimStaleMeshClaims,canInstallClaim:currentClaim,materializeClaim,materializeClaimWithSeams,
     compact,materialize,rebuild,near,stats});
 }
 
