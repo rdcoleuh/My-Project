@@ -247,3 +247,47 @@ test('a seam edit invalidates in-flight mesh snapshots on both sides',()=>{
  for(const job of retry)assert.equal(store.ackDirtySection(job),true);
  assert.deepEqual(Array.from(store.dirtySections()),[]);
 });
+
+test('horizontal neighbor planes are detached, oriented and revision checked',()=>{
+ const make=()=>api.createSectionStore({data:new Uint8Array(2*2*32),height:32,minY:-64,chunkSize:2});
+ const center=make(),west=make(),east=make(),north=make(),south=make();
+ center.set(0,-64,0,1);
+ west.set(1,-64,0,2);east.set(0,-63,1,3);
+ north.set(1,-62,1,4);south.set(0,-61,0,5);
+ const neighbors={west,east,north,south};
+ const job=center.claimDirtySectionsNear(-64,0,1,100)[0];
+ const snap=center.materializeClaimWithNeighbors(job,neighbors);
+ assert.equal(snap.west[0],2,'west reads rightmost X');
+ assert.equal(snap.east[17],3,'east reads leftmost X with Z edge index');
+ assert.equal(snap.north[18],4,'north reads highest Z with X edge index');
+ assert.equal(snap.south[3],5,'south reads lowest Z');
+ assert.equal(snap.above[0],0,'vertical seams remain available');
+ assert.equal(center.canInstallClaimWithNeighbors(job,snap,neighbors),true);
+ snap.west[0]=99;assert.equal(west.get(1,-64,0),2,'plane is detached');
+ west.set(1,-64,0,7);
+ assert.equal(center.canInstallClaimWithNeighbors(job,snap,neighbors),false,
+  'neighbor revision invalidates its border snapshot');
+ center.markNeighborBoundaryDirty(-64);
+ assert.equal(center.canInstallClaim(job),false,'neighbor edit invalidates affected mesh');
+ assert.equal(center.ackDirtySection(job),false);
+ const retry=center.claimDirtySectionsNear(-64,0,1,101)[0];
+ assert.equal(center.materializeClaimWithNeighbors(retry,neighbors).west[0],7);
+ assert.equal(center.ackDirtySection(retry),true);
+});
+test('missing, replaced and incompatible neighbors are not silently accepted',()=>{
+ const make=(size=2)=>api.createSectionStore({data:new Uint8Array(size*size*16),height:16,chunkSize:size,minY:-64});
+ const center=make(),west=make(),replacement=make();
+ center.set(0,-64,0,1);
+ const job=center.claimDirtySectionsNear(-64,0,1)[0];
+ const snap=center.materializeClaimWithNeighbors(job,{west});
+ assert.equal(snap.east,null,'unloaded chunk remains unknown');
+ assert.equal(center.canInstallClaimWithNeighbors(job,snap,{west}),true);
+ assert.equal(center.canInstallClaimWithNeighbors(job,snap,{west:replacement}),false,
+  'same revision on a different chunk is insufficient');
+ assert.equal(center.canInstallClaimWithNeighbors(job,snap,{}),false);
+ assert.throws(()=>center.materializeClaimWithNeighbors(job,{west:make(3)}),/Incompatible adjacent/);
+ assert.throws(()=>center.materializeClaimWithNeighbors(job,null),/Expected adjacent/);
+ assert.throws(()=>center.markNeighborBoundaryDirty(-65),/Invalid adjacent/);
+ assert.throws(()=>center.markNeighborBoundaryDirty(1.5),/Invalid adjacent/);
+ assert.equal(center.ackDirtySection(job),true);
+});

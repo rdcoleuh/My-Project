@@ -174,8 +174,10 @@ function sectionizeChunk({data,minY=0,height,chunkSize=16,sectionHeight=16}={}){
  * caller still owns save edits; this store never rewrites legacy save keys.
  * Coordinates are absolute Y, including negative depths.
  */
+let sectionStoreSerial=0;
 function createSectionStore(options={}){
   const source=sectionizeChunk(options);
+  const storeId=++sectionStoreSerial;
   const {minY,maxY,height,chunkSize,sectionHeight}=source;
   const columns=chunkSize*chunkSize;
   const sections=source.sections.map(s=>({
@@ -377,6 +379,63 @@ function createSectionStore(options={}){
       below:section.minY>minY?plane(section.minY-1):null,
       above:section.maxY<maxY?plane(section.maxY+1):null});
   }
+
+  // Horizontal chunk seams are as important as the upper/lower Y planes.
+  // Unknown neighboring chunks remain null rather than pretending to be air.
+  // Edge-plane index = edge coordinate * section height + local Y.
+  const neighborSides=['west','east','north','south'];
+  function materializeClaimWithNeighbors(job,neighbors={}){
+    if(!neighbors||typeof neighbors!=='object')
+      throw new TypeError('Expected adjacent section stores');
+    const center=materializeClaimWithSeams(job);
+    if(!center)return null;
+    const section=sections[job.index],faces={},tokens={};
+    for(const side of neighborSides){
+      const neighbor=neighbors[side];
+      if(neighbor==null){faces[side]=null;continue;}
+      if(neighbor.chunkSize!==chunkSize||neighbor.minY!==minY||
+         neighbor.maxY!==maxY||!Number.isSafeInteger(neighbor.storeId)||
+         typeof neighbor.get!=='function'||typeof neighbor.stats!=='function')
+        throw new RangeError('Incompatible adjacent section store');
+      const token=Object.freeze({storeId:neighbor.storeId,revision:neighbor.stats().revision});
+      const plane=new Uint8Array(chunkSize*section.height);
+      for(let edge=0;edge<chunkSize;edge++)for(let y=section.minY;y<=section.maxY;y++){
+        const x=side==='west'?chunkSize-1:side==='east'?0:edge;
+        const z=side==='north'?chunkSize-1:side==='south'?0:edge;
+        const block=neighbor.get(x,y,z);
+        if(!Number.isSafeInteger(block)||block<0||block>255)return null;
+        plane[edge*section.height+y-section.minY]=block;
+      }
+      if(neighbor.stats().revision!==token.revision||!currentClaim(job))
+        return null; // A changed neighbor cannot supply a coherent snapshot.
+      faces[side]=plane;tokens[side]=token;
+    }
+    return Object.freeze({...center,...faces,neighborTokens:Object.freeze(tokens)});
+  }
+  // The renderer validates every contributing chunk immediately before
+  // installing the mesh. Store identity prevents same-revision replacements.
+  function canInstallClaimWithNeighbors(job,snapshot,neighbors={}){
+    if(!currentClaim(job)||!snapshot||snapshot.index!==job.index||
+       snapshot.revision!==job.revision||!neighbors||typeof neighbors!=='object')
+      return false;
+    for(const side of neighborSides){
+      const neighbor=neighbors[side],token=snapshot.neighborTokens?.[side];
+      if(neighbor==null){
+        if(snapshot[side]!==null||token)return false;
+      }else if(!token||neighbor.storeId!==token.storeId||
+               typeof neighbor.stats!=='function'||
+               neighbor.stats().revision!==token.revision)return false;
+    }
+    return true;
+  }
+  // A chunk coordinator must notify this store when an adjacent chunk edits
+  // its horizontal boundary. This invalidates geometry, not saved voxels.
+  function markNeighborBoundaryDirty(y){
+    if(!Number.isSafeInteger(y)||y<minY||y>maxY)
+      throw new RangeError('Invalid adjacent section boundary');
+    invalidate(Math.floor((y-minY)/sectionHeight));
+    revision++;
+  }
   function rebuild(){
     const result=new Uint8Array(columns*height);
     for(let i=0;i<sections.length;i++){
@@ -402,10 +461,11 @@ function createSectionStore(options={}){
       payloadBytes:sections.reduce((n,s)=>n+(s.uniform?1:s.data.byteLength),0),
       dirty:dirty.size,inFlight:inFlight.size,revision};
   }
-  return Object.freeze({minY,maxY,height,chunkSize,sectionHeight,get,set,applyEdits,
+  return Object.freeze({storeId,minY,maxY,height,chunkSize,sectionHeight,get,set,applyEdits,
     dirtySections,dirtySectionsNear,takeDirtySections,takeDirtySectionsNear,
     claimDirtySectionsNear,ackDirtySection,releaseDirtySection,
     reclaimStaleMeshClaims,canInstallClaim:currentClaim,materializeClaim,materializeClaimWithSeams,
+    materializeClaimWithNeighbors,canInstallClaimWithNeighbors,markNeighborBoundaryDirty,
     compact,materialize,rebuild,near,stats});
 }
 
