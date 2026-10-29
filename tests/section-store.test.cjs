@@ -160,3 +160,43 @@ test('failed or abandoned mesh claims retry without losing work',()=>{
  assert.throws(()=>store.claimDirtySectionsNear(0,0,0),/Invalid section mesh budget/);
  assert.throws(()=>store.claimDirtySectionsNear(NaN),/Invalid section mesh budget/);
 });
+
+test('claimed mesh snapshots are detached and stale revisions cannot be installed',()=>{
+ const data=new Uint8Array(2*2*32);data[0]=3;
+ const store=api.createSectionStore({data,height:32,chunkSize:2,minY:-64});
+ const lease=store.claimDirtySectionsNear(-64,0,1,100)[0];
+ assert.equal(store.canInstallClaim(lease),true);
+ const snapshot=store.materializeClaim(lease);
+ assert.equal(snapshot.minY,-64);assert.equal(snapshot.maxY,-49);
+ assert.equal(snapshot.data[0],3);
+ snapshot.data[0]=0;
+ assert.equal(store.get(0,-64,0),3,'worker snapshot cannot modify authoritative blocks');
+ store.set(0,-64,0,4);
+ assert.equal(store.canInstallClaim(lease),false,'an edit invalidates the in-flight mesh');
+ assert.equal(store.materializeClaim(lease),null);
+ assert.equal(store.ackDirtySection(lease),false);
+ const retry=store.claimDirtySectionsNear(-64,0,1,101)[0];
+ assert.equal(store.materializeClaim(retry).data[0],4);
+ assert.equal(store.ackDirtySection(retry),true);
+ assert.deepEqual(Array.from(store.dirtySections()),[]);
+});
+
+test('abandoned mesh leases expire and retry without dropping dirty work',()=>{
+ const data=new Uint8Array(2*2*16);data[0]=3;
+ const store=api.createSectionStore({data,height:16,chunkSize:2});
+ const first=store.claimDirtySectionsNear(0,0,1,1000)[0];
+ assert.deepEqual(Array.from(store.reclaimStaleMeshClaims(1099,100)),[]);
+ assert.equal(store.stats().inFlight,1);
+ assert.deepEqual(Array.from(store.reclaimStaleMeshClaims(1100,100)),[0]);
+ assert.equal(store.stats().inFlight,0);
+ assert.deepEqual(Array.from(store.dirtySections()),[0]);
+ assert.equal(store.canInstallClaim(first),false);
+ const second=store.claimDirtySectionsNear(0,0,1,1101)[0];
+ assert.notEqual(second.claimId,first.claimId);
+ assert.equal(store.ackDirtySection(first),false,'expired token cannot acknowledge retry');
+ assert.equal(store.ackDirtySection(second),true);
+ assert.equal(store.stats().dirty,0);
+ assert.throws(()=>store.claimDirtySectionsNear(0,0,1,NaN),/clock/);
+ assert.throws(()=>store.reclaimStaleMeshClaims(Infinity),/timeout/);
+ assert.throws(()=>store.reclaimStaleMeshClaims(1101,0),/timeout/);
+});

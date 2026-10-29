@@ -192,6 +192,14 @@ function createSectionStore(options={}){
   // asynchronous rebuild cannot be silently lost on acknowledgement.
   const sectionRevisions=new Uint32Array(sections.length),inFlight=new Map();
   let claimSerial=0;
+  // Mesh jobs can outlive a browser tab suspension. A lease is valid only
+  // while its token AND section revision still match the current state.
+  const currentClaim=job=>{
+    if(!job||!Number.isSafeInteger(job.index)||!Number.isSafeInteger(job.claimId))return false;
+    const active=inFlight.get(job.index);
+    return !!active&&active.claimId===job.claimId&&
+      active.revision===job.revision&&sectionRevisions[job.index]===job.revision;
+  };
   const invalidate=index=>{dirty.add(index);sectionRevisions[index]++;};
   for(let i=0;i<flags.length;i++)if(flags[i])dirty.add(i);
   let revision=0;
@@ -266,16 +274,32 @@ function createSectionStore(options={}){
   // Claim/ack is the safe path for asynchronous WebGL rebuilds. Claims keep
   // dirty flags until success; failed builds can release the claim for retry.
   // A newer edit invalidates an old claim, including adjacent seam changes.
-  function claimDirtySectionsNear(y,radius=4,limit=4){
+  function claimDirtySectionsNear(y,radius=4,limit=4,now=Date.now()){
+    if(!Number.isFinite(now)||now<0)throw new RangeError('Invalid section mesh clock');
     if(!Number.isSafeInteger(limit)||limit<1)
       throw new RangeError('Invalid section mesh budget');
     return dirtySectionsNear(y,radius,sections.length)
       .filter(job=>!inFlight.has(job.index)).slice(0,limit).map(job=>{
         const lease=Object.freeze({...job,revision:sectionRevisions[job.index],
-          claimId:++claimSerial});
+          claimId:++claimSerial,claimedAt:now});
         inFlight.set(job.index,lease);
         return lease;
       });
+  }
+  // Explicitly recover jobs abandoned when a tab is backgrounded or a
+  // worker disappears. Expiry never acknowledges a mesh or loses dirty work.
+  // Caller-supplied time makes suspension recovery deterministic in tests.
+  function reclaimStaleMeshClaims(now=Date.now(),maxAgeMs=30000){
+    if(!Number.isFinite(now)||now<0||
+       !Number.isFinite(maxAgeMs)||maxAgeMs<1)
+      throw new RangeError('Invalid section mesh lease timeout');
+    const recovered=[];
+    for(const [index,job] of inFlight){
+      if(now-job.claimedAt>=maxAgeMs){
+        inFlight.delete(index);recovered.push(index);
+      }
+    }
+    return recovered.sort((a,b)=>a-b);
   }
   function completeDirtySection(job,applied){
     if(!job||!Number.isSafeInteger(job.index)||
@@ -326,6 +350,15 @@ function createSectionStore(options={}){
     else result.set(section.data);
     return result;
   }
+  // Detached snapshot for a worker or WebGL build. A stale claim cannot
+  // snapshot new geometry, and the caller can verify its lease immediately
+  // before installing the mesh to avoid presenting outdated block faces.
+  function materializeClaim(job){
+    if(!currentClaim(job))return null;
+    const section=sections[job.index];
+    return Object.freeze({index:job.index,revision:job.revision,
+      minY:section.minY,maxY:section.maxY,data:materialize(job.index)});
+  }
   function rebuild(){
     const result=new Uint8Array(columns*height);
     for(let i=0;i<sections.length;i++){
@@ -354,6 +387,7 @@ function createSectionStore(options={}){
   return Object.freeze({minY,maxY,height,chunkSize,sectionHeight,get,set,applyEdits,
     dirtySections,dirtySectionsNear,takeDirtySections,takeDirtySectionsNear,
     claimDirtySectionsNear,ackDirtySection,releaseDirtySection,
+    reclaimStaleMeshClaims,canInstallClaim:currentClaim,materializeClaim,
     compact,materialize,rebuild,near,stats});
 }
 
