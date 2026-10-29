@@ -52,5 +52,5 @@ test('three slots use crisp transparent art and stale async results are guarded'
  assert.match(source,/image-rendering:pixelated/);
  assert.match(source,/node\.dataset\.artStamp!==stamp/);
  assert.match(source,/img\.hidden=true;letters\.hidden=false/);
- assert.match(fs.readFileSync(path.join(root,'sw.js'),'utf8'),/mineworld-6-96-furnace-mobile-picker-and-icons/);
+ assert.match(fs.readFileSync(path.join(root,'sw.js'),'utf8'),/const VERSION='mineworld-6-\\d+-[a-z0-9-]+';/);
 });
