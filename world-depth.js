@@ -187,6 +187,12 @@ function createSectionStore(options={}){
   // A newly loaded section containing blocks needs its first mesh. Empty
   // sections are skipped until an edit makes them visible.
   const dirty=new Set();
+  // A mesh job is acknowledged only after the GPU mesh was successfully
+  // installed. Track a revision for each slice so edits made during an
+  // asynchronous rebuild cannot be silently lost on acknowledgement.
+  const sectionRevisions=new Uint32Array(sections.length),inFlight=new Map();
+  let claimSerial=0;
+  const invalidate=index=>{dirty.add(index);sectionRevisions[index]++;};
   for(let i=0;i<flags.length;i++)if(flags[i])dirty.add(i);
   let revision=0;
   const location=(x,y,z)=>{
@@ -216,9 +222,9 @@ function createSectionStore(options={}){
     section.data[offset]=block;
     // A block changed at the top or bottom of a slice can reveal/hide a face
     // belonging to the neighboring slice. Invalidate both sides of the seam.
-    dirty.add(index);
-    if(y===section.minY&&index>0)dirty.add(index-1);
-    if(y===section.maxY&&index+1<sections.length)dirty.add(index+1);
+    invalidate(index);
+    if(y===section.minY&&index>0)invalidate(index-1);
+    if(y===section.maxY&&index+1<sections.length)invalidate(index+1);
     revision++;
     return true;
   }
@@ -257,12 +263,49 @@ function createSectionStore(options={}){
       nonAir:counts[index],action:counts[index]>0?'rebuild':'remove'
     }));
   }
+  // Claim/ack is the safe path for asynchronous WebGL rebuilds. Claims keep
+  // dirty flags until success; failed builds can release the claim for retry.
+  // A newer edit invalidates an old claim, including adjacent seam changes.
+  function claimDirtySectionsNear(y,radius=4,limit=4){
+    if(!Number.isSafeInteger(limit)||limit<1)
+      throw new RangeError('Invalid section mesh budget');
+    return dirtySectionsNear(y,radius,sections.length)
+      .filter(job=>!inFlight.has(job.index)).slice(0,limit).map(job=>{
+        const lease=Object.freeze({...job,revision:sectionRevisions[job.index],
+          claimId:++claimSerial});
+        inFlight.set(job.index,lease);
+        return lease;
+      });
+  }
+  function completeDirtySection(job,applied){
+    if(!job||!Number.isSafeInteger(job.index)||
+       !Number.isSafeInteger(job.claimId))return false;
+    const active=inFlight.get(job.index);
+    if(!active||active.claimId!==job.claimId||
+       active.revision!==job.revision)return false;
+    inFlight.delete(job.index);
+    if(!applied)return true;
+    if(sectionRevisions[job.index]!==job.revision)return false;
+    dirty.delete(job.index);
+    return true;
+  }
+  const ackDirtySection=job=>completeDirtySection(job,true);
+  const releaseDirtySection=job=>completeDirtySection(job,false);
+  // Retain the synchronous drain API for legacy callers, but never steal a
+  // section currently owned by an asynchronous mesh job.
   function takeDirtySectionsNear(y,radius=4,limit=4){
-    const jobs=dirtySectionsNear(y,radius,limit);
+    if(!Number.isSafeInteger(limit)||limit<1)
+      throw new RangeError('Invalid section mesh budget');
+    const jobs=dirtySectionsNear(y,radius,sections.length)
+      .filter(job=>!inFlight.has(job.index)).slice(0,limit);
     for(const job of jobs)dirty.delete(job.index);
     return jobs;
   }
-  function takeDirtySections(){const result=dirtySections();dirty.clear();return result;}
+  function takeDirtySections(){
+    const result=dirtySections().filter(index=>!inFlight.has(index));
+    for(const index of result)dirty.delete(index);
+    return result;
+  }
   // Recompress when a section is unloaded or after a batch of edits. Scanning
   // 4096 voxels after every block placement would harm mobile frame times.
   function compact(index){
@@ -306,10 +349,12 @@ function createSectionStore(options={}){
       active:flags.reduce((n,v)=>n+(v?1:0),0),
       blocks:counts.reduce((n,v)=>n+v,0),
       payloadBytes:sections.reduce((n,s)=>n+(s.uniform?1:s.data.byteLength),0),
-      dirty:dirty.size,revision};
+      dirty:dirty.size,inFlight:inFlight.size,revision};
   }
   return Object.freeze({minY,maxY,height,chunkSize,sectionHeight,get,set,applyEdits,
-    dirtySections,dirtySectionsNear,takeDirtySections,takeDirtySectionsNear,compact,materialize,rebuild,near,stats});
+    dirtySections,dirtySectionsNear,takeDirtySections,takeDirtySectionsNear,
+    claimDirtySectionsNear,ackDirtySection,releaseDirtySection,
+    compact,materialize,rebuild,near,stats});
 }
 
  // Small occupancy flags for mesh culling, without copying full voxel arrays.

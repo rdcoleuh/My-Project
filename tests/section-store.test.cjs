@@ -109,3 +109,54 @@ test('budgeted jobs remove emptied meshes and retain seam invalidations',()=>{
  assert.deepEqual(Array.from(store.dirtySections()),[]);
  assert.equal(store.get(1,-49,1),11);
 });
+
+test('mesh leases keep pending sections until successful acknowledgement',()=>{
+ const data=new Uint8Array(2*2*48);data[0]=3;data[16]=58;data[32]=19;
+ const store=api.createSectionStore({data,height:48,minY:-64,chunkSize:2});
+ const claimed=store.claimDirtySectionsNear(-48,2,2);
+ assert.deepEqual(Array.from(claimed,job=>job.index),[1,0]);
+ assert.equal(store.stats().inFlight,2);
+ assert.deepEqual(Array.from(store.dirtySections()),[0,1,2]);
+ assert.deepEqual(Array.from(store.claimDirtySectionsNear(-48,2,3),job=>job.index),[2]);
+ assert.equal(store.ackDirtySection(claimed[0]),true);
+ assert.equal(store.ackDirtySection(claimed[0]),false,'a lease cannot be acknowledged twice');
+ assert.equal(store.releaseDirtySection(claimed[1]),true);
+ assert.equal(store.stats().inFlight,1);
+ assert.deepEqual(Array.from(store.dirtySections()),[0,2]);
+ const retried=store.claimDirtySectionsNear(-64,0,1)[0];
+ assert.equal(retried.index,0);
+ assert.notEqual(retried.claimId,claimed[1].claimId);
+ assert.equal(store.ackDirtySection(claimed[1]),false,'stale lease cannot clear a retry');
+ assert.equal(store.ackDirtySection(retried),true);
+ assert.deepEqual(Array.from(store.takeDirtySections()),[],'claimed jobs cannot be drained');
+});
+test('edits during a claimed rebuild preserve dirty state, including seam neighbors',()=>{
+ const data=new Uint8Array(2*2*32);data[0]=3;data[16]=3;
+ const store=api.createSectionStore({data,height:32,minY:-64,chunkSize:2});
+ const first=store.claimDirtySectionsNear(-64,0,1)[0];
+ const neighbor=store.claimDirtySectionsNear(-48,0,1)[0];
+ store.set(1,-49,1,11); // last voxel of section zero invalidates section one
+ assert.equal(store.ackDirtySection(first),false,'old mesh must not clear a newer edit');
+ assert.equal(store.ackDirtySection(neighbor),false,'seam invalidation rejects stale neighbor mesh');
+ assert.deepEqual(Array.from(store.dirtySections()),[0,1]);
+ const rebuilt=store.claimDirtySectionsNear(-64,1,2);
+ assert.equal(rebuilt.length,2);
+ for(const job of rebuilt)assert.equal(store.ackDirtySection(job),true);
+ assert.deepEqual(Array.from(store.dirtySections()),[]);
+ assert.equal(store.get(1,-49,1),11);
+});
+test('failed or abandoned mesh claims retry without losing work',()=>{
+ const data=new Uint8Array(2*2*16);data[0]=3;
+ const store=api.createSectionStore({data,height:16,chunkSize:2});
+ const first=store.claimDirtySectionsNear(0,0,1)[0];
+ assert.equal(store.takeDirtySectionsNear(0,0,1).length,0);
+ assert.equal(store.releaseDirtySection(first),true);
+ assert.equal(store.releaseDirtySection(first),false);
+ const retry=store.claimDirtySectionsNear(0,0,1)[0];
+ assert.equal(store.ackDirtySection({...retry,claimId:retry.claimId+1}),false);
+ assert.equal(store.ackDirtySection(retry),true);
+ assert.equal(store.stats().dirty,0);
+ assert.equal(store.stats().inFlight,0);
+ assert.throws(()=>store.claimDirtySectionsNear(0,0,0),/Invalid section mesh budget/);
+ assert.throws(()=>store.claimDirtySectionsNear(NaN),/Invalid section mesh budget/);
+});
