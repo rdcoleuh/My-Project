@@ -163,3 +163,67 @@ test('mixed-height migration rejects invalid coordinates, blocks and incompatibl
  const different=api.createDimensionCodec({width:9000,depth:9000});
  assert.throws(()=>api.reindexNetworkEdits(new Map(),legacy,different),/Incompatible/);
 });
+
+
+test('section store reports initially occupied sections and exact dirty seam neighbors',()=>{
+ const data=new Uint8Array(2*2*32);data[0]=3;
+ const store=api.createSectionStore({data,minY:-64,height:32,chunkSize:2});
+ assert.deepEqual(Array.from(store.takeDirtySections()),[0]);
+ assert.deepEqual(Array.from(store.takeDirtySections()),[]);
+ assert.equal(store.set(1,-49,1,11),true,'top of first section');
+ assert.deepEqual(Array.from(store.takeDirtySections()),[0,1]);
+ assert.equal(store.set(1,-48,1,11),true,'bottom of second section');
+ assert.deepEqual(Array.from(store.takeDirtySections()),[0,1]);
+ assert.equal(store.set(1,-40,1,11),true,'interior of second section');
+ assert.deepEqual(Array.from(store.takeDirtySections()),[1]);
+ assert.equal(store.set(1,-40,1,11),false,'unchanged edit');
+ assert.deepEqual(Array.from(store.takeDirtySections()),[]);
+ assert.equal(store.stats().revision,3);
+});
+test('section edit batches reject invalid entries atomically and retain saved edits',()=>{
+ const data=new Uint8Array(2*2*32);
+ const store=api.createSectionStore({data,minY:-64,height:32,chunkSize:2});
+ assert.deepEqual(Array.from(store.takeDirtySections()),[]);
+ assert.throws(()=>store.applyEdits([[0,-63,0,11],[1,-65,1,3]]),/Invalid section edit batch/);
+ assert.equal(store.get(0,-63,0),0);
+ assert.equal(store.stats().revision,0);
+ assert.throws(()=>store.applyEdits([[0,-63,0,256]]),/Invalid section edit batch/);
+ assert.throws(()=>store.applyEdits([[0,-63,0,3],[0,-60,0]]),/Invalid section edit batch/);
+ assert.equal(store.applyEdits([[0,-63,0,11],[1,-33,1,20],[0,-63,0,11]]),2);
+ assert.equal(store.get(0,-63,0),11);
+ assert.equal(store.get(1,-33,1),20);
+ assert.equal(store.stats().revision,2);
+ assert.deepEqual(Array.from(store.takeDirtySections()),[0,1]);
+ assert.equal(store.applyEdits([[0,-63,0,11]]),0,'no-op batches avoid mesh work');
+ assert.deepEqual(Array.from(store.takeDirtySections()),[]);
+});
+test('section compaction preserves blocks and never marks unchanged geometry dirty',()=>{
+ const data=new Uint8Array(2*2*32);
+ const store=api.createSectionStore({data,minY:-64,height:32,chunkSize:2});
+ store.set(1,-50,0,4);
+ store.takeDirtySections();
+ assert.equal(store.compact(0),false,'mixed air and stone cannot compact');
+ assert.equal(store.set(1,-50,0,0),true);
+ assert.deepEqual(Array.from(store.takeDirtySections()),[0]);
+ assert.equal(store.compact(0),true);
+ assert.equal(store.stats().uniform,2);
+ assert.equal(store.stats().payloadBytes,2);
+ assert.deepEqual(Array.from(store.rebuild()),Array.from(data),'original data restored');
+ assert.deepEqual(Array.from(store.takeDirtySections()),[],'compaction does not invalidate meshes');
+});
+test('384-layer negative-Y section edits mark only affected section and boundary neighbor',()=>{
+ const H=384,minY=-64,data=new Uint8Array(2*2*H);
+ const store=api.createSectionStore({data,minY,height:H,chunkSize:2});
+ assert.equal(store.stats().sections,24);
+ assert.equal(store.get(0,-64,0),0);
+ assert.equal(store.get(0,319,0),0);
+ store.set(0,-64,0,3);
+ assert.deepEqual(Array.from(store.takeDirtySections()),[0]);
+ store.set(0,319,0,11);
+ assert.deepEqual(Array.from(store.takeDirtySections()),[23]);
+ store.set(0,0,0,58);
+ assert.deepEqual(Array.from(store.takeDirtySections()),[3,4]);
+ assert.equal(store.get(0,0,0),58);
+ assert.equal(store.rebuild()[64],58);
+ assert.equal(store.stats().active,3);
+});
