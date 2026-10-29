@@ -69,7 +69,7 @@ test('deep-world generator exposes a writable store without changing legacy chun
  const options={cx:312,cz:312,H:384,minY:-64,SEA:63};
  const store=ctx.window.MineWorldBiomes.generateSectionStore(options);
  assert.equal(store.minY,-64);assert.equal(store.maxY,319);
- assert.equal(store.get(0,-64,0),58);
+ assert.equal(store.get(0,-64,0),170,'deep-world floor now uses bedrock');
  assert.equal(store.set(1,-32,2,11),true);
  assert.equal(store.get(1,-32,2),11);
  assert.equal(store.rebuild()[at(1,-32,2)],11);
