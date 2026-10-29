@@ -112,8 +112,19 @@ function createSectionNeighborhood(){
     return !!store&&at(cx,cz)===store&&
       store.canInstallClaimWithNeighbors(job,snapshotData,neighborsOf(cx,cz));
   }
+  // Bridge section-store claims to a detached, packed exposed-face plan.
+  // Validate both before and after planning; never acknowledge stale work.
+  function planMesh(cx,cz,job,options){
+    const store=requireStore(cx,cz);
+    const planner=window.MineWorldSectionFaces;
+    if(!planner||typeof planner.plan!=='function')return null;
+    const frame=snapshot(cx,cz,job);
+    if(!frame||!canInstall(cx,cz,store,job,frame))return null;
+    const plan=planner.plan(frame,options);
+    return canInstall(cx,cz,store,job,frame)?Object.freeze({snapshot:frame,plan}):null;
+  }
   return Object.freeze({register,unregister,get:at,neighborsOf,set,applyEdits,
-    snapshot,canInstall,size:()=>stores.size});
+    snapshot,canInstall,planMesh,size:()=>stores.size});
 }
 window.MineWorldSectionNeighborhood=Object.freeze({createSectionNeighborhood});
 })();
