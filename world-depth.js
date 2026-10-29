@@ -167,6 +167,98 @@ function sectionizeChunk({data,minY=0,height,chunkSize=16,sectionHeight=16}={}){
 }
 
 
+
+/*
+ * Mutable, copy-on-write section storage for future deep-world streaming.
+ * Uniform 16-block slices need only a block ID until first edited. The
+ * caller still owns save edits; this store never rewrites legacy save keys.
+ * Coordinates are absolute Y, including negative depths.
+ */
+function createSectionStore(options={}){
+  const source=sectionizeChunk(options);
+  const {minY,maxY,height,chunkSize,sectionHeight}=source;
+  const columns=chunkSize*chunkSize;
+  const sections=source.sections.map(s=>({
+    minY:s.minY,maxY:s.maxY,height:s.height,uniform:s.uniform,
+    block:s.block,data:s.data
+  }));
+  const counts=countNonAirSections({data:options.data,height,chunkSize,sectionHeight});
+  const flags=Uint8Array.from(counts,n=>n>0?1:0);
+  const location=(x,y,z)=>{
+    if(![x,y,z].every(Number.isSafeInteger)||x<0||x>=chunkSize||
+       z<0||z>=chunkSize||y<minY||y>maxY)return null;
+    const index=Math.floor((y-minY)/sectionHeight);
+    const section=sections[index];
+    return {index,section,offset:(x*chunkSize+z)*section.height+y-section.minY};
+  };
+  function get(x,y,z){
+    const loc=location(x,y,z);
+    return loc?(loc.section.uniform?loc.section.block:loc.section.data[loc.offset]):null;
+  }
+  function set(x,y,z,block){
+    const loc=location(x,y,z);
+    if(!loc||!Number.isSafeInteger(block)||block<0||block>255)
+      throw new RangeError('Invalid section block edit');
+    const {index,section,offset}=loc;
+    const previous=section.uniform?section.block:section.data[offset];
+    if(previous===block)return false;
+    updateSectionOccupancy(counts,flags,y-minY,previous,block,sectionHeight,height);
+    if(section.uniform){
+      section.data=new Uint8Array(columns*section.height);
+      section.data.fill(section.block);
+      section.block=null;section.uniform=false;
+    }
+    section.data[offset]=block;
+    return true;
+  }
+  // Recompress when a section is unloaded or after a batch of edits. Scanning
+  // 4096 voxels after every block placement would harm mobile frame times.
+  function compact(index){
+    if(!Number.isSafeInteger(index)||index<0||index>=sections.length)
+      throw new RangeError('Invalid section index');
+    const section=sections[index];
+    if(section.uniform)return true;
+    const first=section.data[0];
+    for(let i=1;i<section.data.length;i++)
+      if(section.data[i]!==first)return false;
+    section.data=null;section.block=first;section.uniform=true;
+    return true;
+  }
+  function materialize(index){
+    if(!Number.isSafeInteger(index)||index<0||index>=sections.length)return null;
+    const section=sections[index],result=new Uint8Array(columns*section.height);
+    if(section.uniform)result.fill(section.block);
+    else result.set(section.data);
+    return result;
+  }
+  function rebuild(){
+    const result=new Uint8Array(columns*height);
+    for(let i=0;i<sections.length;i++){
+      const section=sections[i],slice=materialize(i),start=section.minY-minY;
+      for(let col=0;col<columns;col++)
+        result.set(slice.subarray(col*section.height,(col+1)*section.height),col*height+start);
+    }
+    return result;
+  }
+  function near(y,radius=4){
+    if(!Number.isFinite(y)||!Number.isSafeInteger(radius)||radius<0)
+      throw new RangeError('Invalid section view');
+    const center=Math.max(0,Math.min(sections.length-1,Math.floor((y-minY)/sectionHeight)));
+    return sections.map((s,index)=>({
+      index,minY:s.minY,maxY:s.maxY,uniform:s.uniform,nonAir:counts[index]
+    })).filter(s=>Math.abs(s.index-center)<=radius).sort((a,b)=>
+      Math.abs(a.index-center)-Math.abs(b.index-center)||a.index-b.index);
+  }
+  function stats(){
+    return {sections:sections.length,uniform:sections.filter(s=>s.uniform).length,
+      active:flags.reduce((n,v)=>n+(v?1:0),0),
+      blocks:counts.reduce((n,v)=>n+v,0),
+      payloadBytes:sections.reduce((n,s)=>n+(s.uniform?1:s.data.byteLength),0)};
+  }
+  return Object.freeze({minY,maxY,height,chunkSize,sectionHeight,get,set,compact,
+    materialize,rebuild,near,stats});
+}
+
  // Small occupancy flags for mesh culling, without copying full voxel arrays.
  // Conservative occupied flags after block deletion are safe; false negatives
  // after placement are not. The live setter marks newly occupied sections.
@@ -216,5 +308,5 @@ function sectionizeChunk({data,minY=0,height,chunkSize=16,sectionHeight=16}={}){
    return flags[section];
  }
 
-window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk,scanNonAirSections,countNonAirSections,updateSectionOccupancy});
+window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk,createSectionStore,scanNonAirSections,countNonAirSections,updateSectionOccupancy});
 })();

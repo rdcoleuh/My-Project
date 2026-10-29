@@ -274,5 +274,12 @@
    if(!codec?.sectionizeChunk)throw new Error('Vertical section codec is unavailable');
    return codec.sectionizeChunk({data:generateChunk(options),height:H,minY,chunkSize:CHUNK});
  }
- window.MineWorldBiomes={WORLD,CHUNK,COLS,ROWS,BIOMES,STRUCTURE_NAMES,REGION,setSeed,seedFrom,zone,biomeAt,terrainAt,atlasDestination,generateChunk,generateSections};
+ // Experimental writable section store; legacy playable chunks remain unchanged.
+ function generateSectionStore(options={}){
+   const {H=48,minY=0}=options;
+   const codec=window.MineWorldWorldDepth;
+   if(!codec?.createSectionStore)throw new Error('Vertical section store is unavailable');
+   return codec.createSectionStore({data:generateChunk(options),height:H,minY,chunkSize:CHUNK});
+ }
+ window.MineWorldBiomes={WORLD,CHUNK,COLS,ROWS,BIOMES,STRUCTURE_NAMES,REGION,setSeed,seedFrom,zone,biomeAt,terrainAt,atlasDestination,generateChunk,generateSections,generateSectionStore};
 })();
