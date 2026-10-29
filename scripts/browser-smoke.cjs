@@ -861,10 +861,24 @@ async function go(browser,name,mobile){
   assert.equal(furnaceFixture.granted,true,name+': furnace fixture resources unavailable');
   assert.equal(furnaceFixture.placed,true,name+': furnace block fixture placement failed');
   assert.equal(furnaceFixture.opened,true,name+': furnace block interaction failed');
+  for(const slot of ['input','fuel','output']){
+    assert.equal(await page.locator('#mw-furnace-slot-'+slot).count(),1,
+      name+': missing visible '+slot+' furnace slot');
+  }
+  assert.equal(await page.locator('#mw-furnace-flame').count(),1,name+': missing fuel meter');
+  assert.equal(await page.locator('#mw-furnace-cook').count(),1,name+': missing smelting meter');
   await page.locator('#mw-furnace-input').selectOption('rawIron');
-  await page.locator('#mw-furnace-put-input').click({force:true});
+  await page.locator('#mw-furnace-put-input-stack').click({force:true});
+  const loaded=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
+  assert.equal(loaded?.input?.qty,2,name+': add-stack did not transfer both owned raw iron');
+  assert.match(await page.locator('#mw-furnace-slot-input').getAttribute('aria-label'),/2 ×/,
+    name+': furnace input slot did not announce stack count');
   await page.locator('#mw-furnace-fuel').selectOption('coal');
   await page.locator('#mw-furnace-put-fuel').click({force:true});
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-three-slots.png':'desktop-furnace-three-slots.png'),
+    animations:'disabled'});
   await page.waitForFunction(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z)?.output?.key==='iron',
     furnaceFixture,{timeout:30000});
