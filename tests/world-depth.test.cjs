@@ -105,3 +105,60 @@ test('converted edits replay in the deep generator without rewriting source save
  assert.equal(data[(1*16+1)*384+79],0);
  assert.equal(original.get(legacy.index(x,0,z)),11);
 });
+
+
+test('mixed-height dimension network codec preserves disjoint Overworld, Nether and End intervals',()=>{
+ const mixed=api.createDimensionCodec();
+ const legacy=api.createDimensionCodec({overworld:api.LEGACY});
+ assert.equal(mixed.offsets.overworld,0);
+ assert.equal(mixed.offsets.nether,10000*10000*384);
+ assert.equal(mixed.offsets.end,10000*10000*(384+48));
+ assert.equal(mixed.volume,10000*10000*(384+48+48));
+ for(const [dimension,y] of [['overworld',-64],['overworld',319],['nether',0],['nether',47],['end',0],['end',47]]){
+  const n=mixed.networkIndex(5000,y,5000,dimension);
+  const point=mixed.decodeNetwork(n);
+  assert.equal(point.dimension,dimension);
+  assert.equal(point.y,y);assert.equal(point.x,5000);assert.equal(point.z,5000);
+ }
+ assert.equal(mixed.networkIndex(5000,-64,5000,'nether'),null);
+ assert.equal(mixed.networkIndex(5000,319,5000,'end'),null);
+ assert.equal(mixed.networkIndex(5000,0,5000,'unknown'),null);
+ assert.equal(mixed.decodeNetwork(mixed.volume),null);
+ assert.equal(mixed.decodeNetwork(-1),null);
+ for(const dimension of ['overworld','nether','end']){
+  const old=legacy.networkIndex(5000,14,5000,dimension);
+  const expected=(['overworld','nether','end'].indexOf(dimension)*10000*10000*48)+
+   ((5000*10000+5000)*48+14);
+  assert.equal(old,expected,'all-legacy codec remains byte-compatible with original offsets');
+ }
+});
+test('mixed-height migration preserves edits in every dimension and can round-trip',()=>{
+ const legacy=api.createDimensionCodec({overworld:api.LEGACY});
+ const mixed=api.createDimensionCodec();
+ const original=new Map([
+  [legacy.networkIndex(5000,0,5000,'overworld'),11],
+  [legacy.networkIndex(5000,14,5000,'overworld'),0],
+  [legacy.networkIndex(5000,47,5000,'nether'),20],
+  [legacy.networkIndex(9999,0,9999,'end'),168]
+ ]);
+ const moved=api.reindexNetworkEdits(original,legacy,mixed);
+ assert.equal(moved.size,4);
+ assert.equal(moved.get(mixed.networkIndex(5000,0,5000,'overworld')),11);
+ assert.equal(moved.get(mixed.networkIndex(5000,14,5000,'overworld')),0);
+ assert.equal(moved.get(mixed.networkIndex(5000,47,5000,'nether')),20);
+ assert.equal(moved.get(mixed.networkIndex(9999,0,9999,'end')),168);
+ assert.deepEqual([...api.reindexNetworkEdits(moved,mixed,legacy)],[...original]);
+ assert.equal(original.size,4,'original map remains untouched');
+});
+test('mixed-height migration rejects invalid coordinates, blocks and incompatible dimensions atomically',()=>{
+ const legacy=api.createDimensionCodec({overworld:api.LEGACY});
+ const mixed=api.createDimensionCodec();
+ const valid=legacy.networkIndex(5000,0,5000,'overworld');
+ const invalid=new Map([[valid,11],[legacy.volume,12]]);
+ assert.throws(()=>api.reindexNetworkEdits(invalid,legacy,mixed),/invalid/);
+ assert.equal(invalid.size,2);
+ assert.throws(()=>api.reindexNetworkEdits(new Map([[valid,256]]),legacy,mixed),/Invalid saved block/);
+ assert.throws(()=>api.reindexNetworkEdits(new Map([[mixed.networkIndex(5000,-64,5000,'overworld'),11]]),mixed,legacy),/outside target dimension/);
+ const different=api.createDimensionCodec({width:9000,depth:9000});
+ assert.throws(()=>api.reindexNetworkEdits(new Map(),legacy,different),/Incompatible/);
+});
