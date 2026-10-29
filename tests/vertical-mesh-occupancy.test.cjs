@@ -36,7 +36,7 @@ test('live renderer tracks exact section counts for local and remote edits',()=>
  assert.ok(html.includes('sectionBlockCounts=window.MineWorldWorldDepth.countNonAirSections'));
  assert.ok(html.includes('nonAirSections:Uint8Array.from(sectionBlockCounts'));
  assert.ok(html.includes('updateSectionOccupancy('));
- assert.ok(html.includes('chunk.sectionBlockCounts,chunk.nonAirSections,y-chunk.minY,previous,b'));
+ assert.ok(html.includes('chunk.sectionBlockCounts,chunk.nonAirSections,y-chunk.minY,previous,b,16,H'));
  assert.ok(html.includes('if(chunk){set(x,y,z,b);dirtyAround(x,z);}'));
  assert.ok(!html.includes('if(chunk){chunk.data[chunkIndex(x,y,z)]=b;dirtyAround(x,z);}'));
  assert.ok(html.includes('if(!nonAirSections[section])continue'));
@@ -73,10 +73,10 @@ test('partial sections and invalid count updates are handled safely',()=>{
  const counts=api.countNonAirSections({data,height:35,chunkSize:2});
  const flags=api.scanNonAirSections({data,height:35,chunkSize:2});
  assert.deepEqual([...counts],[0,0,1]);
- api.updateSectionOccupancy(counts,flags,34,9,0);
+ api.updateSectionOccupancy(counts,flags,34,9,0,16,35);
  assert.deepEqual([...flags],[0,0,0]);
- assert.throws(()=>api.updateSectionOccupancy(counts,flags,34,9,0),/underflow/);
- assert.throws(()=>api.updateSectionOccupancy(counts,flags,-1,0,1),/Invalid/);
- assert.throws(()=>api.updateSectionOccupancy(counts,flags,35,0,1),/Invalid/);
- assert.throws(()=>api.updateSectionOccupancy(counts,flags,0,0,256),/Invalid/);
+ assert.throws(()=>api.updateSectionOccupancy(counts,flags,34,9,0,16,35),/underflow/);
+ assert.throws(()=>api.updateSectionOccupancy(counts,flags,-1,0,1,16,35),/Invalid/);
+ assert.throws(()=>api.updateSectionOccupancy(counts,flags,35,0,1,16,35),/Invalid/);
+ assert.throws(()=>api.updateSectionOccupancy(counts,flags,0,0,256,16,35),/Invalid/);
 });

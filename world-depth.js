@@ -194,11 +194,13 @@ function sectionizeChunk({data,minY=0,height,chunkSize=16,sectionHeight=16}={}){
  }
  // y is local to the chunk (0..height-1), not an absolute world Y.
  // No count change is needed when replacing one non-air block with another.
- function updateSectionOccupancy(counts,flags,y,previous,next,sectionHeight=16){
+ function updateSectionOccupancy(counts,flags,y,previous,next,sectionHeight=16,height=counts.length*sectionHeight){
    if(Object.prototype.toString.call(counts)!=='[object Uint32Array]'||
      Object.prototype.toString.call(flags)!=='[object Uint8Array]'||
      !Number.isSafeInteger(y)||y<0||
      !Number.isSafeInteger(sectionHeight)||sectionHeight<1||
+     !Number.isSafeInteger(height)||height<1||y>=height||
+     Math.ceil(height/sectionHeight)!==counts.length||
      ![previous,next].every(n=>Number.isSafeInteger(n)&&n>=0&&n<=255)||
      counts.length!==flags.length||Math.floor(y/sectionHeight)>=counts.length)
      throw new RangeError('Invalid section occupancy update');

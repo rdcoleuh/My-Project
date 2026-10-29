@@ -1377,7 +1377,7 @@ body.in-nether #game-wrap{background:#290f19}
       chunk.data[offset]=b;
       // Keep empty-section culling exact after mining, placement and replacement.
       window.MineWorldWorldDepth.updateSectionOccupancy(
-        chunk.sectionBlockCounts,chunk.nonAirSections,y-chunk.minY,previous,b);
+        chunk.sectionBlockCounts,chunk.nonAirSections,y-chunk.minY,previous,b,16,H);
       chunk.dirty=true;
     }
   };
