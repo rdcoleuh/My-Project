@@ -111,5 +111,60 @@ function reindexNetworkEdits(edits,source,target){
   }
   return converted;
 }
-window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,create,reindexEdits,createDimensionCodec,reindexNetworkEdits});
+
+// Split a generated chunk into independently addressable vertical sections.
+// Uniform (including empty) sections use only one byte of block data. Mixed
+// sections retain exact blocks with the same x,z,y ordering as legacy chunks.
+// This is an opt-in staging API: the live renderer is not switched over yet.
+function sectionizeChunk({data,minY=0,height,chunkSize=16,sectionHeight=16}={}){
+  if(Object.prototype.toString.call(data)!=='[object Uint8Array]'||
+    ![minY,height,chunkSize,sectionHeight].every(Number.isSafeInteger)||
+    height<1||chunkSize<1||sectionHeight<1||
+    !Number.isSafeInteger(chunkSize*chunkSize*height)||
+    data.length!==chunkSize*chunkSize*height)
+    throw new RangeError('Invalid vertical chunk data or dimensions');
+  const sections=[];
+  for(let start=0;start<height;start+=sectionHeight){
+    const span=Math.min(sectionHeight,height-start),first=data[start];
+    let uniform=true;
+    for(let column=0;column<chunkSize*chunkSize&&uniform;column++){
+      const base=column*height+start;
+      for(let y=0;y<span;y++)if(data[base+y]!==first){uniform=false;break;}
+    }
+    let blocks=null;
+    if(!uniform){
+      blocks=new Uint8Array(chunkSize*chunkSize*span);
+      for(let column=0;column<chunkSize*chunkSize;column++)
+        blocks.set(data.subarray(column*height+start,column*height+start+span),column*span);
+    }
+    sections.push(Object.freeze({minY:minY+start,maxY:minY+start+span-1,
+      height:span,uniform,block:uniform?first:null,data:blocks}));
+  }
+  const read=(x,y,z)=>{
+    if(![x,y,z].every(Number.isInteger)||x<0||x>=chunkSize||z<0||z>=chunkSize||
+      y<minY||y>=minY+height)return null;
+    const section=sections[Math.floor((y-minY)/sectionHeight)];
+    return section.uniform?section.block:
+      section.data[(x*chunkSize+z)*section.height+y-section.minY];
+  };
+  const materialize=index=>{
+    if(!Number.isInteger(index)||index<0||index>=sections.length)return null;
+    const section=sections[index],out=new Uint8Array(chunkSize*chunkSize*section.height);
+    if(section.uniform)out.fill(section.block);else out.set(section.data);
+    return out;
+  };
+  const near=(y,radius=4)=>{
+    if(!Number.isFinite(y)||!Number.isSafeInteger(radius)||radius<0)
+      throw new RangeError('Invalid section view');
+    const center=Math.max(0,Math.min(sections.length-1,
+      Math.floor((y-minY)/sectionHeight)));
+    return sections.map((section,index)=>({section,index})).filter(item=>
+      Math.abs(item.index-center)<=radius).sort((a,b)=>
+      Math.abs(a.index-center)-Math.abs(b.index-center)||a.index-b.index);
+  };
+  return Object.freeze({minY,maxY:minY+height-1,height,chunkSize,sectionHeight,
+    sections:Object.freeze(sections),read,materialize,near});
+}
+
+window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk});
 })();

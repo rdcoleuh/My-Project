@@ -266,5 +266,13 @@
    }
    return data;
  }
- window.MineWorldBiomes={WORLD,CHUNK,COLS,ROWS,BIOMES,STRUCTURE_NAMES,REGION,setSeed,seedFrom,zone,biomeAt,terrainAt,atlasDestination,generateChunk};
+ // Opt-in vertical sections. Full-chunk generation remains the input for now;
+ // future renderer integration can stream nearby sections independently.
+ function generateSections(options={}){
+   const {H=48,minY=0}=options;
+   const codec=window.MineWorldWorldDepth;
+   if(!codec?.sectionizeChunk)throw new Error('Vertical section codec is unavailable');
+   return codec.sectionizeChunk({data:generateChunk(options),height:H,minY,chunkSize:CHUNK});
+ }
+ window.MineWorldBiomes={WORLD,CHUNK,COLS,ROWS,BIOMES,STRUCTURE_NAMES,REGION,setSeed,seedFrom,zone,biomeAt,terrainAt,atlasDestination,generateChunk,generateSections};
 })();
