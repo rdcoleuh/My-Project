@@ -123,6 +123,7 @@ test('mixed-height dimension network codec preserves disjoint Overworld, Nether 
  assert.equal(mixed.networkIndex(5000,-64,5000,'nether'),null);
  assert.equal(mixed.networkIndex(5000,319,5000,'end'),null);
  assert.equal(mixed.networkIndex(5000,0,5000,'unknown'),null);
+ assert.equal(mixed.networkIndex(5000,0,5000,'__proto__'),null);
  assert.equal(mixed.decodeNetwork(mixed.volume),null);
  assert.equal(mixed.decodeNetwork(-1),null);
  for(const dimension of ['overworld','nether','end']){
