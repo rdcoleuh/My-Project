@@ -762,12 +762,17 @@ async function go(browser,name,mobile){
     const fallback=icon.querySelector('canvas.mw-stat-fallback');
     const image=icon.querySelector('img.mw-pack-stat-layer');
     const pixel=fallback.getContext('2d').getImageData(7,3,1,1).data;
+    const leftPixel=fallback.getContext('2d').getImageData(3,3,1,1).data;
+    const empty=window.MineWorldHudArt.pixels('heart','empty');
+    const left=(3*11+3)*4,right=(3*11+7)*4;
+    const emptyOutline=[...leftPixel].every((n,i)=>n===empty[left+i])&&
+      [...pixel].every((n,i)=>n===empty[right+i]);
     const css=getComputedStyle(image);
-    return {count:icon.children.length,outlineAlpha:pixel[3],
+    return {count:icon.children.length,outlineAlpha:pixel[3],emptyOutline,
       positioned:css.position==='absolute',sharp:css.imageRendering==='pixelated',
       label:document.querySelector('#health-text').getAttribute('aria-label')};
   });
-  assert.ok(halfLayer.count===2&&halfLayer.outlineAlpha===255&&
+  assert.ok(halfLayer.count===2&&halfLayer.outlineAlpha===255&&halfLayer.emptyOutline&&
     halfLayer.positioned&&halfLayer.sharp&&halfLayer.label==='Health: 19 of 20',
     name+': transparent imported half heart erased its original empty outline: '+
       JSON.stringify(halfLayer));

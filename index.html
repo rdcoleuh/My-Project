@@ -2398,6 +2398,13 @@ body.in-nether #game-wrap{background:#290f19}
           if(fill==='half'){
             image.classList.add('mw-pack-stat-layer');
             if(clipped)image.classList.add('mw-pack-stat-clipped');
+            // The procedural half icon is already filled on one side.
+            // Its colors would bleed through transparent pixels in a
+            // player-imported half/full-clipped sprite. Only once imported
+            // art resolves, put an EMPTY outline beneath that sprite.
+            // Without imported art, keep the complete procedural half.
+            const emptyUnderlay=window.MineWorldHudArt?.paint(glyph,'empty');
+            if(emptyUnderlay)icon.replaceChildren(emptyUnderlay);
             icon.appendChild(image);
           }else icon.replaceChildren(image);
         }).catch(()=>{});

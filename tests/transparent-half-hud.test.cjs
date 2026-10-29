@@ -10,6 +10,8 @@ test('half hearts and food keep original fallback beneath transparent imported s
  const renderer=html.slice(html.indexOf('function updateSurvivalHUD(){'),
    html.indexOf('function setGameMode(next)'));
  assert.match(renderer,/if\(fill==='half'\)\{[\s\S]*?image\.classList\.add\('mw-pack-stat-layer'\);[\s\S]*?icon\.appendChild\(image\);/);
+ assert.match(renderer,/const emptyUnderlay=window\.MineWorldHudArt\?\.paint\(glyph,'empty'\)/);
+ assert.match(renderer,/if\(emptyUnderlay\)icon\.replaceChildren\(emptyUnderlay\)/);
  assert.match(renderer,/else icon\.replaceChildren\(image\)/);
  assert.match(html,/\.mw-pack-stat-layer\{position:absolute;inset:0;pointer-events:none\}/);
  assert.match(html,/#hunger-text \.mw-pack-stat-clipped\{clip-path:inset\(0 0 0 50%\)!important\}/);
@@ -17,7 +19,7 @@ test('half hearts and food keep original fallback beneath transparent imported s
 test('desktop and mobile Chrome smoke check real imported full-only half-heart overlay',()=>{
  assert.match(smoke,/mode==='half-no-empty'/);
  assert.match(smoke,/makeTestArchive\('half-no-empty'\)/);
- assert.match(smoke,/halfLayer\.count===2&&halfLayer\.outlineAlpha===255/);
+ assert.match(smoke,/halfLayer\.count===2&&halfLayer\.outlineAlpha===255&&halfLayer\.emptyOutline/);
  assert.match(smoke,/mobile-half-heart-no-empty-synthetic\.png/);
  assert.match(smoke,/desktop-half-heart-no-empty-synthetic\.png/);
 });
