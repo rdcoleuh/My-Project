@@ -14,29 +14,29 @@ test('boundary edits invalidate only the adjacent chunk section, including negat
  g.register(0,0,a);g.register(1,0,east);g.register(0,-1,north);
  for(const s of [a,east,north])clear(s);
  assert.equal(g.set(0,0,1,-1,1,12),true);
- assert.deepEqual(east.dirtySections(),[0]);
- assert.deepEqual(north.dirtySections(),[]);
+ assert.deepEqual(Array.from(east.dirtySections()),[0]);
+ assert.deepEqual(Array.from(north.dirtySections()),[]);
  clear(a);clear(east);
  assert.equal(g.set(0,0,0,20,0,13),true);
- assert.deepEqual(north.dirtySections(),[2]);
- assert.equal(east.dirtySections().length,0);
+ assert.deepEqual(Array.from(north.dirtySections()),[2]);
+ assert.equal(Array.from(east.dirtySections()).length,0);
  assert.equal(g.set(0,0,0,20,0,13),false);
- assert.deepEqual(north.dirtySections(),[2]);
+ assert.deepEqual(Array.from(north.dirtySections()),[2]);
 });
 
 test('chunk load, replacement and unload invalidate seam faces without voxel changes',()=>{
  const g=grid(),a=make(),b=make(),replacement=make();
  g.register(4,5,a);clear(a);
  g.register(5,5,b);
- assert.deepEqual(a.dirtySections(),[0,1,2]);
+ assert.deepEqual(Array.from(a.dirtySections()),[0,1,2]);
  clear(a);clear(b);
  assert.equal(g.register(5,5,b),false);
- assert.deepEqual(a.dirtySections(),[]);
+ assert.deepEqual(Array.from(a.dirtySections()),[]);
  g.register(5,5,replacement);
- assert.deepEqual(a.dirtySections(),[0,1,2]);
+ assert.deepEqual(Array.from(a.dirtySections()),[0,1,2]);
  clear(a);
  assert.equal(g.unregister(5,5),true);
- assert.deepEqual(a.dirtySections(),[0,1,2]);
+ assert.deepEqual(Array.from(a.dirtySections()),[0,1,2]);
  assert.equal(g.unregister(5,5),false);
 });
 
@@ -45,11 +45,11 @@ test('invalid or rolled-back batches never dirty neighbors; final boundary state
  g.register(0,0,a);g.register(1,0,b);clear(a);clear(b);
  assert.throws(()=>g.applyEdits(0,0,[[1,-5,0,9],[1,0,0,256]]),/Invalid section edit batch/);
  assert.equal(a.get(1,-5,0),0);
- assert.deepEqual(b.dirtySections(),[]);
+ assert.deepEqual(Array.from(b.dirtySections()),[]);
  assert.equal(g.applyEdits(0,0,[[1,-5,0,9],[1,-5,0,0]]),2);
- assert.deepEqual(b.dirtySections(),[]);
+ assert.deepEqual(Array.from(b.dirtySections()),[]);
  assert.equal(g.applyEdits(0,0,[[1,-5,0,9],[1,1,0,10]]),2);
- assert.deepEqual(b.dirtySections(),[0,1]);
+ assert.deepEqual(Array.from(b.dirtySections()),[0,1]);
 });
 
 test('snapshot install rejects changed, missing and replaced neighboring chunks',()=>{
