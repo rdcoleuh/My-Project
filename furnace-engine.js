@@ -11,7 +11,7 @@ const RECIPES=Object.freeze({rawIron:'iron',rawGold:'gold',rawCopper:'copper',ra
  'block:26':'block:9','block:57':'block:25'});
 const FUEL=Object.freeze({coal:80,charcoal:80,'block:5':15,'block:11':15,'block:52':15,sticks:5,bamboo:2.5,'block:15':15,'block:30':15,'block:32':15,'block:34':15,
  'block:36':15,'block:38':15,'block:40':15,'block:42':15});
-const COOK=10,key=k=>typeof k==='string'&&(/^[a-zA-Z][a-zA-Z0-9]*$/.test(k)||/^block:[1-9]\d{0,2}$/.test(k));
+const COOK=10,key=k=>typeof k==='string'&&!Object.hasOwn(Object.prototype,k)&&(/^[a-zA-Z][a-zA-Z0-9]*$/.test(k)||/^block:[1-9]\d{0,2}$/.test(k));
 // Keep the legacy Y=0..47 range and permit future deep-world furnaces.
 // X/Z remain inside the current 10,000-block world; Y is absolute, not an array offset.
 const pos=p=>p&&['overworld','nether','end'].includes(p.dimension)&&
