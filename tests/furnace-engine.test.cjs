@@ -71,3 +71,36 @@ test('restoring a completed cook frame cannot leave the furnace permanently stal
  assert.equal(f.tick(10).completed,1);
  assert.equal(f.get(p).output.key,'iron');
 });
+
+test('unfueled partial smelts cool down instead of remaining indefinitely ready',()=>{
+ const f=api.create();
+ assert.equal(f.insert(p,'input','rawIron',2),2);
+ assert.equal(f.insert(p,'fuel','sticks',1),1); // one stick burns for five seconds
+ assert.equal(f.tick(5).completed,0);
+ assert.equal(f.get(p).progress,5);
+ const cooling=f.tick(1);
+ assert.equal(cooling.changed,true,'cooldown changes saved furnace state');
+ assert.equal(cooling.completed,0);
+ assert.equal(f.get(p).progress,3);
+ f.tick(1.5);
+ assert.equal(f.get(p).progress,0,'progress cannot become negative');
+ assert.equal(f.tick(20).changed,false,'an idle furnace needs no repeated save');
+ assert.equal(f.insert(p,'fuel','coal',1),1);
+ assert.equal(f.tick(9).completed,0,'new fuel must actually cook a full item');
+ assert.equal(f.tick(1).completed,1);
+ assert.equal(f.get(p).output.qty,1);
+});
+
+test('partially smelted saves cool correctly without fuel and resume with fuel',()=>{
+ const f=api.create();
+ f.restore([{...p,input:{key:'rawIron',qty:1},progress:4,burn:0}]);
+ assert.equal(f.tick(1).completed,0);
+ assert.equal(f.get(p).progress,2);
+ const saved=JSON.parse(JSON.stringify(f.snapshot()));
+ const restored=api.create();restored.restore(saved);
+ assert.equal(restored.tick(1).completed,0);
+ assert.equal(restored.get(p).progress,0);
+ assert.equal(restored.insert(p,'fuel','coal',1),1);
+ assert.equal(restored.tick(10).completed,1);
+ assert.equal(restored.get(p).output.key,'iron');
+});

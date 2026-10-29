@@ -38,7 +38,12 @@ function create(){
      if(m.burn){m.burn=Math.max(0,m.burn-remaining);changed=true;}break;
     }
     if(m.burn<=0){
-     if(!m.fuel||!FUEL[m.fuel.key])break;
+     if(!m.fuel||!FUEL[m.fuel.key]){
+      // A stopped cook cools off at twice real time. Without this,
+      // unfueled furnaces could preserve 99% progress indefinitely.
+      if(m.progress>0){m.progress=Math.max(0,m.progress-remaining*2);changed=true;}
+      break;
+     }
      m.burn=m.burnTotal=FUEL[m.fuel.key];if(!--m.fuel.qty)m.fuel=null;changed=true;
     }
     const step=Math.min(remaining,m.burn,COOK-m.progress);if(step<1e-7)break;
