@@ -77,3 +77,35 @@ test('deep-world generator exposes a writable store without changing legacy chun
  assert.equal(old.length,16*16*48);
  assert.equal(ctx.window.MineWorldBiomes.generateSectionStore({cx:312,cz:312}).height,48);
 });
+
+test('budgeted deep-section mesh jobs prioritize the player and retain distant work',()=>{
+ const data=new Uint8Array(2*2*64);
+ for(let section=0;section<4;section++)data[section*16]=section+1;
+ const store=api.createSectionStore({data,height:64,minY:-64,chunkSize:2});
+ assert.deepEqual(Array.from(store.dirtySectionsNear(-32,3,2),job=>job.index),[2,1]);
+ assert.deepEqual(Array.from(store.dirtySections()),[0,1,2,3],'preview does not drain jobs');
+ const jobs=store.takeDirtySectionsNear(-32,3,2);
+ assert.deepEqual(Array.from(jobs,job=>job.action),['rebuild','rebuild']);
+ assert.deepEqual(Array.from(store.dirtySections()),[0,3],'unprocessed jobs survive frame budget');
+ assert.deepEqual(Array.from(store.takeDirtySectionsNear(-64,0,1),job=>job.index),[0]);
+ assert.deepEqual(Array.from(store.takeDirtySectionsNear(-16,0,1),job=>job.index),[3]);
+ assert.deepEqual(Array.from(store.dirtySections()),[]);
+ assert.throws(()=>store.takeDirtySectionsNear(NaN),/Invalid section mesh budget/);
+ assert.throws(()=>store.dirtySectionsNear(0,-1),/Invalid section mesh budget/);
+ assert.throws(()=>store.dirtySectionsNear(0,2,0),/Invalid section mesh budget/);
+});
+
+test('budgeted jobs remove emptied meshes and retain seam invalidations',()=>{
+ const data=new Uint8Array(2*2*32);data[0]=3;
+ const store=api.createSectionStore({data,height:32,minY:-64,chunkSize:2});
+ store.takeDirtySections();
+ store.set(0,-64,0,0);
+ assert.deepEqual(Array.from(store.dirtySectionsNear(-64,0),job=>job.action),['remove']);
+ assert.deepEqual(Array.from(store.takeDirtySectionsNear(-64,0),job=>job.index),[0]);
+ store.set(1,-49,1,11);
+ assert.deepEqual(Array.from(store.takeDirtySectionsNear(-64,0),job=>job.index),[0]);
+ assert.deepEqual(Array.from(store.dirtySections()),[1],'neighbor seam remains pending');
+ assert.deepEqual(Array.from(store.takeDirtySectionsNear(-48,0),job=>job.action),['remove']);
+ assert.deepEqual(Array.from(store.dirtySections()),[]);
+ assert.equal(store.get(1,-49,1),11);
+});

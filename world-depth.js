@@ -241,6 +241,27 @@ function createSectionStore(options={}){
     return changed;
   }
   function dirtySections(){return [...dirty].sort((a,b)=>a-b);}
+  // Budget mesh work around the player's elevation instead of rebuilding all
+  // 24 deep-world slices in one mobile frame. Empty slices must be returned as
+  // 'remove' jobs: dropping their old mesh is as important as building solids.
+  // A preview never acknowledges work; taking a batch drains only its entries.
+  function dirtySectionsNear(y,radius=4,limit=4){
+    if(!Number.isFinite(y)||!Number.isSafeInteger(radius)||radius<0||
+       !Number.isSafeInteger(limit)||limit<1)
+      throw new RangeError('Invalid section mesh budget');
+    const center=Math.max(0,Math.min(sections.length-1,Math.floor((y-minY)/sectionHeight)));
+    const pending=[...dirty].filter(index=>Math.abs(index-center)<=radius);
+    pending.sort((a,b)=>Math.abs(a-center)-Math.abs(b-center)||a-b);
+    return pending.slice(0,limit).map(index=>Object.freeze({
+      index,minY:sections[index].minY,maxY:sections[index].maxY,
+      nonAir:counts[index],action:counts[index]>0?'rebuild':'remove'
+    }));
+  }
+  function takeDirtySectionsNear(y,radius=4,limit=4){
+    const jobs=dirtySectionsNear(y,radius,limit);
+    for(const job of jobs)dirty.delete(job.index);
+    return jobs;
+  }
   function takeDirtySections(){const result=dirtySections();dirty.clear();return result;}
   // Recompress when a section is unloaded or after a batch of edits. Scanning
   // 4096 voxels after every block placement would harm mobile frame times.
@@ -288,7 +309,7 @@ function createSectionStore(options={}){
       dirty:dirty.size,revision};
   }
   return Object.freeze({minY,maxY,height,chunkSize,sectionHeight,get,set,applyEdits,
-    dirtySections,takeDirtySections,compact,materialize,rebuild,near,stats});
+    dirtySections,dirtySectionsNear,takeDirtySections,takeDirtySectionsNear,compact,materialize,rebuild,near,stats});
 }
 
  // Small occupancy flags for mesh culling, without copying full voxel arrays.
