@@ -35,12 +35,12 @@ test('migration rejects out-of-range and fractional furnace coordinates in all d
  for(const record of [
   {...furnace,y:-64},{...furnace,y:48},{...furnace,x:8},
   {...furnace,z:-1},{...furnace,x:1.5},{...furnace,dimension:'other'}
- ])assert.throws(()=>plan({...base,furnaces:[record]},opts),RangeError);
+ ])assert.throws(()=>plan({...base,furnaces:[record]},opts),/Invalid saved furnace/);
 });
 test('malformed or oversized stacks cannot silently disappear during migration',()=>{
  for(const stack of [{key:'rawIron',qty:0},{key:'rawIron',qty:65},
   {key:'__proto__',qty:1},{key:'block:0',qty:1},{key:'rawIron',qty:1.5}]){
-  assert.throws(()=>plan({...base,furnaces:[{...furnace,input:stack}]},opts),RangeError);
+  assert.throws(()=>plan({...base,furnaces:[{...furnace,input:stack}]},opts),/Invalid saved furnace/);
  }
  const future={...furnace,input:{key:'futureModdedItem',qty:4}};
  assert.equal(plan({...base,furnaces:[future]},opts).furnaces[0].input.key,'futureModdedItem',
@@ -51,7 +51,7 @@ test('invalid burn and progress timers abort migration before data is lost',()=>
   {...furnace,burn:81},{...furnace,burn:-1},{...furnace,burnTotal:Infinity},
   {...furnace,progress:10},{...furnace,progress:-1},
   {...furnace,input:null,progress:4}
- ])assert.throws(()=>plan({...base,furnaces:[bad]},opts),RangeError);
+ ])assert.throws(()=>plan({...base,furnaces:[bad]},opts),/Invalid saved furnace/);
 });
 test('migration preflight does not switch the playable world height or rewrite saves',()=>{
  const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
