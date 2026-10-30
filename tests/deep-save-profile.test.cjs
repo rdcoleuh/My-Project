@@ -20,7 +20,7 @@ test('live save writes legacy profile and load refuses deep stride before mutati
  const guard=html.indexOf('if(!window.MineWorldWorldDepth.canLoadLegacySave(s))');
  const restore=html.indexOf('seed=s.seed;seedLabel=');
  assert.ok(guard>0&&restore>guard,'profile guard must precede terrain regeneration');
- assert.ok(html.includes('Unsupported world height; original save preserved'));
+ assert.ok(html.includes('Unsupported save version or world height; original save preserved'));
 });
 test('preview migrates all three dimension edit maps without mutating original save',()=>{
  const width=32,depth=32;

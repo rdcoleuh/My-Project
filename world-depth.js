@@ -530,8 +530,15 @@ function createSectionStore(options={}){
 // version-13 and older worlds remain legacy; an unfamiliar profile must never
 // be decoded using the 48-layer stride and silently corrupt player builds.
 const LEGACY_PROFILE='legacy-0-47',DEEP_PROFILE='overworld--64-319';
+const LAST_LEGACY_SAVE_VERSION=13;
 function readSaveProfile(save){
   if(!save||typeof save!=='object'||Array.isArray(save))return null;
+  // An unrecognized future save may change coordinate strides even if its
+  // verticalProfile field is missing or incorrectly marked as legacy.
+  // Never load it through the 48-layer codec and overwrite the original.
+  if(Object.prototype.hasOwnProperty.call(save,'version')&&
+     (!Number.isSafeInteger(save.version)||save.version<0||
+      save.version>LAST_LEGACY_SAVE_VERSION))return null;
   if(!Object.prototype.hasOwnProperty.call(save,'verticalProfile'))return LEGACY_PROFILE;
   return save.verticalProfile===LEGACY_PROFILE||save.verticalProfile===DEEP_PROFILE?
     save.verticalProfile:null;
@@ -557,11 +564,34 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
     }
     return Object.freeze([...reindexEdits(edits,source,to)].map(pair=>Object.freeze(pair)));
   }
+  // A migration must validate saved player/dimension positions before any
+  // live switch. Coordinates remain absolute: do not shift old builds or
+  // players by 64 blocks when the new index stride gains negative Y.
+  // This preview is deliberately not an executable migration or a promise
+  // that entity, collision and multiplayer state is already compatible.
+  const position=(value,label)=>{
+    if(value==null)return null;
+    if(!value||typeof value!=='object'||Array.isArray(value)||
+       ![value.x,value.y,value.z].every(Number.isFinite)||
+       value.x<0||value.x>=width||value.z<0||value.z>=depth||
+       value.y<source.minY||value.y>=source.maxY+1)
+      throw new RangeError('Invalid '+label+' position in legacy save');
+    return Object.freeze({x:value.x,y:value.y,z:value.z});
+  };
+  const dimension=save.dimension??'overworld';
+  if(!['overworld','nether','end'].includes(dimension))
+    throw new RangeError('Invalid saved player dimension');
+  const positions=Object.freeze({
+    player:position(save.player,'player'),
+    overworld:position(save.overworldPosition,'overworld'),
+    nether:position(save.netherPosition,'nether'),
+    end:position(save.endPosition,'end')
+  });
   const edits=convert(save.edits,target,'overworld');
   const netherEdits=convert(save.netherEdits??[],source,'nether');
   const endEdits=convert(save.endEdits??[],source,'end');
   return Object.freeze({sourceProfile:LEGACY_PROFILE,targetProfile:DEEP_PROFILE,
-    status:'preview-only',edits,netherEdits,endEdits});
+    status:'preview-only',dimension,positions,edits,netherEdits,endEdits});
 }
 
 window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,LEGACY_PROFILE,DEEP_PROFILE,readSaveProfile,canLoadLegacySave,planLegacySaveMigration,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk,createSectionStore,scanNonAirSections,countNonAirSections,updateSectionOccupancy});

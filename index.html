@@ -1999,7 +1999,7 @@ body.in-nether #game-wrap{background:#290f19}
       const s=JSON.parse(data);if(!s||!Number.isInteger(s.seed)||!Array.isArray(s.edits))return false;
       // Refuse incompatible height strides before touching world or inventory.
       if(!window.MineWorldWorldDepth.canLoadLegacySave(s)){
-        $('status').textContent='● Unsupported world height; original save preserved';
+        $('status').textContent='● Unsupported save version or world height; original save preserved';
         return false;
       }
       if((s.version||0)<5&&!localStorage.getItem('mineworld-backup-before-10k'))localStorage.setItem('mineworld-backup-before-10k',data);
