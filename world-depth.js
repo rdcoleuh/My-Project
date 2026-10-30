@@ -518,5 +518,44 @@ function createSectionStore(options={}){
    return flags[section];
  }
 
-window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk,createSectionStore,scanNonAirSections,countNonAirSections,updateSectionOccupancy});
+
+// Save profiles are explicit before live deep-world migration. Untagged
+// version-13 and older worlds remain legacy; an unfamiliar profile must never
+// be decoded using the 48-layer stride and silently corrupt player builds.
+const LEGACY_PROFILE='legacy-0-47',DEEP_PROFILE='overworld--64-319';
+function readSaveProfile(save){
+  if(!save||typeof save!=='object'||Array.isArray(save))return null;
+  if(!Object.prototype.hasOwnProperty.call(save,'verticalProfile'))return LEGACY_PROFILE;
+  return save.verticalProfile===LEGACY_PROFILE||save.verticalProfile===DEEP_PROFILE?
+    save.verticalProfile:null;
+}
+function canLoadLegacySave(save){return readSaveProfile(save)===LEGACY_PROFILE;}
+// Preview-only edit conversion. This does NOT convert terrain, entities,
+// positions, sea level or multiplayer state and must never be auto-applied.
+// Every record is validated before returning a detached, all-or-nothing plan.
+function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
+  if(!canLoadLegacySave(save)||!Number.isSafeInteger(save.version)||save.version<5||
+     save.worldSize!==width)throw new RangeError('Unsupported legacy save profile or version');
+  const source=create({width,depth,minY:LEGACY.minY,maxY:LEGACY.maxY});
+  const target=create({width,depth,minY:OVERWORLD.minY,maxY:OVERWORLD.maxY});
+  function convert(records,to,label){
+    if(!Array.isArray(records))throw new RangeError('Invalid '+label+' edit records');
+    const edits=new Map();
+    for(const pair of records){
+      if(!Array.isArray(pair)||pair.length!==2||
+         !Number.isSafeInteger(pair[0])||!source.decode(pair[0])||
+         !Number.isSafeInteger(pair[1])||pair[1]<0||pair[1]>255||
+         edits.has(pair[0]))throw new RangeError('Invalid or duplicate '+label+' edit');
+      edits.set(pair[0],pair[1]);
+    }
+    return Object.freeze([...reindexEdits(edits,source,to)].map(pair=>Object.freeze(pair)));
+  }
+  const edits=convert(save.edits,target,'overworld');
+  const netherEdits=convert(save.netherEdits??[],source,'nether');
+  const endEdits=convert(save.endEdits??[],source,'end');
+  return Object.freeze({sourceProfile:LEGACY_PROFILE,targetProfile:DEEP_PROFILE,
+    status:'preview-only',edits,netherEdits,endEdits});
+}
+
+window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,LEGACY_PROFILE,DEEP_PROFILE,readSaveProfile,canLoadLegacySave,planLegacySaveMigration,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk,createSectionStore,scanNonAirSections,countNonAirSections,updateSectionOccupancy});
 })();
