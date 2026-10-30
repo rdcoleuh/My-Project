@@ -643,6 +643,44 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
       throw new RangeError('Invalid saved bed respawn position');
     return Object.freeze({x:bed.x,y:bed.y,z:bed.z});
   })();
+  // Preflight results must not share mutable nested metadata with a saved
+  // entity. Shallow spreads previously froze only the outer record, allowing
+  // callers to modify a future metadata object through the migration preview.
+  // Copy JSON-compatible values without invoking getters, bound the work for
+  // mobile browsers, and reject cycles/non-finite values rather than losing
+  // player-owned state or returning a misleading preview.
+  const copyOwnedRecord=(record,label)=>{
+    const seen=new WeakSet();let budget=512;
+    const invalid=()=>{throw new RangeError('Invalid saved '+label+' metadata');};
+    const copy=(value,depth)=>{
+      if(--budget<0||depth>8)invalid();
+      if(value===null||typeof value==='string'||typeof value==='boolean')return value;
+      if(typeof value==='number')return Number.isFinite(value)?value:invalid();
+      if(!value||typeof value!=='object'||seen.has(value))invalid();
+      const array=Array.isArray(value),proto=Object.getPrototypeOf(value);
+      if(!array&&proto!==null&&Object.getPrototypeOf(proto)!==null)invalid();
+      seen.add(value);
+      let result;
+      if(array){
+        if(value.length>128||Object.keys(value).length!==value.length)invalid();
+        result=Object.freeze(value.map(entry=>copy(entry,depth+1)));
+      }else{
+        const keys=Object.keys(value);
+        if(keys.length>128)invalid();
+        result=Object.create(null);
+        for(const key of keys){
+          if(key==='__proto__'||key==='constructor'||key==='prototype')invalid();
+          const descriptor=Object.getOwnPropertyDescriptor(value,key);
+          if(!descriptor||!Object.hasOwn(descriptor,'value'))invalid();
+          result[key]=copy(descriptor.value,depth+1);
+        }
+        Object.freeze(result);
+      }
+      seen.delete(value);
+      return result;
+    };
+    return copy(record,0);
+  };
   const droppedItems=(()=>{
     const records=save.droppedItems??[];
     if(!Array.isArray(records)||records.length>80)
@@ -660,8 +698,8 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
            record[k]!=null&&(!Number.isFinite(record[k])||
              ((k==='age'||k==='delay')&&record[k]<0))))
         throw new RangeError('Invalid saved dropped-item stack or position');
-      // Retain velocity, pickup delay and any future-compatible metadata.
-      return Object.freeze({...record});
+      // Retain velocity, pickup delay and detached future-compatible metadata.
+      return copyOwnedRecord(record,'dropped-item');
     }));
   })();
 
@@ -679,9 +717,9 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
     return Object.freeze(entries.map(record=>{
       if(!record||typeof record!=='object'||Array.isArray(record)||!valid(record))
         throw new RangeError('Invalid saved '+label+' record');
-      // All current entity save fields are primitives. Retain unknown future
-      // fields instead of dropping them during an eventual migration.
-      return Object.freeze({...record});
+      // Retain unknown metadata, but never expose mutable references to the
+      // original save through a frozen preview.
+      return copyOwnedRecord(record,label);
     }));
   };
   const vehicleKinds=['boat','raft','minecart','chestMinecart',
