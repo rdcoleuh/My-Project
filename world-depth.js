@@ -663,7 +663,15 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
       let result;
       if(array){
         if(value.length>128||Object.keys(value).length!==value.length)invalid();
-        result=Object.freeze(value.map(entry=>copy(entry,depth+1)));
+        // Array.map would invoke an accessor installed on a numeric index.
+        // Read only own data descriptors, just as for object metadata.
+        const items=[];
+        for(let index=0;index<value.length;index++){
+          const descriptor=Object.getOwnPropertyDescriptor(value,String(index));
+          if(!descriptor||!Object.hasOwn(descriptor,'value'))invalid();
+          items.push(copy(descriptor.value,depth+1));
+        }
+        result=Object.freeze(items);
       }else{
         const keys=Object.keys(value);
         if(keys.length>128)invalid();

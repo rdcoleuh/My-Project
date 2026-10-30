@@ -40,6 +40,11 @@ test('cyclic, accessor and non-JSON metadata fail preflight without changing sav
   assert.strictEqual(source.custom,bad);
  }
 });
+test('numeric array accessors cannot execute during migration preflight',()=>{
+ const custom=[1,2];
+ Object.defineProperty(custom,'0',{enumerable:true,configurable:true,get(){throw Error('unexpected array getter');}});
+ assert.throws(()=>preview({vehicles:[{...vehicle,custom}]}),/Invalid saved vehicle metadata/);
+});
 test('oversized or excessively deep entity metadata is rejected within a bounded budget',()=>{
  const deep={};let node=deep;
  for(let i=0;i<12;i++){node.child={};node=node.child;}

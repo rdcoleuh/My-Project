@@ -11,3 +11,6 @@ tests/deep-owned-metadata-preflight.test.cjs covers nested vehicle metadata, dro
 
 ## Limitations
 This remains preview-only. Live Overworld still uses 48 layers; no actual deep-world migration or browser playthrough is claimed here.
+
+## Additional guard
+Array numeric-index getters are rejected without evaluation; the preview reads own data descriptors instead of invoking Array.map. A regression test exercises a throwing array getter.
