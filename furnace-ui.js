@@ -128,6 +128,7 @@ function create(api){
    '<div class="mw-furnace-row"><label>Fuel<select id="mw-furnace-fuel" aria-label="Furnace fuel"></select></label>'+
    '<button id="mw-furnace-put-fuel" type="button">Add 1</button><button id="mw-furnace-put-fuel-stack" type="button">Add stack</button><button id="mw-furnace-return-fuel-one" type="button">Take 1</button><button id="mw-furnace-return-fuel" type="button">Take fuel</button></div>'+
    '<div id="mw-furnace-status" role="status" aria-live="polite"></div>'+
+   '<button id="mw-furnace-output-one" type="button" aria-label="Collect one smelted item">Collect 1</button>'+
    '<button id="mw-furnace-output" type="button">Collect output</button>'+
    '<button id="mw-furnace-close" type="button">Return to World</button></section>';
   document.body.appendChild(panel);
@@ -144,6 +145,7 @@ function create(api){
    el('mw-furnace-return-'+which+'-one').addEventListener('click',()=>take(which,1));
    el('mw-furnace-return-'+which).addEventListener('click',()=>take(which));
   }
+  el('mw-furnace-output-one').addEventListener('click',()=>take('output',1));
   el('mw-furnace-output').addEventListener('click',()=>take('output'));
   document.addEventListener('keydown',e=>{
    if(current&&e.code==='Escape'){e.preventDefault();e.stopImmediatePropagation();close();}
@@ -185,6 +187,7 @@ function create(api){
   el('mw-furnace-cook').value=Math.max(0,Math.min(100,Math.round(m.progress*10)));
   el('mw-furnace-status').textContent='Input: '+fmt(m.input)+' · Fuel: '+fmt(m.fuel)+
    ' · Output: '+fmt(m.output)+' · Flame: '+Math.ceil(m.burn)+'s · Smelted: '+Math.round(m.progress*10)+'%';
+  el('mw-furnace-output-one').disabled=!m.output;
   el('mw-furnace-output').textContent='Collect output: '+fmt(m.output);
   el('mw-furnace-output').disabled=!m.output;
  }

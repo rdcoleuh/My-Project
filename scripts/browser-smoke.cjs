@@ -916,8 +916,29 @@ async function go(browser,name,mobile){
   const smelted=await page.evaluate(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
   assert.equal(smelted?.output?.key,'iron',name+': furnace failed to smelt iron in browser');
-  assert.equal(smelted?.output?.qty,1,name+': furnace output count incorrect');
+  assert.ok(smelted?.output?.qty>=1,name+': furnace output count incorrect');
+  // Wait for two real ten-second smelts; one-at-a-time output collection
+  // must preserve the remaining ingot on both desktop and touch Chrome.
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.output?.qty===2,
+    furnaceFixture,{timeout:30000});
+  assert.equal(await page.locator('#mw-furnace-output-one').isDisabled(),false,
+    name+': single-output control must be enabled when ingots are ready');
+  await page.locator('#mw-furnace-output-one').click({force:true});
+  const oneLeft=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
+  assert.equal(oneLeft?.output?.qty,1,name+': Collect 1 removed both ingots');
+  assert.match(await page.locator('#mw-furnace-slot-output').getAttribute('aria-label'),
+    /Output slot: 1 ×/,name+': partial output quantity not announced');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-output-one.png':'desktop-furnace-output-one.png'),
+    animations:'disabled'});
   await page.locator('#mw-furnace-output').click({force:true});
+  const drained=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
+  assert.equal(drained?.output,null,name+': Collect output did not empty remaining ingot');
+  assert.equal(await page.locator('#mw-furnace-output-one').isDisabled(),true,
+    name+': Collect 1 must disable when output is empty');
   await page.locator('#mw-furnace-close').click({force:true});
   assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),furnaceFixture.id),
     true,name+': furnace fixture cleanup failed');
