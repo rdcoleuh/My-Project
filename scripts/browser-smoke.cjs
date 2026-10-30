@@ -879,6 +879,19 @@ async function go(browser,name,mobile){
   assert.equal(loaded?.input?.qty,2,name+': add-stack did not transfer both owned raw iron');
   assert.match(await page.locator('#mw-furnace-slot-input').getAttribute('aria-label'),/2 ×/,
     name+': furnace input slot did not announce stack count');
+  // Exercise the actual touch-sized Take 1 button on desktop and mobile.
+  // Returning one ingredient must leave the other item in its slot.
+  await page.locator('#mw-furnace-return-input-one').click({force:true});
+  const partial=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
+  assert.equal(partial?.input?.qty,1,name+': Take 1 removed the entire input stack');
+  await page.locator('#mw-furnace-put-input').click({force:true});
+  const refilled=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
+  assert.equal(refilled?.input?.qty,2,name+': returned ingredient could not be reinserted');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-take-one.png':'desktop-furnace-take-one.png'),
+    animations:'disabled'});
   await page.locator('#mw-furnace-fuel').selectOption('blazeRod');
   await page.locator('#mw-furnace-put-fuel').click({force:true});
   await page.waitForFunction(({x,y,z})=>

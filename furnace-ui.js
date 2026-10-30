@@ -26,14 +26,14 @@ function deposit(engine,api,position,which,item,limit){
  if(moved<quantity)api.change(item,quantity-moved);
  return moved;
 }
-function withdraw(engine,api,position,which){
- if(!position||!['input','fuel','output'].includes(which))return {moved:0,full:false};
+function withdraw(engine,api,position,which,limit=64){
+ if(!position||!['input','fuel','output'].includes(which)||!Number.isSafeInteger(limit)||limit<1)return {moved:0,full:false};
  const existing=engine.get(position)?.[which];
  if(!existing)return {moved:0,full:false};
  const owned=api.count(existing.key);
  const room=Number.isInteger(owned)?Math.max(0,65535-owned):0;
  if(room<1)return {moved:0,full:true};
- const quantity=Math.min(room,existing.qty);
+ const quantity=Math.min(limit,room,existing.qty);
  const credit=api.change(existing.key,quantity);
  if(!Number.isInteger(credit)||credit<=0)return {moved:0,full:false};
  let out;
@@ -124,9 +124,9 @@ function create(api){
    '<label for="mw-furnace-cook">Smelting<progress id="mw-furnace-cook" max="100" value="0"></progress></label></div>'+
    '<div id="mw-furnace-slot-output" class="mw-furnace-slot" role="img" aria-label="Output slot empty"><img alt="" aria-hidden="true" hidden><span aria-hidden="true">—</span><small>Output</small></div></div>'+
    '<div class="mw-furnace-row"><label>Input<select id="mw-furnace-input" aria-label="Furnace input"></select></label>'+
-   '<button id="mw-furnace-put-input" type="button">Add 1</button><button id="mw-furnace-put-input-stack" type="button">Add stack</button><button id="mw-furnace-return-input" type="button">Take input</button></div>'+
+   '<button id="mw-furnace-put-input" type="button">Add 1</button><button id="mw-furnace-put-input-stack" type="button">Add stack</button><button id="mw-furnace-return-input-one" type="button">Take 1</button><button id="mw-furnace-return-input" type="button">Take input</button></div>'+
    '<div class="mw-furnace-row"><label>Fuel<select id="mw-furnace-fuel" aria-label="Furnace fuel"></select></label>'+
-   '<button id="mw-furnace-put-fuel" type="button">Add 1</button><button id="mw-furnace-put-fuel-stack" type="button">Add stack</button><button id="mw-furnace-return-fuel" type="button">Take fuel</button></div>'+
+   '<button id="mw-furnace-put-fuel" type="button">Add 1</button><button id="mw-furnace-put-fuel-stack" type="button">Add stack</button><button id="mw-furnace-return-fuel-one" type="button">Take 1</button><button id="mw-furnace-return-fuel" type="button">Take fuel</button></div>'+
    '<div id="mw-furnace-status" role="status" aria-live="polite"></div>'+
    '<button id="mw-furnace-output" type="button">Collect output</button>'+
    '<button id="mw-furnace-close" type="button">Return to World</button></section>';
@@ -141,6 +141,7 @@ function create(api){
     });
    }
    el('mw-furnace-'+which).addEventListener('change',render);
+   el('mw-furnace-return-'+which+'-one').addEventListener('click',()=>take(which,1));
    el('mw-furnace-return-'+which).addEventListener('click',()=>take(which));
   }
   el('mw-furnace-output').addEventListener('click',()=>take('output'));
@@ -148,9 +149,9 @@ function create(api){
    if(current&&e.code==='Escape'){e.preventDefault();e.stopImmediatePropagation();close();}
   },true);
  }
- function take(which){
+ function take(which,limit=64){
   if(!current)return;
-  const result=withdraw(engine,api,current,which);
+  const result=withdraw(engine,api,current,which,limit);
   if(result.full){api.toast('Inventory full');return;}
   if(result.moved){api.onChange();render();}
  }
@@ -167,6 +168,7 @@ function create(api){
     (!m[which]||(m[which].key===selected&&m[which].qty<64));
    el('mw-furnace-put-'+which).disabled=!canAdd;
    el('mw-furnace-put-'+which+'-stack').disabled=!canAdd;
+   el('mw-furnace-return-'+which+'-one').disabled=!m[which];
    el('mw-furnace-return-'+which).disabled=!m[which];
   }
   const fmt=s=>s?s.qty+' × '+api.label(s.key):'Empty';

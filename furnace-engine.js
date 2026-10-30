@@ -38,7 +38,7 @@ function create(){
   if(!['input','fuel','output'].includes(which)||!Number.isInteger(n)||n<1)return null;
   const m=get(p),s=m?.[which];if(!s)return null;
   const moved=Math.min(n,s.qty),out={key:s.key,qty:moved};
-  s.qty-=moved;if(!s.qty)m[which]=null;if(which==='input')m.progress=0;return out;
+  s.qty-=moved;if(!s.qty)m[which]=null;if(which==='input'&&!m.input)m.progress=0;return out;
  }
  function tick(seconds){
   let changed=false,completed=0;
