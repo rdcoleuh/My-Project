@@ -291,3 +291,48 @@ test('missing, replaced and incompatible neighbors are not silently accepted',()
  assert.throws(()=>center.markNeighborBoundaryDirty(1.5),/Invalid adjacent/);
  assert.equal(center.ackDirtySection(job),true);
 });
+
+test('editing a claimed section releases obsolete GPU lease for immediate retry',()=>{
+ const data=new Uint8Array(2*2*16);data[0]=3;
+ const store=api.createSectionStore({data,height:16,chunkSize:2,minY:-64});
+ const old=store.claimDirtySectionsNear(-64,0,1,100)[0];
+ assert.equal(store.stats().inFlight,1);
+ assert.equal(store.set(0,-64,0,3),false,'unchanged block must not cancel a valid lease');
+ assert.equal(store.canInstallClaim(old),true);
+ assert.equal(store.set(0,-64,0,4),true);
+ assert.equal(store.stats().inFlight,0,'invalidated job no longer reserves the section');
+ assert.equal(store.canInstallClaim(old),false);
+ assert.equal(store.ackDirtySection(old),false,'late GPU completion cannot acknowledge new voxels');
+ const fresh=store.claimDirtySectionsNear(-64,0,1,101)[0];
+ assert.ok(fresh,'next frame can rebuild without waiting for a 30s timeout');
+ assert.notEqual(fresh.claimId,old.claimId);
+ assert.equal(store.materializeClaim(fresh).data[0],4);
+ assert.equal(store.ackDirtySection(fresh),true);
+ assert.equal(store.stats().dirty,0);
+});
+test('seam edits and adjacent chunk notifications immediately release affected mesh leases',()=>{
+ const data=new Uint8Array(2*2*32);data[15]=3;data[16]=4;
+ const store=api.createSectionStore({data,height:32,chunkSize:2,minY:-64});
+ const lower=store.claimDirtySectionsNear(-64,0,1,100)[0];
+ const upper=store.claimDirtySectionsNear(-48,0,1,100)[0];
+ store.set(0,-49,0,7);
+ assert.equal(store.stats().inFlight,0,'both seam faces must be eligible for immediate rebuild');
+ assert.equal(store.ackDirtySection(lower),false);
+ assert.equal(store.ackDirtySection(upper),false);
+ const retry=store.claimDirtySectionsNear(-64,1,2,101);
+ assert.deepEqual(Array.from(retry,job=>job.index),[0,1]);
+ assert.equal(store.materializeClaimWithSeams(retry[1]).below[0],7);
+ for(const job of retry)assert.equal(store.ackDirtySection(job),true);
+ const boundary=store.claimDirtySectionsNear(-48,0,1,102);
+ assert.equal(boundary.length,0,'clean section has no mesh job');
+ store.markNeighborBoundaryDirty(-48);
+ const neighborLease=store.claimDirtySectionsNear(-48,0,1,103)[0];
+ store.markNeighborBoundaryDirty(-48);
+ assert.equal(store.stats().inFlight,0,'horizontal seam notification releases obsolete claim');
+ assert.equal(store.canInstallClaim(neighborLease),false);
+ assert.equal(store.ackDirtySection(neighborLease),false);
+ const final=store.claimDirtySectionsNear(-48,0,1,104)[0];
+ assert.ok(final);
+ assert.equal(store.ackDirtySection(final),true);
+ assert.equal(store.stats().dirty,0);
+});

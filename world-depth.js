@@ -202,7 +202,14 @@ function createSectionStore(options={}){
     return !!active&&active.claimId===job.claimId&&
       active.revision===job.revision&&sectionRevisions[job.index]===job.revision;
   };
-  const invalidate=index=>{dirty.add(index);sectionRevisions[index]++;};
+  const invalidate=index=>{
+    dirty.add(index);sectionRevisions[index]++;
+    // An edited slice (or seam neighbor) makes an in-flight mesh obsolete.
+    // Release its reservation now, not after a worker timeout or stale ack:
+    // otherwise frequent edits can stall visible geometry for 30 seconds.
+    // Old claim IDs remain invalid, so a late worker cannot install them.
+    inFlight.delete(index);
+  };
   for(let i=0;i<flags.length;i++)if(flags[i])dirty.add(i);
   let revision=0;
   const location=(x,y,z)=>{
