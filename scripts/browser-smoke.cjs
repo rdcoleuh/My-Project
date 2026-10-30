@@ -995,6 +995,29 @@ async function go(browser,name,mobile){
   const logLoaded=await page.evaluate(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
   assert.equal(logLoaded?.input?.key,'block:40',name+': cherry log did not enter furnace');
+  // Reproduce the old bug: closing the furnace and opening the backpack
+  // used to freeze smelting until the inventory was closed.
+  await page.locator('#mw-furnace-close').click({force:true});
+  if(mobile)await page.locator('#quick-inventory').click({force:true});
+  else await page.keyboard.press('e');
+  await page.waitForFunction(()=>
+    !document.querySelector('#gear-panel')?.classList.contains('hidden'),
+    null,{timeout:8000});
+  const beforeCrafting=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
+  await page.waitForTimeout(1400);
+  const afterCrafting=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
+  assert.ok(afterCrafting?.progress>beforeCrafting?.progress+.4||
+    afterCrafting?.output?.key==='charcoal',
+    name+': furnace stopped smelting while the backpack/crafting screen was open');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-cooking-in-backpack.png':'desktop-furnace-cooking-in-backpack.png'),
+    animations:'disabled'});
+  await page.locator('#close-gear').click({force:true});
+  assert.equal(await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.openFurnaceAt(x,y,z),furnaceFixture),true,
+    name+': furnace did not reopen after backpack crafting');
   await page.waitForFunction(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z)?.output?.key==='charcoal',
     furnaceFixture,{timeout:30000});

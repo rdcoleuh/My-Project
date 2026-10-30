@@ -4417,9 +4417,11 @@ body.in-nether #game-wrap{background:#290f19}
     gl.uniform1f(uTextured,textured?1:0);
   }
   function render(t){requestAnimationFrame(render);const frameMs=t-lastTime;let dt=clamp(frameMs/1000,0,.05);lastTime=t;
-    if(gameMode==='survival'&&(!paused||furnaceUI.isOpen)){
+    if(gameMode==='survival'&&(!paused||furnaceUI.isOpen||!$('gear-panel').classList.contains('hidden'))){
       // Smelting uses elapsed real time, not physics-clamped frame time.
       // Low-FPS or suspended tabs catch up by at most 60 seconds per frame.
+      // Crafting/backpack screens pause movement but must not freeze fuel or
+      // cooking. The Escape/pause menu still suspends world simulation.
       // Keep physics capped separately; furnace-engine bounds its own work.
       const furnaceDt=clamp(frameMs/1000,0,60);
       const r=furnaces.tick(furnaceDt);
