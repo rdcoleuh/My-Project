@@ -650,7 +650,7 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
     return Object.freeze(records.map(record=>{
       if(!record||typeof record!=='object'||Array.isArray(record)||
          typeof record.key!=='string'||Object.hasOwn(Object.prototype,record.key)||
-         !(/^[a-zA-Z][a-zA-Z0-9]*$/.test(record.key)||/^block:[1-9]\\d{0,2}$/.test(record.key))||
+         !(/^[a-zA-Z][a-zA-Z0-9]*$/.test(record.key)||/^block:[1-9]\d{0,2}$/.test(record.key))||
          !Number.isSafeInteger(record.count)||record.count<1||record.count>64||
          !['overworld','nether','end'].includes(record.dimension)||
          ![record.x,record.y,record.z].every(Number.isFinite)||
