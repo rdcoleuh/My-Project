@@ -884,6 +884,11 @@ async function go(browser,name,mobile){
   await page.waitForFunction(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z)?.burnTotal===120,
     furnaceFixture,{timeout:8000});
+  // Engine ticks every frame, but accessible slot labels repaint at 250ms.
+  // Wait for the actual UI update rather than racing the first ignition frame.
+  await page.waitForFunction(()=>
+    document.querySelector('#mw-furnace-slot-fuel')?.getAttribute('aria-label')==='Fuel slot: Empty',
+    null,{timeout:8000});
   assert.equal(await page.locator('#mw-furnace-slot-fuel').getAttribute('aria-label'),
     'Fuel slot: Empty',name+': blaze rod was not consumed when furnace ignited');
   await page.screenshot({path:path.join(screenshotDir,
