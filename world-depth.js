@@ -794,9 +794,15 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
       }
       return Object.freeze(result);
     };
+    // Keep future player-owned custom items during a preview just as
+    // furnace slots do. Only strict, bounded namespaced IDs are accepted;
+    // malformed IDs must not silently disappear during height migration.
     const key=value=>typeof value==='string'&&
       !Object.hasOwn(Object.prototype,value)&&
-      (/^[a-zA-Z][a-zA-Z0-9]*$/.test(value)||/^block:[1-9]\d{0,2}$/.test(value));
+      (/^[a-zA-Z][a-zA-Z0-9]*$/.test(value)||/^block:[1-9]\d{0,2}$/.test(value)||
+       value.length<=192&&
+       /^[a-z0-9][a-z0-9_.-]{0,63}:[a-z0-9_][a-z0-9_.-]*(?:\/[a-z0-9_][a-z0-9_.-]*)*$/.test(value)&&
+       !value.startsWith('block:'));
     const id=value=>Number.isSafeInteger(value)&&value>0;
     const inventory=array(save.inventory,'inventory counters',2048,
       value=>Number.isSafeInteger(value)&&value>=0&&value<=65535);
