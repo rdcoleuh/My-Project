@@ -664,12 +664,59 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
       return Object.freeze({...record});
     }));
   })();
+
+  // Vehicles, tamed mounts and farm animals are player-owned entities.
+  // Legacy loading can silently filter malformed records. A height migration
+  // must instead preflight every record and retain its absolute coordinates.
+  // These previews do not spawn entities or mutate the original save.
+  const entityPoint=record=>[record.x,record.y,record.z].every(Number.isFinite)&&
+    record.x>=0&&record.x<width&&record.z>=0&&record.z<depth&&
+    record.y>=source.minY&&record.y<source.maxY+1;
+  const previewEntities=(records,label,limit,valid)=>{
+    const entries=records??[];
+    if(!Array.isArray(entries)||entries.length>limit)
+      throw new RangeError('Invalid saved '+label+' collection');
+    return Object.freeze(entries.map(record=>{
+      if(!record||typeof record!=='object'||Array.isArray(record)||!valid(record))
+        throw new RangeError('Invalid saved '+label+' record');
+      // All current entity save fields are primitives. Retain unknown future
+      // fields instead of dropping them during an eventual migration.
+      return Object.freeze({...record});
+    }));
+  };
+  const vehicleKinds=['boat','raft','minecart','chestMinecart',
+    'hopperMinecart','furnaceMinecart','spruceBoat','cherryBoat'];
+  const rideKinds=['horse','donkey','mule','camel','llama','pig','strider',
+    'skeleton_horse','zombie_horse','happy_ghast'];
+  const vehicleIds=new Set();
+  const vehicles=previewEntities(save.vehicles,'vehicle',80,record=>{
+    if(!vehicleKinds.includes(record.kind)||!['overworld','nether','end'].includes(record.dimension)||
+       !entityPoint(record)||!Number.isSafeInteger(record.id)||record.id<1||
+       vehicleIds.has(record.id))return false;
+    vehicleIds.add(record.id);
+    return true;
+  });
+  const tamedMounts=previewEntities(save.tamedMounts,'tamed mount',60,record=>
+    rideKinds.includes(record.kind)&&['overworld','nether','end'].includes(record.dimension)&&
+    entityPoint(record)&&
+    (record.tamed==null||typeof record.tamed==='boolean')&&
+    (record.saddled==null||typeof record.saddled==='boolean'));
+  const farmAnimals=previewEntities(save.farmAnimals,'farm animal',24,record=>
+    ['cow','pig','sheep','chicken'].includes(record.kind)&&entityPoint(record)&&
+    record.x>2&&record.x<width-2&&record.z>2&&record.z<depth-2&&
+    record.y>=1&&record.y<source.maxY-2&&
+    Number.isFinite(record.hp)&&record.hp>0&&
+    (record.heading==null||Number.isFinite(record.heading))&&
+    (record.growTimer==null||(Number.isFinite(record.growTimer)&&record.growTimer>=0))&&
+    (record.breedCooldown==null||(Number.isFinite(record.breedCooldown)&&record.breedCooldown>=0))&&
+    (record.baby==null||typeof record.baby==='boolean')&&
+    (record.sheared==null||typeof record.sheared==='boolean'));
   const furnaces=previewFurnaces();
   const edits=convert(save.edits,target,'overworld');
   const netherEdits=convert(save.netherEdits??[],source,'nether');
   const endEdits=convert(save.endEdits??[],source,'end');
   return Object.freeze({sourceProfile:LEGACY_PROFILE,targetProfile:DEEP_PROFILE,
-    status:'preview-only',dimension,positions,bedSpawn,droppedItems,edits,netherEdits,endEdits,furnaces});
+    status:'preview-only',dimension,positions,bedSpawn,droppedItems,vehicles,tamedMounts,farmAnimals,edits,netherEdits,endEdits,furnaces});
 }
 
 window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,LEGACY_PROFILE,DEEP_PROFILE,readSaveProfile,canLoadLegacySave,planLegacySaveMigration,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk,createSectionStore,scanNonAirSections,countNonAirSections,updateSectionOccupancy});
