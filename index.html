@@ -3948,7 +3948,7 @@ body.in-nether #game-wrap{background:#290f19}
     return {hit:true,dead:false,kind:m.kind,hp:m.hp};
   }
   function grantLoot(drop,count){
-    if(gameMode!=='survival'||!(drop in bag)||!Number.isInteger(count)||count<1||count>8)return false;
+    if(gameMode!=='survival'||!validHotbarKey(drop)||!Number.isInteger(count)||count<1||count>8)return false;
     addResource(drop,count);updateSurvivalHUD();updateHotbar();markSave();toast('Collected '+count+' '+drop);return true;
   }
   function syncMobs(data){

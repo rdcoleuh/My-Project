@@ -14,3 +14,6 @@ After: all ten independently registered MineWorld log types cook into charcoal i
 
 ## Verification status
 Implementation prepared for GitHub Actions Node tests, desktop/mobile Chrome smoke, and Pages deployment. Consult the corresponding workflow runs for actual pass/fail status; this document does not claim they have completed.
+
+## Browser-fixture correction
+The first CI run passed all 587 Node tests but desktop Chrome failed before charcoal smelting: `MineWorldBridge.grantLoot('block:40',1)` rejected every block key because the QA grant helper only accepted named bag items. The helper now uses the existing `validHotbarKey` guard, which validates registered block IDs and named items, while retaining the survival-mode and 1–8 quantity restrictions. The first failed run did **not** verify charcoal in Chrome; consult the new run for re-test results.

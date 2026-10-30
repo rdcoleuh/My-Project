@@ -65,3 +65,10 @@ test('desktop/mobile Chrome smoke exercises real cherry-log furnace UI with synt
  assert.match(smoke,/desktop-furnace-cherry-charcoal-synthetic\.png/);
  assert.match(smoke,/mobile-furnace-cherry-charcoal-synthetic\.png/);
 });
+
+test('survival QA bridge accepts valid registered block loot but still rejects bad keys',()=>{
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+ assert.match(html,/if\(gameMode!=='survival'\|\|!validHotbarKey\(drop\)/);
+ assert.match(html,/if\(key\.startsWith\('block:'\)\)/);
+ assert.match(html,/Number\.isInteger\(id\)&&id>=1&&id<inventory\.length/);
+});
