@@ -59,6 +59,6 @@ test('both accessible Take 1 buttons are exercised in real desktop/mobile browse
   assert.match(ui,new RegExp("take\\(which,1\\)"));
  }
  assert.match(smoke,/mw-furnace-return-input-one/);
- assert.match(smoke,/mobile-furnace-take-one\\.png/);
- assert.match(smoke,/desktop-furnace-take-one\\.png/);
+ assert.match(smoke,/mobile-furnace-take-one\.png/);
+ assert.match(smoke,/desktop-furnace-take-one\.png/);
 });
