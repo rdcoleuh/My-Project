@@ -1037,6 +1037,46 @@ async function go(browser,name,mobile){
     window.MineWorldBridge.getFurnaceState(x,y,z)?.output,
     furnaceFixture),null,name+': charcoal could not be collected');
   await page.locator('#mw-furnace-close').click({force:true});
+  // A second real furnace proves harvested bamboo blocks fuel a full smelt.
+  // The imported artwork is an independently generated test fixture.
+  const bambooFixture=await page.evaluate(({x,y,z})=>{
+    const bridge=window.MineWorldBridge,W=bridge.getSnapshot().worldSize,bx=x+1;
+    const id=(bx*W+z)*48+y;
+    const granted=bridge.grantLoot('rawIron',1)&&bridge.grantLoot('block:45',4);
+    const placed=bridge.remoteEdit(id,20);
+    return {id,x:bx,y,z,granted,placed,opened:bridge.openFurnaceAt(bx,y,z)};
+  },furnaceFixture);
+  assert.equal(bambooFixture.granted,true,name+': harvested bamboo fuel fixture was unavailable');
+  assert.equal(bambooFixture.placed,true,name+': bamboo furnace placement failed');
+  assert.equal(bambooFixture.opened,true,name+': bamboo furnace did not open');
+  await page.locator('#mw-furnace-input').selectOption('rawIron');
+  await page.locator('#mw-furnace-put-input').click({force:true});
+  await page.waitForFunction(()=>
+    [...document.querySelector('#mw-furnace-fuel').options].some(o=>o.value==='block:45'),
+    null,{timeout:8000});
+  await page.locator('#mw-furnace-fuel').selectOption('block:45');
+  await page.locator('#mw-furnace-put-fuel-stack').click({force:true});
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.output?.key==='iron',
+    bambooFixture,{timeout:30000});
+  const bambooCook=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),bambooFixture);
+  assert.equal(bambooCook?.input,null,name+': bamboo smelt left an unconsumed ingredient');
+  assert.equal(bambooCook?.fuel,null,name+': bamboo smelt did not consume four fuel blocks');
+  assert.equal(bambooCook?.output?.qty,1,name+': four bamboo did not produce exactly one iron');
+  await page.waitForFunction(()=>
+    document.querySelector('#mw-furnace-output-one')?.disabled===false,
+    null,{timeout:8000});
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-bamboo-smelt-synthetic.png':'desktop-furnace-bamboo-smelt-synthetic.png'),
+    animations:'disabled'});
+  await page.locator('#mw-furnace-output-one').click({force:true});
+  assert.equal(await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.output,bambooFixture),null,
+    name+': bamboo-smelted iron could not be collected');
+  await page.locator('#mw-furnace-close').click({force:true});
+  assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),bambooFixture.id),
+    true,name+': bamboo furnace cleanup failed');
   assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),furnaceFixture.id),
     true,name+': furnace fixture cleanup failed');
   await page.waitForTimeout(300);

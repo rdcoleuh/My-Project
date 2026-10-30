@@ -19,7 +19,12 @@ const FUEL=Object.freeze({coal:80,charcoal:80,'block:5':15,'block:11':15,'block:
  // Craftable MineWorld fuel blocks and inventory items; durations in seconds.
  // A coal block fuels 80 smelts, a blaze rod 12, and a boat/raft six.
  'block:50':15,'block:116':800,blazeRod:120,
- boat:60,spruceBoat:60,cherryBoat:60,raft:60});
+ boat:60,spruceBoat:60,cherryBoat:60,raft:60,
+ // Craftable wooden stations, wooden accessories and harvestable bamboo.
+ // These are MineWorld inventory keys; the old bamboo item remains valid.
+ 'block:45':2.5,'block:119':15,'block:155':15,'block:160':15,'block:168':15,
+ ladder:15,fence:15,gate:15,door:10,trapdoor:15,sign:10,
+ button:5,pressurePlate:15,bowl:5});
 const COOK=10,key=k=>typeof k==='string'&&!Object.hasOwn(Object.prototype,k)&&(/^[a-zA-Z][a-zA-Z0-9]*$/.test(k)||/^block:[1-9]\d{0,2}$/.test(k));
 // Keep the legacy Y=0..47 range and permit future deep-world furnaces.
 // X/Z remain inside the current 10,000-block world; Y is absolute, not an array offset.
