@@ -75,7 +75,12 @@ function create(){
  // Never silently drop player-owned furnaces from a saved world.
  function snapshot(){return [...machines.values()].map(m=>({...m,input:slot(m.input),fuel:slot(m.fuel),output:slot(m.output)}));}
  function restore(records){machines.clear();if(!Array.isArray(records))return;
-  for(const r of records){if(!pos(r))continue;const m=blank(r);
+  for(const r of records){
+   if(!pos(r))continue;
+   // Duplicate saved positions must not replace an already-restored machine:
+   // last-wins loading silently erased its ingredient, fuel and output stacks.
+   if(machines.has(id(r)))continue;
+   const m=blank(r);
    m.input=slot(r.input);m.fuel=slot(r.fuel);m.output=slot(r.output);
    // Preserve well-formed stacks even if this build no longer recognizes
    // their recipe or fuel. Dropping unknown items on load permanently destroys
@@ -96,7 +101,9 @@ function create(){
    // A completed cook frame cannot be resumed at exactly COOK: tick would
    // otherwise take a zero-length step forever, leaving the furnace stuck.
    m.progress=Math.max(0,Math.min(COOK,Number(r.progress)||0));
-   if(m.progress>=COOK)m.progress=0;
+   if(m.progress>=COOK||!m.input)m.progress=0;
+   // A saved progress timer without any ingredient would otherwise grant
+   // a newly inserted item free cooking time after a world reload.
    machines.set(id(m),m);
   }
  }
