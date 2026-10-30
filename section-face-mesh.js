@@ -10,7 +10,16 @@ const SIDES=['west','east','north','south'];
 // Same-type transparent neighbors still cull their internal interface.
 // This conservative staging rule can later use live material metadata.
 const NON_OCCLUDING=new Set([
-  6,7,9,12,13,14,22,23,31,33,35,37,39,41,43,45,59,62,66
+  // Transparent, translucent, liquid and foliage materials.
+  6,7,9,12,13,14,22,23,31,33,35,37,39,41,43,59,62,66,
+  // Non-full-cube plants, narrow objects, portals and decorations.
+  // A neighboring partial block must not erase a full stone face.
+  16,17,44,45,63,73,77,82,87,89,93,94,
+  119,120,122,123,124,125,126,127,128,129,
+  // Farmland is lower than a cube; crops have no solid cube faces.
+  137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,
+  // Hollow or inset workstations and the low bed model.
+  155,159,162,163,164,167,169
 ]);
 const defaultOccludes=(neighbor,block)=>neighbor!==0&&
   (neighbor===block||!NON_OCCLUDING.has(neighbor));

@@ -86,3 +86,34 @@ test('neighbor chunk glass does not hide boundary stone; solid neighbor does',()
  assert.equal(mesh.plan(s).faceCount,5,'solid neighbor still culls hidden stone face');
  assert.equal(mesh.plan(s,{occludes:()=>true}).faceCount,0,'explicit caller predicate retains priority');
 });
+
+test('partial block neighbors preserve stone faces across the experimental section mesh',()=>{
+ const s=blank();s.data[at(1,1,1)]=3;
+ for(const partial of [16,17,44,45,63,73,87,89,93,119,122,125,126,128,129,137,139,145,155,159,162,164,167,169]){
+  s.data[at(2,1,1)]=partial;
+  const plan=mesh.plan(s);
+  assert.equal(plan.faceCount,11,'partial block '+partial+' must not hide stone');
+  assert.ok([...plan.faces].some(p=>{
+   const f=mesh.unpack(p,-64);
+   return f.x===1&&f.z===1&&f.localY===1&&f.face===1;
+  }), 'stone east face remains visible beside '+partial);
+ }
+ s.data[at(2,1,1)]=20;
+ assert.equal(mesh.plan(s).faceCount,10,'full-cube furnace still occludes stone');
+});
+test('cross-chunk partial blocks cannot erase opaque boundary faces',()=>{
+ const s=blank();s.data[at(0,2,4)]=3;
+ s.west=new Uint8Array(256);
+ for(const partial of [44,87,126,139,162,169]){
+  s.west[2*16+4]=partial;
+  assert.equal(mesh.plan(s).faceCount,6,'west boundary with partial '+partial);
+ }
+ s.west[2*16+4]=20;
+ assert.equal(mesh.plan(s).faceCount,5,'full furnace across seam hides face');
+});
+test('matching partial blocks still cull interior faces to limit mobile geometry',()=>{
+ const s=blank();s.data[at(1,1,1)]=139;s.data[at(2,1,1)]=139;
+ assert.equal(mesh.plan(s).faceCount,10);
+ s.data[at(1,1,1)]=162;s.data[at(2,1,1)]=162;
+ assert.equal(mesh.plan(s).faceCount,10);
+});
