@@ -45,7 +45,7 @@ test('specialized station kind, half progress, fuel and inventory survive save/r
  const g=api.create();g.restore(saved);
  assert.equal(g.get(p).kind,'smoker');
  assert.equal(g.get(p).progress,2);
- assert.equal(g.get(p).burn,78);
+ assert.equal(g.get(p).burn,38);
  assert.equal(g.tick(3).completed,1);
  assert.equal(g.get(p).output.key,'cookedChicken');
  assert.equal(saved[0].input.qty,2);

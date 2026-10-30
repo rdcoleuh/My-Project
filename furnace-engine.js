@@ -77,7 +77,10 @@ function create(){
       if(m.progress>0){m.progress=Math.max(0,m.progress-remaining*2);changed=true;}
       break;
      }
-     m.burn=m.burnTotal=FUEL[m.fuel.key];if(!--m.fuel.qty)m.fuel=null;changed=true;
+     // Specialized stations cook twice as fast, but also burn fuel twice as fast.
+     // One coal therefore smelts eight items in every station, not sixteen.
+     m.burn=m.burnTotal=FUEL[m.fuel.key]*(m.kind==='furnace'?1:0.5);
+     if(!--m.fuel.qty)m.fuel=null;changed=true;
     }
     const cook=KINDS[m.kind].cook;const step=Math.min(remaining,m.burn,cook-m.progress);if(step<1e-7)break;
     m.burn=Math.max(0,m.burn-step);m.progress+=step;remaining-=step;changed=true;
