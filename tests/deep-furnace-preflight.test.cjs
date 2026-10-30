@@ -59,3 +59,23 @@ test('migration preflight does not switch the playable world height or rewrite s
  assert.match(html,/SEA=14/);
  assert.match(html,/verticalProfile:window\.MineWorldWorldDepth\.LEGACY_PROFILE/);
 });
+
+test('specialized furnace kind and five-second progress survive deep-world preview',()=>{
+ for(const kind of ['smoker','blast']){
+  const record={...furnace,kind,progress:4.75};
+  const original=copy(record);
+  const preview=plan({...base,furnaces:[record]},opts).furnaces[0];
+  assert.deepEqual(copy(preview),original);
+  assert.equal(Object.isFrozen(preview),true);
+  assert.deepEqual(record,original,'preflight never mutates specialized stations');
+ }
+});
+test('invalid station kinds and overlong specialized progress fail without item loss',()=>{
+ for(const record of [
+  {...furnace,kind:'unknown'},
+  {...furnace,kind:'smoker',progress:5},
+  {...furnace,kind:'blast',progress:8}
+ ])assert.throws(()=>plan({...base,furnaces:[record]},opts),/Invalid saved furnace/);
+ assert.equal(plan({...base,furnaces:[furnace]},opts).furnaces[0].kind,undefined,
+  'untagged legacy furnace records remain unchanged');
+});

@@ -618,15 +618,18 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
       const input=validSlot(record.input,'input');
       const fuel=validSlot(record.fuel,'fuel');
       const output=validSlot(record.output,'output');
+      const kind=record.kind===undefined?'furnace':record.kind;
+      if(!['furnace','smoker','blast'].includes(kind))
+        throw new RangeError('Invalid saved furnace station kind');
       const burn=record.burn??0,burnTotal=record.burnTotal??0;
       const progress=record.progress??0;
       if(![burn,burnTotal,progress].every(Number.isFinite)||
          burn<0||burnTotal<0||burnTotal>1000||burn>burnTotal||
-         progress<0||progress>=10||(!input&&progress>0))
+         progress<0||progress>=(kind==='furnace'?10:5)||(!input&&progress>0))
         throw new RangeError('Invalid saved furnace timers');
       return Object.freeze({dimension:record.dimension,
         x:record.x,y:record.y,z:record.z,input,fuel,output,
-        burn,burnTotal,progress});
+        burn,burnTotal,progress,...(record.kind===undefined?{}:{kind})});
     }));
   }
   // Dropped stacks and respawn points are player-owned state, not terrain
