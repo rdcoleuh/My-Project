@@ -14,8 +14,11 @@ function deposit(engine,api,position,which,item,limit){
  const quantity=Math.min(limit,owned,64-(existing?.qty||0));
  if(quantity<1)return 0;
  const debit=api.change(item,-quantity);
- if(debit!==-quantity){
-  if(Number.isInteger(debit)&&debit<0)api.change(item,-debit);
+ // An inventory adapter can misreport its delta while still changing stock.
+ // Verify the observed balance before adding anything to the furnace.
+ const afterDebit=api.count(item),removed=owned-afterDebit;
+ if(debit!==-quantity||removed!==quantity){
+  if(Number.isInteger(removed)&&removed>0)api.change(item,removed);
   return 0;
  }
  let moved=0;
@@ -35,7 +38,13 @@ function withdraw(engine,api,position,which,limit=64){
  if(room<1)return {moved:0,full:true};
  const quantity=Math.min(limit,room,existing.qty);
  const credit=api.change(existing.key,quantity);
- if(!Number.isInteger(credit)||credit<=0)return {moved:0,full:false};
+ const afterCredit=api.count(existing.key),added=afterCredit-owned;
+ // Reject and roll back a misreported credit rather than granting free items
+ // or taking more than the player requested from the furnace.
+ if(!Number.isInteger(credit)||credit<=0||credit>quantity||added!==credit){
+  if(Number.isInteger(added)&&added>0)api.change(existing.key,-added);
+  return {moved:0,full:false};
+ }
  let out;
  try{out=engine.take(position,which,credit);}
  catch(error){api.change(existing.key,-credit);throw error;}
