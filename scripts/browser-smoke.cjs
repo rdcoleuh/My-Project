@@ -859,7 +859,7 @@ async function go(browser,name,mobile){
     const bridge=window.MineWorldBridge,p=bridge.getPlayer(),W=bridge.getSnapshot().worldSize;
     const x=Math.floor(p.x)+2,z=Math.floor(p.z),y=Math.max(1,Math.min(47,Math.floor(p.y)));
     const id=(x*W+z)*48+y;
-    const granted=bridge.grantLoot('rawIron',2)&&bridge.grantLoot('coal',1);
+    const granted=bridge.grantLoot('rawIron',2)&&bridge.grantLoot('blazeRod',1);
     const placed=bridge.remoteEdit(id,20);
     return {id,x,y,z,granted,placed,opened:bridge.openFurnaceAt(x,y,z)};
   });
@@ -879,8 +879,16 @@ async function go(browser,name,mobile){
   assert.equal(loaded?.input?.qty,2,name+': add-stack did not transfer both owned raw iron');
   assert.match(await page.locator('#mw-furnace-slot-input').getAttribute('aria-label'),/2 ×/,
     name+': furnace input slot did not announce stack count');
-  await page.locator('#mw-furnace-fuel').selectOption('coal');
+  await page.locator('#mw-furnace-fuel').selectOption('blazeRod');
   await page.locator('#mw-furnace-put-fuel').click({force:true});
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.burnTotal===120,
+    furnaceFixture,{timeout:8000});
+  assert.equal(await page.locator('#mw-furnace-slot-fuel').getAttribute('aria-label'),
+    'Fuel slot: Empty',name+': blaze rod was not consumed when furnace ignited');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-blaze-fuel.png':'desktop-furnace-blaze-fuel.png'),
+    animations:'disabled'});
   await page.screenshot({path:path.join(screenshotDir,
     mobile?'mobile-furnace-three-slots.png':'desktop-furnace-three-slots.png'),
     animations:'disabled'});

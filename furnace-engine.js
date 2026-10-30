@@ -10,7 +10,11 @@ const RECIPES=Object.freeze({rawIron:'iron',rawGold:'gold',rawCopper:'copper',ra
  'block:105':'redstone','block:106':'lapis','block:107':'diamond','block:108':'emerald',
  'block:26':'block:9','block:57':'block:25'});
 const FUEL=Object.freeze({coal:80,charcoal:80,'block:5':15,'block:11':15,'block:52':15,sticks:5,bamboo:2.5,'block:15':15,'block:30':15,'block:32':15,'block:34':15,
- 'block:36':15,'block:38':15,'block:40':15,'block:42':15});
+ 'block:36':15,'block:38':15,'block:40':15,'block:42':15,
+ // Craftable MineWorld fuel blocks and inventory items; durations in seconds.
+ // A coal block fuels 80 smelts, a blaze rod 12, and a boat/raft six.
+ 'block:50':15,'block:116':800,blazeRod:120,
+ boat:60,spruceBoat:60,cherryBoat:60,raft:60});
 const COOK=10,key=k=>typeof k==='string'&&!Object.hasOwn(Object.prototype,k)&&(/^[a-zA-Z][a-zA-Z0-9]*$/.test(k)||/^block:[1-9]\d{0,2}$/.test(k));
 // Keep the legacy Y=0..47 range and permit future deep-world furnaces.
 // X/Z remain inside the current 10,000-block world; Y is absolute, not an array offset.
