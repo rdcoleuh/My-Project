@@ -649,8 +649,8 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
   // Copy JSON-compatible values without invoking getters, bound the work for
   // mobile browsers, and reject cycles/non-finite values rather than losing
   // player-owned state or returning a misleading preview.
-  const copyOwnedRecord=(record,label)=>{
-    const seen=new WeakSet();let budget=512;
+  const copyOwnedRecord=(record,label,{maxArray=128,maxNodes=512}={})=>{
+    const seen=new WeakSet();let budget=maxNodes;
     const invalid=()=>{throw new RangeError('Invalid saved '+label+' metadata');};
     const copy=(value,depth)=>{
       if(--budget<0||depth>8)invalid();
@@ -662,7 +662,7 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
       seen.add(value);
       let result;
       if(array){
-        if(value.length>128||Object.keys(value).length!==value.length)invalid();
+        if(value.length>maxArray||Object.keys(value).length!==value.length)invalid();
         // Array.map would invoke an accessor installed on a numeric index.
         // Read only own data descriptors, just as for object metadata.
         const items=[];
@@ -757,12 +757,89 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
     (record.breedCooldown==null||(Number.isFinite(record.breedCooldown)&&record.breedCooldown>=0))&&
     (record.baby==null||typeof record.baby==='boolean')&&
     (record.sheared==null||typeof record.sheared==='boolean'));
+  // Preserve player-owned inventory and stack identities before any future
+  // world-height migration. Legacy restorers can silently discard malformed
+  // slots; the preview must instead fail without rewriting the original save.
+  const playerItems=(()=>{
+    const invalid=label=>{throw new RangeError('Invalid saved '+label);};
+    const field=(object,name,label)=>{
+      const descriptor=Object.getOwnPropertyDescriptor(object,name);
+      if(!descriptor||!Object.hasOwn(descriptor,'value'))invalid(label);
+      return descriptor.value;
+    };
+    const array=(value,label,limit,valid)=>{
+      if(value==null)return null;
+      if(!Array.isArray(value)||value.length>limit)invalid(label);
+      const result=[];
+      for(let i=0;i<value.length;i++){
+        const descriptor=Object.getOwnPropertyDescriptor(value,String(i));
+        if(!descriptor||!Object.hasOwn(descriptor,'value')||!valid(descriptor.value))
+          invalid(label);
+        result.push(descriptor.value);
+      }
+      return Object.freeze(result);
+    };
+    const key=value=>typeof value==='string'&&
+      !Object.hasOwn(Object.prototype,value)&&
+      (/^[a-zA-Z][a-zA-Z0-9]*$/.test(value)||/^block:[1-9]\\d{0,2}$/.test(value));
+    const id=value=>Number.isSafeInteger(value)&&value>0;
+    const inventory=array(save.inventory,'inventory counters',2048,
+      value=>Number.isSafeInteger(value)&&value>=0&&value<=65535);
+    const seen=new Set();
+    const rawStacks=save.itemStacks;
+    const itemStacks=rawStacks==null?null:(()=>{
+      if(!Array.isArray(rawStacks)||rawStacks.length>8192)
+        invalid('item stacks');
+      const result=[];
+      for(let i=0;i<rawStacks.length;i++){
+        const descriptor=Object.getOwnPropertyDescriptor(rawStacks,String(i));
+        if(!descriptor||!Object.hasOwn(descriptor,'value'))invalid('item stacks');
+        const stack=descriptor.value;
+        if(!stack||typeof stack!=='object'||Array.isArray(stack))
+          invalid('item stack');
+        const stackId=field(stack,'id','item stack');
+        const stackKey=field(stack,'key','item stack');
+        const quantity=field(stack,'qty','item stack');
+        if(!id(stackId)||seen.has(stackId)||!key(stackKey)||
+           !Number.isSafeInteger(quantity)||quantity<1||quantity>64)
+          invalid('item stack');
+        seen.add(stackId);
+        result.push(copyOwnedRecord(stack,'item stack'));
+      }
+      return Object.freeze(result);
+    })();
+    const hotbar=array(save.survivalHotbar,'survival hotbar',9,
+      value=>value===null||id(value)||key(value));
+    if(hotbar&&itemStacks)for(const ref of hotbar)
+      if(id(ref)&&!seen.has(ref))invalid('survival hotbar stack reference');
+    let javaInventory=null;
+    if(save.javaInventory!=null){
+      const raw=save.javaInventory;
+      if(!raw||typeof raw!=='object'||Array.isArray(raw))
+        invalid('Java inventory');
+      const slots=array(field(raw,'slots','Java inventory'),'Java inventory slots',8192,
+        value=>value===null||id(value));
+      const offhand=field(raw,'offhand','Java inventory');
+      const cursor=field(raw,'cursor','Java inventory');
+      if(!slots||![offhand,cursor].every(value=>value===null||id(value)))
+        invalid('Java inventory');
+      const assigned=new Set();
+      for(const ref of [...slots,offhand,cursor]){
+        if(ref===null)continue;
+        if(assigned.has(ref)||(itemStacks&&!seen.has(ref)))
+          invalid('Java inventory stack reference');
+        assigned.add(ref);
+      }
+      javaInventory=copyOwnedRecord(raw,'Java inventory',{maxArray:8192,maxNodes:12000});
+    }
+    return Object.freeze({inventory,itemStacks,survivalHotbar:hotbar,javaInventory});
+  })();
   const furnaces=previewFurnaces();
   const edits=convert(save.edits,target,'overworld');
   const netherEdits=convert(save.netherEdits??[],source,'nether');
   const endEdits=convert(save.endEdits??[],source,'end');
   return Object.freeze({sourceProfile:LEGACY_PROFILE,targetProfile:DEEP_PROFILE,
-    status:'preview-only',dimension,positions,bedSpawn,droppedItems,vehicles,tamedMounts,farmAnimals,edits,netherEdits,endEdits,furnaces});
+    status:'preview-only',dimension,positions,bedSpawn,droppedItems,vehicles,tamedMounts,farmAnimals,edits,netherEdits,endEdits,furnaces,playerItems});
 }
 
 window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,LEGACY_PROFILE,DEEP_PROFILE,readSaveProfile,canLoadLegacySave,planLegacySaveMigration,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk,createSectionStore,scanNonAirSections,countNonAirSections,updateSectionOccupancy});
