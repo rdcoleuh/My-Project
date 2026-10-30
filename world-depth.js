@@ -629,12 +629,47 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
         burn,burnTotal,progress});
     }));
   }
+  // Dropped stacks and respawn points are player-owned state, not terrain
+  // edits. The legacy loader silently filters invalid drops and clears invalid
+  // beds; a future height migration must refuse that data loss instead.
+  // Keep this preview detached and non-mutating until live entity migration.
+  const bedSpawn=(()=>{
+    const bed=save.bedSpawn;
+    if(bed==null)return null;
+    if(!bed||typeof bed!=='object'||Array.isArray(bed)||
+       ![bed.x,bed.y,bed.z].every(Number.isSafeInteger)||
+       bed.x<2||bed.x>=width-2||bed.z<2||bed.z>=depth-2||
+       bed.y<1||bed.y>=source.maxY-1)
+      throw new RangeError('Invalid saved bed respawn position');
+    return Object.freeze({x:bed.x,y:bed.y,z:bed.z});
+  })();
+  const droppedItems=(()=>{
+    const records=save.droppedItems??[];
+    if(!Array.isArray(records)||records.length>80)
+      throw new RangeError('Invalid saved dropped-item collection');
+    return Object.freeze(records.map(record=>{
+      if(!record||typeof record!=='object'||Array.isArray(record)||
+         typeof record.key!=='string'||Object.hasOwn(Object.prototype,record.key)||
+         !(/^[a-zA-Z][a-zA-Z0-9]*$/.test(record.key)||/^block:[1-9]\\d{0,2}$/.test(record.key))||
+         !Number.isSafeInteger(record.count)||record.count<1||record.count>64||
+         !['overworld','nether','end'].includes(record.dimension)||
+         ![record.x,record.y,record.z].every(Number.isFinite)||
+         record.x<1||record.x>width-1||record.z<1||record.z>depth-1||
+         record.y<.2||record.y>source.maxY+1||
+         ['vx','vy','vz','age','delay'].some(k=>
+           record[k]!=null&&(!Number.isFinite(record[k])||
+             ((k==='age'||k==='delay')&&record[k]<0))))
+        throw new RangeError('Invalid saved dropped-item stack or position');
+      // Retain velocity, pickup delay and any future-compatible metadata.
+      return Object.freeze({...record});
+    }));
+  })();
   const furnaces=previewFurnaces();
   const edits=convert(save.edits,target,'overworld');
   const netherEdits=convert(save.netherEdits??[],source,'nether');
   const endEdits=convert(save.endEdits??[],source,'end');
   return Object.freeze({sourceProfile:LEGACY_PROFILE,targetProfile:DEEP_PROFILE,
-    status:'preview-only',dimension,positions,edits,netherEdits,endEdits,furnaces});
+    status:'preview-only',dimension,positions,bedSpawn,droppedItems,edits,netherEdits,endEdits,furnaces});
 }
 
 window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,LEGACY_PROFILE,DEEP_PROFILE,readSaveProfile,canLoadLegacySave,planLegacySaveMigration,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk,createSectionStore,scanNonAirSections,countNonAirSections,updateSectionOccupancy});
