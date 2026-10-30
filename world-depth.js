@@ -237,6 +237,15 @@ function createSectionStore(options={}){
       section.block=null;section.uniform=false;
     }
     section.data[offset]=block;
+    // A section becomes entirely air when its last solid voxel is removed.
+    // Reclaim its 4096-byte (or partial-slice) payload immediately in O(1),
+    // without scanning on every edit or waiting for a chunk unload. This
+    // matters for deep-world mobile memory usage and does not touch saves.
+    if(counts[index]===0){
+      section.data=null;
+      section.block=0;
+      section.uniform=true;
+    }
     // A block changed at the top or bottom of a slice can reveal/hide a face
     // belonging to the neighboring slice. Invalidate both sides of the seam.
     invalidate(index);
