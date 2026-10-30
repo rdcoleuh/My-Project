@@ -14,3 +14,6 @@ Allow the existing bounded, save-aware furnace tick to continue while the Surviv
 
 ## Remaining
 Deep Overworld integration (Y -64..319), actual multiplayer furnace inventory synchronization, and a full survival-to-boss playthrough remain incomplete.
+
+## Browser test follow-up
+The first CI run passed all 617 Node tests but failed when the browser script force-clicked the Collect 1 button before the 250 ms UI repaint enabled it. The engine had produced charcoal; the click was ignored. The smoke script now waits for the button to become enabled before collecting, then asserts the output is gone. Re-run required before claiming browser success.

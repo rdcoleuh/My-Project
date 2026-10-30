@@ -1024,6 +1024,11 @@ async function go(browser,name,mobile){
   const charcoalState=await page.evaluate(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
   assert.equal(charcoalState?.output?.qty,1,name+': log did not produce one charcoal');
+  // The engine completes before the 250 ms accessible UI repaint. Wait for
+  // the button to become enabled; force-clicking a disabled button is a no-op.
+  await page.waitForFunction(()=>
+    document.querySelector('#mw-furnace-output-one')?.disabled===false,
+    null,{timeout:8000});
   await page.screenshot({path:path.join(screenshotDir,
     mobile?'mobile-furnace-cherry-charcoal-synthetic.png':'desktop-furnace-cherry-charcoal-synthetic.png'),
     animations:'disabled'});
