@@ -32,7 +32,7 @@ test('malformed second drop rejects the entire migration instead of losing its s
   {...good,vx:Infinity}, {...good,age:-1}
  ]){
   const saved=make({droppedItems:[good,bad]});
-  const before=json(saved);
+  const before={...saved,droppedItems:saved.droppedItems.map(drop=>({...drop}))};
   assert.throws(()=>plan(saved),/Invalid saved dropped-item/);
   assert.deepEqual(saved,before,'failure cannot rewrite or truncate the saved drops');
  }
