@@ -55,7 +55,7 @@ test('invalid burn and progress timers abort migration before data is lost',()=>
 });
 test('migration preflight does not switch the playable world height or rewrite saves',()=>{
  const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
- assert.match(html,/const H=48/);
+ assert.match(html,/\bH=48\b/);
  assert.match(html,/SEA=14/);
  assert.match(html,/verticalProfile:window\.MineWorldWorldDepth\.LEGACY_PROFILE/);
 });
