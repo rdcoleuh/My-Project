@@ -71,6 +71,15 @@ test('three station types have independent inventories and breaking returns cont
  assert.equal(f.get(p).input.key,'rawIron');
  assert.equal(f.get(q(5002)).input.key,'rawGold');
 });
+test('changing a restored station type cannot inherit progress from a different recipe',()=>{
+ const f=api.create();f.ensure(p,'furnace');
+ f.insert(p,'input','rawIron',1);f.insert(p,'fuel','coal',1);f.tick(8);
+ f.ensure(p,'smoker');
+ assert.equal(f.get(p).progress,0);
+ assert.equal(f.tick(5).completed,0);
+ assert.equal(f.get(p).output,null);
+ assert.equal(f.take(p,'input').key,'rawIron');
+});
 test('world interactions, mobile smoke and recipe picker include specialized stations',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const ui=fs.readFileSync(path.join(root,'furnace-ui.js'),'utf8');

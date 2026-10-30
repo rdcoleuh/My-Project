@@ -44,7 +44,7 @@ function create(){
  function ensure(p,kind='furnace'){
   if(!pos(p)||!Object.hasOwn(KINDS,kind))return null;
   const existing=get(p);
-  if(existing){if(kind!=='furnace'&&existing.kind!==kind)existing.kind=kind;return existing;}
+  if(existing){if(kind!=='furnace'&&existing.kind!==kind){existing.kind=kind;existing.progress=0;}return existing;}
   const machine=blank(p,kind);machines.set(id(p),machine);return machine;
  }
  function insert(p,which,item,n=1){

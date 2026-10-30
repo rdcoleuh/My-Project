@@ -1104,6 +1104,8 @@ async function go(browser,name,mobile){
     await page.waitForFunction(({fixture,product})=>
       window.MineWorldBridge.getFurnaceState(fixture.x,fixture.y,fixture.z)?.output?.key===product,
       {fixture,product:station.product},{timeout:30000});
+    await page.waitForFunction(()=>document.querySelector('#mw-furnace-output-one')?.disabled===false,
+      null,{timeout:8000});
     await page.screenshot({path:path.join(screenshotDir,
       (mobile?'mobile':'desktop')+'-'+station.kind+'-smelt-synthetic.png'),animations:'disabled'});
     await page.locator('#mw-furnace-output-one').click({force:true});
