@@ -30,7 +30,13 @@ const KINDS=Object.freeze({furnace:Object.freeze({cook:10}),smoker:Object.freeze
 const FOOD=new Set(['raw','chicken','mutton','fish','potato','kelp']);
 const ORE=new Set(['rawIron','rawGold','rawCopper','ancientDebris',...Object.keys(RECIPES).filter(k=>/^block:/.test(k)&&!['block:4','block:5','block:15','block:26','block:30','block:32','block:34','block:36','block:38','block:40','block:42','block:50','block:57','block:61'].includes(k))]);
 const canSmelt=(kind,item)=>Object.hasOwn(RECIPES,item)&&(kind==='furnace'||kind==='smoker'&&FOOD.has(item)||kind==='blast'&&ORE.has(item));
-const key=k=>typeof k==='string'&&!Object.hasOwn(Object.prototype,k)&&(/^[a-zA-Z][a-zA-Z0-9]*$/.test(k)||/^block:[1-9]\d{0,2}$/.test(k));
+// Namespaced IDs may arrive in saves from future/custom resource-pack content.
+// Preserve them as inert, withdrawable stacks; only registered recipes/fuels run.
+const namespaced=k=>k.length<=192&&
+ /^[a-z0-9][a-z0-9_.-]{0,63}:[a-z0-9_][a-z0-9_.-]*(?:\/[a-z0-9_][a-z0-9_.-]*)*$/.test(k)&&
+ !k.startsWith('block:');
+const key=k=>typeof k==='string'&&!Object.hasOwn(Object.prototype,k)&&
+ (/^[a-zA-Z][a-zA-Z0-9]*$/.test(k)||/^block:[1-9]\d{0,2}$/.test(k)||namespaced(k));
 // Keep the legacy Y=0..47 range and permit future deep-world furnaces.
 // X/Z remain inside the current 10,000-block world; Y is absolute, not an array offset.
 const pos=p=>p&&['overworld','nether','end'].includes(p.dimension)&&

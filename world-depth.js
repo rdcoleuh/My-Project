@@ -609,7 +609,10 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
       if(value==null)return null;
       if(!value||typeof value!=='object'||Array.isArray(value)||
          typeof value.key!=='string'||Object.hasOwn(Object.prototype,value.key)||
-         !(/^[a-zA-Z][a-zA-Z0-9]*$/.test(value.key)||/^block:[1-9]\d{0,2}$/.test(value.key))||
+         !(/^[a-zA-Z][a-zA-Z0-9]*$/.test(value.key)||/^block:[1-9]\d{0,2}$/.test(value.key)||
+           value.key.length<=192&&
+           /^[a-z0-9][a-z0-9_.-]{0,63}:[a-z0-9_][a-z0-9_.-]*(?:\/[a-z0-9_][a-z0-9_.-]*)*$/.test(value.key)&&
+           !value.key.startsWith('block:'))||
          !Number.isSafeInteger(value.qty)||value.qty<1||value.qty>64)
         throw new RangeError('Invalid saved furnace '+label+' stack');
       return Object.freeze({key:value.key,qty:value.qty});
