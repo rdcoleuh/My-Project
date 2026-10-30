@@ -83,8 +83,16 @@ function create(){
    // smelt and unknown fuel cannot ignite, but players can retrieve both.
    // An unrecognized output must also remain intact and block incompatible
    // smelting rather than being overwritten by a new product.
-   m.burn=Math.max(0,Math.min(1000,Number(r.burn)||0));
-   m.burnTotal=Math.max(0,Math.min(1000,Number(r.burnTotal)||0));
+   // Burn remaining is meaningful only relative to the fuel's recorded
+   // total. Corrupt or partial saves used to restore burn=1000 with no
+   // burnTotal, manufacturing up to 100 free smelts without any fuel.
+   // Normal snapshots always store both numeric fields, including 800s coal.
+   const total=typeof r.burnTotal==='number'&&Number.isFinite(r.burnTotal)?
+    Math.max(0,Math.min(1000,r.burnTotal)):0;
+   const remaining=typeof r.burn==='number'&&Number.isFinite(r.burn)?
+    Math.max(0,Math.min(1000,r.burn)):0;
+   m.burnTotal=total;
+   m.burn=Math.min(remaining,total);
    // A completed cook frame cannot be resumed at exactly COOK: tick would
    // otherwise take a zero-length step forever, leaving the furnace stuck.
    m.progress=Math.max(0,Math.min(COOK,Number(r.progress)||0));
