@@ -1578,7 +1578,7 @@ body.in-nether #game-wrap{background:#290f19}
       }))return false;
     }
     const before=get(x,y,z);if(before===b)return false;
-    if(before===20&&b!==20){
+    if([20,157,158].includes(before)&&before!==b){
       const contents=furnaces.remove({dimension,x,y,z});
       if(gameMode==='survival'&&!remote)for(const item of contents)dropMinedResource(item.key,item.qty,x,y,z);
     }
@@ -1939,7 +1939,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(paused||window.MineWorldMultiplayer?.isTyping?.())return false;
     if(!stack&&aimMob&&interactFarmAnimal(aimMob))return true;
     if(!stack&&aim?.b===169){cancelMining();useBed(aim);return;}
-    if(!stack&&aim?.b===20){openFurnace(aim);return true;}
+    if(!stack&&[20,157,158].includes(aim?.b)){openFurnace(aim);return true;}
     if(!stack&&gameMode==='survival'&&aim?.b===168){
       // Interacting with a targeted crafting table must open its 3×3 grid,
       // even if the nearby-station memo was populated before placement.
@@ -1980,7 +1980,7 @@ body.in-nether #game-wrap{background:#290f19}
   function openFurnace(target){
     if(gameMode!=='survival'){toast('Furnaces operate in Survival mode');return;}
     if(window.MineWorldMultiplayer?.isShared()){toast('Furnace inventories currently work in private worlds');return;}
-    furnaceUI.open({dimension,x:target.x,y:target.y,z:target.z});
+    furnaceUI.open({dimension,x:target.x,y:target.y,z:target.z},target.b===157?'smoker':target.b===158?'blast':'furnace');
   }
   let furnaceSaveClock=0;
   function markSave(){dirtySave=true}
@@ -4888,8 +4888,8 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
     getMode:()=>gameMode,
     // Testable interaction entry point: only opens an actual furnace block.
     openFurnaceAt:(x,y,z)=>{
-      if(!inside(x,y,z)||get(x,y,z)!==20||gameMode!=='survival')return false;
-      openFurnace({x,y,z});return true;
+      if(!inside(x,y,z)||![20,157,158].includes(get(x,y,z))||gameMode!=='survival')return false;
+      openFurnace({x,y,z,b:get(x,y,z)});return true;
     },
     getFurnaceState:(x,y,z)=>furnaces.get({dimension,x,y,z}),
 

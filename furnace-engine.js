@@ -25,21 +25,31 @@ const FUEL=Object.freeze({coal:80,charcoal:80,'block:5':15,'block:11':15,'block:
  'block:45':2.5,'block:119':15,'block:155':15,'block:160':15,'block:168':15,
  ladder:15,fence:15,gate:15,door:10,trapdoor:15,sign:10,
  button:5,pressurePlate:15,bowl:5});
-const COOK=10,key=k=>typeof k==='string'&&!Object.hasOwn(Object.prototype,k)&&(/^[a-zA-Z][a-zA-Z0-9]*$/.test(k)||/^block:[1-9]\d{0,2}$/.test(k));
+const COOK=10;
+const KINDS=Object.freeze({furnace:Object.freeze({cook:10}),smoker:Object.freeze({cook:5}),blast:Object.freeze({cook:5})});
+const FOOD=new Set(['raw','chicken','mutton','fish','potato','kelp']);
+const ORE=new Set(['rawIron','rawGold','rawCopper','ancientDebris',...Object.keys(RECIPES).filter(k=>/^block:/.test(k)&&!['block:4','block:5','block:15','block:26','block:30','block:32','block:34','block:36','block:38','block:40','block:42','block:50','block:57','block:61'].includes(k))]);
+const canSmelt=(kind,item)=>Object.hasOwn(RECIPES,item)&&(kind==='furnace'||kind==='smoker'&&FOOD.has(item)||kind==='blast'&&ORE.has(item));
+const key=k=>typeof k==='string'&&!Object.hasOwn(Object.prototype,k)&&(/^[a-zA-Z][a-zA-Z0-9]*$/.test(k)||/^block:[1-9]\d{0,2}$/.test(k));
 // Keep the legacy Y=0..47 range and permit future deep-world furnaces.
 // X/Z remain inside the current 10,000-block world; Y is absolute, not an array offset.
 const pos=p=>p&&['overworld','nether','end'].includes(p.dimension)&&
   [p.x,p.y,p.z].every(Number.isInteger)&&p.x>=0&&p.x<10000&&p.z>=0&&p.z<10000&&p.y>=-64&&p.y<=319;
 const id=p=>p.dimension+':'+p.x+','+p.y+','+p.z;
-const blank=p=>({dimension:p.dimension,x:p.x,y:p.y,z:p.z,input:null,fuel:null,output:null,burn:0,burnTotal:0,progress:0});
+const blank=(p,kind='furnace')=>({kind,dimension:p.dimension,x:p.x,y:p.y,z:p.z,input:null,fuel:null,output:null,burn:0,burnTotal:0,progress:0});
 const slot=s=>s&&key(s.key)&&Number.isInteger(s.qty)&&s.qty>0&&s.qty<=64?{key:s.key,qty:s.qty}:null;
 function create(){
  const machines=new Map();
  const get=p=>pos(p)?machines.get(id(p))||null:null;
- function ensure(p){if(!pos(p))return null;if(!get(p))machines.set(id(p),blank(p));return get(p);}
+ function ensure(p,kind='furnace'){
+  if(!pos(p)||!Object.hasOwn(KINDS,kind))return null;
+  const existing=get(p);
+  if(existing){if(kind!=='furnace'&&existing.kind!==kind)existing.kind=kind;return existing;}
+  const machine=blank(p,kind);machines.set(id(p),machine);return machine;
+ }
  function insert(p,which,item,n=1){
   if(!['input','fuel'].includes(which)||!key(item)||!Number.isInteger(n)||n<1)return 0;
-  if(which==='input'&&!Object.hasOwn(RECIPES,item)||which==='fuel'&&!Object.hasOwn(FUEL,item))return 0;
+  if(which==='input'&&!canSmelt(get(p)?.kind||'furnace',item)||which==='fuel'&&!Object.hasOwn(FUEL,item))return 0;
   const m=ensure(p);if(!m||m[which]&&m[which].key!==item)return 0;
   const moved=Math.min(n,64-(m[which]?.qty||0));
   if(moved)m[which]={key:item,qty:(m[which]?.qty||0)+moved};return moved;
@@ -55,7 +65,7 @@ function create(){
   for(const m of machines.values()){
    let remaining=Math.max(0,Math.min(60,Number(seconds)||0));
    while(remaining>1e-7){
-    const product=m.input&&Object.hasOwn(RECIPES,m.input.key)&&RECIPES[m.input.key];
+    const product=m.input&&canSmelt(m.kind,m.input.key)&&RECIPES[m.input.key];
     if(!product||m.output&&(m.output.key!==product||m.output.qty>=64)){
      if(m.progress){m.progress=0;changed=true;}
      if(m.burn){m.burn=Math.max(0,m.burn-remaining);changed=true;}break;
@@ -69,9 +79,9 @@ function create(){
      }
      m.burn=m.burnTotal=FUEL[m.fuel.key];if(!--m.fuel.qty)m.fuel=null;changed=true;
     }
-    const step=Math.min(remaining,m.burn,COOK-m.progress);if(step<1e-7)break;
+    const cook=KINDS[m.kind].cook;const step=Math.min(remaining,m.burn,cook-m.progress);if(step<1e-7)break;
     m.burn=Math.max(0,m.burn-step);m.progress+=step;remaining-=step;changed=true;
-    if(m.progress>=COOK-1e-7){
+    if(m.progress>=cook-1e-7){
      if(!--m.input.qty)m.input=null;
      if(m.output)m.output.qty++;else m.output={key:product,qty:1};
      m.progress=0;completed++;
@@ -90,7 +100,7 @@ function create(){
    // Duplicate saved positions must not replace an already-restored machine:
    // last-wins loading silently erased its ingredient, fuel and output stacks.
    if(machines.has(id(r)))continue;
-   const m=blank(r);
+   const m=blank(r,Object.hasOwn(KINDS,r.kind)?r.kind:'furnace');
    m.input=slot(r.input);m.fuel=slot(r.fuel);m.output=slot(r.output);
    // Preserve well-formed stacks even if this build no longer recognizes
    // their recipe or fuel. Dropping unknown items on load permanently destroys
@@ -110,14 +120,14 @@ function create(){
    m.burn=Math.min(remaining,total);
    // A completed cook frame cannot be resumed at exactly COOK: tick would
    // otherwise take a zero-length step forever, leaving the furnace stuck.
-   m.progress=Math.max(0,Math.min(COOK,Number(r.progress)||0));
-   if(m.progress>=COOK||!m.input)m.progress=0;
+   m.progress=Math.max(0,Math.min(KINDS[m.kind].cook,Number(r.progress)||0));
+   if(m.progress>=KINDS[m.kind].cook||!m.input||!canSmelt(m.kind,m.input.key))m.progress=0;
    // A saved progress timer without any ingredient would otherwise grant
    // a newly inserted item free cooking time after a world reload.
    machines.set(id(m),m);
   }
  }
- return {get,ensure,insert,take,tick,remove,snapshot,restore,clear:()=>machines.clear()};
+ return {get,ensure,insert,take,tick,remove,snapshot,restore,canSmelt,clear:()=>machines.clear()};
 }
-window.MineWorldFurnace=Object.freeze({create,RECIPES,FUEL,COOK});
+window.MineWorldFurnace=Object.freeze({create,RECIPES,FUEL,COOK,KINDS,canSmelt});
 })();

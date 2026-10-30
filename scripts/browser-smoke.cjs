@@ -1075,6 +1075,42 @@ async function go(browser,name,mobile){
     window.MineWorldBridge.getFurnaceState(x,y,z)?.output,bambooFixture),null,
     name+': bamboo-smelted iron could not be collected');
   await page.locator('#mw-furnace-close').click({force:true});
+  // Smoker and blast furnace: real desktop/mobile placement, UI, recipe and cooking.
+  for(const station of [
+    {block:157,kind:'smoker',ingredient:'chicken',product:'cookedChicken',wrong:'rawIron',offset:2},
+    {block:158,kind:'blast',ingredient:'rawIron',product:'iron',wrong:'chicken',offset:3}
+  ]){
+    const fixture=await page.evaluate(({fixture,station})=>{
+      const {x,y,z}=fixture,bridge=window.MineWorldBridge,W=bridge.getSnapshot().worldSize,bx=x+station.offset;
+      const id=(bx*W+z)*48+y;
+      const granted=bridge.grantLoot(station.ingredient,1)&&bridge.grantLoot('coal',1);
+      const placed=bridge.remoteEdit(id,station.block);
+      return {id,x:bx,y,z,granted,placed,opened:bridge.openFurnaceAt(bx,y,z)};
+    },{fixture:bambooFixture,station});
+    assert.equal(fixture.granted,true,name+': '+station.kind+' ingredients unavailable');
+    assert.equal(fixture.placed,true,name+': '+station.kind+' placement failed');
+    assert.equal(fixture.opened,true,name+': '+station.kind+' interaction failed');
+    assert.equal(await page.evaluate(({x,y,z})=>
+      window.MineWorldBridge.getFurnaceState(x,y,z)?.kind,fixture),
+      station.kind,name+': station type not assigned');
+    await page.waitForFunction(()=>document.querySelector('#mw-furnace-input')?.options.length>0);
+    const options=await page.locator('#mw-furnace-input option').evaluateAll(nodes=>nodes.map(n=>n.value));
+    assert.ok(options.includes(station.ingredient),name+': '+station.kind+' ingredient missing');
+    assert.ok(!options.includes(station.wrong),name+': '+station.kind+' accepted forbidden recipe');
+    await page.locator('#mw-furnace-input').selectOption(station.ingredient);
+    await page.locator('#mw-furnace-put-input').click({force:true});
+    await page.locator('#mw-furnace-fuel').selectOption('coal');
+    await page.locator('#mw-furnace-put-fuel').click({force:true});
+    await page.waitForFunction(({fixture,product})=>
+      window.MineWorldBridge.getFurnaceState(fixture.x,fixture.y,fixture.z)?.output?.key===product,
+      {fixture,product:station.product},{timeout:30000});
+    await page.screenshot({path:path.join(screenshotDir,
+      (mobile?'mobile':'desktop')+'-'+station.kind+'-smelt-synthetic.png'),animations:'disabled'});
+    await page.locator('#mw-furnace-output-one').click({force:true});
+    await page.locator('#mw-furnace-close').click({force:true});
+    assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),fixture.id),
+      true,name+': '+station.kind+' cleanup failed');
+  }
   assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),bambooFixture.id),
     true,name+': bamboo furnace cleanup failed');
   assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),furnaceFixture.id),

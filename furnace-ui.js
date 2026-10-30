@@ -124,8 +124,8 @@ function create(api){
   document.head.appendChild(style);
   panel=document.createElement('div');panel.id='mw-furnace-panel';panel.className='modal-backdrop hidden';
   panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label','Furnace');
-  panel.innerHTML='<section class="modal mw-furnace-modal"><h2>🔥 Furnace</h2>'+
-   '<p>Put an ingredient in the input slot and add fuel. One item takes 10 seconds to smelt.</p>'+
+  panel.innerHTML='<section class="modal mw-furnace-modal"><h2 id="mw-furnace-title">🔥 Furnace</h2>'+
+   '<p id="mw-furnace-help">Put an ingredient in the input slot and add fuel. One item takes 10 seconds to smelt.</p>'+
    '<div class="mw-furnace-workspace" role="group" aria-label="Furnace input, fuel and output slots">'+
    '<div class="mw-furnace-stack"><div id="mw-furnace-slot-input" class="mw-furnace-slot" role="img" aria-label="Input slot empty"><img alt="" aria-hidden="true" hidden><span aria-hidden="true">—</span><small>Input</small></div>'+
    '<div id="mw-furnace-slot-fuel" class="mw-furnace-slot" role="img" aria-label="Fuel slot empty"><img alt="" aria-hidden="true" hidden><span aria-hidden="true">—</span><small>Fuel</small></div></div>'+
@@ -172,7 +172,7 @@ function create(api){
   for(const which of ['input','fuel']){
    const select=el('mw-furnace-'+which);
    const options=which==='input'?window.MineWorldFurnace.RECIPES:window.MineWorldFurnace.FUEL;
-   const keys=Object.keys(options).filter(key=>totals[key]||m[which]?.key===key);
+   const keys=Object.keys(options).filter(key=>(which==='fuel'||engine.canSmelt(m.kind,key))&&(totals[key]||m[which]?.key===key));
    syncSelect(select,keys,totals,key=>api.label(key),document);
    const selected=select.value;
    const canAdd=!!selected&&!!totals[selected]&&
@@ -193,14 +193,18 @@ function create(api){
    slotArt(node,item);
   }
   el('mw-furnace-flame').value=m.burnTotal>0?Math.max(0,Math.min(100,Math.round(m.burn/m.burnTotal*100))):0;
-  el('mw-furnace-cook').value=Math.max(0,Math.min(100,Math.round(m.progress*10)));
+  el('mw-furnace-cook').value=Math.max(0,Math.min(100,Math.round(m.progress/window.MineWorldFurnace.KINDS[m.kind].cook*100)));
   el('mw-furnace-status').textContent='Input: '+fmt(m.input)+' · Fuel: '+fmt(m.fuel)+
-   ' · Output: '+fmt(m.output)+' · Flame: '+Math.ceil(m.burn)+'s · Smelted: '+Math.round(m.progress*10)+'%';
+   ' · Output: '+fmt(m.output)+' · Flame: '+Math.ceil(m.burn)+'s · Smelted: '+Math.round(m.progress/window.MineWorldFurnace.KINDS[m.kind].cook*100)+'%';
   el('mw-furnace-output-one').disabled=!m.output;
   el('mw-furnace-output').textContent='Collect output: '+fmt(m.output);
   el('mw-furnace-output').disabled=!m.output;
  }
- function open(position){ensurePanel();current={...position};engine.ensure(current);
+ function open(position,kind='furnace'){ensurePanel();current={...position};engine.ensure(current,kind);
+  const station=engine.get(current)?.kind||'furnace';
+  el('mw-furnace-title').textContent=station==='smoker'?'🍖 Smoker':station==='blast'?'⚒ Blast Furnace':'🔥 Furnace';
+  el('mw-furnace-help').textContent='Add an ingredient and fuel. '+(station==='smoker'?'Food only':station==='blast'?'Ores and metals only':'All supported recipes')+'; one item takes '+window.MineWorldFurnace.KINDS[station].cook+' seconds.';
+
   panel.classList.remove('hidden');api.onPause();render();el('mw-furnace-close').focus();}
  function close(){if(!current)return;current=null;panel?.classList.add('hidden');api.onResume();}
  function tick(dt){if(!current)return;drawClock+=dt;if(drawClock>=.25){drawClock=0;render();}}
