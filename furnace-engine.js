@@ -8,7 +8,12 @@ const RECIPES=Object.freeze({rawIron:'iron',rawGold:'gold',rawCopper:'copper',ra
  'block:99':'diamond','block:100':'emerald',
  'block:101':'coal','block:102':'iron','block:103':'copper','block:104':'gold',
  'block:105':'redstone','block:106':'lapis','block:107':'diamond','block:108':'emerald',
- 'block:26':'block:9','block:57':'block:25'});
+ 'block:26':'block:9','block:57':'block:25',
+ // Every independently registered log type produces charcoal, not only oak.
+ // Planks remain fuels but are not smelting inputs.
+ 'block:15':'charcoal','block:30':'charcoal','block:32':'charcoal',
+ 'block:34':'charcoal','block:36':'charcoal','block:38':'charcoal',
+ 'block:40':'charcoal','block:42':'charcoal','block:50':'charcoal'});
 const FUEL=Object.freeze({coal:80,charcoal:80,'block:5':15,'block:11':15,'block:52':15,sticks:5,bamboo:2.5,'block:15':15,'block:30':15,'block:32':15,'block:34':15,
  'block:36':15,'block:38':15,'block:40':15,'block:42':15,
  // Craftable MineWorld fuel blocks and inventory items; durations in seconds.

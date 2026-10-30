@@ -939,6 +939,31 @@ async function go(browser,name,mobile){
   assert.equal(drained?.output,null,name+': Collect output did not empty remaining ingot');
   assert.equal(await page.locator('#mw-furnace-output-one').isDisabled(),true,
     name+': Collect 1 must disable when output is empty');
+  // Smelt a non-oak log using the same real furnace UI in both browsers.
+  // The imported pack is a synthetic test fixture, not a player's owned art.
+  assert.equal(await page.evaluate(()=>window.MineWorldBridge.grantLoot('block:40',1)),
+    true,name+': cherry log could not be granted for charcoal regression');
+  await page.waitForFunction(()=>
+    [...document.querySelector('#mw-furnace-input').options].some(o=>o.value==='block:40'),
+    null,{timeout:8000});
+  await page.locator('#mw-furnace-input').selectOption('block:40');
+  await page.locator('#mw-furnace-put-input').click({force:true});
+  const logLoaded=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
+  assert.equal(logLoaded?.input?.key,'block:40',name+': cherry log did not enter furnace');
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.output?.key==='charcoal',
+    furnaceFixture,{timeout:30000});
+  const charcoalState=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
+  assert.equal(charcoalState?.output?.qty,1,name+': log did not produce one charcoal');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-cherry-charcoal-synthetic.png':'desktop-furnace-cherry-charcoal-synthetic.png'),
+    animations:'disabled'});
+  await page.locator('#mw-furnace-output-one').click({force:true});
+  assert.equal(await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.output,
+    furnaceFixture),null,name+': charcoal could not be collected');
   await page.locator('#mw-furnace-close').click({force:true});
   assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),furnaceFixture.id),
     true,name+': furnace fixture cleanup failed');
