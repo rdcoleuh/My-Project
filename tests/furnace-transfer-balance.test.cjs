@@ -50,6 +50,7 @@ test('credit that exaggerates actual amount is reversed',()=>{
 });
 test('partial honest credit still transfers only the amount actually accepted',()=>{
  const f=cooked();
+ f.tick(10); // two ingots are waiting, but the adapter accepts only one
  let amount=0;
  const inventory={count:()=>amount,change:(_key,delta)=>{
   const accepted=delta>0?Math.min(1,delta):delta;
@@ -58,7 +59,7 @@ test('partial honest credit still transfers only the amount actually accepted',(
  }};
  assert.equal(withdraw(f,inventory,p,'output',2).moved,1);
  assert.equal(amount,1);
- assert.equal(f.get(p).output,null);
+ assert.equal(f.get(p).output.qty,1,'uncredited output remains in the furnace');
 });
 test('ordinary input deposit and output collection still succeed',()=>{
  const f=create(),inventory=bag(2);
