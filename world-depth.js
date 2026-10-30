@@ -587,11 +587,54 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
     nether:position(save.netherPosition,'nether'),
     end:position(save.endPosition,'end')
   });
+  // Furnace records are block-entity data, not linear world edits. A future
+  // height migration must preserve all three inventories and absolute Y.
+  // Validate them before returning a plan: a malformed/duplicate record
+  // would otherwise be silently discarded by the live furnace restorer.
+  // This is still preview-only; it never writes a world or changes its save.
+  function previewFurnaces(){
+    const records=save.furnaces??[];
+    if(!Array.isArray(records))throw new RangeError('Invalid saved furnace collection');
+    const seen=new Set();
+    const validSlot=(value,label)=>{
+      if(value==null)return null;
+      if(!value||typeof value!=='object'||Array.isArray(value)||
+         typeof value.key!=='string'||Object.hasOwn(Object.prototype,value.key)||
+         !(/^[a-zA-Z][a-zA-Z0-9]*$/.test(value.key)||/^block:[1-9]\\d{0,2}$/.test(value.key))||
+         !Number.isSafeInteger(value.qty)||value.qty<1||value.qty>64)
+        throw new RangeError('Invalid saved furnace '+label+' stack');
+      return Object.freeze({key:value.key,qty:value.qty});
+    };
+    return Object.freeze(records.map(record=>{
+      if(!record||typeof record!=='object'||Array.isArray(record)||
+         !['overworld','nether','end'].includes(record.dimension)||
+         ![record.x,record.y,record.z].every(Number.isSafeInteger)||
+         record.x<0||record.x>=width||record.z<0||record.z>=depth||
+         record.y<LEGACY.minY||record.y>LEGACY.maxY)
+        throw new RangeError('Invalid saved furnace position');
+      const id=record.dimension+':'+record.x+','+record.y+','+record.z;
+      if(seen.has(id))throw new RangeError('Duplicate saved furnace position');
+      seen.add(id);
+      const input=validSlot(record.input,'input');
+      const fuel=validSlot(record.fuel,'fuel');
+      const output=validSlot(record.output,'output');
+      const burn=record.burn??0,burnTotal=record.burnTotal??0;
+      const progress=record.progress??0;
+      if(![burn,burnTotal,progress].every(Number.isFinite)||
+         burn<0||burnTotal<0||burnTotal>1000||burn>burnTotal||
+         progress<0||progress>=10||(!input&&progress>0))
+        throw new RangeError('Invalid saved furnace timers');
+      return Object.freeze({dimension:record.dimension,
+        x:record.x,y:record.y,z:record.z,input,fuel,output,
+        burn,burnTotal,progress});
+    }));
+  }
+  const furnaces=previewFurnaces();
   const edits=convert(save.edits,target,'overworld');
   const netherEdits=convert(save.netherEdits??[],source,'nether');
   const endEdits=convert(save.endEdits??[],source,'end');
   return Object.freeze({sourceProfile:LEGACY_PROFILE,targetProfile:DEEP_PROFILE,
-    status:'preview-only',dimension,positions,edits,netherEdits,endEdits});
+    status:'preview-only',dimension,positions,edits,netherEdits,endEdits,furnaces});
 }
 
 window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,LEGACY_PROFILE,DEEP_PROFILE,readSaveProfile,canLoadLegacySave,planLegacySaveMigration,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk,createSectionStore,scanNonAirSections,countNonAirSections,updateSectionOccupancy});
