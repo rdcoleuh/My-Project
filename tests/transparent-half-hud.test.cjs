@@ -6,11 +6,13 @@ const fs=require('node:fs'),path=require('node:path');
 const root=path.join(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const smoke=fs.readFileSync(path.join(root,'scripts/browser-smoke.cjs'),'utf8');
-test('half hearts and food keep original fallback beneath transparent imported sprites',()=>{
+test('half hearts and food prefer imported empty underlays with procedural fallback',()=>{
  const renderer=html.slice(html.indexOf('function updateSurvivalHUD(){'),
    html.indexOf('function setGameMode(next)'));
  assert.match(renderer,/if\(fill==='half'\)\{[\s\S]*?image\.classList\.add\('mw-pack-stat-layer'\);[\s\S]*?icon\.appendChild\(image\);/);
- assert.match(renderer,/const emptyUnderlay=window\.MineWorldHudArt\?\.paint\(glyph,'empty'\)/);
+ assert.match(renderer,/const emptySrc=await cachedStatArt\(pack,glyph,'empty'\)/);
+ assert.match(renderer,/const emptyUnderlay=emptySrc\?document\.createElement\('img'\):[\s\S]*?window\.MineWorldHudArt\?\.paint\(glyph,'empty'\)/);
+ assert.match(renderer,/if\(!icon\.isConnected\|\|pack!==window\.MineWorldLocalTextures\|\|/);
  assert.match(renderer,/if\(emptyUnderlay\)icon\.replaceChildren\(emptyUnderlay\)/);
  assert.match(renderer,/else icon\.replaceChildren\(image\)/);
  assert.match(html,/\.mw-pack-stat-layer\{position:absolute;inset:0;pointer-events:none\}/);

@@ -49,7 +49,10 @@ test('same-generation pack replacement repaints all twenty unchanged HUD icons',
   h.window.MineWorldLocalTextures=second;
   h.update();await settle();
   assert.equal(h.elements.get('health-text').children[0].children[0].src,'new:heart:full');
-  assert.equal(h.elements.get('hunger-text').children[0].children[0].src,'new:food:half');
+  const halfFood=h.elements.get('hunger-text').children[0].children;
+  assert.equal(halfFood[0].src,'new:food:empty','imported empty underlay');
+  assert.equal(halfFood[1].src,'new:food:half','imported half artwork overlays empty');
+  assert.match(halfFood[0].className,/mw-pack-stat-underlay/);
   assert.equal(h.elements.get('health-text')['aria-label'],'Health: 19 of 20');
   assert.equal(h.elements.get('hunger-text')['aria-label'],'Hunger: 1 of 20');
 });

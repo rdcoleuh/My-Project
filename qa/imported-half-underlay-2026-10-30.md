@@ -8,3 +8,6 @@ For a half heart or food icon, resolve the pack's empty sprite through the exist
 
 ## Verification
 Node regression tests exercise full+empty without half, missing-empty fallback, and stale pack replacement. Desktop/mobile Chrome smoke scripts import a synthetic full+empty pack, verify the rendered underlay source and decoded image dimensions, and capture a screenshot. These fixtures are **original test artwork**, not the user's Minecraft pack. A full survival playthrough and endgame completion are not established by these tests.
+
+## CI follow-up
+The first pipeline ran 597 Node tests: 595 passed and two existing tests expected the former procedural-only underlay. Their expectations were updated to assert imported-empty precedence and the retained procedural fallback. Browser smoke tests were skipped on that failed run and require the follow-up pipeline before claiming browser verification.
