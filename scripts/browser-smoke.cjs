@@ -136,6 +136,14 @@ function makeTestArchive(mode='full'){
   ['resource_pack/textures/ui/heart.png',generatedPng(9,205,9)],
   ['resource_pack/textures/ui/hunger_full.png',generatedPng(9,170,9)]
  ];
+ // Full + empty but no half: verify imported empty art stays visible
+ // beneath the synthesized transparent half, without proprietary pixels.
+ if(mode==='half-with-empty')files=[
+  ['resource_pack/textures/ui/heart.png',generatedPng(9,205,9)],
+  ['resource_pack/textures/ui/heart_background.png',generatedPng(9,40,9)],
+  ['resource_pack/textures/ui/hunger_full.png',generatedPng(9,170,9)],
+  ['resource_pack/textures/ui/hunger_background.png',generatedPng(9,55,9)]
+ ];
  // Independently generated item placeholders: a blank Java item must not
  // suppress a visible Bedrock alias or MineWorld's original fallback icon.
  if(mode==='transparent-item')files=[
@@ -778,6 +786,42 @@ async function go(browser,name,mobile){
       JSON.stringify(halfLayer));
   await page.screenshot({path:path.join(screenshotDir,
     mobile?'mobile-half-heart-no-empty-synthetic.png':'desktop-half-heart-no-empty-synthetic.png'),
+    animations:'disabled'});
+  // This synthetic Bedrock pack has full and empty heart/food sprites,
+  // but deliberately omits half sprites. Test the real rendered half-heart.
+  await page.evaluate(async bytes=>{
+    const file=new File([new Uint8Array(bytes)],'half-with-empty-original-fixture.zip',
+      {type:'application/zip'});
+    await window.MineWorldLocalTextures.loadFile(file);
+  },Array.from(makeTestArchive('half-with-empty')));
+  await page.waitForFunction(()=>{
+    const half=document.querySelector('#health-text .mw-stat-icon.half');
+    return !!half?.querySelector('img.mw-pack-stat-underlay')&&
+      !!half.querySelector('img.mw-pack-stat-layer');
+  },null,{timeout:15000});
+  const importedHalf=await page.evaluate(async()=>{
+    const icon=document.querySelector('#health-text .mw-stat-icon.half');
+    const pack=window.MineWorldLocalTextures;
+    const empty=await pack.hudIcon('heart','empty');
+    const full=await pack.hudIcon('heart','full');
+    const underlay=icon.querySelector('img.mw-pack-stat-underlay');
+    const layer=icon.querySelector('img.mw-pack-stat-layer');
+    await Promise.all([underlay.decode(),layer.decode()]);
+    return {matched:underlay.src===empty,full:!!full,
+      count:icon.children.length,underlayWidth:underlay.naturalWidth,
+      sharp:getComputedStyle(underlay).imageRendering==='pixelated'&&
+        getComputedStyle(layer).imageRendering==='pixelated',
+      half:icon.classList.contains('half'),
+      label:document.querySelector('#health-text').getAttribute('aria-label')};
+  });
+  assert.ok(importedHalf.matched&&importedHalf.full&&importedHalf.count===2&&
+    importedHalf.underlayWidth===9&&importedHalf.sharp&&importedHalf.half&&
+    importedHalf.label==='Health: 19 of 20',
+    name+': imported empty frame was lost under a synthesized half-heart: '+
+      JSON.stringify(importedHalf));
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-half-heart-imported-empty-synthetic.png':
+      'desktop-half-heart-imported-empty-synthetic.png'),
     animations:'disabled'});
   // Inspect real decoded pixels in desktop/mobile Chrome with a synthetic
   // Java+Bedrock item pack. This is not the player's proprietary pack.
