@@ -781,7 +781,7 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
     };
     const key=value=>typeof value==='string'&&
       !Object.hasOwn(Object.prototype,value)&&
-      (/^[a-zA-Z][a-zA-Z0-9]*$/.test(value)||/^block:[1-9]\\d{0,2}$/.test(value));
+      (/^[a-zA-Z][a-zA-Z0-9]*$/.test(value)||/^block:[1-9]\d{0,2}$/.test(value));
     const id=value=>Number.isSafeInteger(value)&&value>0;
     const inventory=array(save.inventory,'inventory counters',2048,
       value=>Number.isSafeInteger(value)&&value>=0&&value<=65535);

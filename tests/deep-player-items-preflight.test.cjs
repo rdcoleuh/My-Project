@@ -22,6 +22,13 @@ test('player counters, stacks, hotbar and Java slots survive as detached immutab
  assert.notStrictEqual(items.itemStacks[0].custom,stack.custom);
  assert.equal(JSON.stringify(save),original);
 });
+test('player-owned placeable block stacks and hotbar keys survive preview',()=>{
+ const save={...sample(),itemStacks:[{id:5,key:'block:169',qty:4}],
+  survivalHotbar:[5,'block:169']};
+ const items=preview(save);
+ assert.equal(items.itemStacks[0].key,'block:169');
+ assert.equal(items.survivalHotbar[1],'block:169');
+});
 test('legacy saves without modern item fields remain previewable',()=>{
  const items=preview(base);
  for(const name of ['inventory','itemStacks','survivalHotbar','javaInventory'])
