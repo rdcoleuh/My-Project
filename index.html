@@ -1578,7 +1578,7 @@ body.in-nether #game-wrap{background:#290f19}
       }))return false;
     }
     const before=get(x,y,z);if(before===b)return false;
-    if([20,157,158].includes(before)&&before!==b){
+    if([20,156,157].includes(before)&&before!==b){
       const contents=furnaces.remove({dimension,x,y,z});
       if(gameMode==='survival'&&!remote)for(const item of contents)dropMinedResource(item.key,item.qty,x,y,z);
     }
@@ -1939,7 +1939,7 @@ body.in-nether #game-wrap{background:#290f19}
     if(paused||window.MineWorldMultiplayer?.isTyping?.())return false;
     if(!stack&&aimMob&&interactFarmAnimal(aimMob))return true;
     if(!stack&&aim?.b===169){cancelMining();useBed(aim);return;}
-    if(!stack&&[20,157,158].includes(aim?.b)){openFurnace(aim);return true;}
+    if(!stack&&[20,156,157].includes(aim?.b)){openFurnace(aim);return true;}
     if(!stack&&gameMode==='survival'&&aim?.b===168){
       // Interacting with a targeted crafting table must open its 3×3 grid,
       // even if the nearby-station memo was populated before placement.
@@ -1980,7 +1980,7 @@ body.in-nether #game-wrap{background:#290f19}
   function openFurnace(target){
     if(gameMode!=='survival'){toast('Furnaces operate in Survival mode');return;}
     if(window.MineWorldMultiplayer?.isShared()){toast('Furnace inventories currently work in private worlds');return;}
-    furnaceUI.open({dimension,x:target.x,y:target.y,z:target.z},target.b===157?'smoker':target.b===158?'blast':'furnace');
+    furnaceUI.open({dimension,x:target.x,y:target.y,z:target.z},target.b===157?'smoker':target.b===156?'blast':'furnace');
   }
   function markSave(){dirtySave=true}
   function save(){
@@ -2017,6 +2017,17 @@ body.in-nether #game-wrap{background:#290f19}
       }
       if(Array.isArray(s.netherEdits))for(const pair of s.netherEdits){if(!Array.isArray(pair)||pair.length!==2)continue;const [i,b]=pair;if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)netherEdits.set(i,b)}
       if(Array.isArray(s.endEdits))for(const pair of s.endEdits){if(!Array.isArray(pair)||pair.length!==2)continue;const [i,b]=pair;if(Number.isSafeInteger(i)&&i>=0&&i<W*D*H&&Number.isInteger(b)&&b>=0&&b<NAMES.length)endEdits.set(i,b)}
+      // Older builds incorrectly used cartography-table block 158 as a blast
+      // furnace. Only convert blocks backed by an actual saved blast-machine
+      // record; a genuine cartography table must never be rewritten.
+      const correctedBlastBlocks=furnaces.migrateLegacyBlastBlocks(
+        {overworld:overworldEdits,nether:netherEdits,end:endEdits},idx);
+      if(correctedBlastBlocks){
+        try{
+          const backup='mineworld-backup-before-blast-block-fix-'+slot;
+          if(!localStorage.getItem(backup))localStorage.setItem(backup,data);
+        }catch(_){/* Keep the original save intact if backup space is exhausted. */}
+      }
       dragonDefeated=!!s.dragonDefeated;eyesPlaced=clamp(Number(s.eyesPlaced)||0,0,12);netherPortalBuilt=!!s.netherPortalBuilt;netherPortalPosition=s.netherPortalPosition&&Number.isFinite(s.netherPortalPosition.x)&&Number.isFinite(s.netherPortalPosition.z)?{x:s.netherPortalPosition.x,z:s.netherPortalPosition.z}:null;
       if(s.villagerProgress&&typeof s.villagerProgress==='object')for(const [k,v] of Object.entries(s.villagerProgress).slice(0,500)){if(/^-?\d+,-?\d+:\d+$/.test(k)&&v&&typeof v==='object'){villagerProgress[k]={xp:clamp(Number(v.xp)||0,0,99999),uses:(v.uses&&typeof v.uses==='object'?v.uses:{}),restock:Number(v.restock)||0}}}
       if(s.overworldPosition&&Number.isFinite(s.overworldPosition.x))overworldPosition=s.overworldPosition;
@@ -2089,7 +2100,7 @@ body.in-nether #game-wrap{background:#290f19}
       }
       preservedFarmAnimals=Array.isArray(s.farmAnimals)?s.farmAnimals.slice(0,24):[];
       if(dimension==='overworld'&&Array.isArray(s.farmAnimals))restoreFarmAnimals(preservedFarmAnimals);
-      restoreStabledMounts();updatePortalUI();updateWeatherHUD();scheduleChunks(true);streamChunks(5);updateFlyButton();updateSeedLabel();dirtySave=false;
+      restoreStabledMounts();updatePortalUI();updateWeatherHUD();scheduleChunks(true);streamChunks(5);updateFlyButton();updateSeedLabel();dirtySave=correctedBlastBlocks>0;
       advancementLoading=true;
       try{
         if(gameMode==='survival')advancementEngine.reconcile({dimension,dragonDefeated,items:inventoryTotals(),tools,armor});
@@ -4889,7 +4900,7 @@ if(e.code==='KeyV'&&!e.repeat){if(aimVillager)openVillagerTrade(aimVillager);els
     getMode:()=>gameMode,
     // Testable interaction entry point: only opens an actual furnace block.
     openFurnaceAt:(x,y,z)=>{
-      if(!inside(x,y,z)||![20,157,158].includes(get(x,y,z))||gameMode!=='survival')return false;
+      if(!inside(x,y,z)||![20,156,157].includes(get(x,y,z))||gameMode!=='survival')return false;
       openFurnace({x,y,z,b:get(x,y,z)});return true;
     },
     getFurnaceState:(x,y,z)=>furnaces.get({dimension,x,y,z}),

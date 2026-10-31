@@ -84,8 +84,8 @@ test('world interactions, mobile smoke and recipe picker include specialized sta
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const ui=fs.readFileSync(path.join(root,'furnace-ui.js'),'utf8');
  const smoke=fs.readFileSync(path.join(root,'scripts/browser-smoke.cjs'),'utf8');
- assert.match(html,/\[20,157,158\]\.includes\(aim\?\.b\)/);
- assert.match(html,/\[20,157,158\]\.includes\(before\)/);
+ assert.match(html,/\[20,156,157\]\.includes\(aim\?\.b\)/);
+ assert.match(html,/\[20,156,157\]\.includes\(before\)/);
  assert.match(ui,/engine\.canSmelt\(m\.kind,key\)/);
  assert.match(ui,/mw-furnace-title/);
  assert.match(smoke,/station\.kind\+'-smelt-synthetic\.png'/);

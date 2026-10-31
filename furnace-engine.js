@@ -142,6 +142,24 @@ function create(){
   }
   return {changed,completed};
  }
+ // Upgrade only previously saved blast furnaces mistakenly placed as
+ // cartography-table block 158. Unopened block 158 placements are ambiguous:
+ // they may be real cartography tables, so never change them without a saved
+ // blast-furnace machine record. Maps retain all other edits and inventories.
+ function migrateLegacyBlastBlocks(editsByDimension,worldIndex){
+  if(!editsByDimension||typeof worldIndex!=='function')return 0;
+  let converted=0;
+  for(const m of machines.values()){
+   if(m.kind!=='blast'||m.y<0||m.y>=48)continue;
+   const edits=editsByDimension[m.dimension];
+   if(!edits||typeof edits.get!=='function'||typeof edits.set!=='function')continue;
+   const index=worldIndex(m.x,m.y,m.z);
+   if(Number.isSafeInteger(index)&&edits.get(index)===158){
+    edits.set(index,156);converted++;
+   }
+  }
+  return converted;
+ }
  function remove(p){const m=get(p);if(!m)return [];machines.delete(id(p));
   return ['input','fuel','output'].map(k=>m[k]).filter(Boolean).map(s=>({...s}));}
  // Never silently drop player-owned furnaces from a saved world.
@@ -184,7 +202,7 @@ function create(){
    machines.set(id(m),m);
   }
  }
- return {get,ensure,insert,take,tick,remove,snapshot,restore,canSmelt,clear:()=>machines.clear()};
+ return {get,ensure,insert,take,tick,remove,snapshot,restore,canSmelt,migrateLegacyBlastBlocks,clear:()=>machines.clear()};
 }
 window.MineWorldFurnace=Object.freeze({create,RECIPES,FUEL,COOK,KINDS,canSmelt});
 })();

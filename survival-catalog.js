@@ -27,7 +27,7 @@
  add('Basics','Pressure Plate',{[B(11)]:2},{pressurePlate:1});
  add('Basics','Craft a Furnace',{[B(61)]:8},{[B(20)]:1},table);
  add('Basics','Craft a Smoker',{[B(5)]:4,[B(20)]:1},{[B(157)]:1},table);
- add('Basics','Craft a Blast Furnace',{iron:5,[B(20)]:1,[B(3)]:3},{[B(158)]:1},table);
+ add('Basics','Craft a Blast Furnace',{iron:5,[B(20)]:1,[B(3)]:3},{[B(156)]:1},table);
  add('Basics','Craft a Composter',{[B(11)]:7},{[B(155)]:1},table);
  add('Basics','Bucket',{iron:3},{bucket:1},table);
  add('Basics','Shears',{iron:2},{shears:1},table);

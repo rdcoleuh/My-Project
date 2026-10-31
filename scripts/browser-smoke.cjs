@@ -1137,7 +1137,7 @@ async function go(browser,name,mobile){
   // Smoker and blast furnace: real desktop/mobile placement, UI, recipe and cooking.
   for(const station of [
     {block:157,kind:'smoker',ingredient:'chicken',product:'cookedChicken',wrong:'rawIron',offset:2},
-    {block:158,kind:'blast',ingredient:'rawIron',product:'iron',wrong:'chicken',offset:3}
+    {block:156,kind:'blast',ingredient:'rawIron',product:'iron',wrong:'chicken',offset:3}
   ]){
     const fixture=await page.evaluate(({fixture,station})=>{
       const {x,y,z}=fixture,bridge=window.MineWorldBridge,W=bridge.getSnapshot().worldSize,bx=x+station.offset;
@@ -1172,6 +1172,20 @@ async function go(browser,name,mobile){
     assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),fixture.id),
       true,name+': '+station.kind+' cleanup failed');
   }
+  // Cartography tables are not furnaces: placing block 158 must never
+  // open a blast-furnace UI or manufacture a furnace save record.
+  const cartography=await page.evaluate(({x,y,z})=>{
+    const bridge=window.MineWorldBridge,W=bridge.getSnapshot().worldSize,bx=x+4;
+    const id=(bx*W+z)*48+y;
+    return {id,placed:bridge.remoteEdit(id,158),
+      opened:bridge.openFurnaceAt(bx,y,z),
+      machine:bridge.getFurnaceState(bx,y,z)};
+  },bambooFixture);
+  assert.equal(cartography.placed,true,name+': cartography fixture placement failed');
+  assert.equal(cartography.opened,false,name+': cartography table opened as a furnace');
+  assert.equal(cartography.machine,null,name+': cartography table created furnace inventory');
+  assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),cartography.id),
+    true,name+': cartography cleanup failed');
   assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),bambooFixture.id),
     true,name+': bamboo furnace cleanup failed');
   assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),furnaceFixture.id),
