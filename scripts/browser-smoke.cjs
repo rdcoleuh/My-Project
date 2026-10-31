@@ -709,6 +709,57 @@ async function go(browser,name,mobile){
       window.dispatchEvent(new Event('mineworld-pack-hud-changed'));
     });
   }
+  // Independently drawn partial GUI fixture: a full sheet plus a single
+  // authored override. Missing slot images must expose the imported sheet,
+  // not MineWorld gray fallback tiles. No proprietary artwork is used.
+  await page.evaluate(()=>{
+    window.__mineworldPartialSheetOriginal=window.MineWorldLocalTextures;
+    const bar=document.createElement('canvas');bar.width=180;bar.height=20;
+    const ctx=bar.getContext('2d');
+    ctx.fillStyle='#454545';ctx.fillRect(0,0,180,20);
+    ctx.strokeStyle='#bbbbbb';
+    for(let i=0;i<9;i++)ctx.strokeRect(i*20+.5,.5,19,19);
+    const slot=document.createElement('canvas');slot.width=20;slot.height=20;
+    const slotCtx=slot.getContext('2d');slotCtx.fillStyle='#3480b6';
+    slotCtx.fillRect(0,0,20,20);slotCtx.strokeStyle='#e8faff';
+    slotCtx.strokeRect(.5,.5,19,19);
+    const background=bar.toDataURL('image/png'),override=slot.toDataURL('image/png');
+    window.MineWorldLocalTextures={
+      generation:987655,hasPack:true,
+      hudIcon:async(kind,fill)=>kind!=='hotbar'?null:
+        fill==='background'?background:fill==='slot0'?override:null
+    };
+    window.dispatchEvent(new Event('mineworld-pack-hud-changed'));
+  });
+  try{
+    await page.waitForFunction(()=>{
+      const bar=document.querySelector('#hotbar');
+      return bar?.classList.contains('mw-pack-bar-image')&&
+        bar.querySelectorAll('.mw-pack-slot').length===1;
+    },null,{timeout:15000});
+    assert.ok(await page.evaluate(()=>{
+      const bar=document.querySelector('#hotbar'),items=[...bar.querySelectorAll('.hot-item')];
+      const selected=items.find(item=>item.classList.contains('active'));
+      const frame=selected&&getComputedStyle(selected,'::after');
+      return items.length===9&&bar.classList.contains('mw-pack-hotbar')&&
+        !bar.classList.contains('mw-pack-hotbar-slots')&&
+        getComputedStyle(bar).backgroundImage.startsWith('url(')&&
+        items[0].classList.contains('mw-pack-slot')&&
+        getComputedStyle(items[0]).backgroundImage.startsWith('url(')&&
+        items.slice(1).every(item=>!item.classList.contains('mw-pack-slot')&&
+          getComputedStyle(item).backgroundColor==='rgba(0, 0, 0, 0)')&&
+        !!selected&&frame.content!=='none'&&frame.borderTopWidth==='2px';
+    }),name+': partial sheet/slot override lost imported art or selected outline');
+    await page.screenshot({path:path.join(screenshotDir,
+      mobile?'mobile-partial-sheet-slot-synthetic.png':'desktop-partial-sheet-slot-synthetic.png'),
+      animations:'disabled'});
+  }finally{
+    await page.evaluate(()=>{
+      window.MineWorldLocalTextures=window.__mineworldPartialSheetOriginal;
+      delete window.__mineworldPartialSheetOriginal;
+      window.dispatchEvent(new Event('mineworld-pack-hud-changed'));
+    });
+  }
   // A square GUI sprite named hotbar.png must not erase procedural slot tiles.
   await page.evaluate(async bytes=>{
     const file=new File([new Uint8Array(bytes)],'invalid-sheet.zip',{type:'application/zip'});

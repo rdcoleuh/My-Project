@@ -2333,8 +2333,11 @@ body.in-nether #game-wrap{background:#290f19}
     const root=$('hotbar');
     if(!root)return;
     const allSlots=slots.length===9&&slots.every(Boolean);
-    // Do not overlay a full-bar sheet with individually imported slot sprites.
-    const useBackground=!!background&&!allSlots&&!genericSlot&&!slots.some(Boolean);
+    // A partial pack can supply a full nine-cell sheet plus only a few
+    // authored slot overrides. Keep the sheet visible behind missing cells;
+    // explicit slot sprites paint over their own positions. Generic/all-nine
+    // slot art remains authoritative to avoid doubled borders.
+    const useBackground=!!background&&!allSlots&&!genericSlot;
     root.classList.toggle('mw-pack-hotbar',!!background||!!selected||!!genericSlot||slots.some(Boolean));
     root.classList.toggle('mw-pack-hotbar-slots',allSlots);
     root.classList.toggle('mw-pack-bar-image',useBackground);
