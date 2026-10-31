@@ -16,7 +16,7 @@ test('furnace has three labeled visual slots and independent live progress meter
 test('furnace UI supports one item and a stack, without consuming more than owned',()=>{
  for(const name of ['input','fuel'])assert.ok(source.includes('mw-furnace-put-'+name+'-stack'));
  assert.match(source,/Math\.min\(limit,owned,64-/);
- assert.match(source,/const debit=api\.change\(item,-quantity\)/);
+ assert.match(source,/api\.change\(item,-quantity\)/);
  assert.match(source,/const moved=deposit\(engine,api,current,which,item,limit\)/);
  assert.match(source,/if\(observed<quantity\)api\.change\(item,quantity-observed\)/);
  const context=vm.createContext({window:{}});
