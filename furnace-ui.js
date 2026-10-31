@@ -21,13 +21,23 @@ function deposit(engine,api,position,which,item,limit){
   if(Number.isInteger(removed)&&removed>0)api.change(item,removed);
   return 0;
  }
- let moved=0;
- try{moved=engine.insert(position,which,item,quantity);}
- catch(error){api.change(item,quantity);throw error;}
- if(!Number.isInteger(moved)||moved<0||moved>quantity)
-  throw new Error('Invalid furnace deposit result');
- if(moved<quantity)api.change(item,quantity-moved);
- return moved;
+ // Reconcile the actual slot delta, not the adapter's reported return.
+ // A misreported insert previously refunded items that were already inside
+ // the furnace (duplication), or failed to refund items that never arrived.
+ // A partially mutating insert that throws must refund only what was NOT
+ // transferred; refunding the whole debit would duplicate the partial stack.
+ let insertError=null;
+ try{engine.insert(position,which,item,quantity);}
+ catch(error){insertError=error;}
+ const after=engine.get(position)?.[which];
+ const beforeQty=existing?.qty||0;
+ const observed=after?.key===item?after.qty-beforeQty:
+  after?NaN:-beforeQty;
+ if(!Number.isInteger(observed)||observed<0||observed>quantity)
+  throw new Error('Invalid furnace deposit state');
+ if(observed<quantity)api.change(item,quantity-observed);
+ if(insertError)throw insertError;
+ return observed;
 }
 function withdraw(engine,api,position,which,limit=64){
  if(!position||!['input','fuel','output'].includes(which)||!Number.isSafeInteger(limit)||limit<1)return {moved:0,full:false};
