@@ -129,6 +129,16 @@
     witchHut:'Witch Hut',jungleTemple:'Jungle Temple',camp:'Bamboo Camp',mushroomHut:'Mushroom House'
   };
  function generateChunk({cx,cz,H=48,SEA=14,minY=0,edits=null}){
+   // Validate the world-height profile before allocating chunk memory. A
+   // damaged save or experimental profile must never request an unbounded
+   // Uint8Array on a phone. Both legacy 48-layer and staged 384-layer
+   // Overworld chunks remain supported without rewriting either save.
+   if(![cx,cz,H,SEA,minY].every(Number.isSafeInteger)||
+      cx<0||cz<0||cx>=Math.ceil(WORLD/CHUNK)||cz>=Math.ceil(WORLD/CHUNK)||
+      H<1||H>384||minY< -64||minY+H-1>319)
+     throw new RangeError('Invalid chunk generation bounds');
+   if(edits!==null&&Object.prototype.toString.call(edits)!=='[object Map]')
+     throw new TypeError('Expected a Map of saved chunk edits');
    const data=new Uint8Array(CHUNK*CHUNK*H), x0=cx*CHUNK,z0=cz*CHUNK;
    const within=(x,y,z)=>x>=x0&&x<x0+CHUNK&&z>=z0&&z<z0+CHUNK&&y>=minY&&y<minY+H;
    const offset=(x,y,z)=>((x-x0)*CHUNK+(z-z0))*H+(y-minY);
@@ -273,6 +283,12 @@
      // Each loaded chunk indexes its own edits directly, rather than scanning all edits.
      const baseX=cx*CHUNK,baseZ=cz*CHUNK;
      for(const [index,block] of edits){
+       // Typed arrays silently wrap invalid IDs (256 becomes air, 511
+       // becomes 255). Reject corrupted save edits rather than turning a
+       // placed block into a different block during chunk regeneration.
+       if(!Number.isSafeInteger(index)||index<0||index>=WORLD*WORLD*H||
+          !Number.isSafeInteger(block)||block<0||block>255)
+         throw new RangeError('Invalid saved chunk edit');
        const x=Math.floor(index/(WORLD*H)),z=Math.floor(index/H)%WORLD,y=index%H+minY;
        if(x>=baseX&&x<baseX+CHUNK&&z>=baseZ&&z<baseZ+CHUNK&&y>=minY&&y<minY+H)put(x,y,z,block);
      }
