@@ -77,6 +77,24 @@ function withdraw(engine,api,position,which,limit=64){
  if(takeError)throw takeError;
  return {moved,full:false};
 }
+// A transfer adapter can throw *after* moving items. The underlying
+// deposit/withdraw routines reconcile the amounts before rethrowing, but the
+// UI must still persist that partial transfer. Otherwise a reload may restore
+// old furnace contents while retaining the newly credited player inventory.
+function commitTransfer(api,work,changed,refresh){
+ let result;
+ try{result=work();}
+ catch(_error){
+  // Conservatively persist even if the adapter rolled everything back:
+  // it is safer to save an unchanged state than lose a partial transfer.
+  api.onChange();
+  refresh();
+  api.toast?.('Furnace transfer interrupted; check inventory');
+  return null;
+ }
+ if(changed(result)){api.onChange();refresh();}
+ return result;
+}
 // Avoid rebuilding native <select> option nodes every 250 ms: this used to
 // close mobile fuel/input pickers while the player was making a choice.
 function syncSelect(select,keys,totals,label,doc){
@@ -170,8 +188,10 @@ function create(api){
    for(const [suffix,limit] of [['',1],['-stack',64]]){
     el('mw-furnace-put-'+which+suffix).addEventListener('click',()=>{
      if(!current)return;const item=el('mw-furnace-'+which).value;
-     const moved=deposit(engine,api,current,which,item,limit);
-     if(moved){api.onChange();render();}
+     commitTransfer(api,()=>{
+      const moved=deposit(engine,api,current,which,item,limit);
+      return moved;
+     },moved=>moved>0,render);
     });
    }
    el('mw-furnace-'+which).addEventListener('change',render);
@@ -186,9 +206,9 @@ function create(api){
  }
  function take(which,limit=64){
   if(!current)return;
-  const result=withdraw(engine,api,current,which,limit);
-  if(result.full){api.toast('Inventory full');return;}
-  if(result.moved){api.onChange();render();}
+  const result=commitTransfer(api,()=>withdraw(engine,api,current,which,limit),
+   value=>!!value?.moved,render);
+  if(result?.full){api.toast('Inventory full');return;}
  }
  function render(){
   if(!current||!panel)return;
@@ -234,5 +254,5 @@ function create(api){
  function tick(dt){if(!current)return;drawClock+=dt;if(drawClock>=.25){drawClock=0;render();}}
  return {open,close,tick,get isOpen(){return !!current;}};
 }
-window.MineWorldFurnaceUI=Object.freeze({create,syncSelect,resolveSlotIcon,transfers:Object.freeze({deposit,withdraw})});
+window.MineWorldFurnaceUI=Object.freeze({create,syncSelect,resolveSlotIcon,transfers:Object.freeze({deposit,withdraw,commitTransfer})});
 })();
