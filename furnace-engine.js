@@ -87,9 +87,15 @@ function create(){
   s.qty-=moved;if(!s.qty)m[which]=null;if(which==='input'&&!m.input)m.progress=0;return out;
  }
  function tick(seconds){
+  // Reject malformed frame deltas before touching any furnace. Infinity used
+  // to be clamped to 60 seconds, instantly burning fuel and smelting six items.
+  // A numeric string must not be silently interpreted as elapsed game time.
+  const elapsed=typeof seconds==='number'&&Number.isFinite(seconds)&&seconds>0?
+   Math.min(seconds,60):0;
+  if(!elapsed)return {changed:false,completed:0};
   let changed=false,completed=0;
   for(const m of machines.values()){
-   let remaining=Math.max(0,Math.min(60,Number(seconds)||0));
+   let remaining=elapsed;
    while(remaining>1e-7){
     const product=m.input&&canSmelt(m.kind,m.input.key)&&RECIPES[m.input.key];
     if(!product||m.output&&(m.output.key!==product||m.output.qty>=64)){
