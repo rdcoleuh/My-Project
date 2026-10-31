@@ -13,12 +13,16 @@ function deposit(engine,api,position,which,item,limit){
  if(!Number.isInteger(owned)||owned<1)return 0;
  const quantity=Math.min(limit,owned,64-(existing?.qty||0));
  if(quantity<1)return 0;
- const debit=api.change(item,-quantity);
- // An inventory adapter can misreport its delta while still changing stock.
- // Verify the observed balance before adding anything to the furnace.
+ // Some inventory adapters throw *after* mutating their inventory.
+ // Reconcile the observed debit before propagating the error, otherwise
+ // an interrupted deposit silently destroys the reserved player items.
+ let debit,debitError=null;
+ try{debit=api.change(item,-quantity);}catch(error){debitError=error;}
  const afterDebit=api.count(item),removed=owned-afterDebit;
- if(debit!==-quantity||removed!==quantity){
-  if(Number.isInteger(removed)&&removed>0)api.change(item,removed);
+ if(debitError||debit!==-quantity||removed!==quantity){
+  // Undo both unexpected debits and unexpected credits, if measurable.
+  if(Number.isInteger(removed)&&removed!==0)api.change(item,removed);
+  if(debitError)throw debitError;
   return 0;
  }
  // Reconcile the actual slot delta, not the adapter's reported return.
@@ -47,12 +51,14 @@ function withdraw(engine,api,position,which,limit=64){
  const room=Number.isInteger(owned)?Math.max(0,65535-owned):0;
  if(room<1)return {moved:0,full:true};
  const quantity=Math.min(limit,room,existing.qty);
- const credit=api.change(existing.key,quantity);
+ // A credit may throw after granting items. Undo the *observed* credit
+ // before rethrowing, so the unchanged furnace output cannot be duplicated.
+ let credit,creditError=null;
+ try{credit=api.change(existing.key,quantity);}catch(error){creditError=error;}
  const afterCredit=api.count(existing.key),added=afterCredit-owned;
- // Reject and roll back a misreported credit rather than granting free items
- // or taking more than the player requested from the furnace.
- if(!Number.isInteger(credit)||credit<=0||credit>quantity||added!==credit){
-  if(Number.isInteger(added)&&added>0)api.change(existing.key,-added);
+ if(creditError||!Number.isInteger(credit)||credit<=0||credit>quantity||added!==credit){
+  if(Number.isInteger(added)&&added!==0)api.change(existing.key,-added);
+  if(creditError)throw creditError;
   return {moved:0,full:false};
  }
  // Reconcile the actual furnace stack delta. A misreporting take adapter
