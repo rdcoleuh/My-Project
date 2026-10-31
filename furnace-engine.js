@@ -76,6 +76,11 @@ function create(){
      if(m.progress){m.progress=0;changed=true;}
      if(m.burn){m.burn=Math.max(0,m.burn-remaining);changed=true;}break;
     }
+    // Floating-point fuel remnants below the simulation's 0.1 microsecond
+    // step threshold must be exhausted, not treated as perpetually burning.
+    // Otherwise a furnace can become stuck forever with burn > 0 but too
+    // little fuel to advance even one tick.
+    if(m.burn>0&&m.burn<1e-7){m.burn=0;changed=true;}
     if(m.burn<=0){
      if(!m.fuel||!FUEL[m.fuel.key]){
       // A stopped cook cools off at twice real time. Without this,
@@ -88,8 +93,20 @@ function create(){
      m.burn=m.burnTotal=FUEL[m.fuel.key]*(m.kind==='furnace'?1:0.5);
      if(!--m.fuel.qty)m.fuel=null;changed=true;
     }
-    const cook=KINDS[m.kind].cook;const step=Math.min(remaining,m.burn,cook-m.progress);if(step<1e-7)break;
-    m.burn=Math.max(0,m.burn-step);m.progress+=step;remaining-=step;changed=true;
+    const cook=KINDS[m.kind].cook;
+    const gap=cook-m.progress;
+    // A saved or accumulated cook can be within floating-point epsilon of
+    // completion. Finish that item rather than looping forever on a tiny step.
+    if(gap>=0&&gap<1e-7){
+     m.progress=cook;changed=true;
+    }else{
+     const step=Math.min(remaining,m.burn,gap);
+     if(step<1e-7){
+      if(m.burn<1e-7){m.burn=0;changed=true;continue;}
+      break;
+     }
+     m.burn=Math.max(0,m.burn-step);m.progress+=step;remaining-=step;changed=true;
+    }
     if(m.progress>=cook-1e-7){
      if(!--m.input.qty)m.input=null;
      if(m.output)m.output.qty++;else m.output={key:product,qty:1};
