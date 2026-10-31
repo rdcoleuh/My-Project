@@ -384,7 +384,13 @@ function createSectionStore(options={}){
   function materializeClaim(job){
     if(!currentClaim(job))return null;
     const section=sections[job.index];
-    return Object.freeze({index:job.index,revision:job.revision,
+    // Bind the detached mesh data to the originating store AND lease.
+    // Revisions and section indices are not globally unique: two chunks can
+    // both have revision zero, and a retried claim can share its revision.
+    // Without these tokens, a worker result from another chunk or an expired
+    // lease could be installed as the current chunk's geometry.
+    return Object.freeze({storeId,claimId:job.claimId,
+      index:job.index,revision:job.revision,
       minY:section.minY,maxY:section.maxY,data:materialize(job.index)});
   }
   // Vertical-section meshes need neighboring Y planes to hide internal
@@ -441,7 +447,8 @@ function createSectionStore(options={}){
   // The renderer validates every contributing chunk immediately before
   // installing the mesh. Store identity prevents same-revision replacements.
   function canInstallClaimWithNeighbors(job,snapshot,neighbors={}){
-    if(!currentClaim(job)||!snapshot||snapshot.index!==job.index||
+    if(!currentClaim(job)||!snapshot||snapshot.storeId!==storeId||
+       snapshot.claimId!==job.claimId||snapshot.index!==job.index||
        snapshot.revision!==job.revision||!neighbors||typeof neighbors!=='object')
       return false;
     for(const side of neighborSides){
