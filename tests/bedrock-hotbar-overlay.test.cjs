@@ -4,7 +4,7 @@ test('Bedrock hotbar variants include start end and selected sprite aliases',()=
 
 test('selection-only and partial HUD packs preserve fallback slot backgrounds',()=>{
  const s=read('index.html');
- assert.ok(s.includes('const useBackground=!!background&&!allSlots&&!genericSlot&&!slots.some(Boolean);'));
+ assert.ok(s.includes('const useBackground=!!background&&!allSlots&&!genericSlot;'));
  assert.ok(s.includes("root.classList.toggle('mw-pack-bar-image',useBackground)"));
  assert.ok(s.includes('#hotbar.mw-pack-bar-image,#hotbar.mw-pack-hotbar-slots{background-color:transparent!important'));
  assert.ok(!s.includes('#hotbar.mw-pack-hotbar .hot-item{background-color:transparent!important'));
