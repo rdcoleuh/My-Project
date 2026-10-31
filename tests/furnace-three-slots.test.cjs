@@ -18,7 +18,7 @@ test('furnace UI supports one item and a stack, without consuming more than owne
  assert.match(source,/Math\.min\(limit,owned,64-/);
  assert.match(source,/const debit=api\.change\(item,-quantity\)/);
  assert.match(source,/const moved=deposit\(engine,api,current,which,item,limit\)/);
- assert.match(source,/if\(moved<quantity\)api\.change\(item,quantity-moved\)/);
+ assert.match(source,/if\(observed<quantity\)api\.change\(item,quantity-observed\)/);
  const context=vm.createContext({window:{}});
  vm.runInContext(fs.readFileSync(path.join(root,'furnace-engine.js'),'utf8'),context);
  const f=context.window.MineWorldFurnace.create();

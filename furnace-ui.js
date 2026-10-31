@@ -32,7 +32,7 @@ function deposit(engine,api,position,which,item,limit){
  const after=engine.get(position)?.[which];
  const beforeQty=existing?.qty||0;
  const observed=after?.key===item?after.qty-beforeQty:
-  after?NaN:-beforeQty;
+  after?NaN:beforeQty?-beforeQty:0;
  if(!Number.isInteger(observed)||observed<0||observed>quantity)
   throw new Error('Invalid furnace deposit state');
  if(observed<quantity)api.change(item,quantity-observed);
