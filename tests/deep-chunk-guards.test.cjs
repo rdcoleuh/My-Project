@@ -45,6 +45,8 @@ test('valid placed and mined edits retain exact values in legacy and deep profil
 test('invalid edits containers cannot silently bypass save replay',()=>{
  assert.throws(()=>generator.generateChunk({cx:312,cz:312,edits:[]}),
   /Expected a Map of saved chunk edits/);
- assert.match(fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8'),
-  /mineworld-6-132-deep-codec-coordinate-guards/);
+ const sw=fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8');
+ assert.match(sw,/const VERSION='mineworld-6-\\d+-[a-z0-9-]+';/,
+   'service worker must have a versioned cache, not a frozen release identifier');
+ assert.ok(sw.includes("'./world-depth.js'"),'deep-world codec remains precached');
 });
