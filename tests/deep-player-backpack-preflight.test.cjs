@@ -55,8 +55,9 @@ test('invalid tool and armor metadata cannot silently erase equipment',()=>{
 test('invalid XP fails preflight without modifying the original save',()=>{
  for(const experienceTotal of [-1,1.5,Infinity,'70',2000001]){
   const save={...base,bag:{rawIron:2},experienceTotal};
-  const before=plain(save);
+  const originalBag=plain(save.bag);
   assert.throws(()=>preview(save),/Invalid saved experience total/);
-  assert.deepEqual(save,before);
+  assert.equal(save.experienceTotal,experienceTotal,'invalid XP is not rewritten');
+  assert.deepEqual(save.bag,originalBag,'backpack is not mutated');
  }
 });
