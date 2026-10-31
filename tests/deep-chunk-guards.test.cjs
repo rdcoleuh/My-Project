@@ -46,7 +46,7 @@ test('invalid edits containers cannot silently bypass save replay',()=>{
  assert.throws(()=>generator.generateChunk({cx:312,cz:312,edits:[]}),
   /Expected a Map of saved chunk edits/);
  const sw=fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8');
- assert.match(sw,/const VERSION='mineworld-6-\\d+-[a-z0-9-]+';/,
+ assert.match(sw,/const VERSION='mineworld-6-\d+-[a-z0-9-]+';/,
    'service worker must have a versioned cache, not a frozen release identifier');
  assert.ok(sw.includes("'./world-depth.js'"),'deep-world codec remains precached');
 });
