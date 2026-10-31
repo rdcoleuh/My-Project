@@ -1982,7 +1982,6 @@ body.in-nether #game-wrap{background:#290f19}
     if(window.MineWorldMultiplayer?.isShared()){toast('Furnace inventories currently work in private worlds');return;}
     furnaceUI.open({dimension,x:target.x,y:target.y,z:target.z},target.b===157?'smoker':target.b===158?'blast':'furnace');
   }
-  let furnaceSaveClock=0;
   function markSave(){dirtySave=true}
   function save(){
     if(window.MineWorldMultiplayer?.isShared())return false;
@@ -4425,7 +4424,9 @@ body.in-nether #game-wrap{background:#290f19}
       // Keep physics capped separately; furnace-engine bounds its own work.
       const furnaceDt=clamp(frameMs/1000,0,60);
       const r=furnaces.tick(furnaceDt);
-      if(r.changed){furnaceSaveClock+=furnaceDt;if(furnaceSaveClock>=1){markSave();furnaceSaveClock=0;}}
+      // A sub-second change still needs an autosave. Marking dirty is cheap;
+      // the existing saveTimer controls localStorage writes separately.
+      if(r.changed)markSave();
       furnaceUI.tick(furnaceDt);
     }
     if(paused)return;
