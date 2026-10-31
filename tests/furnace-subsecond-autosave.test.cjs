@@ -32,6 +32,8 @@ test('suspended frames remain capped at 60 seconds and still mark dirty',()=>{
 });
 test('dirty flag is decoupled from periodic localStorage writes',()=>{
  assert.doesNotMatch(html,/furnaceSaveClock/);
- assert.match(html,/saveTimer\+=dt;if\(saveTimer>8\)\{saveTimer=0;if\(dirtySave\)save\(\)\}/);
+ assert.match(html,/function autosaveTick\(elapsed\)/);
+ assert.match(html,/saveTimer\+=elapsed/);
+ assert.match(html,/autosaveTick\(dt\)/);
  assert.match(html,/function markSave\(\)\{dirtySave=true\}/);
 });
