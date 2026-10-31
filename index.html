@@ -4429,6 +4429,13 @@ body.in-nether #game-wrap{background:#290f19}
     else{gl.disableVertexAttribArray(aUV);gl.vertexAttrib2f(aUV,0,0)}
     gl.uniform1f(uTextured,textured?1:0);
   }
+  // Save during furnace/backpack overlays as well as active gameplay.
+  // The world render loop returns early while these overlays are open, but
+  // smelting continues; an interrupted tab must not lose that progress.
+  function autosaveTick(elapsed){
+    saveTimer+=elapsed;
+    if(saveTimer>8){saveTimer=0;if(dirtySave)save()}
+  }
   function render(t){requestAnimationFrame(render);const frameMs=t-lastTime;let dt=clamp(frameMs/1000,0,.05);lastTime=t;
     if(gameMode==='survival'&&(!paused||furnaceUI.isOpen||!$('gear-panel').classList.contains('hidden'))){
       // Smelting uses elapsed real time, not physics-clamped frame time.
@@ -4443,7 +4450,14 @@ body.in-nether #game-wrap{background:#290f19}
       if(r.changed)markSave();
       furnaceUI.tick(furnaceDt);
     }
-    if(paused)return;
+    if(paused){
+      // Furnace and backpack overlays pause movement, not smelting. Advance
+      // their autosave clock using real elapsed time (bounded like cooking).
+      // The Escape menu stays fully paused and does not trigger writes.
+      if(gameMode==='survival'&&(furnaceUI.isOpen||!$('gear-panel').classList.contains('hidden')))
+        autosaveTick(clamp(frameMs/1000,0,60));
+      return;
+    }
     // Java-style cooldown feedback beside the crosshair. Uses the same
     // weapon speed and timestamp as damage; no changes to save data.
     const meter=document.getElementById('mw-attack-meter');
@@ -4541,7 +4555,7 @@ body.in-nether #game-wrap{background:#290f19}
     drawHighlight(aimMob?null:aim);
     $('target-name').textContent=aimVillager?'💚 '+aimVillager.job.name+' · Tap Mine / V to Trade':aimMob?'⚔ '+SPECIES[aimMob.kind].name+' · ♥ '+Math.ceil(aimMob.hp):aimPlayer?'⚔ '+aimPlayer.name+' · PvP enabled':aim?'⛏ '+NAMES[aim.b]+'  ·  '+aim.x+', '+aim.y+', '+aim.z:'Aim at a block or creature';
     if((frameCount++%18)===0){updateDebugView();if(frameCount%90===1)tickAdvancements();if(gameMode==='survival'){const changed=syncSurvivalHotbar(),signature=stackSignature();if(changed||signature!==hotbarSignature)updateHotbar();}$('coord-readout').textContent=(dimension==='end'?'✦ '+window.MineWorldEnd.biomeAt(player.x,player.z).name:dimension==='nether'?'🔥 '+window.MineWorldNether.biomeAt(player.x,player.z).name:'🌿 '+window.MineWorldBiomes.biomeAt(player.x,player.z).name)+' · X '+player.x.toFixed(0)+' Y '+player.y.toFixed(0)+' Z '+player.z.toFixed(0)+(player.fly?' · FLY':'');}
-    saveTimer+=dt;if(saveTimer>8){saveTimer=0;if(dirtySave)save()}
+    autosaveTick(dt);
   }
   // Biome travel stays deterministic and works in the same peer-to-peer world.
   let atlasWasPlaying=false;

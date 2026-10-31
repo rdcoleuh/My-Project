@@ -1050,6 +1050,21 @@ async function go(browser,name,mobile){
   await page.waitForFunction(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z)?.output?.qty===2,
     furnaceFixture,{timeout:30000});
+  // Regression: while the furnace overlay pauses movement, the engine keeps
+  // smelting. Verify an actual saved world contains its output BEFORE closing
+  // the overlay, so a terminated browser tab cannot erase completed ingots.
+  await page.waitForFunction(({x,y,z})=>{
+    return Object.keys(localStorage).some(key=>{
+      let saved;
+      try{saved=JSON.parse(localStorage.getItem(key));}catch{return false;}
+      return saved?.gameMode==='survival'&&Array.isArray(saved.furnaces)&&
+        saved.furnaces.some(m=>m.dimension==='overworld'&&m.x===x&&m.y===y&&m.z===z&&
+          m.output?.key==='iron'&&m.output.qty>=1);
+    });
+  },furnaceFixture,{timeout:12000});
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-autosaved-open.png':'desktop-furnace-autosaved-open.png'),
+    animations:'disabled'});
   assert.equal(await page.locator('#mw-furnace-output-one').isDisabled(),false,
     name+': single-output control must be enabled when ingots are ready');
   await page.locator('#mw-furnace-output-one').click({force:true});
