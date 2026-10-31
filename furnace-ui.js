@@ -129,6 +129,16 @@ async function resolveSlotIcon(key,pack,doc){
  }
  return null;
 }
+// Opening or replacing a station changes persisted machine state even when
+// the player never transfers an item. Save those transitions immediately so
+// closing the world cannot restore an outdated furnace kind or fuel timer.
+function ensureStation(engine,api,position,kind='furnace'){
+ const previous=engine.get(position),previousKind=previous?.kind;
+ const machine=engine.ensure(position,kind);
+ if(!machine)return null;
+ if(!previous||previousKind!==machine.kind)api.onChange();
+ return machine;
+}
 function create(api){
  const engine=api.engine;let current=null,panel=null,drawClock=0;
  const iconCache=new Map();let iconPack=null,iconGeneration=null,iconEpoch=0;
@@ -244,8 +254,11 @@ function create(api){
   el('mw-furnace-output').textContent='Collect output: '+fmt(m.output);
   el('mw-furnace-output').disabled=!m.output;
  }
- function open(position,kind='furnace'){ensurePanel();current={...position};engine.ensure(current,kind);
-  const station=engine.get(current)?.kind||'furnace';
+ function open(position,kind='furnace'){
+  const machine=ensureStation(engine,api,position,kind);
+  if(!machine)return false;
+  ensurePanel();current={...position};
+  const station=machine.kind;
   el('mw-furnace-title').textContent=station==='smoker'?'🍖 Smoker':station==='blast'?'⚒ Blast Furnace':'🔥 Furnace';
   el('mw-furnace-help').textContent='Add an ingredient and fuel. '+(station==='smoker'?'Food only':station==='blast'?'Ores and metals only':'All supported recipes')+'; one item takes '+window.MineWorldFurnace.KINDS[station].cook+' seconds.';
 
@@ -254,5 +267,5 @@ function create(api){
  function tick(dt){if(!current)return;drawClock+=dt;if(drawClock>=.25){drawClock=0;render();}}
  return {open,close,tick,get isOpen(){return !!current;}};
 }
-window.MineWorldFurnaceUI=Object.freeze({create,syncSelect,resolveSlotIcon,transfers:Object.freeze({deposit,withdraw,commitTransfer})});
+window.MineWorldFurnaceUI=Object.freeze({create,ensureStation,syncSelect,resolveSlotIcon,transfers:Object.freeze({deposit,withdraw,commitTransfer})});
 })();
