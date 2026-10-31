@@ -55,12 +55,20 @@ function withdraw(engine,api,position,which,limit=64){
   if(Number.isInteger(added)&&added>0)api.change(existing.key,-added);
   return {moved:0,full:false};
  }
- let out;
- try{out=engine.take(position,which,credit);}
- catch(error){api.change(existing.key,-credit);throw error;}
- const moved=out?.key===existing.key&&Number.isInteger(out.qty)?
-  Math.max(0,Math.min(credit,out.qty)):0;
+ // Reconcile the actual furnace stack delta. A misreporting take adapter
+ // must not duplicate smelted items, and a partially mutating adapter that
+ // throws must refund only the amount still inside the furnace.
+ const beforeQty=existing.qty;
+ let takeError=null;
+ try{engine.take(position,which,credit);}
+ catch(error){takeError=error;}
+ const after=engine.get(position)?.[which];
+ const remaining=after?.key===existing.key?after.qty:after?NaN:0;
+ const moved=beforeQty-remaining;
+ if(!Number.isInteger(moved)||moved<0||moved>credit)
+  throw new Error('Invalid furnace withdrawal state');
  if(moved<credit)api.change(existing.key,moved-credit);
+ if(takeError)throw takeError;
  return {moved,full:false};
 }
 // Avoid rebuilding native <select> option nodes every 250 ms: this used to
