@@ -681,7 +681,7 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
   // Copy JSON-compatible values without invoking getters, bound the work for
   // mobile browsers, and reject cycles/non-finite values rather than losing
   // player-owned state or returning a misleading preview.
-  const copyOwnedRecord=(record,label,{maxArray=128,maxNodes=512}={})=>{
+  const copyOwnedRecord=(record,label,{maxArray=128,maxNodes=512,maxKeys=128}={})=>{
     const seen=new WeakSet();let budget=maxNodes;
     const invalid=()=>{throw new RangeError('Invalid saved '+label+' metadata');};
     const copy=(value,depth)=>{
@@ -706,7 +706,7 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
         result=Object.freeze(items);
       }else{
         const keys=Object.keys(value);
-        if(keys.length>128)invalid();
+        if(keys.length>maxKeys)invalid();
         result=Object.create(null);
         for(const key of keys){
           if(key==='__proto__'||key==='constructor'||key==='prototype')invalid();
@@ -826,6 +826,42 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
        /^[a-z0-9][a-z0-9_.-]{0,63}:[a-z0-9_][a-z0-9_.-]*(?:\/[a-z0-9_][a-z0-9_.-]*)*$/.test(value)&&
        !value.startsWith('block:'));
     const id=value=>Number.isSafeInteger(value)&&value>0;
+    // Backpack counters, equipped tools, armor and XP are player-owned save
+    // state too. The legacy loader may normalize malformed fields silently;
+    // a height migration must preserve or reject them before any live switch.
+    // Large but valid recipe catalogs can exceed the generic 128-key metadata
+    // limit, so only the numeric backpack receives a larger bounded allowance.
+    const bag=(()=>{
+      if(save.bag==null)return null;
+      const copy=copyOwnedRecord(save.bag,'backpack',{maxNodes:2048,maxKeys:512});
+      if(!copy||Array.isArray(copy))invalid('backpack');
+      for(const [item,count] of Object.entries(copy))
+        if(!key(item)||!Number.isSafeInteger(count)||count<0||
+           count>(item==='experience'?2000000:65535))invalid('backpack');
+      return copy;
+    })();
+    const tools=(()=>{
+      if(save.tools==null)return null;
+      const copy=copyOwnedRecord(save.tools,'tools',{maxNodes:64});
+      if(!copy||Array.isArray(copy))invalid('tools');
+      for(const [tool,tier] of Object.entries(copy))
+        if(!['pickaxe','sword','hoe','axe','shovel'].includes(tool)||
+           typeof tier!=='string'||!/^[a-z][a-z0-9]{0,31}$/.test(tier))
+          invalid('tools');
+      return copy;
+    })();
+    const armor=(()=>{
+      if(save.armor==null)return null;
+      const copy=copyOwnedRecord(save.armor,'armor',{maxNodes:64});
+      if(!copy||Array.isArray(copy))invalid('armor');
+      for(const [part,item] of Object.entries(copy))
+        if(!['head','chest','legs','feet'].includes(part)||
+           !(item===''||key(item)))invalid('armor');
+      return copy;
+    })();
+    const experienceTotal=save.experienceTotal==null?null:
+      Number.isSafeInteger(save.experienceTotal)&&save.experienceTotal>=0&&
+      save.experienceTotal<=2000000?save.experienceTotal:invalid('experience total');
     const inventory=array(save.inventory,'inventory counters',2048,
       value=>Number.isSafeInteger(value)&&value>=0&&value<=65535);
     const seen=new Set();
@@ -875,7 +911,7 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
       }
       javaInventory=copyOwnedRecord(raw,'Java inventory',{maxArray:8192,maxNodes:12000});
     }
-    return Object.freeze({inventory,itemStacks,survivalHotbar:hotbar,javaInventory});
+    return Object.freeze({inventory,itemStacks,survivalHotbar:hotbar,javaInventory,bag,tools,armor,experienceTotal});
   })();
   const furnaces=previewFurnaces();
   const edits=convert(save.edits,target,'overworld');
