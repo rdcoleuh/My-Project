@@ -172,7 +172,12 @@ function create(){
    m.burn=Math.min(remaining,total);
    // A completed cook frame cannot be resumed at exactly COOK: tick would
    // otherwise take a zero-length step forever, leaving the furnace stuck.
-   m.progress=Math.max(0,Math.min(KINDS[m.kind].cook,Number(r.progress)||0));
+   // Saved progress is a duration, never a string, boolean or array.
+   // Number(...) coerced malformed values (e.g. "9" or [9]) into almost
+   // finished smelts, giving unearned cooking time after a reload.
+   const savedProgress=typeof r.progress==='number'&&Number.isFinite(r.progress)?
+    r.progress:0;
+   m.progress=Math.max(0,Math.min(KINDS[m.kind].cook,savedProgress));
    if(m.progress>=KINDS[m.kind].cook||!m.input||!canSmelt(m.kind,m.input.key))m.progress=0;
    // A saved progress timer without any ingredient would otherwise grant
    // a newly inserted item free cooking time after a world reload.
