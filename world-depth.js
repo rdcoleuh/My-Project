@@ -11,15 +11,25 @@ function create({width=10000,depth=10000,minY=0,maxY=47,chunkSize=16}={}){
   if(!params.every(Number.isSafeInteger)||width<1||depth<1||chunkSize<1||maxY<minY)throw new RangeError('Invalid world dimensions');
   const height=maxY-minY+1,volume=width*depth*height;
   if(!Number.isSafeInteger(volume*3))throw new RangeError('World exceeds safe index range');
+  // A codec can describe a tiny world with a huge chunkSize. Validate the
+  // *local* stride too, or chunkIndex can silently alias voxels past JS's
+  // exact-integer range even when the global world volume is small.
+  if(!Number.isSafeInteger(chunkSize*chunkSize*height))
+    throw new RangeError('Chunk stride exceeds safe index range');
   const inside=(x,y,z)=>Number.isInteger(x)&&Number.isInteger(y)&&Number.isInteger(z)&&x>=0&&x<width&&z>=0&&z<depth&&y>=minY&&y<=maxY;
   // Same linear ordering as old MineWorld when minY=0: saves stay readable.
-  const index=(x,y,z)=>(x*depth+z)*height+(y-minY);
+  // Never allow an invalid absolute coordinate to alias a valid saved edit.
+  // In the old formula, y=maxY+1 became the next Z column's first voxel.
+  const index=(x,y,z)=>inside(x,y,z)?(x*depth+z)*height+(y-minY):null;
   const decode=n=>{
     if(!Number.isSafeInteger(n)||n<0||n>=volume)return null;
     const y=n%height+minY,z=Math.floor(n/height)%depth,x=Math.floor(n/(depth*height));
     return {x,y,z};
   };
-  const chunkIndex=(x,y,z)=>((x%chunkSize)*chunkSize+(z%chunkSize))*height+(y-minY);
+  // Match index()'s validation before mapping world coordinates into
+  // a chunk-local array. Negative Y is legal only for deep-world profiles.
+  const chunkIndex=(x,y,z)=>inside(x,y,z)?
+    ((x%chunkSize)*chunkSize+(z%chunkSize))*height+(y-minY):null;
   const networkIndex=(x,y,z,dimension='overworld')=>{
     const d=dimension==='overworld'?0:dimension==='nether'?1:dimension==='end'?2:-1;
     if(d<0||!inside(x,y,z))return null;

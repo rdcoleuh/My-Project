@@ -46,5 +46,5 @@ test('invalid edits containers cannot silently bypass save replay',()=>{
  assert.throws(()=>generator.generateChunk({cx:312,cz:312,edits:[]}),
   /Expected a Map of saved chunk edits/);
  assert.match(fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8'),
-  /mineworld-6-131-deep-chunk-guards/);
+  /mineworld-6-132-deep-codec-coordinate-guards/);
 });
