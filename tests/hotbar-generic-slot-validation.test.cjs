@@ -31,5 +31,6 @@ test('desktop/mobile browser smoke checks malformed and transparent generic slot
   assert.ok(smoke.includes("for(const fixture of ['malformed-generic-slot','transparent-generic-slot'])"));
  }
  assert.ok(smoke.includes("generic!==null||cells.some(src=>!src)"));
- assert.ok(read('sw.js').includes('mineworld-6-130-generic-slot-validation'));
+ assert.match(read('sw.js'), /const VERSION='mineworld-6-\d+-[^']+'/);
+ assert.ok(read('sw.js').includes("'./hotbar-sprite-uv.js'"));
 });
