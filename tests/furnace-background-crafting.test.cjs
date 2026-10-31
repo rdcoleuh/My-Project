@@ -18,7 +18,7 @@ test('crafting and backpack screens keep furnace ticking without unpausing movem
  assert.match(html,/if\(paused\)return;/,'physics must remain paused in the backpack');
  assert.match(html,/\$\('gear-panel'\)\.classList\.remove\('hidden'\);paused=true/);
  assert.match(html,/const furnaceDt=clamp\(frameMs\/1000,0,60\)/);
- assert.match(html,/if\(r\.changed\)\{furnaceSaveClock\+=furnaceDt/);
+ assert.match(html,/if\(r\.changed\)markSave\(\);/,'even a partial second of cooking must be saved');
 });
 test('real desktop and mobile browser tests verify cooking while backpack is visible',()=>{
  assert.match(smoke,/furnace stopped smelting while the backpack\/crafting screen was open/);
