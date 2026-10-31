@@ -69,7 +69,7 @@ test('full dye output stack blocks cactus consumption until room exists',()=>{
 
 test('browser smoke checks real cactus picker, smelting and synthetic screenshots',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
- assert.match(html,/\b'Cactus'\b/);
+ assert.ok(html.includes("'Cactus'"),'Cactus must exist in the game block registry');
  assert.match(html,/\bdye:0\b/);
  const smoke=fs.readFileSync(path.join(root,'scripts/browser-smoke.cjs'),'utf8');
  assert.ok(smoke.includes("grantLoot('block:44',1)"));
