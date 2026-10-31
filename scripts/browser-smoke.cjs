@@ -1161,6 +1161,32 @@ async function go(browser,name,mobile){
   assert.equal(await page.evaluate(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z)?.output,
     furnaceFixture),null,name+': brick output could not be collected');
+  // Harvested cactus uses block 44 in MineWorld's original registry.
+  // Exercise the actual input picker, furnace timers and dye collection with
+  // the independently generated resource pack active on desktop and mobile.
+  assert.equal(await page.evaluate(()=>window.MineWorldBridge.grantLoot('block:44',1)),
+    true,name+': cactus block could not be granted');
+  await page.waitForFunction(()=>
+    [...document.querySelector('#mw-furnace-input').options].some(o=>o.value==='block:44'),
+    null,{timeout:8000});
+  await page.locator('#mw-furnace-input').selectOption('block:44');
+  await page.locator('#mw-furnace-put-input').click({force:true});
+  assert.equal(await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.input?.key,
+    furnaceFixture),'block:44',name+': cactus did not enter the furnace');
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.output?.key==='dye',
+    furnaceFixture,{timeout:30000});
+  await page.waitForFunction(()=>
+    document.querySelector('#mw-furnace-output-one')?.disabled===false,
+    null,{timeout:8000});
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-cactus-dye-synthetic.png':'desktop-furnace-cactus-dye-synthetic.png'),
+    animations:'disabled'});
+  await page.locator('#mw-furnace-output-one').click({force:true});
+  assert.equal(await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.output,
+    furnaceFixture),null,name+': cactus dye could not be collected');
   await page.locator('#mw-furnace-close').click({force:true});
   // A second real furnace proves harvested bamboo blocks fuel a full smelt.
   // The imported artwork is an independently generated test fixture.
