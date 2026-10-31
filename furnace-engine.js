@@ -47,11 +47,31 @@ const slot=s=>s&&key(s.key)&&Number.isInteger(s.qty)&&s.qty>0&&s.qty<=64?{key:s.
 function create(){
  const machines=new Map();
  const get=p=>pos(p)?machines.get(id(p))||null:null;
- function ensure(p,kind='furnace'){
-  if(!pos(p)||!Object.hasOwn(KINDS,kind))return null;
+ function ensure(p,kind){
+  // Omitted kind means "get or create", not "convert to a furnace".
+  // UI openings pass an explicit kind so a restored/replaced station can
+  // transition in either direction (including smoker/blast -> furnace).
+  if(!pos(p)||(kind!==undefined&&!Object.hasOwn(KINDS,kind)))return null;
   const existing=get(p);
-  if(existing){if(kind!=='furnace'&&existing.kind!==kind){existing.kind=kind;existing.progress=0;}return existing;}
-  const machine=blank(p,kind);machines.set(id(p),machine);return machine;
+  if(existing){
+   if(kind!==undefined&&existing.kind!==kind){
+    // A smoker/blast furnace burns fuel twice as fast as a normal furnace.
+    // Keep the remaining fuel's smelting capacity when correcting a saved
+    // station type, rather than granting extra smelts or losing paid fuel.
+    const oldRate=existing.kind==='furnace'?1:0.5;
+    const newRate=kind==='furnace'?1:0.5;
+    const ratio=newRate/oldRate;
+    existing.burn*=ratio;
+    existing.burnTotal*=ratio;
+    existing.kind=kind;
+    // A partial cook from a different recipe duration must not complete
+    // instantly or be counted twice after the station changes type.
+    existing.progress=0;
+   }
+   return existing;
+  }
+  const machine=blank(p,kind===undefined?'furnace':kind);
+  machines.set(id(p),machine);return machine;
  }
  function insert(p,which,item,n=1){
   if(!['input','fuel'].includes(which)||!key(item)||!Number.isInteger(n)||n<1)return 0;
