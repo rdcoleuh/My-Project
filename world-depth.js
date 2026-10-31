@@ -207,7 +207,7 @@ function createSectionStore(options={}){
   // Mesh jobs can outlive a browser tab suspension. A lease is valid only
   // while its token AND section revision still match the current state.
   const currentClaim=job=>{
-    if(!job||!Number.isSafeInteger(job.index)||!Number.isSafeInteger(job.claimId))return false;
+    if(!job||job.storeId!==storeId||!Number.isSafeInteger(job.index)||!Number.isSafeInteger(job.claimId))return false;
     const active=inFlight.get(job.index);
     return !!active&&active.claimId===job.claimId&&
       active.revision===job.revision&&sectionRevisions[job.index]===job.revision;
@@ -308,7 +308,7 @@ function createSectionStore(options={}){
       throw new RangeError('Invalid section mesh budget');
     return dirtySectionsNear(y,radius,sections.length)
       .filter(job=>!inFlight.has(job.index)).slice(0,limit).map(job=>{
-        const lease=Object.freeze({...job,revision:sectionRevisions[job.index],
+        const lease=Object.freeze({...job,storeId,revision:sectionRevisions[job.index],
           claimId:++claimSerial,claimedAt:now});
         inFlight.set(job.index,lease);
         return lease;
@@ -330,7 +330,7 @@ function createSectionStore(options={}){
     return recovered.sort((a,b)=>a-b);
   }
   function completeDirtySection(job,applied){
-    if(!job||!Number.isSafeInteger(job.index)||
+    if(!job||job.storeId!==storeId||!Number.isSafeInteger(job.index)||
        !Number.isSafeInteger(job.claimId))return false;
     const active=inFlight.get(job.index);
     if(!active||active.claimId!==job.claimId||
