@@ -1,6 +1,6 @@
 /* Original MineWorld furnace logic: per-block slots, fuel and saved progress. */
 (()=>{'use strict';
-const RECIPES=Object.freeze({rawIron:'iron',rawGold:'gold',rawCopper:'copper',raw:'cooked',chicken:'cookedChicken',mutton:'cookedMutton',fish:'cookedFish',potato:'bakedPotato',kelp:'driedKelp',ancientDebris:'netheriteScrap','block:85':'netheriteScrap','block:4':'block:9','block:61':'block:3','block:5':'charcoal',
+const RECIPES=Object.freeze({clay:'brick',rawIron:'iron',rawGold:'gold',rawCopper:'copper',raw:'cooked',chicken:'cookedChicken',mutton:'cookedMutton',fish:'cookedFish',potato:'bakedPotato',kelp:'driedKelp',ancientDebris:'netheriteScrap','block:85':'netheriteScrap','block:4':'block:9','block:61':'block:3','block:5':'charcoal',
  // Smelt placeable ore blocks obtained with silk-touch/creative as well as raw drops.
  // IDs are MineWorld's own block registry, not an external asset mapping.
  'block:18':'coal','block:19':'iron','block:83':'quartz','block:84':'goldNugget',

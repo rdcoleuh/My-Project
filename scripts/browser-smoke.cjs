@@ -1069,6 +1069,32 @@ async function go(browser,name,mobile){
   assert.equal(await page.evaluate(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z)?.output,
     furnaceFixture),null,name+': charcoal could not be collected');
+  // Clay balls are real backpack items. Verify the three-slot furnace UI
+  // smelts one into a brick on both desktop and mobile with the independently
+  // generated resource-pack fixture active.
+  assert.equal(await page.evaluate(()=>window.MineWorldBridge.grantLoot('clay',1)),
+    true,name+': clay could not be granted to survival inventory');
+  await page.waitForFunction(()=>
+    [...document.querySelector('#mw-furnace-input').options].some(o=>o.value==='clay'),
+    null,{timeout:8000});
+  await page.locator('#mw-furnace-input').selectOption('clay');
+  await page.locator('#mw-furnace-put-input').click({force:true});
+  assert.equal(await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.input?.key,
+    furnaceFixture),'clay',name+': clay did not enter the input slot');
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.output?.key==='brick',
+    furnaceFixture,{timeout:30000});
+  await page.waitForFunction(()=>
+    document.querySelector('#mw-furnace-output-one')?.disabled===false,
+    null,{timeout:8000});
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-clay-brick-synthetic.png':'desktop-furnace-clay-brick-synthetic.png'),
+    animations:'disabled'});
+  await page.locator('#mw-furnace-output-one').click({force:true});
+  assert.equal(await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.output,
+    furnaceFixture),null,name+': brick output could not be collected');
   await page.locator('#mw-furnace-close').click({force:true});
   // A second real furnace proves harvested bamboo blocks fuel a full smelt.
   // The imported artwork is an independently generated test fixture.
