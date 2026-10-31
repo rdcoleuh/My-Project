@@ -721,6 +721,8 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
     };
     return copy(record,0);
   };
+  // Keep valid namespaced dropped loot during future height migration, just
+  // as we already do for furnace slots and player inventory stacks.
   const droppedItems=(()=>{
     const records=save.droppedItems??[];
     if(!Array.isArray(records)||records.length>80)
@@ -728,7 +730,10 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
     return Object.freeze(records.map(record=>{
       if(!record||typeof record!=='object'||Array.isArray(record)||
          typeof record.key!=='string'||Object.hasOwn(Object.prototype,record.key)||
-         !(/^[a-zA-Z][a-zA-Z0-9]*$/.test(record.key)||/^block:[1-9]\d{0,2}$/.test(record.key))||
+         !(/^[a-zA-Z][a-zA-Z0-9]*$/.test(record.key)||/^block:[1-9]\d{0,2}$/.test(record.key)||
+           record.key.length<=192&&
+           /^[a-z0-9][a-z0-9_.-]{0,63}:[a-z0-9_][a-z0-9_.-]*(?:\/[a-z0-9_][a-z0-9_.-]*)*$/.test(record.key)&&
+           !record.key.startsWith('block:'))||
          !Number.isSafeInteger(record.count)||record.count<1||record.count>64||
          !['overworld','nether','end'].includes(record.dimension)||
          ![record.x,record.y,record.z].every(Number.isFinite)||
