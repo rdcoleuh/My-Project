@@ -126,6 +126,16 @@ function makeTestArchive(mode='full'){
   ['resource_pack/textures/ui/hotbar.png',generatedPng(20,120,180,true)],
   ['resource_pack/textures/ui/hotbar_slot.png',generatedPng(20,180,20)]
  ];
+ // Synthetic, independently drawn invalid generic slot art. The intact
+ // nine-cell sheet must still supply all numbered slots.
+ if(mode==='malformed-generic-slot')files=[
+  ['resource_pack/textures/ui/hotbar.png',generatedPng(20,120,180,true)],
+  ['resource_pack/textures/ui/hotbar_slot.png',generatedPng(22,180,182,true)]
+ ];
+ if(mode==='transparent-generic-slot')files=[
+  ['resource_pack/textures/ui/hotbar.png',generatedPng(20,120,180,true)],
+  ['resource_pack/textures/ui/hotbar_slot.png',generatedPng(20,180,20,false,0)]
+ ];
  if(mode==='malformed-selected')files=[
   ['resource_pack/textures/ui/selected_hotbar_slot.png',generatedPng(22,180,182,true)]
  ];
@@ -620,6 +630,29 @@ async function go(browser,name,mobile){
         item.classList.contains('mw-pack-slot')&&
         getComputedStyle(item).backgroundImage.startsWith('url('));
   }),name+': generic imported slot was overridden by a sliced background');
+  // An invalid generic slot used to be accepted without aspect/alpha
+  // validation, flattening a whole GUI strip across every hotbar cell.
+  // Both synthetic fixtures retain a valid 180x20 nine-cell sheet.
+  for(const fixture of ['malformed-generic-slot','transparent-generic-slot']){
+    await page.evaluate(async bytes=>{
+      await window.MineWorldLocalTextures.loadFile(new File(
+        [new Uint8Array(bytes)],'generic-slot-fallback-fixture.zip',{type:'application/zip'}));
+    },Array.from(makeTestArchive(fixture)));
+    assert.ok(await page.evaluate(async()=>{
+      const pack=window.MineWorldLocalTextures;
+      const generic=await pack.hudIcon('hotbar','slot');
+      const cells=await Promise.all(Array.from({length:9},(_,i)=>
+        pack.hudIcon('hotbar','slot'+i)));
+      if(generic!==null||cells.some(src=>!src))return false;
+      const decoded=await Promise.all(cells.map(async src=>{
+        const img=new Image();img.src=src;await img.decode();
+        return img.naturalWidth===20&&img.naturalHeight===20;
+      }));
+      return decoded.every(Boolean);
+    }),name+': '+fixture+' must fall back to nine crisp imported sheet cells');
+    await page.screenshot({path:path.join(screenshotDir,
+      (mobile?'mobile-':'desktop-')+fixture+'-synthetic.png'),animations:'disabled'});
+  }
   // An unrelated wide GUI strip mislabeled as a selection sprite must not
   // flatten across the selected button or hide the fallback outline.
   await page.evaluate(async bytes=>{

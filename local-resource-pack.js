@@ -1232,6 +1232,14 @@ function hudIcon(kind,fill){
         }
       }
       if(generation!==state.itemGeneration)return null;
+      // Generic hotbar slots are individual square sprites, not arbitrary
+      // GUI strips. Numbered slots already validate each candidate above,
+      // but the standalone generic lookup used to bypass both the aspect
+      // check and alpha probe, stretching a mislabeled/blank import across
+      // all nine buttons. Keep the original procedural or sheet fallback.
+      if(kind==='hotbar'&&fill==='slot'&&
+         (!window.MineWorldHotbarUV?.validSlotSprite(image.width,image.height)||
+          !visibleCandidate(image)))return null;
       if(kind!=='hotbar'&&!legacyStat&&
          !window.MineWorldHotbarUV?.validStatSprite(image.width,image.height)){
         if(!await tryFullHalf()){
