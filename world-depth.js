@@ -913,12 +913,69 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
     }
     return Object.freeze({inventory,itemStacks,survivalHotbar:hotbar,javaInventory,bag,tools,armor,experienceTotal});
   })();
+  // Deep-world migration must retain survival stats and endgame progress as
+  // well as block edits. The live save loader clamps malformed values; silently
+  // normalizing them during a height change would alter a player's progress.
+  // Keep this a detached, read-only preflight: no live save is rewritten.
+  const savedScalar=(name,valid)=>{
+    const value=save[name];
+    if(value==null)return null; // Fields absent in older saves remain absent.
+    if(!valid(value))throw new RangeError('Invalid saved '+name);
+    return value;
+  };
+  const boundedStat=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=20;
+  const survivalState=Object.freeze({
+    health:savedScalar('health',boundedStat),
+    hunger:savedScalar('hunger',boundedStat),
+    saturation:savedScalar('saturation',boundedStat),
+    exhaustion:savedScalar('exhaustion',value=>typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<4),
+    gameMode:savedScalar('gameMode',value=>['survival','creative'].includes(value)),
+    difficulty:savedScalar('difficulty',value=>['peaceful','easy','normal','hard'].includes(value)),
+    equipped:savedScalar('equipped',value=>['pickaxe','sword','hoe','none'].includes(value)),
+    cameraMode:savedScalar('cameraMode',value=>Number.isInteger(value)&&value>=0&&value<=2),
+    dayClock:savedScalar('dayClock',value=>typeof value==='number'&&Number.isFinite(value))
+  });
+  if(survivalState.saturation!==null&&survivalState.hunger!==null&&
+     survivalState.saturation>survivalState.hunger)
+    throw new RangeError('Invalid saved saturation exceeds hunger');
+  const portalPosition=(()=>{
+    if(save.netherPortalPosition==null)return null;
+    const copy=copyOwnedRecord(save.netherPortalPosition,'nether portal position',{maxNodes:16,maxKeys:8});
+    if(!copy||Array.isArray(copy)||!Number.isFinite(copy.x)||!Number.isFinite(copy.z)||
+       copy.x<0||copy.x>=width||copy.z<0||copy.z>=depth)
+      throw new RangeError('Invalid saved nether portal position');
+    return copy;
+  })();
+  const advancements=(()=>{
+    if(save.advancements==null)return null;
+    const copy=copyOwnedRecord(save.advancements,'advancements',
+      {maxNodes:800,maxArray:128,maxKeys:16});
+    if(!copy||Array.isArray(copy)||copy.version!==1||
+       !Array.isArray(copy.completed)||copy.completed.length>126||
+       !copy.biomes||Array.isArray(copy.biomes)||
+       !Array.isArray(copy.biomes.nether)||copy.biomes.nether.length>64||
+       !Array.isArray(copy.biomes.overworld)||copy.biomes.overworld.length>128||
+       !Array.isArray(copy.foods)||copy.foods.length>100||
+       !Array.isArray(copy.killKinds)||copy.killKinds.length>100||
+       [...copy.completed,...copy.biomes.nether,...copy.biomes.overworld,
+        ...copy.foods,...copy.killKinds].some(value=>
+          typeof value!=='string'||value.length>128))
+      throw new RangeError('Invalid saved advancements');
+    return copy;
+  })();
+  const progressionState=Object.freeze({
+    dragonDefeated:savedScalar('dragonDefeated',value=>typeof value==='boolean'),
+    eyesPlaced:savedScalar('eyesPlaced',value=>Number.isSafeInteger(value)&&value>=0&&value<=12),
+    netherPortalBuilt:savedScalar('netherPortalBuilt',value=>typeof value==='boolean'),
+    netherPortalPosition:portalPosition,
+    advancements
+  });
   const furnaces=previewFurnaces();
   const edits=convert(save.edits,target,'overworld');
   const netherEdits=convert(save.netherEdits??[],source,'nether');
   const endEdits=convert(save.endEdits??[],source,'end');
   return Object.freeze({sourceProfile:LEGACY_PROFILE,targetProfile:DEEP_PROFILE,
-    status:'preview-only',dimension,positions,bedSpawn,droppedItems,vehicles,tamedMounts,farmAnimals,edits,netherEdits,endEdits,furnaces,playerItems});
+    status:'preview-only',dimension,positions,bedSpawn,droppedItems,vehicles,tamedMounts,farmAnimals,edits,netherEdits,endEdits,furnaces,playerItems,survivalState,progressionState});
 }
 
 window.MineWorldWorldDepth=Object.freeze({LEGACY,OVERWORLD,LEGACY_PROFILE,DEEP_PROFILE,readSaveProfile,canLoadLegacySave,planLegacySaveMigration,create,reindexEdits,createDimensionCodec,reindexNetworkEdits,sectionizeChunk,createSectionStore,scanNonAirSections,countNonAirSections,updateSectionOccupancy});
