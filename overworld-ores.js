@@ -47,7 +47,8 @@
     minX=0,minZ=0,width=WORLD,depth=WORLD}={}){
     // Legacy callers omit the signed origin and keep byte-for-byte identical
     // coordinate encoding. A deep-world chunk can instead span negative X/Z.
-    if(!(data instanceof Uint8Array)||!Number.isSafeInteger(H)||H<4||
+    if(Object.prototype.toString.call(data)!=='[object Uint8Array]'||
+       !Number.isSafeInteger(H)||H<4||
        data.length!==CHUNK*CHUNK*H||
        ![cx,cz,minY,minX,minZ,width,depth].every(Number.isSafeInteger)||
        width<1||depth<1||!Number.isSafeInteger(minX+width-1)||
