@@ -141,10 +141,18 @@
       !Number.isSafeInteger(width*depth*H)||
       cx*CHUNK<minX||cx*CHUNK>=minX+width||
       cz*CHUNK<minZ||cz*CHUNK>=minZ+depth||
-      H<1||H>384||minY< -64||minY+H-1>319)
+      H<1||H>384||minY< -64||minY+H-1>319||
+      SEA<minY||SEA>=minY+H)
      throw new RangeError('Invalid chunk generation bounds');
    if(edits!==null&&Object.prototype.toString.call(edits)!=='[object Map]')
      throw new TypeError('Expected a Map of saved chunk edits');
+   // Reject malformed saves *before* cave, ore and structure generation.
+   // An invalid edit late in a Map must not burn a mobile frame generating
+   // terrain that cannot be safely loaded. The caller's Map stays untouched.
+   if(edits)for(const [index,block] of edits)
+     if(!Number.isSafeInteger(index)||index<0||index>=width*depth*H||
+        !Number.isSafeInteger(block)||block<0||block>255)
+       throw new RangeError('Invalid saved chunk edit');
    const data=new Uint8Array(CHUNK*CHUNK*H), x0=cx*CHUNK,z0=cz*CHUNK;
    const maxX=minX+width,maxZ=minZ+depth;
    const within=(x,y,z)=>x>=x0&&x<x0+CHUNK&&z>=z0&&z<z0+CHUNK&&y>=minY&&y<minY+H;
@@ -290,12 +298,7 @@
      // Each loaded chunk indexes its own edits directly, rather than scanning all edits.
      const baseX=cx*CHUNK,baseZ=cz*CHUNK;
      for(const [index,block] of edits){
-       // Typed arrays silently wrap invalid IDs (256 becomes air, 511
-       // becomes 255). Reject corrupted save edits rather than turning a
-       // placed block into a different block during chunk regeneration.
-       if(!Number.isSafeInteger(index)||index<0||index>=width*depth*H||
-          !Number.isSafeInteger(block)||block<0||block>255)
-         throw new RangeError('Invalid saved chunk edit');
+       // Edit IDs were validated before terrain generation.
        const x=Math.floor(index/(depth*H))+minX,z=Math.floor(index/H)%depth+minZ,y=index%H+minY;
        if(x>=baseX&&x<baseX+CHUNK&&z>=baseZ&&z<baseZ+CHUNK&&y>=minY&&y<minY+H)put(x,y,z,block);
      }
