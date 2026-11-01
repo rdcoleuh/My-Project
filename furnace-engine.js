@@ -21,7 +21,7 @@ const FUEL=Object.freeze({coal:80,charcoal:80,'block:5':15,'block:11':15,'block:
  'block:36':15,'block:38':15,'block:40':15,'block:42':15,
  // Craftable MineWorld fuel blocks and inventory items; durations in seconds.
  // A coal block fuels 80 smelts, a blaze rod 12, and a boat/raft six.
- 'block:50':15,'block:116':800,blazeRod:120,
+ 'block:50':15,'block:116':800,blazeRod:120,lavaBucket:1000,
  boat:60,spruceBoat:60,cherryBoat:60,raft:60,
  // Craftable wooden stations, wooden accessories and harvestable bamboo.
  // These are MineWorld inventory keys; the old bamboo item remains valid.
@@ -84,7 +84,10 @@ function create(){
   if(!['input','fuel'].includes(which)||!key(item)||!Number.isInteger(n)||n<1)return 0;
   if(which==='input'&&!canSmelt(get(p)?.kind||'furnace',item)||which==='fuel'&&!Object.hasOwn(FUEL,item))return 0;
   const m=ensure(p);if(!m||m[which]&&m[which].key!==item)return 0;
-  const moved=Math.min(n,64-(m[which]?.qty||0));
+  // Lava buckets are non-stackable fuel containers. The empty bucket
+  // remains in the fuel slot after ignition and can be withdrawn.
+  const capacity=which==='fuel'&&item==='lavaBucket'?1:64;
+  const moved=Math.max(0,Math.min(n,capacity-(m[which]?.qty||0)));
   if(moved)m[which]={key:item,qty:(m[which]?.qty||0)+moved};return moved;
  }
  function take(p,which,n=64){
@@ -123,8 +126,13 @@ function create(){
      }
      // Specialized stations cook twice as fast, but also burn fuel twice as fast.
      // One coal therefore smelts eight items in every station, not sixteen.
-     m.burn=m.burnTotal=FUEL[m.fuel.key]*(m.kind==='furnace'?1:0.5);
-     if(!--m.fuel.qty)m.fuel=null;changed=true;
+     // An older or malformed save can contain a stacked lava bucket.
+     // Do not consume one and silently discard its empty container.
+     if(m.fuel.key==='lavaBucket'&&m.fuel.qty!==1)break;
+     const usedFuel=m.fuel.key;
+     m.burn=m.burnTotal=FUEL[usedFuel]*(m.kind==='furnace'?1:0.5);
+     if(!--m.fuel.qty)m.fuel=usedFuel==='lavaBucket'?{key:'bucket',qty:1}:null;
+     changed=true;
     }
     const cook=KINDS[m.kind].cook;
     const gap=cook-m.progress;
