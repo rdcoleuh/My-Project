@@ -214,8 +214,18 @@ function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator}={}){
        typeof store.markNeighborBoundaryDirty!=='function'||
        typeof store.materializeClaimWithNeighbors!=='function'||
        typeof store.canInstallClaimWithNeighbors!=='function'||
+       typeof store.stats!=='function'||
        [...resident.values(),...other].includes(store))
       throw new RangeError('Invalid generated deep-world section store');
+    // A generator that ignores or partially applies saved edits must never
+    // silently resurrect mined blocks or discard placed blocks on reload.
+    // Validate the regenerated section *before* evicting any resident chunk.
+    // This includes explicit air edits (block 0), which must stay mined.
+    for(const [index,block] of byChunk.get(k)||[]){
+      const p=codec.decode(index);
+      if(!p||store.get(p.x-cx*16,p.y,p.z-cz*16)!==block)
+        throw new RangeError('Generated deep-world chunk did not replay saved edits');
+    }
     return store;
   }
   function install(cx,cz,store){
