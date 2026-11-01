@@ -41,9 +41,13 @@ const namespaced=k=>k.length<=192&&
 const key=k=>typeof k==='string'&&!Object.hasOwn(Object.prototype,k)&&
  (/^[a-zA-Z][a-zA-Z0-9]*$/.test(k)||/^block:[1-9]\d{0,2}$/.test(k)||namespaced(k));
 // Keep the legacy Y=0..47 range and permit future deep-world furnaces.
-// X/Z remain inside the current 10,000-block world; Y is absolute, not an array offset.
+// The future chunk stream supports negative X/Z. Bound furnace positions to
+// the same 10,000-block radius used by the current world, retaining all legacy
+// positive positions while allowing deep-world stations west/north of origin.
+// Y is absolute, not a dense-array offset.
 const pos=p=>p&&['overworld','nether','end'].includes(p.dimension)&&
-  [p.x,p.y,p.z].every(Number.isInteger)&&p.x>=0&&p.x<10000&&p.z>=0&&p.z<10000&&p.y>=-64&&p.y<=319;
+  [p.x,p.y,p.z].every(Number.isSafeInteger)&&
+  p.x>=-9999&&p.x<10000&&p.z>=-9999&&p.z<10000&&p.y>=-64&&p.y<=319;
 const id=p=>p.dimension+':'+p.x+','+p.y+','+p.z;
 const blank=(p,kind='furnace')=>({kind,dimension:p.dimension,x:p.x,y:p.y,z:p.z,input:null,fuel:null,output:null,burn:0,burnTotal:0,progress:0});
 const slot=s=>s&&key(s.key)&&Number.isInteger(s.qty)&&s.qty>0&&s.qty<=64?{key:s.key,qty:s.qty}:null;
@@ -153,7 +157,9 @@ function create(){
   if(!editsByDimension||typeof worldIndex!=='function')return 0;
   let converted=0;
   for(const m of machines.values()){
-   if(m.kind!=='blast'||m.y<0||m.y>=48)continue;
+   // Legacy array indices cannot represent negative X/Z. A signed
+   // deep-world furnace must never alias a positive legacy block index.
+   if(m.kind!=='blast'||m.y<0||m.y>=48||m.x<0||m.z<0)continue;
    const edits=editsByDimension[m.dimension];
    if(!edits||typeof edits.get!=='function'||typeof edits.set!=='function')continue;
    const index=worldIndex(m.x,m.y,m.z);
