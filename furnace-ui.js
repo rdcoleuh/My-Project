@@ -139,6 +139,19 @@ function ensureStation(engine,api,position,kind='furnace'){
  if(!previous||previousKind!==machine.kind)api.onChange();
  return machine;
 }
+// Plan a native button tap without mutating either inventory. Mouse modifiers
+// offer quick stack handling; touch and keyboard clicks use the same safe path.
+function planSlotGesture(which,slot,selected,owned,modifiers={}){
+ if(!['input','fuel','output'].includes(which))return null;
+ const shift=!!modifiers.shiftKey;
+ if(which==='output')return slot?{action:'take',limit:shift?1:64}:null;
+ if(modifiers.altKey||modifiers.ctrlKey||modifiers.metaKey)
+  return slot?{action:'take',limit:shift?64:1}:null;
+ if(typeof selected==='string'&&selected&&Number.isSafeInteger(owned)&&owned>0&&
+    (!slot||(slot.key===selected&&Number.isSafeInteger(slot.qty)&&slot.qty<64)))
+  return {action:'deposit',item:selected,limit:shift?64:1};
+ return slot?{action:'take',limit:shift?64:1}:null;
+}
 function create(api){
  const engine=api.engine;let current=null,panel=null,drawClock=0;
  const iconCache=new Map();let iconPack=null,iconGeneration=null,iconEpoch=0;
@@ -170,8 +183,8 @@ function create(api){
    '.mw-furnace-modal button{min-height:44px;padding:9px 12px;margin:4px;border:2px solid #839d72;background:#233b27;color:#fff;border-radius:5px}.mw-furnace-modal button:disabled{opacity:.5}'+
    '#mw-furnace-status{padding:14px;background:#13251c;border:1px solid #6c8965;line-height:1.6}'+
    '.mw-furnace-workspace{display:grid;grid-template-columns:74px minmax(90px,1fr) 74px;align-items:center;justify-content:center;gap:14px;padding:14px;margin:12px 0;background:#18281c;border:2px solid #728365;border-radius:7px}'+
-   '.mw-furnace-stack{display:flex;flex-direction:column;gap:12px}.mw-furnace-slot{box-sizing:border-box;width:70px;min-height:70px;padding:6px 3px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;background:#2a3029;border:3px solid #0d1b13;box-shadow:inset 2px 2px #131b14,inset -2px -2px #65715e;color:#e5e8dc;text-align:center;overflow:hidden}'+
-   '.mw-furnace-slot.occupied{background:#384633;border-color:#a5b68b}.mw-furnace-slot span{font-family:monospace;font-size:20px;font-weight:900;line-height:1;white-space:nowrap}.mw-furnace-slot img{width:32px;height:32px;object-fit:contain;image-rendering:pixelated;image-rendering:crisp-edges}.mw-furnace-slot img[hidden]{display:none}.mw-furnace-slot small{font-size:11px;line-height:1.15;overflow-wrap:anywhere}.mw-furnace-meters{display:flex;flex-direction:column;gap:12px;min-width:0}.mw-furnace-meters label{font-size:12px;font-weight:700}.mw-furnace-meters progress{display:block;width:100%;height:14px;accent-color:#f3a33d;margin-top:5px}'+
+   '.mw-furnace-stack{display:flex;flex-direction:column;gap:12px}.mw-furnace-slot{box-sizing:border-box;width:70px;min-height:70px;margin:0;padding:6px 3px;cursor:pointer;touch-action:manipulation;font:inherit;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;background:#2a3029;border:3px solid #0d1b13;box-shadow:inset 2px 2px #131b14,inset -2px -2px #65715e;color:#e5e8dc;text-align:center;overflow:hidden}'+
+   '.mw-furnace-slot:focus-visible{outline:3px solid #f7d56c;outline-offset:3px}.mw-furnace-slot.occupied{background:#384633;border-color:#a5b68b}.mw-furnace-slot span{font-family:monospace;font-size:20px;font-weight:900;line-height:1;white-space:nowrap}.mw-furnace-slot img{width:32px;height:32px;object-fit:contain;image-rendering:pixelated;image-rendering:crisp-edges}.mw-furnace-slot img[hidden]{display:none}.mw-furnace-slot small{font-size:11px;line-height:1.15;overflow-wrap:anywhere}.mw-furnace-meters{display:flex;flex-direction:column;gap:12px;min-width:0}.mw-furnace-meters label{font-size:12px;font-weight:700}.mw-furnace-meters progress{display:block;width:100%;height:14px;accent-color:#f3a33d;margin-top:5px}'+
    '@media(max-width:390px){.mw-furnace-workspace{grid-template-columns:64px minmax(70px,1fr) 64px;gap:7px;padding:8px}.mw-furnace-slot{width:62px;min-height:62px}.mw-furnace-modal{padding:12px}}';
   document.head.appendChild(style);
   panel=document.createElement('div');panel.id='mw-furnace-panel';panel.className='modal-backdrop hidden';
@@ -179,11 +192,11 @@ function create(api){
   panel.innerHTML='<section class="modal mw-furnace-modal"><h2 id="mw-furnace-title">🔥 Furnace</h2>'+
    '<p id="mw-furnace-help">Put an ingredient in the input slot and add fuel. One item takes 10 seconds to smelt.</p>'+
    '<div class="mw-furnace-workspace" role="group" aria-label="Furnace input, fuel and output slots">'+
-   '<div class="mw-furnace-stack"><div id="mw-furnace-slot-input" class="mw-furnace-slot" role="img" aria-label="Input slot empty"><img alt="" aria-hidden="true" hidden><span aria-hidden="true">—</span><small>Input</small></div>'+
-   '<div id="mw-furnace-slot-fuel" class="mw-furnace-slot" role="img" aria-label="Fuel slot empty"><img alt="" aria-hidden="true" hidden><span aria-hidden="true">—</span><small>Fuel</small></div></div>'+
+   '<div class="mw-furnace-stack"><button id="mw-furnace-slot-input" type="button" class="mw-furnace-slot" aria-label="Input slot empty" title="Tap to add selected ingredient; Shift adds stack; Alt takes one"><img alt="" aria-hidden="true" hidden><span aria-hidden="true">—</span><small>Input</small></button>'+
+   '<button id="mw-furnace-slot-fuel" type="button" class="mw-furnace-slot" aria-label="Fuel slot empty" title="Tap to add selected fuel; Shift adds stack; Alt takes one"><img alt="" aria-hidden="true" hidden><span aria-hidden="true">—</span><small>Fuel</small></button></div>'+
    '<div class="mw-furnace-meters"><label for="mw-furnace-flame">Fuel burning<progress id="mw-furnace-flame" max="100" value="0"></progress></label>'+
    '<label for="mw-furnace-cook">Smelting<progress id="mw-furnace-cook" max="100" value="0"></progress></label></div>'+
-   '<div id="mw-furnace-slot-output" class="mw-furnace-slot" role="img" aria-label="Output slot empty"><img alt="" aria-hidden="true" hidden><span aria-hidden="true">—</span><small>Output</small></div></div>'+
+   '<button id="mw-furnace-slot-output" type="button" class="mw-furnace-slot" aria-label="Output slot empty" title="Tap to collect output; Shift collects one"><img alt="" aria-hidden="true" hidden><span aria-hidden="true">—</span><small>Output</small></button></div>'+
    '<div class="mw-furnace-row"><label>Input<select id="mw-furnace-input" aria-label="Furnace input"></select></label>'+
    '<button id="mw-furnace-put-input" type="button">Add 1</button><button id="mw-furnace-put-input-stack" type="button">Add stack</button><button id="mw-furnace-return-input-one" type="button">Take 1</button><button id="mw-furnace-return-input" type="button">Take input</button></div>'+
    '<div class="mw-furnace-row"><label>Fuel<select id="mw-furnace-fuel" aria-label="Furnace fuel"></select></label>'+
@@ -193,6 +206,20 @@ function create(api){
    '<button id="mw-furnace-output" type="button">Collect output</button>'+
    '<button id="mw-furnace-close" type="button">Return to World</button></section>';
   document.body.appendChild(panel);
+  // Native buttons support touch, mouse, Enter and Space without custom
+  // key handlers. All mutations use the existing reconciled transfer path.
+  for(const which of ['input','fuel','output']){
+   el('mw-furnace-slot-'+which).addEventListener('click',event=>{
+    if(!current)return;
+    const stack=engine.get(current)?.[which]||null;
+    const selected=which==='output'?'':el('mw-furnace-'+which).value;
+    const gesture=planSlotGesture(which,stack,selected,selected?api.count(selected):0,event);
+    if(!gesture)return;
+    if(gesture.action==='take')take(which,gesture.limit);
+    else commitTransfer(api,()=>deposit(engine,api,current,which,gesture.item,gesture.limit),
+      moved=>moved>0,render);
+   });
+  }
   el('mw-furnace-close').addEventListener('click',close);
   for(const which of ['input','fuel']){
    for(const [suffix,limit] of [['',1],['-stack',64]]){
@@ -260,12 +287,12 @@ function create(api){
   ensurePanel();current={...position};
   const station=machine.kind;
   el('mw-furnace-title').textContent=station==='smoker'?'🍖 Smoker':station==='blast'?'⚒ Blast Furnace':'🔥 Furnace';
-  el('mw-furnace-help').textContent='Add an ingredient and fuel. '+(station==='smoker'?'Food only':station==='blast'?'Ores and metals only':'All supported recipes')+'; one item takes '+window.MineWorldFurnace.KINDS[station].cook+' seconds.';
+  el('mw-furnace-help').textContent='Add an ingredient and fuel. '+(station==='smoker'?'Food only':station==='blast'?'Ores and metals only':'All supported recipes')+'; one item takes '+window.MineWorldFurnace.KINDS[station].cook+' seconds. Tap a slot to add the selected item or collect output. Take buttons return ingredients and fuel.';
 
-  panel.classList.remove('hidden');api.onPause();render();el('mw-furnace-close').focus();}
+  panel.classList.remove('hidden');api.onPause();render();el('mw-furnace-close').focus();return true;}
  function close(){if(!current)return;current=null;panel?.classList.add('hidden');api.onResume();}
  function tick(dt){if(!current)return;drawClock+=dt;if(drawClock>=.25){drawClock=0;render();}}
  return {open,close,tick,get isOpen(){return !!current;}};
 }
-window.MineWorldFurnaceUI=Object.freeze({create,ensureStation,syncSelect,resolveSlotIcon,transfers:Object.freeze({deposit,withdraw,commitTransfer})});
+window.MineWorldFurnaceUI=Object.freeze({create,ensureStation,syncSelect,resolveSlotIcon,planSlotGesture,transfers:Object.freeze({deposit,withdraw,commitTransfer})});
 })();

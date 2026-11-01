@@ -1017,6 +1017,22 @@ async function go(browser,name,mobile){
   const refilled=await page.evaluate(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
   assert.equal(refilled?.input?.qty,2,name+': returned ingredient could not be reinserted');
+  // Test native furnace slot taps in both desktop and mobile Chrome.
+  // No ingredients remain in the backpack, so tapping takes one; tapping
+  // again deposits the returned ingredient without creating duplicates.
+  assert.equal(await page.locator('#mw-furnace-slot-input').evaluate(el=>el.tagName),
+    'BUTTON',name+': furnace slots must support native keyboard and touch clicks');
+  await page.locator('#mw-furnace-slot-input').click({force:true});
+  const tappedOut=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
+  assert.equal(tappedOut?.input?.qty,1,name+': tapping a full ingredient slot must take one');
+  await page.locator('#mw-furnace-slot-input').click({force:true});
+  const tappedIn=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
+  assert.equal(tappedIn?.input?.qty,2,name+': tapping an ingredient slot must reinsert one');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-slot-tap.png':'desktop-furnace-slot-tap.png'),
+    animations:'disabled'});
   await page.screenshot({path:path.join(screenshotDir,
     mobile?'mobile-furnace-take-one.png':'desktop-furnace-take-one.png'),
     animations:'disabled'});
@@ -1076,7 +1092,7 @@ async function go(browser,name,mobile){
   await page.screenshot({path:path.join(screenshotDir,
     mobile?'mobile-furnace-output-one.png':'desktop-furnace-output-one.png'),
     animations:'disabled'});
-  await page.locator('#mw-furnace-output').click({force:true});
+  await page.locator('#mw-furnace-slot-output').click({force:true});
   const drained=await page.evaluate(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
   assert.equal(drained?.output,null,name+': Collect output did not empty remaining ingot');
