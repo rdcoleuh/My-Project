@@ -10,6 +10,9 @@ const stream=ctx.window.MineWorldSectionNeighborhood.createDeepChunkStream;
 const codec=depth.create({width:10000,depth:10000,minY:-64,maxY:319,chunkSize:16});
 function store(cx,cz,edits,apply=true){
  const s=depth.createSectionStore({data:new Uint8Array(16*16*384),minY:-64,height:384,chunkSize:16,sectionHeight:16});
+ // Deliberately populate a non-air baseline so a saved air edit must
+ // remove a real block, not merely confirm an already-empty voxel.
+ s.set(6,319,6,13);
  if(apply)for(const [index,block] of edits){
   const p=codec.decode(index);s.set(p.x-cx*16,p.y,p.z-cz*16,block);
  }
@@ -60,5 +63,13 @@ test('a generator missing required memory stats is rejected before registration'
   return {...item,stats:undefined};
  }});
  assert.throws(()=>s.load(0,0),/Invalid generated/);
+ assert.equal(s.stats().loaded,0);
+});
+
+test('reject a generator that fails to replay a mined-air edit',()=>{
+ const index=codec.index(6,319,6);
+ const s=stream({maxLoaded:1,edits:new Map([[index,0]]),
+  generator:(cx,cz,edits)=>store(cx,cz,edits,false)});
+ assert.throws(()=>s.load(0,0),/did not replay saved edits/);
  assert.equal(s.stats().loaded,0);
 });
