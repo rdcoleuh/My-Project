@@ -72,7 +72,8 @@ test('signed profiles require aligned safe bounds and a custom generator',()=>{
   {...profile,minZ:1.5}]){
   assert.throws(()=>makeStream({...options,generator}),/horizontal profile/);
  }
- assert.throws(()=>makeStream(profile),/custom generator/);
+ const pending=makeStream(profile);
+ assert.throws(()=>pending.load(-2,-2),/generator unavailable/);
  const stream=make();
  assert.throws(()=>stream.load(-3,-2),/outside/);
  assert.throws(()=>stream.load(2,0),/outside/);

@@ -170,10 +170,8 @@ function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator,
      minX%16!==0||minZ%16!==0||
      !Number.isSafeInteger(minX+width)||!Number.isSafeInteger(minZ+depth))
     throw new RangeError('Invalid signed deep-world horizontal profile');
-  // The current built-in biome generator still accepts positive chunks only.
-  // Signed worlds must supply an independent generator until it is migrated.
-  if((minX<0||minZ<0)&&generator===undefined)
-    throw new RangeError('Signed deep-world chunks require a custom generator');
+  // The built-in generator now accepts opt-in signed, chunk-aligned bounds.
+  // The default positive profile retains its legacy terrain and edit indices.
   const maxX=minX+width,maxZ=minZ+depth;
   const minCX=minX/16,maxCX=maxX/16,minCZ=minZ/16,maxCZ=maxZ/16;
   if(!Number.isSafeInteger(maxLoaded)||maxLoaded<1||maxLoaded>64)
@@ -189,7 +187,8 @@ function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator,
       const biomes=window.MineWorldBiomes;
       if(!biomes||typeof biomes.generateSectionStore!=='function')
         throw new Error('Deep-world chunk generator unavailable');
-      return biomes.generateSectionStore({cx,cz,H:384,minY:-64,SEA:63,edits:chunkEdits});
+      return biomes.generateSectionStore({cx,cz,H:384,minY:-64,SEA:63,
+        edits:chunkEdits,minX,minZ,width,depth});
     }:generator;
   if(typeof make!=='function')throw new TypeError('Invalid deep chunk generator');
   const grid=createSectionNeighborhood(),resident=new Map();

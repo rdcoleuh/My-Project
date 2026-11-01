@@ -128,18 +128,25 @@
     ruinedPortal:'Ruined Portal',bridge:'Stone Bridge',swampHut:'Mangrove Cabin',
     witchHut:'Witch Hut',jungleTemple:'Jungle Temple',camp:'Bamboo Camp',mushroomHut:'Mushroom House'
   };
- function generateChunk({cx,cz,H=48,SEA=14,minY=0,edits=null}){
+ function generateChunk({cx,cz,H=48,SEA=14,minY=0,edits=null,minX=0,minZ=0,width=WORLD,depth=WORLD}={}){
    // Validate the world-height profile before allocating chunk memory. A
    // damaged save or experimental profile must never request an unbounded
    // Uint8Array on a phone. Both legacy 48-layer and staged 384-layer
    // Overworld chunks remain supported without rewriting either save.
-   if(![cx,cz,H,SEA,minY].every(Number.isSafeInteger)||
-      cx<0||cz<0||cx>=Math.ceil(WORLD/CHUNK)||cz>=Math.ceil(WORLD/CHUNK)||
+   if(![cx,cz,H,SEA,minY,minX,minZ,width,depth].every(Number.isSafeInteger)||
+      width<CHUNK||depth<CHUNK||width%CHUNK!==0||depth%CHUNK!==0||
+      minX%CHUNK!==0||minZ%CHUNK!==0||
+      !Number.isSafeInteger(minX+width)||!Number.isSafeInteger(minZ+depth)||
+      !Number.isSafeInteger(cx*CHUNK)||!Number.isSafeInteger(cz*CHUNK)||
+      !Number.isSafeInteger(width*depth*H)||
+      cx*CHUNK<minX||cx*CHUNK>=minX+width||
+      cz*CHUNK<minZ||cz*CHUNK>=minZ+depth||
       H<1||H>384||minY< -64||minY+H-1>319)
      throw new RangeError('Invalid chunk generation bounds');
    if(edits!==null&&Object.prototype.toString.call(edits)!=='[object Map]')
      throw new TypeError('Expected a Map of saved chunk edits');
    const data=new Uint8Array(CHUNK*CHUNK*H), x0=cx*CHUNK,z0=cz*CHUNK;
+   const maxX=minX+width,maxZ=minZ+depth;
    const within=(x,y,z)=>x>=x0&&x<x0+CHUNK&&z>=z0&&z<z0+CHUNK&&y>=minY&&y<minY+H;
    const offset=(x,y,z)=>((x-x0)*CHUNK+(z-z0))*H+(y-minY);
    const put=(x,y,z,block,onlyAir=false)=>{
@@ -149,7 +156,7 @@
    const get=(x,y,z)=>within(x,y,z)?data[offset(x,y,z)]:0;
    const heights=new Int16Array(CHUNK*CHUNK);
    for(let dx=0;dx<CHUNK;dx++)for(let dz=0;dz<CHUNK;dz++){
-     const x=x0+dx,z=z0+dz;if(x>=WORLD||z>=WORLD)continue;
+     const x=x0+dx,z=z0+dz;if(x>=maxX||z>=maxZ)continue;
      const biome=BIOMES[zone(x,z)],top=terrainAt(x,z,SEA,H,minY);
      heights[dx*CHUNK+dz]=top;
      for(let y=minY;y<=top;y++){
@@ -168,14 +175,14 @@
    }
    // Seeded mineral veins are distributed across depth bands and neighboring chunk edges.
    // This runs after cave carving and before structures; saved edits are reapplied last.
-   window.MineWorldOres.generate({data,cx,cz,H,minY,sea:SEA,biomeAt,terrainAt,protectedEdits:null});
+   window.MineWorldOres.generate({data,cx,cz,H,minY,sea:SEA,biomeAt,terrainAt,protectedEdits:null,minX,minZ,width,depth});
    // Original deep-world bedrock: a continuous Y=-64 floor and an irregular
    // four-layer transition. Place after caves/ores, before player edits.
    // Legacy 48-layer worlds are intentionally unchanged.
    if(minY===-64&&H===384){
      for(let dx=0;dx<CHUNK;dx++)for(let dz=0;dz<CHUNK;dz++){
        const x=x0+dx,z=z0+dz;
-       if(x>=WORLD||z>=WORLD)continue;
+       if(x>=maxX||z>=maxZ)continue;
        put(x,-64,z,170);
        for(let layer=1;layer<=4;layer++)
          if(rnd(x,z,3100+layer*37)<[0,.80,.55,.30,.10][layer])
@@ -184,7 +191,7 @@
    }
    // Seeded biome-specific groundcover and reeds.
    for(let x=x0;x<x0+CHUNK;x++)for(let z=z0;z<z0+CHUNK;z++){
-     if(x<1||z<1||x>=WORLD-1||z>=WORLD-1)continue;
+     if(x<minX+1||z<minZ+1||x>=maxX-1||z>=maxZ-1)continue;
      const biome=BIOMES[zone(x,z)],top=terrainAt(x,z,SEA,H,minY),kind=biome.tree;
      if(top>=minY+H-4)continue;
      if(kind==='flowers'&&rnd(x,z,441)>.67&&get(x,top+1,z)===0){put(x,top+1,z,rnd(x,z,442)>.4?16:17);}
@@ -224,7 +231,7 @@
      }else crown(x,base+h,z,leaf,r);
    };
    for(let x=x0-4;x<x0+CHUNK+4;x++)for(let z=z0-4;z<z0+CHUNK+4;z++){
-     if(x<2||x>=WORLD-2||z<2||z>=WORLD-2)continue;
+     if(x<minX+2||x>=maxX-2||z<minZ+2||z>=maxZ-2)continue;
      const biome=BIOMES[zone(x,z)],kind=biome.tree;
      if(kind==='none'||kind==='flowers'||kind==='reeds')continue;
      const density=kind==='jungle'?.035:kind==='bamboo'?.09:kind==='cactus'?.014:kind==='bigSpruce'?.018:kind==='sparseOak'?.009:kind==='spikes'?.009:.019;
@@ -236,7 +243,7 @@
    for(let gx=Math.floor((x0-24)/SPACING);gx<=Math.floor((x0+CHUNK+24)/SPACING);gx++)
    for(let gz=Math.floor((z0-24)/SPACING);gz<=Math.floor((z0+CHUNK+24)/SPACING);gz++){
      const ax=gx*SPACING+40+(hash(gx,gz,180)%100),az=gz*SPACING+40+(hash(gx,gz,181)%100);
-     if(ax<10||ax>=WORLD-10||az<10||az>=WORLD-10)continue;
+     if(ax<minX+10||ax>=maxX-10||az<minZ+10||az>=maxZ-10)continue;
      const biome=BIOMES[zone(ax,az)];if(!biome.feature||rnd(gx,gz,182)>.67)continue;
      const ty=terrainAt(ax,az,SEA,H,minY)+1;
      const feature=biome.feature;
@@ -286,10 +293,10 @@
        // Typed arrays silently wrap invalid IDs (256 becomes air, 511
        // becomes 255). Reject corrupted save edits rather than turning a
        // placed block into a different block during chunk regeneration.
-       if(!Number.isSafeInteger(index)||index<0||index>=WORLD*WORLD*H||
+       if(!Number.isSafeInteger(index)||index<0||index>=width*depth*H||
           !Number.isSafeInteger(block)||block<0||block>255)
          throw new RangeError('Invalid saved chunk edit');
-       const x=Math.floor(index/(WORLD*H)),z=Math.floor(index/H)%WORLD,y=index%H+minY;
+       const x=Math.floor(index/(depth*H))+minX,z=Math.floor(index/H)%depth+minZ,y=index%H+minY;
        if(x>=baseX&&x<baseX+CHUNK&&z>=baseZ&&z<baseZ+CHUNK&&y>=minY&&y<minY+H)put(x,y,z,block);
      }
    }
