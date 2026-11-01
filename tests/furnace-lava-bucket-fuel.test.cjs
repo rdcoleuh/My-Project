@@ -72,5 +72,5 @@ test('fuel appears in the existing furnace picker and service worker is versione
  const ui=fs.readFileSync(path.join(__dirname,'..','furnace-ui.js'),'utf8');
  const sw=fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8');
  assert.ok(ui.includes('window.MineWorldFurnace.FUEL'));
- assert.match(sw,/const VERSION='mineworld-6-\\d+-[a-z0-9-]+';/);
+ assert.match(sw,/const VERSION='mineworld-6-\d+-[a-z0-9-]+';/);
 });
