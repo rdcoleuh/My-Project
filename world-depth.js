@@ -279,11 +279,16 @@ function createSectionStore(options={}){
       throw new TypeError('Expected iterable section edits');
     const pending=[];
     for(const entry of edits){
-      if(!Array.isArray(entry)||entry.length!==4||
-         !location(entry[0],entry[1],entry[2])||
-         !Number.isSafeInteger(entry[3])||entry[3]<0||entry[3]>255)
+      if(!Array.isArray(entry)||entry.length!==4)
         throw new RangeError('Invalid section edit batch');
-      pending.push(entry);
+      // Snapshot each primitive exactly once during preflight. A caller may
+      // reuse or mutate its entry arrays while an iterable is consumed;
+      // retaining those arrays could cause a later set() to throw after
+      // earlier blocks were already changed, violating batch atomicity.
+      const [x,y,z,block]=entry;
+      if(!location(x,y,z)||!Number.isSafeInteger(block)||block<0||block>255)
+        throw new RangeError('Invalid section edit batch');
+      pending.push([x,y,z,block]);
     }
     let changed=0;
     for(const [x,y,z,block] of pending)if(set(x,y,z,block))changed++;
