@@ -255,7 +255,41 @@ function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator}={}){
   const inside=(x,y,z)=>codec.inside(x,y,z);
   function getWorld(x,y,z){
     if(!inside(x,y,z))return null;
+    // A fresh stream (or one with its final chunk unloaded) has no
+    // neighborhood profile. Missing terrain is not an exceptional state:
+    // return null instead of letting grid.worldToChunk throw before load().
+    const cx=Math.floor(x/16),cz=Math.floor(z/16);
+    if(!resident.has(key(cx,cz)))return null;
     return grid.getWorld(x,y,z);
+  }
+  // Conservative, bounded collision sampling for the staged deep world.
+  // The caller owns block hitbox rules (fluids, ladders and partial blocks
+  // must not be guessed here). Unknown/unloaded terrain blocks movement
+  // until streamed in; air is always passable. AABB maxima are exclusive,
+  // so a player exactly touching a block face is not colliding with it.
+  function sampleCollision(box,isSolid){
+    if(!box||typeof box!=='object'||typeof isSolid!=='function')
+      throw new TypeError('Expected a collision box and block predicate');
+    const {minX,minY,minZ,maxX,maxY,maxZ}=box;
+    if(![minX,minY,minZ,maxX,maxY,maxZ].every(v=>typeof v==='number'&&Number.isFinite(v))||
+       minX<0||minZ<0||minY< -64||maxX>10000||maxZ>10000||maxY>320||
+       maxX<=minX||maxY<=minY||maxZ<=minZ)
+      throw new RangeError('Invalid deep-world collision bounds');
+    const x0=Math.floor(minX),y0=Math.floor(minY),z0=Math.floor(minZ);
+    const x1=Math.ceil(maxX)-1,y1=Math.ceil(maxY)-1,z1=Math.ceil(maxZ)-1;
+    // Prevent a malformed network/player box from scanning whole chunks.
+    const cells=(x1-x0+1)*(y1-y0+1)*(z1-z0+1);
+    if(!Number.isSafeInteger(cells)||cells>512)
+      throw new RangeError('Deep-world collision query exceeds cell budget');
+    for(let x=x0;x<=x1;x++)for(let z=z0;z<=z1;z++)
+      for(let y=y0;y<=y1;y++){
+        const block=getWorld(x,y,z);
+        if(block===null)
+          return Object.freeze({state:'unloaded',blocked:true,hit:Object.freeze({x,y,z})});
+        if(block!==0&&isSolid(block,x,y,z))
+          return Object.freeze({state:'solid',blocked:true,hit:Object.freeze({x,y,z,block})});
+      }
+    return Object.freeze({state:'clear',blocked:false,hit:null});
   }
   function applyWorldEdits(entries){
     if(!entries||typeof entries[Symbol.iterator]!=='function')
@@ -329,7 +363,7 @@ function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator}={}){
     for(const store of resident.values())payloadBytes+=store.stats().payloadBytes;
     return Object.freeze({loaded:resident.size,maxLoaded,edits:saved.size,payloadBytes});
   }
-  return Object.freeze({load,unload,loadAround,getWorld,setWorld,applyWorldEdits,
+  return Object.freeze({load,unload,loadAround,getWorld,setWorld,sampleCollision,applyWorldEdits,
     snapshotEdits:()=>new Map(saved),loadedChunks:()=>Object.freeze([...resident.keys()]),
     stats,grid,codec});
 }
