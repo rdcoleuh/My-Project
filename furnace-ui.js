@@ -81,7 +81,7 @@ function withdraw(engine,api,position,which,limit=64){
 // deposit/withdraw routines reconcile the amounts before rethrowing, but the
 // UI must still persist that partial transfer. Otherwise a reload may restore
 // old furnace contents while retaining the newly credited player inventory.
-function commitTransfer(api,work,changed,refresh){
+function commitTransfer(api,work,changed,refresh,beforeSave){
  let result;
  try{result=work();}
  catch(_error){
@@ -92,7 +92,17 @@ function commitTransfer(api,work,changed,refresh){
   api.toast?.('Furnace transfer interrupted; check inventory');
   return null;
  }
- if(changed(result)){api.onChange();refresh();}
+ if(changed(result)){
+  // A collected smelt's XP belongs to the same saved transaction as its
+  // inventory credit and output debit. Award it before the save callback:
+  // otherwise a snapshot taken by onChange can contain the items but no XP.
+  // An optional reward callback cannot prevent persisting a completed transfer.
+  if(typeof beforeSave==='function'){
+   try{beforeSave(result);}
+   catch(_error){api.toast?.('Furnace reward interrupted; check experience');}
+  }
+  api.onChange();refresh();
+ }
  return result;
 }
 // Avoid rebuilding native <select> option nodes every 250 ms: this used to
@@ -262,9 +272,9 @@ function create(api){
   if(!current)return;
   const outputKey=which==='output'?engine.get(current)?.output?.key:null;
   const result=commitTransfer(api,()=>withdraw(engine,api,current,which,limit),
-   value=>!!value?.moved,render);
+   value=>!!value?.moved,render,
+   result=>awardCollectedOutput(api,which,outputKey,result));
   if(result?.full){api.toast('Inventory full');return;}
-  awardCollectedOutput(api,which,outputKey,result);
  }
  function render(){
   if(!current||!panel)return;
