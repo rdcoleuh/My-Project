@@ -149,10 +149,20 @@
    // Reject malformed saves *before* cave, ore and structure generation.
    // An invalid edit late in a Map must not burn a mobile frame generating
    // terrain that cannot be safely loaded. The caller's Map stays untouched.
-   if(edits)for(const [index,block] of edits)
+   // Validate the entire save before generation, but collect only edits for
+   // this chunk in the same pass. Large explored worlds can contain thousands
+   // of edits elsewhere; never scan the global Map a second time on every
+   // chunk load. A corrupt edit anywhere still aborts before terrain work.
+   const chunkEdits=[];
+   if(edits)for(const [index,block] of edits){
      if(!Number.isSafeInteger(index)||index<0||index>=width*depth*H||
         !Number.isSafeInteger(block)||block<0||block>255)
        throw new RangeError('Invalid saved chunk edit');
+     const x=Math.floor(index/(depth*H))+minX;
+     const z=Math.floor(index/H)%depth+minZ;
+     if(x>=cx*CHUNK&&x<(cx+1)*CHUNK&&z>=cz*CHUNK&&z<(cz+1)*CHUNK)
+       chunkEdits.push({x,y:index%H+minY,z,block});
+   }
    const data=new Uint8Array(CHUNK*CHUNK*H), x0=cx*CHUNK,z0=cz*CHUNK;
    const maxX=minX+width,maxZ=minZ+depth;
    const within=(x,y,z)=>x>=x0&&x<x0+CHUNK&&z>=z0&&z<z0+CHUNK&&y>=minY&&y<minY+H;
@@ -293,16 +303,9 @@
        });
      }
    }
-   // User edits always override generated terrain and structures, even when unloaded.
-   if(edits && edits.size){
-     // Each loaded chunk indexes its own edits directly, rather than scanning all edits.
-     const baseX=cx*CHUNK,baseZ=cz*CHUNK;
-     for(const [index,block] of edits){
-       // Edit IDs were validated before terrain generation.
-       const x=Math.floor(index/(depth*H))+minX,z=Math.floor(index/H)%depth+minZ,y=index%H+minY;
-       if(x>=baseX&&x<baseX+CHUNK&&z>=baseZ&&z<baseZ+CHUNK&&y>=minY&&y<minY+H)put(x,y,z,block);
-     }
-   }
+   // User edits override terrain, caves, ores and structures, including air.
+   // Replay only the prevalidated local edits; no second global Map scan.
+   for(const {x,y,z,block} of chunkEdits)put(x,y,z,block);
    return data;
  }
  // Opt-in vertical sections. Full-chunk generation remains the input for now;
