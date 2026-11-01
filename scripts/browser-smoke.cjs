@@ -1077,7 +1077,27 @@ async function go(browser,name,mobile){
   await page.screenshot({path:path.join(screenshotDir,
     mobile?'mobile-lava-fuel-capacity.png':'desktop-lava-fuel-capacity.png'),
     animations:'disabled'});
-  await page.locator('#mw-furnace-return-fuel').click({force:true});
+  // A full nonstackable fuel slot must be tappable to withdraw, even when
+  // more of the same selected fuel is owned. Reinsert using the same native
+  // touch/keyboard button and then withdraw again without duplication.
+  await page.locator('#mw-furnace-slot-fuel').click({force:true});
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.fuel===null,
+    furnaceFixture,{timeout:8000});
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-lava-native-withdraw.png':'desktop-lava-native-withdraw.png'),
+    animations:'disabled'});
+  await page.locator('#mw-furnace-slot-fuel').click({force:true});
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.fuel?.key==='lavaBucket',
+    furnaceFixture,{timeout:8000});
+  assert.equal((await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture)).fuel.qty,1,
+    name+': native lava slot tap inserted more than one bucket');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-lava-native-reinsert.png':'desktop-lava-native-reinsert.png'),
+    animations:'disabled'});
+  await page.locator('#mw-furnace-slot-fuel').click({force:true});
   await page.waitForFunction(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z)?.fuel===null,
     furnaceFixture,{timeout:8000});
