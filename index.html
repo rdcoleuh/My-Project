@@ -1973,6 +1973,7 @@ body.in-nether #game-wrap{background:#290f19}
   const snapshotFurnaces=()=>furnaces.snapshot();
   const furnaceUI=window.MineWorldFurnaceUI.create({
     engine:furnaces,count:amount,totals:inventoryTotals,change:addResource,label:itemLabel,toast,
+    gainExperience,
     onChange:()=>{markSave();updateHotbar();},
     onPause:()=>{cancelMining();mouseMiningHeld=false;touchHold.mine=false;paused=true;keys.clear();if(document.pointerLockElement)document.exitPointerLock();},
     onResume:()=>{markSave();save();if(started)start();else $('welcome').classList.remove('hidden');}

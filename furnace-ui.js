@@ -152,6 +152,23 @@ function planSlotGesture(which,slot,selected,owned,modifiers={}){
   return {action:'deposit',item:selected,limit:shift?64:1};
  return slot?{action:'take',limit:shift?64:1}:null;
 }
+// Experience is earned when a successfully smelted stack is actually
+// collected, never when fuel is inserted or an output merely finishes.
+// MineWorld currently tracks whole XP points: standard outputs grant one
+// point each; ancient debris is a rarer two-point product. This is original
+// MineWorld progression balancing, not an exact Java/Bedrock XP table.
+const SMELT_PRODUCTS=new Set(Object.values(window.MineWorldFurnace?.RECIPES||{}));
+function smeltingReward(key,quantity){
+ if(!SMELT_PRODUCTS.has(key)||!Number.isSafeInteger(quantity)||quantity<1||quantity>64)return 0;
+ return quantity*(key==='netheriteScrap'?2:1);
+}
+function awardCollectedOutput(api,which,key,result){
+ if(which!=='output'||!result||!Number.isSafeInteger(result.moved)||
+    result.moved<1||typeof api?.gainExperience!=='function')return 0;
+ const points=smeltingReward(key,result.moved);
+ if(points)api.gainExperience(points);
+ return points;
+}
 function create(api){
  const engine=api.engine;let current=null,panel=null,drawClock=0;
  const iconCache=new Map();let iconPack=null,iconGeneration=null,iconEpoch=0;
@@ -243,9 +260,11 @@ function create(api){
  }
  function take(which,limit=64){
   if(!current)return;
+  const outputKey=which==='output'?engine.get(current)?.output?.key:null;
   const result=commitTransfer(api,()=>withdraw(engine,api,current,which,limit),
    value=>!!value?.moved,render);
   if(result?.full){api.toast('Inventory full');return;}
+  awardCollectedOutput(api,which,outputKey,result);
  }
  function render(){
   if(!current||!panel)return;
@@ -287,12 +306,12 @@ function create(api){
   ensurePanel();current={...position};
   const station=machine.kind;
   el('mw-furnace-title').textContent=station==='smoker'?'🍖 Smoker':station==='blast'?'⚒ Blast Furnace':'🔥 Furnace';
-  el('mw-furnace-help').textContent='Add an ingredient and fuel. '+(station==='smoker'?'Food only':station==='blast'?'Ores and metals only':'All supported recipes')+'; one item takes '+window.MineWorldFurnace.KINDS[station].cook+' seconds. Tap a slot to add the selected item or collect output. Take buttons return ingredients and fuel.';
+  el('mw-furnace-help').textContent='Add an ingredient and fuel. '+(station==='smoker'?'Food only':station==='blast'?'Ores and metals only':'All supported recipes')+'; one item takes '+window.MineWorldFurnace.KINDS[station].cook+' seconds. Tap a slot to add the selected item or collect output. Collect smelted output for experience. Take buttons return ingredients and fuel.';
 
   panel.classList.remove('hidden');api.onPause();render();el('mw-furnace-close').focus();return true;}
  function close(){if(!current)return;current=null;panel?.classList.add('hidden');api.onResume();}
  function tick(dt){if(!current)return;drawClock+=dt;if(drawClock>=.25){drawClock=0;render();}}
  return {open,close,tick,get isOpen(){return !!current;}};
 }
-window.MineWorldFurnaceUI=Object.freeze({create,ensureStation,syncSelect,resolveSlotIcon,planSlotGesture,transfers:Object.freeze({deposit,withdraw,commitTransfer})});
+window.MineWorldFurnaceUI=Object.freeze({create,ensureStation,syncSelect,resolveSlotIcon,planSlotGesture,smeltingReward,awardCollectedOutput,transfers:Object.freeze({deposit,withdraw,commitTransfer})});
 })();

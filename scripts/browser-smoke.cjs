@@ -1083,7 +1083,11 @@ async function go(browser,name,mobile){
     animations:'disabled'});
   assert.equal(await page.locator('#mw-furnace-output-one').isDisabled(),false,
     name+': single-output control must be enabled when ingots are ready');
+  const xpBeforeCollection=Number((await page.locator('#xp-display').getAttribute('title')||'').match(/^\d+/)?.[0]);
+  assert.ok(Number.isSafeInteger(xpBeforeCollection),name+': experience HUD unavailable');
   await page.locator('#mw-furnace-output-one').click({force:true});
+  const xpAfterOne=Number((await page.locator('#xp-display').getAttribute('title')||'').match(/^\d+/)?.[0]);
+  assert.equal(xpAfterOne,xpBeforeCollection+1,name+': collecting one iron ingot must grant one XP');
   const oneLeft=await page.evaluate(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
   assert.equal(oneLeft?.output?.qty,1,name+': Collect 1 removed both ingots');
@@ -1096,6 +1100,8 @@ async function go(browser,name,mobile){
   const drained=await page.evaluate(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
   assert.equal(drained?.output,null,name+': Collect output did not empty remaining ingot');
+  const xpAfterStack=Number((await page.locator('#xp-display').getAttribute('title')||'').match(/^\d+/)?.[0]);
+  assert.equal(xpAfterStack,xpBeforeCollection+2,name+': collecting the remaining ingot must grant one more XP');
   assert.equal(await page.locator('#mw-furnace-output-one').isDisabled(),true,
     name+': Collect 1 must disable when output is empty');
   // Smelt a non-oak log using the same real furnace UI in both browsers.
