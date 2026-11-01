@@ -121,8 +121,18 @@ function canOccupy(entity,blockAt,blockShape,collidable,worldBounds){
  if(!bounds||typeof blockAt!=='function'||typeof blockShape!=='function'||
   typeof collidable!=='function')return false;
  const epsilon=1e-7;
- if(worldBounds&&(bounds.minX<0||bounds.minZ<0||bounds.minY<0||
-   bounds.maxX>worldBounds.width||bounds.maxZ>worldBounds.depth))return false;
+ // Treat width/height/depth as spans, not absolute upper coordinates.
+ // Legacy worlds start at (0,0,0); experimental deep worlds can provide
+ // negative origins such as minY=-64 without changing the collision API.
+ if(worldBounds){
+  const minX=worldBounds.minX??0,minY=worldBounds.minY??0,minZ=worldBounds.minZ??0;
+  const {width,height,depth}=worldBounds;
+  if(![minX,minY,minZ,width,height,depth].every(finite)||
+     width<=0||height<=0||depth<=0)return false;
+  if(bounds.minX<minX-epsilon||bounds.minY<minY-epsilon||
+     bounds.minZ<minZ-epsilon||bounds.maxX>minX+width+epsilon||
+     bounds.maxY>minY+height+epsilon||bounds.maxZ>minZ+depth+epsilon)return false;
+ }
  for(let x=Math.floor(bounds.minX);x<=Math.floor(bounds.maxX-epsilon);x++)
   for(let z=Math.floor(bounds.minZ);z<=Math.floor(bounds.maxZ-epsilon);z++)
    for(let y=Math.floor(bounds.minY);y<=Math.floor(bounds.maxY-epsilon);y++){
