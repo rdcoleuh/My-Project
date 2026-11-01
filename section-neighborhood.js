@@ -291,6 +291,62 @@ function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator}={}){
       }
     return Object.freeze({state:'clear',blocked:false,hit:null});
   }
+  // Swept movement preflight for the 384-layer stream. Checking only the
+  // destination AABB lets a sprinting or falling player tunnel through a
+  // full voxel between frames. Sample at most quarter-block intervals,
+  // including the starting box; unloaded chunks are solid barriers until
+  // streamed. This staged API uses whole-block predicates, not custom
+  // partial-block hitboxes, and is not yet wired into live movement.
+  function sweepCollision(box,motion,isSolid){
+    if(!motion||typeof motion!=='object'||Array.isArray(motion))
+      throw new TypeError('Expected a deep-world motion vector');
+    const {x:dx,y:dy,z:dz}=motion;
+    if(![dx,dy,dz].every(v=>typeof v==='number'&&Number.isFinite(v)))
+      throw new RangeError('Invalid deep-world motion vector');
+    const distance=Math.max(Math.abs(dx),Math.abs(dy),Math.abs(dz));
+    // Limit per-frame work to 64 steps. Physics callers must subdivide
+    // teleport-sized displacements rather than skipping through terrain.
+    if(distance>16)throw new RangeError('Deep-world sweep exceeds movement budget');
+    if(!box||typeof box!=='object')
+      throw new TypeError('Expected a collision box');
+    const end={
+      minX:box.minX+dx,maxX:box.maxX+dx,
+      minY:box.minY+dy,maxY:box.maxY+dy,
+      minZ:box.minZ+dz,maxZ:box.maxZ+dz
+    };
+    // Preflight both endpoints before reading any terrain, so malformed
+    // network motion never partially advances a collision query.
+    for(const b of [box,end]){
+      if(![b.minX,b.minY,b.minZ,b.maxX,b.maxY,b.maxZ]
+        .every(v=>typeof v==='number'&&Number.isFinite(v))||
+        b.minX<0||b.minY< -64||b.minZ<0||
+        b.maxX>10000||b.maxY>320||b.maxZ>10000||
+        b.maxX<=b.minX||b.maxY<=b.minY||b.maxZ<=b.minZ)
+        throw new RangeError('Invalid deep-world sweep bounds');
+    }
+    const initial=sampleCollision(box,isSolid);
+    if(initial.blocked)
+      return Object.freeze({state:initial.state,blocked:true,
+        fraction:0,hit:initial.hit,samples:1});
+    const steps=Math.ceil(distance*4);
+    if(!steps)
+      return Object.freeze({state:'clear',blocked:false,
+        fraction:1,hit:null,samples:1});
+    for(let i=1;i<=steps;i++){
+      const t=i/steps;
+      const moved={
+        minX:box.minX+dx*t,maxX:box.maxX+dx*t,
+        minY:box.minY+dy*t,maxY:box.maxY+dy*t,
+        minZ:box.minZ+dz*t,maxZ:box.maxZ+dz*t
+      };
+      const hit=sampleCollision(moved,isSolid);
+      if(hit.blocked)
+        return Object.freeze({state:hit.state,blocked:true,
+          fraction:(i-1)/steps,hit:hit.hit,samples:i+1});
+    }
+    return Object.freeze({state:'clear',blocked:false,
+      fraction:1,hit:null,samples:steps+1});
+  }
   function applyWorldEdits(entries){
     if(!entries||typeof entries[Symbol.iterator]!=='function')
       throw new TypeError('Expected iterable absolute-world edits');
@@ -364,7 +420,7 @@ function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator}={}){
     return Object.freeze({loaded:resident.size,maxLoaded,edits:saved.size,payloadBytes});
   }
   return Object.freeze({load,unload,loadAround,getWorld,setWorld,sampleCollision,applyWorldEdits,
-    snapshotEdits:()=>new Map(saved),loadedChunks:()=>Object.freeze([...resident.keys()]),
+    sweepCollision,snapshotEdits:()=>new Map(saved),loadedChunks:()=>Object.freeze([...resident.keys()]),
     stats,grid,codec});
 }
 
