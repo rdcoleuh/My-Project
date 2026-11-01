@@ -154,5 +154,147 @@ function createSectionNeighborhood(){
   return Object.freeze({register,unregister,get:at,neighborsOf,set,applyEdits,
     worldToChunk,getWorld,setWorld,snapshot,canInstall,planMesh,size:()=>stores.size});
 }
-window.MineWorldSectionNeighborhood=Object.freeze({createSectionNeighborhood});
+
+/*
+ * Opt-in 384-layer chunk residency bridge. This connects the existing
+ * generator, copy-on-write vertical sections, cross-chunk seam invalidation
+ * and deep edit codec without switching legacy gameplay or rewriting saves.
+ * A bounded LRU avoids retaining every 384-layer chunk on mobile GPUs.
+ */
+function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator}={}){
+  if(!Number.isSafeInteger(maxLoaded)||maxLoaded<1||maxLoaded>64)
+    throw new RangeError('Invalid deep chunk residency budget');
+  if(Object.prototype.toString.call(edits)!=='[object Map]')
+    throw new TypeError('Expected a Map of deep-world edits');
+  const depth=window.MineWorldWorldDepth;
+  if(!depth||typeof depth.create!=='function')
+    throw new Error('Deep-world coordinate codec unavailable');
+  const codec=depth.create({width:10000,depth:10000,minY:-64,maxY:319,chunkSize:16});
+  const make=generator===undefined?
+    (cx,cz,chunkEdits)=>{
+      const biomes=window.MineWorldBiomes;
+      if(!biomes||typeof biomes.generateSectionStore!=='function')
+        throw new Error('Deep-world chunk generator unavailable');
+      return biomes.generateSectionStore({cx,cz,H:384,minY:-64,SEA:63,edits:chunkEdits});
+    }:generator;
+  if(typeof make!=='function')throw new TypeError('Invalid deep chunk generator');
+  const grid=createSectionNeighborhood(),resident=new Map();
+  const saved=new Map(),byChunk=new Map();
+  const key=(cx,cz)=>cx+','+cz;
+  const chunk=(cx,cz)=>{
+    if(!Number.isSafeInteger(cx)||!Number.isSafeInteger(cz)||
+       cx<0||cz<0||cx>=625||cz>=625)
+      throw new RangeError('Chunk lies outside the Overworld');
+    return key(cx,cz);
+  };
+  const addEdit=(index,block,cx,cz)=>{
+    saved.set(index,block);
+    const k=key(cx,cz);
+    if(!byChunk.has(k))byChunk.set(k,new Map());
+    byChunk.get(k).set(index,block);
+  };
+  // Validate the whole imported edit map before retaining any of it. Neither
+  // the original Map nor its entries are ever rewritten by this bridge.
+  for(const [index,block] of edits){
+    const p=codec.decode(index);
+    if(!p||!Number.isSafeInteger(block)||block<0||block>255)
+      throw new RangeError('Invalid saved deep-world edit');
+    addEdit(index,block,Math.floor(p.x/16),Math.floor(p.z/16));
+  }
+  function load(cx,cz){
+    const k=chunk(cx,cz);
+    if(resident.has(k)){
+      const store=resident.get(k);
+      resident.delete(k);resident.set(k,store);
+      return store;
+    }
+    // Generate and validate before evicting any resident chunk. A failed
+    // generator must not discard the player's current playable neighborhood.
+    const store=make(cx,cz,new Map(byChunk.get(k)||[]));
+    if(!store||store.minY!==-64||store.maxY!==319||
+       store.chunkSize!==16||store.sectionHeight!==16||
+       !Number.isSafeInteger(store.storeId)||
+       typeof store.get!=='function'||typeof store.set!=='function'||
+       typeof store.applyEdits!=='function'||
+       typeof store.markNeighborBoundaryDirty!=='function'||
+       typeof store.materializeClaimWithNeighbors!=='function'||
+       typeof store.canInstallClaimWithNeighbors!=='function'||
+       [...resident.values()].includes(store))
+      throw new RangeError('Invalid generated deep-world section store');
+    if(resident.size>=maxLoaded){
+      const oldest=resident.keys().next().value;
+      const [ox,oz]=oldest.split(',').map(Number);
+      grid.unregister(ox,oz);resident.delete(oldest);
+    }
+    grid.register(cx,cz,store);
+    resident.set(k,store);
+    return store;
+  }
+  function unload(cx,cz){
+    const k=chunk(cx,cz);
+    if(!resident.has(k))return false;
+    grid.unregister(cx,cz);resident.delete(k);return true;
+  }
+  const inside=(x,y,z)=>codec.inside(x,y,z);
+  function getWorld(x,y,z){
+    if(!inside(x,y,z))return null;
+    return grid.getWorld(x,y,z);
+  }
+  function applyWorldEdits(entries){
+    if(!entries||typeof entries[Symbol.iterator]!=='function')
+      throw new TypeError('Expected iterable absolute-world edits');
+    const pending=new Map();
+    // All-or-nothing validation, including loaded-chunk membership, precedes
+    // any voxel or save edit. Last-write-wins for repeated network positions.
+    for(const entry of entries){
+      if(!Array.isArray(entry)||entry.length!==4)
+        throw new RangeError('Invalid deep-world edit batch');
+      const [x,y,z,block]=entry;
+      if(!inside(x,y,z)||!Number.isSafeInteger(block)||block<0||block>255)
+        throw new RangeError('Invalid deep-world edit batch');
+      const cx=Math.floor(x/16),cz=Math.floor(z/16);
+      if(!resident.has(key(cx,cz)))
+        throw new RangeError('Cannot edit an unloaded deep-world chunk');
+      const index=codec.index(x,y,z);
+      pending.set(index,{x,y,z,block,cx,cz,index});
+    }
+    let changed=0;
+    for(const p of pending.values()){
+      if(grid.setWorld(p.x,p.y,p.z,p.block)){
+        addEdit(p.index,p.block,p.cx,p.cz);
+        changed++;
+      }
+    }
+    return changed;
+  }
+  function setWorld(x,y,z,block){
+    return applyWorldEdits([[x,y,z,block]])>0;
+  }
+  function loadAround(x,z,radius=1){
+    if(!Number.isSafeInteger(x)||!Number.isSafeInteger(z)||
+       x<0||x>=10000||z<0||z>=10000||
+       !Number.isSafeInteger(radius)||radius<0||radius>4)
+      throw new RangeError('Invalid deep-world streaming radius');
+    const cx=Math.floor(x/16),cz=Math.floor(z/16),targets=[];
+    for(let dx=-radius;dx<=radius;dx++)
+      for(let dz=-radius;dz<=radius;dz++)
+        if(cx+dx>=0&&cx+dx<625&&cz+dz>=0&&cz+dz<625)
+          targets.push({cx:cx+dx,cz:cz+dz,distance:dx*dx+dz*dz});
+    if(targets.length>maxLoaded)
+      throw new RangeError('Deep-world streaming radius exceeds residency budget');
+    targets.sort((a,b)=>a.distance-b.distance||a.cx-b.cx||a.cz-b.cz);
+    for(const p of targets)load(p.cx,p.cz);
+    return Object.freeze(targets.map(({cx,cz})=>Object.freeze({cx,cz})));
+  }
+  function stats(){
+    let payloadBytes=0;
+    for(const store of resident.values())payloadBytes+=store.stats().payloadBytes;
+    return Object.freeze({loaded:resident.size,maxLoaded,edits:saved.size,payloadBytes});
+  }
+  return Object.freeze({load,unload,loadAround,getWorld,setWorld,applyWorldEdits,
+    snapshotEdits:()=>new Map(saved),loadedChunks:()=>Object.freeze([...resident.keys()]),
+    stats,grid,codec});
+}
+
+window.MineWorldSectionNeighborhood=Object.freeze({createSectionNeighborhood,createDeepChunkStream});
 })();
