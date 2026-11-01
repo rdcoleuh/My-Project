@@ -21,7 +21,7 @@ test('survival meters, controls and endgame progress survive a detached height-m
   difficulty:'hard',equipped:'sword',cameraMode:2,dayClock:19876.25});
  assert.deepEqual(plain(result.progressionState),{
   dragonDefeated:true,eyesPlaced:12,netherPortalBuilt:true,
-  netherPortalPosition:{x:4.5,z:3.5},advancements:achievements()});
+  netherPortalPosition:{x:4.5,z:3.5},advancements:achievements(),villagerProgress:null});
  assert.equal(result.status,'preview-only');
  assert.ok(Object.isFrozen(result.survivalState));
  assert.ok(Object.isFrozen(result.progressionState));

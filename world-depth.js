@@ -973,12 +973,37 @@ function planLegacySaveMigration(save,{width=10000,depth=10000}={}){
       throw new RangeError('Invalid saved advancements');
     return copy;
   })();
+  // Villager trade tiers and exhausted offers must survive future height migration.
+  // This is read-only preflight; it never rewrites a live save.
+  const villagerProgress=(()=>{
+    if(save.villagerProgress==null)return null;
+    const copy=copyOwnedRecord(save.villagerProgress,'villager trading',
+      {maxNodes:20000,maxKeys:500,maxArray:0});
+    if(!copy||Array.isArray(copy)||Object.keys(copy).length>500)
+      throw new RangeError('Invalid saved villager trading collection');
+    for(const [id,state] of Object.entries(copy)){
+      if(!/^-?\d+,-?\d+:\d+$/.test(id)||
+         !state||Array.isArray(state)||
+         !Number.isSafeInteger(state.xp)||state.xp<0||state.xp>99999||
+         !Number.isSafeInteger(state.restock)||state.restock<0||state.restock>1000000000||
+         !state.uses||Array.isArray(state.uses)||
+         Object.keys(state.uses).length>128)
+        throw new RangeError('Invalid saved villager trading record');
+      for(const [offer,count] of Object.entries(state.uses)){
+        if(!/^(0|[1-9]\d{0,3})$/.test(offer)||
+           !Number.isSafeInteger(count)||count<0||count>65535)
+          throw new RangeError('Invalid saved villager trade usage');
+      }
+    }
+    return copy;
+  })();
   const progressionState=Object.freeze({
     dragonDefeated:savedScalar('dragonDefeated',value=>typeof value==='boolean'),
     eyesPlaced:savedScalar('eyesPlaced',value=>Number.isSafeInteger(value)&&value>=0&&value<=12),
     netherPortalBuilt:savedScalar('netherPortalBuilt',value=>typeof value==='boolean'),
     netherPortalPosition:portalPosition,
-    advancements
+    advancements,
+    villagerProgress
   });
   // A terrain migration without its seed or weather changes the world even
   // when every placed block is reindexed correctly. Preflight these live
