@@ -1,6 +1,6 @@
 /* MineWorld: independently authored deterministic Overworld ore veins.
- * World height is 48 rather than Minecraft's -64..320. These are compressed
- * depth distributions informed by the general idea of real ore layering.
+ * Legacy 48-layer and experimental Y=-64..319 profiles use separate
+ * distributions. Signed X/Z world origins are opt-in for deep-world chunks.
  * Never writes outside the 16x16 chunk; neighboring chunks share seam-safe
  * candidate positions, and player edits remain authoritative afterward.
  */
@@ -43,10 +43,26 @@
     if(ore.name==='Emerald')w=/Peaks|Grove|Slopes|Meadow|Mountain|Stony/.test(biome)?w*2.4:w*.045;
     return Math.min(2.5,w);
   }
-  function generate({data,cx,cz,H=48,minY=0,sea=14,biomeAt,terrainAt,protectedEdits}){
+  function generate({data,cx,cz,H=48,minY=0,sea=14,biomeAt,terrainAt,protectedEdits,
+    minX=0,minZ=0,width=WORLD,depth=WORLD}={}){
+    // Legacy callers omit the signed origin and keep byte-for-byte identical
+    // coordinate encoding. A deep-world chunk can instead span negative X/Z.
+    if(!(data instanceof Uint8Array)||!Number.isSafeInteger(H)||H<4||
+       data.length!==CHUNK*CHUNK*H||
+       ![cx,cz,minY,minX,minZ,width,depth].every(Number.isSafeInteger)||
+       width<1||depth<1||!Number.isSafeInteger(minX+width-1)||
+       !Number.isSafeInteger(minZ+depth-1)||
+       !Number.isSafeInteger(cx*CHUNK)||!Number.isSafeInteger(cz*CHUNK)||
+       typeof biomeAt!=='function'||typeof terrainAt!=='function')
+      throw new RangeError('Invalid ore chunk geometry');
     const x0=cx*CHUNK,z0=cz*CHUNK;
     const at=(x,y,z)=>((x-x0)*CHUNK+(z-z0))*H+(y-minY);
-    const inside=(x,y,z)=>x>=x0&&x<x0+CHUNK&&z>=z0&&z<z0+CHUNK&&x>=0&&x<WORLD&&z>=0&&z<WORLD&&y>minY+2&&y<minY+H;
+    // Ore placement never edits the protected floor. Player edits, however,
+    // must be restored at EVERY valid height, including bedrock and sea level.
+    const insideChunk=(x,y,z)=>x>=x0&&x<x0+CHUNK&&z>=z0&&z<z0+CHUNK&&
+      x>=minX&&x<minX+width&&z>=minZ&&z<minZ+depth&&
+      y>=minY&&y<minY+H;
+    const oreInside=(x,y,z)=>insideChunk(x,y,z)&&y>minY+2;
     const cell=5;
     for(let type=0;type<TYPES.length;type++){
       const base=TYPES[type],ore=minY<0?{...base,...DEEP_BANDS[base.name]}:base;
@@ -56,7 +72,7 @@
         const anchorX=gx*cell+Math.floor(chance(gx,gy,gz,type*15+1)*cell);
         const anchorZ=gz*cell+Math.floor(chance(gx,gy,gz,type*15+2)*cell);
         const anchorY=gy*cell+Math.floor(chance(gx,gy,gz,type*15+3)*cell);
-        if(anchorX<0||anchorX>=WORLD||anchorZ<0||anchorZ>=WORLD||anchorY<ore.min||anchorY>ore.max)continue;
+        if(anchorX<minX||anchorX>=minX+width||anchorZ<minZ||anchorZ>=minZ+depth||anchorY<ore.min||anchorY>ore.max)continue;
         const biome=biomeAt(anchorX,anchorZ).name;
         const threshold=ore.chance*weight(anchorY,ore,biome);
         if(chance(gx,gy,gz,type*15+4)>threshold)continue;
@@ -64,7 +80,7 @@
         for(let ox=-radius;ox<=radius;ox++)for(let oy=-radius;oy<=radius;oy++)for(let oz=-radius;oz<=radius;oz++){
           if(ox*ox+oy*oy+oz*oz>radius*radius+.3)continue;
           const x=anchorX+ox,y=anchorY+oy,z=anchorZ+oz;
-          if(!inside(x,y,z))continue;
+          if(!oreInside(x,y,z))continue;
           if(y>=terrainAt(x,z,sea,H,minY)-3)continue;
           if(chance(x,y,z,type*15+5)<.13)continue;
           const i=at(x,y,z),rock=data[i];
@@ -76,8 +92,11 @@
     // Ground truth: preserve manually mined or built blocks in regenerated chunks.
     if(protectedEdits&&protectedEdits.size){
       for(const [index,block] of protectedEdits){
-        const x=Math.floor(index/(WORLD*H)),z=Math.floor(index/H)%WORLD,y=index%H+minY;
-        if(inside(x,y,z))data[at(x,y,z)]=block;
+        if(!Number.isSafeInteger(index)||index<0||index>=width*depth*H||
+           !Number.isSafeInteger(block)||block<0||block>255)continue;
+        const x=Math.floor(index/(depth*H))+minX,
+          z=Math.floor(index/H)%depth+minZ,y=index%H+minY;
+        if(insideChunk(x,y,z))data[at(x,y,z)]=block;
       }
     }
     return data;
