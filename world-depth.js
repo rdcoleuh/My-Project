@@ -469,6 +469,36 @@ function createSectionStore(options={}){
     invalidate(Math.floor((y-minY)/sectionHeight));
     revision++;
   }
+  // Horizontal seam updates must invalidate the neighboring chunk's mesh
+  // as well as the edited chunk. Validate all participating stores before
+  // changing any voxels so a mismatched world-height profile cannot leave
+  // one side updated and the other side stale. Unloaded neighbors are allowed:
+  // their initial mesh must be built when that chunk is subsequently loaded.
+  function setWithNeighbors(x,y,z,block,neighbors={}){
+    if(!location(x,y,z)||!Number.isSafeInteger(block)||block<0||block>255)
+      throw new RangeError('Invalid section block edit');
+    if(!neighbors||typeof neighbors!=='object'||Array.isArray(neighbors))
+      throw new TypeError('Expected adjacent section stores');
+    const sides=[];
+    if(x===0)sides.push('west');
+    if(x===chunkSize-1)sides.push('east');
+    if(z===0)sides.push('north');
+    if(z===chunkSize-1)sides.push('south');
+    const recipients=[];
+    for(const side of sides){
+      const neighbor=neighbors[side];
+      if(neighbor==null)continue;
+      if(neighbor.storeId===storeId||neighbor.chunkSize!==chunkSize||
+         neighbor.minY!==minY||neighbor.maxY!==maxY||
+         !Number.isSafeInteger(neighbor.storeId)||
+         typeof neighbor.markNeighborBoundaryDirty!=='function')
+        throw new RangeError('Incompatible adjacent section store');
+      recipients.push(neighbor);
+    }
+    if(!set(x,y,z,block))return false;
+    for(const neighbor of recipients)neighbor.markNeighborBoundaryDirty(y);
+    return true;
+  }
   function rebuild(){
     const result=new Uint8Array(columns*height);
     for(let i=0;i<sections.length;i++){
@@ -494,7 +524,7 @@ function createSectionStore(options={}){
       payloadBytes:sections.reduce((n,s)=>n+(s.uniform?1:s.data.byteLength),0),
       dirty:dirty.size,inFlight:inFlight.size,revision};
   }
-  return Object.freeze({storeId,minY,maxY,height,chunkSize,sectionHeight,get,set,applyEdits,
+  return Object.freeze({storeId,minY,maxY,height,chunkSize,sectionHeight,get,set,setWithNeighbors,applyEdits,
     dirtySections,dirtySectionsNear,takeDirtySections,takeDirtySectionsNear,
     claimDirtySectionsNear,ackDirtySection,releaseDirtySection,
     reclaimStaleMeshClaims,canInstallClaim:currentClaim,materializeClaim,materializeClaimWithSeams,
