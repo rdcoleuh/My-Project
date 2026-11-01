@@ -161,15 +161,29 @@ function createSectionNeighborhood(){
  * and deep edit codec without switching legacy gameplay or rewriting saves.
  * A bounded LRU avoids retaining every 384-layer chunk on mobile GPUs.
  */
-function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator}={}){
+function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator,
+  width=10000,depth=10000,minX=0,minZ=0}={}){
+  // Horizontal origins are opt-in, chunk-aligned and part of the edit codec.
+  // Do not silently reinterpret legacy positive-coordinate saved indices.
+  if(![width,depth,minX,minZ].every(Number.isSafeInteger)||
+     width<16||depth<16||width%16!==0||depth%16!==0||
+     minX%16!==0||minZ%16!==0||
+     !Number.isSafeInteger(minX+width)||!Number.isSafeInteger(minZ+depth))
+    throw new RangeError('Invalid signed deep-world horizontal profile');
+  // The current built-in biome generator still accepts positive chunks only.
+  // Signed worlds must supply an independent generator until it is migrated.
+  if((minX<0||minZ<0)&&generator===undefined)
+    throw new RangeError('Signed deep-world chunks require a custom generator');
+  const maxX=minX+width,maxZ=minZ+depth;
+  const minCX=minX/16,maxCX=maxX/16,minCZ=minZ/16,maxCZ=maxZ/16;
   if(!Number.isSafeInteger(maxLoaded)||maxLoaded<1||maxLoaded>64)
     throw new RangeError('Invalid deep chunk residency budget');
   if(Object.prototype.toString.call(edits)!=='[object Map]')
     throw new TypeError('Expected a Map of deep-world edits');
-  const depth=window.MineWorldWorldDepth;
-  if(!depth||typeof depth.create!=='function')
+  const depthCodec=window.MineWorldWorldDepth;
+  if(!depthCodec||typeof depthCodec.create!=='function')
     throw new Error('Deep-world coordinate codec unavailable');
-  const codec=depth.create({width:10000,depth:10000,minY:-64,maxY:319,chunkSize:16});
+  const codec=depthCodec.create({width,depth,minX,minZ,minY:-64,maxY:319,chunkSize:16});
   const make=generator===undefined?
     (cx,cz,chunkEdits)=>{
       const biomes=window.MineWorldBiomes;
@@ -183,7 +197,7 @@ function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator}={}){
   const key=(cx,cz)=>cx+','+cz;
   const chunk=(cx,cz)=>{
     if(!Number.isSafeInteger(cx)||!Number.isSafeInteger(cz)||
-       cx<0||cz<0||cx>=625||cz>=625)
+       cx<minCX||cz<minCZ||cx>=maxCX||cz>=maxCZ)
       throw new RangeError('Chunk lies outside the Overworld');
     return key(cx,cz);
   };
@@ -272,7 +286,8 @@ function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator}={}){
       throw new TypeError('Expected a collision box and block predicate');
     const {minX,minY,minZ,maxX,maxY,maxZ}=box;
     if(![minX,minY,minZ,maxX,maxY,maxZ].every(v=>typeof v==='number'&&Number.isFinite(v))||
-       minX<0||minZ<0||minY< -64||maxX>10000||maxZ>10000||maxY>320||
+       minX<codec.minX||minZ<codec.minZ||minY< -64||
+       maxX>codec.minX+codec.width||maxZ>codec.minZ+codec.depth||maxY>320||
        maxX<=minX||maxY<=minY||maxZ<=minZ)
       throw new RangeError('Invalid deep-world collision bounds');
     const x0=Math.floor(minX),y0=Math.floor(minY),z0=Math.floor(minZ);
@@ -319,8 +334,9 @@ function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator}={}){
     for(const b of [box,end]){
       if(![b.minX,b.minY,b.minZ,b.maxX,b.maxY,b.maxZ]
         .every(v=>typeof v==='number'&&Number.isFinite(v))||
-        b.minX<0||b.minY< -64||b.minZ<0||
-        b.maxX>10000||b.maxY>320||b.maxZ>10000||
+        b.minX<codec.minX||b.minY< -64||b.minZ<codec.minZ||
+        b.maxX>codec.minX+codec.width||b.maxY>320||
+        b.maxZ>codec.minZ+codec.depth||
         b.maxX<=b.minX||b.maxY<=b.minY||b.maxZ<=b.minZ)
         throw new RangeError('Invalid deep-world sweep bounds');
     }
@@ -379,13 +395,13 @@ function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator}={}){
   }
   function loadAround(x,z,radius=1){
     if(!Number.isSafeInteger(x)||!Number.isSafeInteger(z)||
-       x<0||x>=10000||z<0||z>=10000||
+       x<minX||x>=maxX||z<minZ||z>=maxZ||
        !Number.isSafeInteger(radius)||radius<0||radius>4)
       throw new RangeError('Invalid deep-world streaming radius');
     const cx=Math.floor(x/16),cz=Math.floor(z/16),targets=[];
     for(let dx=-radius;dx<=radius;dx++)
       for(let dz=-radius;dz<=radius;dz++)
-        if(cx+dx>=0&&cx+dx<625&&cz+dz>=0&&cz+dz<625)
+        if(cx+dx>=minCX&&cx+dx<maxCX&&cz+dz>=minCZ&&cz+dz<maxCZ)
           targets.push({cx:cx+dx,cz:cz+dz,distance:dx*dx+dz*dz});
     if(targets.length>maxLoaded)
       throw new RangeError('Deep-world streaming radius exceeds residency budget');
