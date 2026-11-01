@@ -1054,6 +1054,33 @@ async function go(browser,name,mobile){
   await page.screenshot({path:path.join(screenshotDir,
     mobile?'mobile-furnace-three-slots.png':'desktop-furnace-three-slots.png'),
     animations:'disabled'});
+  // Synthetic pack remains active. Verify nonstackable lava fuel on both
+  // desktop and mobile Chrome before the existing iron-smelting check.
+  assert.equal(await page.evaluate(()=>window.MineWorldBridge.grantLoot('lavaBucket',3)),
+    true,name+': synthetic lava-bucket fixture unavailable');
+  await page.waitForFunction(()=>[...document.querySelector('#mw-furnace-fuel')?.options||[]]
+    .some(option=>option.value==='lavaBucket'),null,{timeout:8000});
+  await page.locator('#mw-furnace-fuel').selectOption('lavaBucket');
+  assert.equal(await page.locator('#mw-furnace-put-fuel-stack').isDisabled(),true,
+    name+': Add Stack must be disabled for nonstackable lava buckets');
+  await page.locator('#mw-furnace-put-fuel').click({force:true});
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.fuel?.key==='lavaBucket',
+    furnaceFixture,{timeout:8000});
+  const lavaLoaded=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
+  assert.equal(lavaLoaded.fuel.qty,1,name+': lava slot exceeded one bucket');
+  await page.waitForFunction(()=>document.querySelector('#mw-furnace-put-fuel')?.disabled,
+    null,{timeout:8000});
+  assert.equal(await page.locator('#mw-furnace-put-fuel-stack').isDisabled(),true,
+    name+': full lava slot incorrectly enables Add Stack');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-lava-fuel-capacity.png':'desktop-lava-fuel-capacity.png'),
+    animations:'disabled'});
+  await page.locator('#mw-furnace-return-fuel').click({force:true});
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.fuel===null,
+    furnaceFixture,{timeout:8000});
   await page.waitForFunction(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z)?.output?.key==='iron',
     furnaceFixture,{timeout:30000});

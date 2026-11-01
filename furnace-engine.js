@@ -51,6 +51,10 @@ const pos=p=>p&&['overworld','nether','end'].includes(p.dimension)&&
 const id=p=>p.dimension+':'+p.x+','+p.y+','+p.z;
 const blank=(p,kind='furnace')=>({kind,dimension:p.dimension,x:p.x,y:p.y,z:p.z,input:null,fuel:null,output:null,burn:0,burnTotal:0,progress:0});
 const slot=s=>s&&key(s.key)&&Number.isInteger(s.qty)&&s.qty>0&&s.qty<=64?{key:s.key,qty:s.qty}:null;
+// Nonstackable fuel containers share one capacity contract with the UI.
+// Never reserve 64 buckets for a furnace slot that holds only one.
+const slotCapacity=(which,item)=>!['input','fuel'].includes(which)?0:
+ which==='fuel'&&item==='lavaBucket'?1:64;
 function create(){
  const machines=new Map();
  const get=p=>pos(p)?machines.get(id(p))||null:null;
@@ -86,7 +90,7 @@ function create(){
   const m=ensure(p);if(!m||m[which]&&m[which].key!==item)return 0;
   // Lava buckets are non-stackable fuel containers. The empty bucket
   // remains in the fuel slot after ignition and can be withdrawn.
-  const capacity=which==='fuel'&&item==='lavaBucket'?1:64;
+  const capacity=slotCapacity(which,item);
   const moved=Math.max(0,Math.min(n,capacity-(m[which]?.qty||0)));
   if(moved)m[which]={key:item,qty:(m[which]?.qty||0)+moved};return moved;
  }
@@ -221,5 +225,5 @@ function create(){
  }
  return {get,ensure,insert,take,tick,remove,snapshot,restore,canSmelt,migrateLegacyBlastBlocks,clear:()=>machines.clear()};
 }
-window.MineWorldFurnace=Object.freeze({create,RECIPES,FUEL,COOK,KINDS,canSmelt});
+window.MineWorldFurnace=Object.freeze({create,RECIPES,FUEL,COOK,KINDS,canSmelt,slotCapacity});
 })();

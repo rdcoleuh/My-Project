@@ -11,7 +11,8 @@ function deposit(engine,api,position,which,item,limit){
  if(existing&&existing.key!==item)return 0;
  const owned=api.count(item);
  if(!Number.isInteger(owned)||owned<1)return 0;
- const quantity=Math.min(limit,owned,64-(existing?.qty||0));
+ const capacity=window.MineWorldFurnace.slotCapacity(which,item);
+ const quantity=Math.min(limit,owned,capacity-(existing?.qty||0));
  if(quantity<1)return 0;
  // Some inventory adapters throw *after* mutating their inventory.
  // Reconcile the observed debit before propagating the error, otherwise
@@ -285,10 +286,12 @@ function create(api){
    const keys=Object.keys(options).filter(key=>(which==='fuel'||engine.canSmelt(m.kind,key))&&(totals[key]||m[which]?.key===key));
    syncSelect(select,keys,totals,key=>api.label(key),document);
    const selected=select.value;
+   const capacity=window.MineWorldFurnace.slotCapacity(which,selected);
    const canAdd=!!selected&&!!totals[selected]&&
-    (!m[which]||(m[which].key===selected&&m[which].qty<64));
+    (!m[which]||(m[which].key===selected&&m[which].qty<capacity));
    el('mw-furnace-put-'+which).disabled=!canAdd;
-   el('mw-furnace-put-'+which+'-stack').disabled=!canAdd;
+   // A nonstackable fuel container can be added only once per slot.
+   el('mw-furnace-put-'+which+'-stack').disabled=!canAdd||capacity<=1;
    el('mw-furnace-return-'+which+'-one').disabled=!m[which];
    el('mw-furnace-return-'+which).disabled=!m[which];
   }
