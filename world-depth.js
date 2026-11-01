@@ -6,9 +6,11 @@
 (()=>{'use strict';
 const LEGACY=Object.freeze({minY:0,maxY:47,seaLevel:14});
 const OVERWORLD=Object.freeze({minY:-64,maxY:319,seaLevel:63});
-function create({width=10000,depth=10000,minY=0,maxY=47,chunkSize=16}={}){
-  const params=[width,depth,minY,maxY,chunkSize];
-  if(!params.every(Number.isSafeInteger)||width<1||depth<1||chunkSize<1||maxY<minY)throw new RangeError('Invalid world dimensions');
+function create({width=10000,depth=10000,minX=0,minZ=0,minY=0,maxY=47,chunkSize=16}={}){
+  const params=[width,depth,minX,minZ,minY,maxY,chunkSize];
+  if(!params.every(Number.isSafeInteger)||width<1||depth<1||chunkSize<1||maxY<minY||
+     !Number.isSafeInteger(minX+width-1)||!Number.isSafeInteger(minZ+depth-1))
+    throw new RangeError('Invalid world dimensions');
   const height=maxY-minY+1,volume=width*depth*height;
   if(!Number.isSafeInteger(volume*3))throw new RangeError('World exceeds safe index range');
   // A codec can describe a tiny world with a huge chunkSize. Validate the
@@ -16,20 +18,25 @@ function create({width=10000,depth=10000,minY=0,maxY=47,chunkSize=16}={}){
   // exact-integer range even when the global world volume is small.
   if(!Number.isSafeInteger(chunkSize*chunkSize*height))
     throw new RangeError('Chunk stride exceeds safe index range');
-  const inside=(x,y,z)=>Number.isInteger(x)&&Number.isInteger(y)&&Number.isInteger(z)&&x>=0&&x<width&&z>=0&&z<depth&&y>=minY&&y<=maxY;
+  // Optional signed horizontal origins are opt-in. Default 0,0 preserves
+  // every existing saved index. Chunk-local positions remain aligned to the
+  // global 16-block grid even when the codec begins at a negative coordinate.
+  const inside=(x,y,z)=>Number.isSafeInteger(x)&&Number.isSafeInteger(y)&&Number.isSafeInteger(z)&&
+    x>=minX&&x<minX+width&&z>=minZ&&z<minZ+depth&&y>=minY&&y<=maxY;
   // Same linear ordering as old MineWorld when minY=0: saves stay readable.
   // Never allow an invalid absolute coordinate to alias a valid saved edit.
   // In the old formula, y=maxY+1 became the next Z column's first voxel.
-  const index=(x,y,z)=>inside(x,y,z)?(x*depth+z)*height+(y-minY):null;
+  const index=(x,y,z)=>inside(x,y,z)?((x-minX)*depth+(z-minZ))*height+(y-minY):null;
   const decode=n=>{
     if(!Number.isSafeInteger(n)||n<0||n>=volume)return null;
-    const y=n%height+minY,z=Math.floor(n/height)%depth,x=Math.floor(n/(depth*height));
+    const y=n%height+minY,z=Math.floor(n/height)%depth+minZ,x=Math.floor(n/(depth*height))+minX;
     return {x,y,z};
   };
   // Match index()'s validation before mapping world coordinates into
   // a chunk-local array. Negative Y is legal only for deep-world profiles.
+  const local=v=>((v%chunkSize)+chunkSize)%chunkSize;
   const chunkIndex=(x,y,z)=>inside(x,y,z)?
-    ((x%chunkSize)*chunkSize+(z%chunkSize))*height+(y-minY):null;
+    (local(x)*chunkSize+local(z))*height+(y-minY):null;
   const networkIndex=(x,y,z,dimension='overworld')=>{
     const d=dimension==='overworld'?0:dimension==='nether'?1:dimension==='end'?2:-1;
     if(d<0||!inside(x,y,z))return null;
@@ -40,7 +47,7 @@ function create({width=10000,depth=10000,minY=0,maxY=47,chunkSize=16}={}){
     const d=Math.floor(n/volume),point=decode(n%volume);
     return point?{...point,dimension:['overworld','nether','end'][d]}:null;
   };
-  return Object.freeze({width,depth,minY,maxY,height,chunkSize,volume,inside,index,decode,chunkIndex,networkIndex,decodeNetwork});
+  return Object.freeze({width,depth,minX,minZ,minY,maxY,height,chunkSize,volume,inside,index,decode,chunkIndex,networkIndex,decodeNetwork});
 }
 // Explicit, non-mutating conversion of edit indices for a future versioned save
 // migration. Coordinates are absolute; only the serialized index changes.
@@ -67,7 +74,7 @@ function reindexEdits(edits,source,target){
 // network offset. The Overworld may be 384 layers while the Nether and End
 // remain 48; allocate each dimension its own non-overlapping index interval.
 // This is an opt-in codec and does not change live legacy saves or networking.
-function createDimensionCodec({width=10000,depth=10000,chunkSize=16,
+function createDimensionCodec({width=10000,depth=10000,minX=0,minZ=0,chunkSize=16,
   overworld=OVERWORLD,nether=LEGACY,end=LEGACY}={}){
   const names=['overworld','nether','end'];
   const profiles={overworld,nether,end},codecs={},offsets={};
@@ -76,7 +83,7 @@ function createDimensionCodec({width=10000,depth=10000,chunkSize=16,
     const p=profiles[name];
     if(!p||!Number.isSafeInteger(p.minY)||!Number.isSafeInteger(p.maxY))
       throw new RangeError('Invalid dimension profile');
-    const codec=create({width,depth,chunkSize,minY:p.minY,maxY:p.maxY});
+    const codec=create({width,depth,minX,minZ,chunkSize,minY:p.minY,maxY:p.maxY});
     offsets[name]=total;codecs[name]=codec;
     total+=codec.volume;
     if(!Number.isSafeInteger(total))throw new RangeError('Combined dimensions exceed safe index range');
@@ -96,7 +103,7 @@ function createDimensionCodec({width=10000,depth=10000,chunkSize=16,
     }
     return null;
   };
-  return Object.freeze({width,depth,chunkSize,volume:total,
+  return Object.freeze({width,depth,minX,minZ,chunkSize,volume:total,
     codecs:Object.freeze(codecs),offsets:Object.freeze(offsets),
     networkIndex,decodeNetwork});
 }
