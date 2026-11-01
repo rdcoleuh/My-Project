@@ -55,8 +55,8 @@ test('unloaded neighbors and interior edits do not require full chunk arrays',()
   assert.equal(center.setWithNeighbors(1,-33,1,5,{}),true);
   assert.deepEqual(Array.from(neighbor.dirtySections()),[]);
   assert.equal(center.get(1,-33,1),5);
-  assert.equal(center.setWithNeighbors(0,-32,0,7,{}),true);
-  assert.equal(center.get(0,-32,0),7);
+  assert.equal(center.setWithNeighbors(0,-64,0,7,{}),true);
+  assert.equal(center.get(0,-64,0),7);
   assert.equal(center.stats().revision,2);
 });
 test('neighbor-aware snapshots reject a horizontal seam edit before mesh install',()=>{
