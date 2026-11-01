@@ -25,6 +25,7 @@ test('signed chunks preserve negative X/Z blocks and saved edits through evictio
  const stream=make({maxLoaded:1,edits:original});
  stream.load(-2,-2);
  assert.equal(stream.getWorld(-31,-64,-31),7);
+ stream.load(-1,-1); // (-1,-1) is a different chunk from (-31,-31).
  stream.setWorld(-1,-63,-1,21);
  stream.load(0,0);
  assert.equal(stream.getWorld(-1,-63,-1),null);
