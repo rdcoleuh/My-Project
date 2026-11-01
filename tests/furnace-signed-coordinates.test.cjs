@@ -50,7 +50,7 @@ test('legacy blast-block conversion never aliases a negative coordinate into a v
  assert.equal(edits.get(7),158);
  const positive=at(3,4,10);
  assert.ok(f.ensure(positive,'blast'));
- assert.equal(f.migrateLegacyBlastBlocks({overworld:edits},q=>q.x===3?7:999),1);
+ assert.equal(f.migrateLegacyBlastBlocks({overworld:edits},x=>x===3?7:999),1);
  assert.equal(edits.get(7),156);
 });
 test('legacy positive-coordinate furnaces remain compatible with signed saves',()=>{
