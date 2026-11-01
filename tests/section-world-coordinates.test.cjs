@@ -28,7 +28,8 @@ test('negative Z maps to north chunk and invalidates the shared south seam',()=>
  assert.deepEqual({...g.worldToChunk(2,-49,-1)},{cx:0,cz:-1,x:2,y:-49,z:15});
  assert.equal(g.setWorld(2,-49,-1,7),true);
  assert.equal(g.getWorld(2,-49,-1),7);
- assert.deepEqual(dirty(center),[0,1],'vertical and horizontal seam slices are dirty');
+ assert.deepEqual(dirty(center),[0],'the adjacent mesh slice is dirty');
+ assert.deepEqual(dirty(north),[0,1],'the edited chunk also invalidates its own vertical seam');
 });
 
 test('positive world coordinates map to correct chunk and local offset',()=>{
