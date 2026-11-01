@@ -17,6 +17,13 @@ function createSectionNeighborhood(){
     return `${cx},${cz}`;
   };
   const at=(cx,cz)=>stores.get(key(cx,cz))||null;
+  // Neighbor offsets can overflow Number.MAX_SAFE_INTEGER even when the
+  // registered chunk itself is valid. Treat that side as unloaded instead
+  // of throwing after a block was already changed or a chunk registered.
+  const offsetAt=(cx,cz,dx,dz)=>{
+    const nx=cx+dx,nz=cz+dz;
+    return Number.isSafeInteger(nx)&&Number.isSafeInteger(nz)?at(nx,nz):null;
+  };
   const compatible=store=>!!store&&Number.isSafeInteger(store.storeId)&&
     Number.isSafeInteger(store.minY)&&Number.isSafeInteger(store.maxY)&&
     Number.isSafeInteger(store.chunkSize)&&store.chunkSize>0&&
@@ -30,7 +37,7 @@ function createSectionNeighborhood(){
   function neighborsOf(cx,cz){
     key(cx,cz);
     const result={};
-    for(const [side,dx,dz] of sides)result[side]=at(cx+dx,cz+dz);
+    for(const [side,dx,dz] of sides)result[side]=offsetAt(cx,cz,dx,dz);
     return result;
   }
   function dirtyWhole(store){
@@ -72,10 +79,10 @@ function createSectionNeighborhood(){
   }
   function notifyEdges(cx,cz,x,y,z,store){
     const size=store.chunkSize;
-    if(x===0){const n=at(cx-1,cz);if(n)n.markNeighborBoundaryDirty(y);}
-    if(x===size-1){const n=at(cx+1,cz);if(n)n.markNeighborBoundaryDirty(y);}
-    if(z===0){const n=at(cx,cz-1);if(n)n.markNeighborBoundaryDirty(y);}
-    if(z===size-1){const n=at(cx,cz+1);if(n)n.markNeighborBoundaryDirty(y);}
+    if(x===0){const n=offsetAt(cx,cz,-1,0);if(n)n.markNeighborBoundaryDirty(y);}
+    if(x===size-1){const n=offsetAt(cx,cz,1,0);if(n)n.markNeighborBoundaryDirty(y);}
+    if(z===0){const n=offsetAt(cx,cz,0,-1);if(n)n.markNeighborBoundaryDirty(y);}
+    if(z===size-1){const n=offsetAt(cx,cz,0,1);if(n)n.markNeighborBoundaryDirty(y);}
   }
   function set(cx,cz,x,y,z,block){
     const store=requireStore(cx,cz);
@@ -104,6 +111,27 @@ function createSectionNeighborhood(){
       if(block!==store.get(x,y,z))notifyEdges(cx,cz,x,y,z,store);
     return changed;
   }
+  // Translate absolute horizontal world coordinates into signed chunk
+  // coordinates and nonnegative local offsets. Math.floor is essential:
+  // truncation maps world X=-1 into chunk zero and breaks seam edits.
+  // This staging bridge never changes legacy saves or live terrain.
+  function worldToChunk(x,y,z){
+    if(!profile)throw new RangeError('No section profile registered');
+    if(![x,y,z].every(Number.isSafeInteger))
+      throw new RangeError('Invalid absolute world coordinates');
+    const size=profile[2],cx=Math.floor(x/size),cz=Math.floor(z/size);
+    return Object.freeze({cx,cz,x:x-cx*size,y,z:z-cz*size});
+  }
+  // An unloaded chunk is distinct from a loaded air block (0). Return null
+  // for missing chunks, but never silently create a chunk on a world edit.
+  function getWorld(x,y,z){
+    const p=worldToChunk(x,y,z),store=at(p.cx,p.cz);
+    return store?store.get(p.x,p.y,p.z):null;
+  }
+  function setWorld(x,y,z,block){
+    const p=worldToChunk(x,y,z);
+    return set(p.cx,p.cz,p.x,p.y,p.z,block);
+  }
   function snapshot(cx,cz,job){
     const store=requireStore(cx,cz);
     return store.materializeClaimWithNeighbors(job,neighborsOf(cx,cz));
@@ -124,7 +152,7 @@ function createSectionNeighborhood(){
     return canInstall(cx,cz,store,job,frame)?Object.freeze({snapshot:frame,plan}):null;
   }
   return Object.freeze({register,unregister,get:at,neighborsOf,set,applyEdits,
-    snapshot,canInstall,planMesh,size:()=>stores.size});
+    worldToChunk,getWorld,setWorld,snapshot,canInstall,planMesh,size:()=>stores.size});
 }
 window.MineWorldSectionNeighborhood=Object.freeze({createSectionNeighborhood});
 })();
