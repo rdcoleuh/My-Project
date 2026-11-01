@@ -201,16 +201,11 @@ function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator}={}){
       throw new RangeError('Invalid saved deep-world edit');
     addEdit(index,block,Math.floor(p.x/16),Math.floor(p.z/16));
   }
-  function load(cx,cz){
-    const k=chunk(cx,cz);
-    if(resident.has(k)){
-      const store=resident.get(k);
-      resident.delete(k);resident.set(k,store);
-      return store;
-    }
-    // Generate and validate before evicting any resident chunk. A failed
-    // generator must not discard the player's current playable neighborhood.
-    const store=make(cx,cz,new Map(byChunk.get(k)||[]));
+  // A generated store must be valid and unique before any resident is evicted.
+  // loadAround preflights every missing chunk so a late generator failure cannot
+  // leave the player's previously loaded neighborhood half-replaced.
+  function generate(cx,cz,other=[]) {
+    const k=key(cx,cz),store=make(cx,cz,new Map(byChunk.get(k)||[]));
     if(!store||store.minY!==-64||store.maxY!==319||
        store.chunkSize!==16||store.sectionHeight!==16||
        !Number.isSafeInteger(store.storeId)||
@@ -219,16 +214,28 @@ function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator}={}){
        typeof store.markNeighborBoundaryDirty!=='function'||
        typeof store.materializeClaimWithNeighbors!=='function'||
        typeof store.canInstallClaimWithNeighbors!=='function'||
-       [...resident.values()].includes(store))
+       [...resident.values(),...other].includes(store))
       throw new RangeError('Invalid generated deep-world section store');
+    return store;
+  }
+  function install(cx,cz,store){
     if(resident.size>=maxLoaded){
       const oldest=resident.keys().next().value;
       const [ox,oz]=oldest.split(',').map(Number);
       grid.unregister(ox,oz);resident.delete(oldest);
     }
     grid.register(cx,cz,store);
-    resident.set(k,store);
+    resident.set(key(cx,cz),store);
     return store;
+  }
+  function load(cx,cz){
+    const k=chunk(cx,cz);
+    if(resident.has(k)){
+      const store=resident.get(k);
+      resident.delete(k);resident.set(k,store);
+      return store;
+    }
+    return install(cx,cz,generate(cx,cz));
   }
   function unload(cx,cz){
     const k=chunk(cx,cz);
@@ -283,7 +290,28 @@ function createDeepChunkStream({maxLoaded=9,edits=new Map(),generator}={}){
     if(targets.length>maxLoaded)
       throw new RangeError('Deep-world streaming radius exceeds residency budget');
     targets.sort((a,b)=>a.distance-b.distance||a.cx-b.cx||a.cz-b.cz);
-    for(const p of targets)load(p.cx,p.cz);
+    const targetKeys=new Set(targets.map(p=>key(p.cx,p.cz))),staged=new Map();
+    // No LRU touch, eviction or seam invalidation until every new chunk
+    // has been generated and checked. Also reject a generator that returns
+    // the same mutable store for two different chunk coordinates.
+    for(const p of targets){
+      const k=key(p.cx,p.cz);
+      if(!resident.has(k))
+        staged.set(k,generate(p.cx,p.cz,staged.values()));
+    }
+    // Only evict chunks outside the requested view. Otherwise a newly
+    // generated center chunk can evict a target-edge chunk before its turn.
+    for(const k of [...resident.keys()]){
+      if(resident.size+staged.size<=maxLoaded)break;
+      if(targetKeys.has(k))continue;
+      const [ox,oz]=k.split(',').map(Number);
+      grid.unregister(ox,oz);resident.delete(k);
+    }
+    for(const p of targets){
+      const k=key(p.cx,p.cz);
+      if(resident.has(k))load(p.cx,p.cz);
+      else install(p.cx,p.cz,staged.get(k));
+    }
     return Object.freeze(targets.map(({cx,cz})=>Object.freeze({cx,cz})));
   }
   function stats(){
