@@ -90,6 +90,9 @@ function makeTestArchive(mode='full'){
   ['assets/minecraft/textures/gui/icons.png',
     generatedPng(mode==='legacy-icons-hd'?512:256,170,mode==='legacy-icons-hd'?512:256,true)]
  ];
+ if(mode==='transparent-legacy-icons')files=[
+  ['assets/minecraft/textures/gui/icons.png',generatedPng(256,170,256,true,0)]
+ ];
  if(mode==='malformed-stat-sprites')files=[
   ...['heart','heart_background','hunger_full','hunger_background']
     .map((name,i)=>['resource_pack/textures/ui/'+name+'.png',generatedPng(22,30+i*25,182)]),
@@ -575,6 +578,28 @@ async function go(browser,name,mobile){
         document.querySelector('#hunger-text')?.getAttribute('aria-label')?.includes('of 20');
     },mode),name+': '+mode+' legacy Java heart/hunger atlas was not decoded or displayed');
   }
+  // A wholly transparent legacy Java atlas must not mask the original HUD.
+  // This fixture is independently generated; no game artwork is bundled.
+  await page.evaluate(async bytes=>{
+    await window.MineWorldLocalTextures.loadFile(new File(
+      [new Uint8Array(bytes)],'transparent-legacy-icons-fixture.zip',
+      {type:'application/zip'}));
+  },Array.from(makeTestArchive('transparent-legacy-icons')));
+  await page.waitForFunction(()=>
+    document.querySelectorAll('#health-text .mw-stat-fallback').length===10&&
+    document.querySelectorAll('#hunger-text .mw-stat-fallback').length===10,
+    null,{timeout:15000});
+  assert.ok(await page.evaluate(async()=>{
+    const pack=window.MineWorldLocalTextures;
+    const icons=await Promise.all(['full','half','empty'].flatMap(fill=>[
+      pack.hudIcon('heart',fill),pack.hudIcon('food',fill)]));
+    return icons.every(icon=>icon===null)&&
+      document.querySelectorAll('#health-text .mw-pack-stat-art').length===0&&
+      document.querySelectorAll('#hunger-text .mw-pack-stat-art').length===0;
+  }),name+': transparent legacy atlas incorrectly suppressed fallback heart/hunger icons');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-transparent-legacy-icons.png':'desktop-transparent-legacy-icons.png'),
+    animations:'disabled'});
   // Invalid modern HUD strips must fall back to imported legacy icons instead
   // of becoming horizontally stretched hearts or hiding the procedural HUD.
   await page.evaluate(async bytes=>{

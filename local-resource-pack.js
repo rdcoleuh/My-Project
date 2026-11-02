@@ -1267,7 +1267,10 @@ function hudIcon(kind,fill){
       }
       if(legacyStat){
         rect=window.MineWorldHotbarUV?.legacyStatRect(image.width,image.height,kind,fill);
-        if(!rect)return null;
+        // A legacy atlas may contain unrelated opaque GUI pixels while the
+        // requested heart/food cell is fully transparent. Inspect only the
+        // cropped glyph, never the entire sheet, before overriding fallback.
+        if(!rect||!visibleCandidate(image,rect))return null;
       }
     }
     // Prevent huge HUD canvas allocations from tiny, malicious PNG files.
