@@ -29,5 +29,7 @@ test('cached HUD art retains all twenty-one health and food states',()=>{
 });
 test('player-imported transparent empty sprites cannot become half-icon underlays',()=>{
  const source=read('local-resource-pack.js');
- assert.match(source,/!window\\.MineWorldHotbarUV\\?\\.validStatSprite\\(underlay\\.width,underlay\\.height\\)\\|\\|\\s*!visibleCandidate\\(underlay\\)/);\n assert.match(source,/if\\(underlay\\)ctx\\.drawImage\\(underlay,0,0,canvas\\.width,canvas\\.height\\)/);
+ assert.ok(source.includes('!window.MineWorldHotbarUV?.validStatSprite(underlay.width,underlay.height)||'));
+ assert.ok(source.includes('!visibleCandidate(underlay)'));
+ assert.ok(source.includes('if(underlay)ctx.drawImage(underlay,0,0,canvas.width,canvas.height)'));
 });
