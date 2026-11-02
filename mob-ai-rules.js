@@ -76,7 +76,10 @@
    const start=[a.x,a.y,a.z],finish=[b.x,b.y,b.z];
    const delta=finish.map((v,i)=>v-start[i]);
    const distance=Math.hypot(...delta);
-   if(distance<.001||distance>maxDistance)return false;
+   // Same-voxel targets are visible, including exact overlaps. The voxel
+   // traversal below still checks stationary face/edge neighbors, so short
+   // rays do not bypass solid walls along grid boundaries.
+   if(distance>maxDistance)return false;
    const cell=start.map(Math.floor),end=finish.map(Math.floor);
    const step=delta.map(Math.sign);
    const next=delta.map((v,i)=>v>0?(cell[i]+1-start[i])/v:
