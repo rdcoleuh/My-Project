@@ -62,6 +62,18 @@
    const peak=/Peaks|Slopes|Stony|Windswept/.test(biome.name);
    if(peak){const ridge=Math.abs(noise(x,z,85,89)-.5);y+=Math.pow(ridge*2,1.75)*10*blend;}
    if(/Badlands/.test(biome.name))y+=(noise(x,z,66,86)-.5)*5*blend;
+   // The opt-in 384-layer profile needs genuine highlands above sea level 63.
+   // Keep legacy 48-layer terrain byte-for-byte stable for existing saves.
+   // Original deterministic noise and smooth biome blending avoid chunk seams.
+   if(H===384&&minY===-64&&sea===63&&!biome.water){
+     y+=(noise(x,z,260,94)-.5)*18;
+     if(/Peaks|Slopes|Windswept|Grove/.test(biome.name)){
+       const crest=Math.abs(noise(x,z,85,89)-.5)*2;
+       y+=(45+80*Math.pow(crest,1.5))*blend;
+     }else if(/Badlands/.test(biome.name)){
+       y+=(18+20*noise(x,z,120,95))*blend;
+     }
+   }
    if(biome.water){const marine=sea-4+(noise(x,z,78,87)-.5)*4;const depth=.45+.55*blend;y=y*(1-depth)+marine*depth;}
    return clamp(Math.floor(y),minY+4,minY+H-9);
  }
