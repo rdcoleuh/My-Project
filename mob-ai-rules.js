@@ -6,8 +6,11 @@
  'use strict';
  const FUSE_SECONDS=1.5;
  function creeperTick(fuse,dt,close){
-   const step=Math.max(0,Math.min(.1,Number(dt)||0));
-   const before=Math.max(0,Math.min(FUSE_SECONDS,Number(fuse)||0));
+   const step=typeof dt==='number'&&Number.isFinite(dt)&&dt>0?Math.min(.1,dt):0;
+   // Corrupt/non-numeric saved fuses must not arm a creeper instantly.
+   // Non-finite or coerced frame deltas must not advance its countdown.
+   const before=typeof fuse==='number'&&Number.isFinite(fuse)?
+     Math.max(0,Math.min(FUSE_SECONDS,fuse)):0;
    const next=close?Math.min(FUSE_SECONDS,before+step):Math.max(0,before-step*2);
    return {fuse:next,explode:close&&next>=FUSE_SECONDS};
  }
