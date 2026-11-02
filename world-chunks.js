@@ -190,6 +190,11 @@
    const heights=new Int16Array(CHUNK*CHUNK);
    for(let dx=0;dx<CHUNK;dx++)for(let dz=0;dz<CHUNK;dz++){
      const x=x0+dx,z=z0+dz;if(x>=maxX||z>=maxZ)continue;
+     // The staged deep profile has continuous, seed-dependent aquifer pockets.
+     // Sample once per column, not per voxel, to keep mobile generation cheap.
+     // Existing 48-layer saves skip this branch and remain byte-identical.
+     const aquifer=deepCaverns?noise(x,z,72,612):0;
+     const waterTop=-38+Math.floor(Math.max(0,aquifer-.59)*20);
      const biome=BIOMES[zone(x,z)],top=terrainAt(x,z,SEA,H,minY);
      heights[dx*CHUNK+dz]=top;
      for(let y=minY;y<=top;y++){
@@ -208,7 +213,14 @@
        // noise sampling, chunk-local randomness, or copyrighted assets.
        const cavernBand=deepCaverns&&y>=-56&&y<=-8?
          Math.max(0,1-Math.abs(y+32)/24):0;
-       if(cave>.745-.075*cavernBand)put(x,y,z,0);
+       if(cave>.745-.075*cavernBand){
+         // Deep cave pockets hold water where a continuous aquifer field
+         // crosses the cavity. Lava occupies exposed caves at Y <= -54.
+         // Only carved cells receive fluids; bedrock and player edits win.
+         const fluid=deepCaverns&&y<=-54?66:
+           deepCaverns&&aquifer>.59&&y>-54&&y<=waterTop?7:0;
+         put(x,y,z,fluid);
+       }
      }
    }
    // Seeded mineral veins are distributed across depth bands and neighboring chunk edges.
