@@ -18,8 +18,13 @@ const palette=Object.freeze({
  heart:[[0,0,0,0],[24,16,19,255],[227,48,64,255],[255,135,145,255],[67,42,49,255]],
  food:[[0,0,0,0],[28,20,14,255],[197,121,49,255],[249,184,86,255],[67,53,37,255]]
 });
+// Rasterize each original glyph once. Return independent byte buffers so a
+// caller cannot accidentally corrupt the cached art for future HUD updates.
+const pixelCache=new Map();
 function pixels(kind,fill){
  const rows=glyphs[kind];if(!rows||!['full','half','empty'].includes(fill))return null;
+ const cacheKey=kind+':'+fill;
+ if(pixelCache.has(cacheKey))return new Uint8ClampedArray(pixelCache.get(cacheKey));
  const data=new Uint8ClampedArray(11*11*4),colors=palette[kind];
  for(let y=0;y<11;y++)for(let x=0;x<11;x++){
   const value=Number(rows[y][x]);
@@ -30,7 +35,8 @@ function pixels(kind,fill){
   const shade=value===2?(fill==='full'||(fill==='half'&&filledHalf)?2:4):value;
   data.set(colors[shade],(y*11+x)*4);
  }
- return data;
+ pixelCache.set(cacheKey,data);
+ return new Uint8ClampedArray(data);
 }
 function paint(kind,fill){
  const data=pixels(kind,fill);if(!data||!globalThis.document?.createElement)return null;

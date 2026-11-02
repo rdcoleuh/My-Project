@@ -1286,7 +1286,10 @@ function hudIcon(kind,fill){
     if(!legacyStat&&kind!=='hotbar'&&fill!=='empty'&&source.entries.has(backgroundKey)){
       try{
         underlay=await smallSpriteFromPng(await source.get(backgroundKey));
-        if(!window.MineWorldHotbarUV?.validStatSprite(underlay.width,underlay.height))
+        // A fully transparent imported empty glyph is not an outline.
+        // Ignore it so callers can retain MineWorld's visible fallback.
+        if(!window.MineWorldHotbarUV?.validStatSprite(underlay.width,underlay.height)||
+           !visibleCandidate(underlay))
           underlay=null;
         else {
           // Full and empty glyphs may come from different pack resolutions.
