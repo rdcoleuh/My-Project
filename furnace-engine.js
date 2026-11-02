@@ -24,7 +24,7 @@ const FUEL=Object.freeze({coal:80,charcoal:80,'block:5':15,'block:11':15,'block:
  'block:36':15,'block:38':15,'block:40':15,'block:42':15,
  // Craftable MineWorld fuel blocks and inventory items; durations in seconds.
  // A coal block fuels 80 smelts, a blaze rod 12, and a boat/raft six.
- 'block:116':800,blazeRod:120,lavaBucket:1000,
+ 'block:116':800,driedKelpBlock:200,blazeRod:120,lavaBucket:1000,
  boat:60,spruceBoat:60,cherryBoat:60,raft:60,
  // Craftable wooden stations, wooden accessories and harvestable bamboo.
  // These are MineWorld inventory keys; the old bamboo item remains valid.

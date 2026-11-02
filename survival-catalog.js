@@ -102,6 +102,10 @@
  add('Food','Cooked Fish',{fish:1,coal:1},{cookedFish:1},furnace);
  add('Food','Baked Potato',{potato:1,coal:1},{bakedPotato:1},furnace);
  add('Food','Dried Kelp',{kelp:1,coal:1},{driedKelp:1},furnace);
+ // Nine cooked kelp form a compact, stackable furnace fuel: twenty smelts.
+ // The current catalog represents this as an inventory item, not a placed voxel.
+ add('Food','Dried Kelp Fuel Block',{driedKelp:9},{driedKelpBlock:1},table);
+ add('Food','Unpack Dried Kelp Fuel Block',{driedKelpBlock:1},{driedKelp:9});
  add('Food','Hay Bale',{wheat:9},{[B(60)]:1});
  add('Food','Wheat from Hay Bale',{[B(60)]:1},{wheat:9});
  add('Food','Wheat Seeds',{wheat:1},{wheatSeeds:2});
