@@ -85,6 +85,8 @@ test('malformed dimensions and RGBA buffers fail closed',()=>{
 test('importer checks full sheet only for background, keeping numbered slot fallbacks',()=>{
  const source=read('local-resource-pack.js');
  assert.ok(source.includes('hasCompleteBarAlpha(pixels,width,height)'));
+ assert.ok(source.includes('if((sliced||legacy&&numberedSlot)&&'),
+  'derived numbered slots must validate their entire imported sheet');
  assert.ok(source.includes("visibleCandidate(attempt,candidateRect,kind==='hotbar'&&fill==='background')"));
  assert.ok(source.includes('candidate===legacyKey'));
  assert.ok(source.includes('sliced?window.MineWorldHotbarUV?.slotRect'));

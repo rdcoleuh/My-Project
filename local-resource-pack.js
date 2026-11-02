@@ -1202,6 +1202,14 @@ function hudIcon(kind,fill){
           else if(candidate==='hud:hotbar:background'){
             if(!window.MineWorldHotbarUV?.slotRect(attempt.width,attempt.height,0))continue;
           }else if(!window.MineWorldHotbarUV?.validSlotSprite(attempt.width,attempt.height))continue;
+          // A derived numbered slot must not bypass the complete-bar check.
+          // Otherwise a sheet with one opaque pixel in each cell can be
+          // rejected as a background yet accepted as nine individual slots,
+          // leaving the procedural hotbar invisible. Probe the source sheet
+          // (or the cropped legacy bar) before accepting a derived cell.
+          if((sliced||legacy&&numberedSlot)&&
+             !visibleCandidate(attempt,legacy?
+               window.MineWorldHotbarUV?.legacyRect(attempt.width,attempt.height,'background'):null,true))continue;
           if(!visibleCandidate(attempt,candidateRect,kind==='hotbar'&&fill==='background'))continue;
           image=attempt;rect=candidateRect;break;
         }catch(error){console.warn('Skipping damaged local hotbar candidate '+candidate,error);}
