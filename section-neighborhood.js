@@ -152,9 +152,13 @@ function createSectionNeighborhood(){
     // Geometry generation is opt-in: normal mesh claims allocate no vertex
     // buffers. A stale neighbor edit still prevents installation.
     const requested=options?.geometry;
-    const geometry=requested?planner.buildTriangles(plan,{
-      ...(requested===true?{}:requested),originX:cx*16,originZ:cz*16
-    }):null;
+    const geometryOptions={...(requested===true?{}:requested),
+      originX:cx*16,originZ:cz*16};
+    const geometry=requested?(
+      geometryOptions.batched===true?
+        planner.buildTriangleBatches(plan,geometryOptions):
+        planner.buildTriangles(plan,geometryOptions)
+    ):null;
     return canInstall(cx,cz,store,job,frame)?
       Object.freeze(geometry?{snapshot:frame,plan,geometry}:{snapshot:frame,plan}):null;
   }

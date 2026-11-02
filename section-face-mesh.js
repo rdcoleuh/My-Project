@@ -176,5 +176,39 @@ function buildTriangles(plan,{originX=0,originZ=0,uvForFace,shapeForBlock,maxFac
   originX,originZ,minY:plan.minY,revision:plan.revision});
 }
 
-window.MineWorldSectionFaces=Object.freeze({FACE,plan,unpack,buildTriangles});
+/*
+ * Opt-in multi-draw bridge for dense deep sections. A checkerboard section
+ * can expose more than 8,192 faces; rejecting it makes terrain disappear.
+ * Each draw remains within the same bounded GPU upload budget. Validate
+ * the entire packed plan before producing any buffers, then snapshot it so
+ * caller edits cannot mix different terrain revisions across batches.
+ */
+function buildTriangleBatches(plan,{maxFaces=8192,...options}={}){
+ if(!plan||Object.prototype.toString.call(plan.faces)!=='[object Uint32Array]'||
+    plan.chunkSize!==16||!Number.isSafeInteger(plan.minY)||
+    !Number.isSafeInteger(plan.maxY)||plan.maxY<plan.minY||
+    plan.maxY-plan.minY>=16||plan.faceCount!==plan.faces.length||
+    plan.faceCount<0||plan.faceCount>24576)
+  throw new RangeError('Invalid section face plan');
+ if(!Number.isSafeInteger(maxFaces)||maxFaces<1||maxFaces>8192)
+  throw new RangeError('Invalid section batch face budget');
+ // This copy is at most 96 KiB, far smaller than a full vertex buffer.
+ const faces=Uint32Array.from(plan.faces);
+ for(const packed of faces){
+  const face=unpack(packed,plan.minY);
+  if(!face||face.face>5||face.block===0||face.y>plan.maxY)
+   throw new RangeError('Invalid packed section face');
+ }
+ const batches=[];
+ for(let start=0;start<faces.length;start+=maxFaces){
+  const slice=faces.slice(start,start+maxFaces);
+  batches.push(buildTriangles({...plan,faces:slice,faceCount:slice.length},
+    {...options,maxFaces}));
+ }
+ return Object.freeze({batches:Object.freeze(batches),faceCount:faces.length,
+  vertexCount:faces.length*6,triangleCount:faces.length*2,stride:8,
+  originX:options.originX??0,originZ:options.originZ??0,
+  minY:plan.minY,revision:plan.revision});
+}
+window.MineWorldSectionFaces=Object.freeze({FACE,plan,unpack,buildTriangles,buildTriangleBatches});
 })();
