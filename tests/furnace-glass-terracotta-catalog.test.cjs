@@ -67,5 +67,6 @@ test('desktop/mobile Chrome smoke exercises glass and clay with synthetic pack e
  }
  assert.ok(smoke.includes("'furnace-'+sample.slug+'-synthetic.png'"));
  assert.ok(smoke.includes('glazeFixture,output:sample.output'));
- assert.match(read('sw.js'),/mineworld-6-170-glass-clay-furnace-only/);
+ // Cache versions advance with unrelated gameplay/HUD updates.
+ assert.match(read('sw.js'),/const VERSION='mineworld-6-\\d+-/);
 });
