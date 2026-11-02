@@ -17,3 +17,7 @@ The furnace engine's shared slot-capacity rule now limits boat, spruceBoat, cher
 ## Limits
 
 This is a focused furnace fuel-capacity parity increment, not activation of the experimental 384-layer Overworld. No player-owned Minecraft bitmap textures are distributed. Browser screenshots and recordings, when uploaded, use independently generated fixture textures rather than a user's personal resource pack. A full survival playthrough and final boss remain unverified.
+
+## CI follow-up
+
+The first Node suite exposed an unrelated brittle test that pinned the service-worker cache to the previous release string. The test now verifies the cache-version format rather than requiring an obsolete exact version; furnace behavior assertions are unchanged. A fresh full CI run is required before claiming a pass.

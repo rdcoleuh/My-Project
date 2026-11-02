@@ -60,5 +60,6 @@ test('desktop and mobile Chrome smoke verify furnace recipe guidance',()=>{
  assert.match(smoke,/desktop-furnace-no-instant-recipe-synthetic\.png/);
  assert.match(smoke,/mobile-furnace-no-instant-recipe-synthetic\.png/);
  assert.match(smoke,/furnace failed to smelt iron in browser/);
- assert.match(read('sw.js'),/mineworld-6-166-timed-furnace-only/);
+ // Cache versions advance with each deployment; never pin a test to an old release.
+ assert.match(read('sw.js'),/const VERSION='mineworld-\\d+-\\d+-[a-z0-9-]+'/);
 });
