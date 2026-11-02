@@ -33,6 +33,6 @@ test('a new sighting refreshes the target independently of frame validity',()=>{
 });
 test('the deployed service worker includes the updated mob AI module',()=>{
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
- assert.match(sw,/const VERSION='mineworld-6-\\d+-[a-z0-9-]+';/);
+ assert.match(sw,/const VERSION='mineworld-6-\d+-[a-z0-9-]+';/);
  assert.ok(sw.includes("'./mob-ai-rules.js'"));
 });
