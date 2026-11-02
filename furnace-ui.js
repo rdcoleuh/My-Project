@@ -188,9 +188,10 @@ function awardCollectedOutput(api,which,key,result){
 function furnaceAnnouncement(previous,machine){
  if(!previous||!machine)return null;
  const output=machine.output,qty=output?.qty||0,key=output?.key||null;
+ const exhausted=previous.burn>0&&machine.burn<=0;
  if(qty>0&&(key!==previous.outputKey||qty>previous.outputQty))
-  return {kind:'ready',key,quantity:qty};
- if(previous.burn>0&&machine.burn<=0)return {kind:'fuel-out'};
+  return {kind:exhausted?'ready-and-fuel-out':'ready',key,quantity:qty};
+ if(exhausted)return {kind:'fuel-out'};
  if(previous.burn<=0&&machine.burn>0)return {kind:'burning'};
  return null;
 }
@@ -333,8 +334,9 @@ function create(api){
   const event=furnaceAnnouncement(announceState,m);
   announceState=furnaceAnnouncementState(m);
   if(event){
-   el('mw-furnace-announcement').textContent=event.kind==='ready'?
-    'Smelting complete. '+fmt(m.output)+' ready in output slot.':
+   el('mw-furnace-announcement').textContent=event.kind==='ready'||event.kind==='ready-and-fuel-out'?
+    'Smelting complete. '+fmt(m.output)+' ready in output slot.'+
+     (event.kind==='ready-and-fuel-out'?' Fuel exhausted.':''):
     event.kind==='burning'?'Furnace fuel ignited.':'Furnace fuel exhausted.';
   }
   el('mw-furnace-output-one').disabled=!m.output;

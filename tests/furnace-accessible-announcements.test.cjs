@@ -31,8 +31,9 @@ test('burn countdown is silent except for ignition and exhaustion',()=>{
  const burning=furnaceAnnouncementState(f.get(p));
  f.tick(1);
  assert.equal(furnaceAnnouncement(burning,f.get(p)),null);
+ f.tick(60);
  const almost=furnaceAnnouncementState(f.get(p));
- f.tick(60);f.tick(60);
+ f.tick(60);
  assert.equal(event(almost,f.get(p)).kind,'fuel-out');
 });
 test('new output announces once and timer frames do not repeat it',()=>{
@@ -47,6 +48,14 @@ test('new output announces once and timer frames do not repeat it',()=>{
  assert.equal(furnaceAnnouncement(after,f.get(p)),null);
  f.tick(9);
  assert.equal(event(after,f.get(p)).kind,'ready');
+});
+test('simultaneous completion and fuel exhaustion are both announced',()=>{
+ const f=ctx.window.MineWorldFurnace.create();
+ f.restore([{...p,input:{key:'rawIron',qty:1},burn:1,burnTotal:80,progress:9}]);
+ const before=furnaceAnnouncementState(f.get(p));
+ f.tick(1);
+ assert.deepEqual(event(before,f.get(p)),
+  {kind:'ready-and-fuel-out',key:'iron',quantity:1});
 });
 test('closing furnace returns focus to its opening control',()=>{
  assert.match(source,/returnFocus=document.activeElement/);
