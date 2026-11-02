@@ -249,7 +249,8 @@ function create(api){
    '<button id="mw-furnace-put-input" type="button">Add 1</button><button id="mw-furnace-put-input-stack" type="button">Add stack</button><button id="mw-furnace-return-input-one" type="button">Take 1</button><button id="mw-furnace-return-input" type="button">Take input</button></div>'+
    '<div class="mw-furnace-row"><label>Fuel<select id="mw-furnace-fuel" aria-label="Furnace fuel"></select></label>'+
    '<button id="mw-furnace-put-fuel" type="button">Add 1</button><button id="mw-furnace-put-fuel-stack" type="button">Add stack</button><button id="mw-furnace-return-fuel-one" type="button">Take 1</button><button id="mw-furnace-return-fuel" type="button">Take fuel</button></div>'+
-   '<div id="mw-furnace-status" aria-live="off"></div>'+\n   '<div id="mw-furnace-announcement" class="mw-furnace-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>'+
+   '<div id="mw-furnace-status" aria-live="off"></div>'+
+   '<div id="mw-furnace-announcement" class="mw-furnace-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>'+
    '<button id="mw-furnace-output-one" type="button" aria-label="Collect one smelted item">Collect 1</button>'+
    '<button id="mw-furnace-output" type="button">Collect output</button>'+
    '<button id="mw-furnace-close" type="button">Return to World</button></section>';
