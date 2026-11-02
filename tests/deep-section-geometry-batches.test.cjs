@@ -37,7 +37,7 @@ test('batched and single geometry preserve face order, UVs and original source',
   shapeForBlock:block=>block===17?{left:.2,right:.8,bottom:0,top:.5,front:0,back:1}:null};
  const single=api.buildTriangles(plan,{...options,maxFaces:8192});
  const batched=api.buildTriangleBatches(plan,options);
- const combined=batched.batches.flatMap(b=>Array.from(b.vertices));
+ const combined=Array.from(batched.batches).flatMap(b=>Array.from(b.vertices));
  assert.deepEqual(combined,Array.from(single.vertices));
  assert.deepEqual(Array.from(plan.faces),before);
  assert.ok(batched.batches.every(b=>b.faceCount<=4));
