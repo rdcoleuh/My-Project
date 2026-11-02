@@ -1430,6 +1430,40 @@ async function go(browser,name,mobile){
     window.MineWorldBridge.getFurnaceState(x,y,z)?.output,bambooFixture),null,
     name+': bamboo-smelted iron could not be collected');
   await page.locator('#mw-furnace-close').click({force:true});
+  // Dried kelp fuel is a craftable inventory item. Verify the actual placed
+  // furnace accepts it in desktop/mobile Chrome with the synthetic pack active.
+  const kelpFixture=await page.evaluate(({x,y,z})=>{
+    const bridge=window.MineWorldBridge,W=bridge.getSnapshot().worldSize,bx=x+6;
+    const id=(bx*W+z)*48+y;
+    const granted=bridge.grantLoot('rawIron',1)&&bridge.grantLoot('driedKelpBlock',1);
+    const placed=bridge.remoteEdit(id,20);
+    return {id,x:bx,y,z,granted,placed,opened:bridge.openFurnaceAt(bx,y,z)};
+  },bambooFixture);
+  assert.equal(kelpFixture.granted,true,name+': dried kelp fuel item unavailable in live inventory');
+  assert.equal(kelpFixture.placed,true,name+': dried kelp furnace placement failed');
+  assert.equal(kelpFixture.opened,true,name+': dried kelp furnace did not open');
+  await page.locator('#mw-furnace-input').selectOption('rawIron');
+  await page.locator('#mw-furnace-put-input').click({force:true});
+  await page.waitForFunction(()=>
+    [...document.querySelector('#mw-furnace-fuel').options].some(o=>o.value==='driedKelpBlock'),
+    null,{timeout:8000});
+  await page.locator('#mw-furnace-fuel').selectOption('driedKelpBlock');
+  await page.locator('#mw-furnace-put-fuel').click({force:true});
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.output?.key==='iron',
+    kelpFixture,{timeout:30000});
+  const kelpCook=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),kelpFixture);
+  assert.equal(kelpCook?.burnTotal,200,name+': dried kelp fuel must burn for 200 seconds');
+  assert.equal(kelpCook?.output?.qty,1,name+': dried kelp fuel did not smelt iron');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-dried-kelp-fuel-synthetic.png':
+      'desktop-furnace-dried-kelp-fuel-synthetic.png'),animations:'disabled'});
+  await page.locator('#mw-furnace-output-one').click({force:true});
+  assert.equal(await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.output,kelpFixture),null,
+    name+': dried kelp smelted output could not be collected');
+  await page.locator('#mw-furnace-close').click({force:true});
   // The existing synthetic pack stays enabled while a real placed furnace
   // smelts terracotta through the three-slot UI on desktop and mobile Chrome.
   const glazeFixture=await page.evaluate(({x,y,z})=>{
