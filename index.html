@@ -2490,15 +2490,15 @@ body.in-nether #game-wrap{background:#290f19}
     {name:'⚔ Stone sword',cost:{'block:3':2,sticks:1},tool:['sword','stone'],tip:'2 stone + stick'},
     {name:'⚔ Iron sword',cost:{iron:2,sticks:1},tool:['sword','iron'],tip:'2 iron + stick'},
     {name:'🔥 Furnace',cost:{'block:3':8},give:{'block:20':1},tip:'8 stone → furnace'},
-    {name:'🍖 Cook meat',cost:{raw:1,coal:1},give:{cooked:1},tip:'Raw meat + coal → cooked food'},
-    {name:'⚒ Smelt iron',cost:{'block:19':1,coal:1},give:{iron:1},tip:'Iron ore + coal → iron ingot'},
-    {name:'⚒ Smelt raw iron',cost:{rawIron:1,coal:1},give:{iron:1},tip:'Raw iron + coal → iron ingot'},
-    {name:'⚒ Smelt deep iron',cost:{'block:102':1,coal:1},give:{iron:1},tip:'Deepslate iron ore + coal → iron ingot'},
-    {name:'🔥 Smelt copper',cost:{rawCopper:1,coal:1},give:{copper:1},tip:'Raw copper + coal → copper ingot'},
-    {name:'🔥 Smelt gold',cost:{rawGold:1,coal:1},give:{gold:1},tip:'Raw gold + coal → gold ingot'},
+    {name:'🍖 Cook meat',cost:{raw:1,coal:1},give:{cooked:1},station:'furnace',tip:'Raw meat + coal → cooked food'},
+    {name:'⚒ Smelt iron',cost:{'block:19':1,coal:1},give:{iron:1},station:'furnace',tip:'Iron ore + coal → iron ingot'},
+    {name:'⚒ Smelt raw iron',cost:{rawIron:1,coal:1},give:{iron:1},station:'furnace',tip:'Raw iron + coal → iron ingot'},
+    {name:'⚒ Smelt deep iron',cost:{'block:102':1,coal:1},give:{iron:1},station:'furnace',tip:'Deepslate iron ore + coal → iron ingot'},
+    {name:'🔥 Smelt copper',cost:{rawCopper:1,coal:1},give:{copper:1},station:'furnace',tip:'Raw copper + coal → copper ingot'},
+    {name:'🔥 Smelt gold',cost:{rawGold:1,coal:1},give:{gold:1},station:'furnace',tip:'Raw gold + coal → gold ingot'},
     {name:'⛏ Diamond pickaxe',cost:{diamond:3,sticks:2},tool:['pickaxe','diamond'],tip:'3 diamonds + 2 sticks · highest mining tier'},
     {name:'⚔ Diamond sword',cost:{diamond:2,sticks:1},tool:['sword','diamond'],tip:'2 diamonds + 1 stick'},
-    {name:'🔥 Smelt Netherite scrap',cost:{'block:85':1,coal:1},give:{netheriteScrap:1},tip:'Ancient Debris + coal → Netherite Scrap'},
+    {name:'🔥 Smelt Netherite scrap',cost:{'block:85':1,coal:1},give:{netheriteScrap:1},station:'furnace',tip:'Ancient Debris + coal → Netherite Scrap'},
     {name:'⬛ Netherite ingot',cost:{netheriteScrap:4,gold:4},give:{netheriteIngot:1},tip:'4 Netherite Scrap + 4 gold ingots'},
     {name:'⚒ Smithing table',cost:{iron:2,'block:11':4},give:{'block:136':1},tip:'2 iron ingots + 4 planks'},
     {name:'⬛ Netherite pickaxe',cost:{netheriteUpgrade:1,netheriteIngot:1},tool:['pickaxe','netherite'],upgradeFrom:'diamond',requiresSmithing:true,tip:'Smithing table + diamond pickaxe + upgrade template + ingot'},
@@ -2704,8 +2704,11 @@ body.in-nether #game-wrap{background:#290f19}
   }
   function craft(recipe){
     if(gameMode!=='survival'){toast('Choose Survival to craft tools');return false;}
+    // Smelting uses the real three-slot machine, never an instant craft exchange.
+    if(recipe.station==='furnace'){
+      toast('Place a Furnace, tap it, and load its input and fuel slots to smelt.');return false;
+    }
     const cost={...recipe.cost};
-    if(recipe.name==='⚒ Smelt iron'&&bag.iron>0&&inventory[19]===0){cost['block:19']=0;cost.iron=1;}
     if(recipe.tool&&toolLevels[tools[recipe.tool[0]]] >= toolLevels[recipe.tool[1]]){toast('Already own this tier or better');return false;}
     if(recipe.upgradeFrom&&tools[recipe.tool[0]]!==recipe.upgradeFrom){toast('First craft a diamond '+recipe.tool[0]);return false;}
     if(recipe.requiresSmithing&&!inventory[136]){toast('Craft and carry a Smithing Table to upgrade');return false;}
@@ -2721,7 +2724,6 @@ body.in-nether #game-wrap{background:#290f19}
     if(recipe.tool){tools[recipe.tool[0]]=recipe.tool[1];equipped=recipe.tool[0];emitAdvancement('tool',recipe.tool[0]+':'+recipe.tool[1]);}
     if(recipe.giveEquipment){tools[recipe.giveEquipment.kind]=recipe.giveEquipment.tier;equipped=recipe.giveEquipment.kind;emitAdvancement('tool',recipe.giveEquipment.kind+':'+recipe.giveEquipment.tier);}
     emitAdvancement('craft',recipe.name.replace(/^[^ ]+ /,''));
-    if(recipe.station==='furnace')gainExperience(2);
     updateHotbar();updateSurvivalHUD();renderGear();markSave();toast('Crafted '+recipe.name.replace(/^[^ ]+ /,''));
     return true;
   }
@@ -3154,8 +3156,8 @@ body.in-nether #game-wrap{background:#290f19}
     updateHotbar();updateSurvivalHUD();markSave();renderGear();
   }
   function stationName(station){return {table:'a Crafting Table',furnace:'a Furnace',smithing:'a Smithing Table'}[station]||station}
-  function hasCraftingStation(station){return station==='table'?nearbyCraftTable():station==='furnace'?inventory[20]>0||inventory[156]>0||inventory[157]>0:station==='smithing'?inventory[136]>0:true}
-  function recipeCanCraft(r){return gameMode==='survival'&&(r.station==='furnace'||r.station==='smithing'||craftTemplate(r)!==null)&&(!r.station||hasCraftingStation(r.station))&&Object.entries(r.cost).every(([key,n])=>amount(key)>=n)&&(!r.tool||toolLevels[tools[r.tool[0]]] < toolLevels[r.tool[1]])&&(!r.upgradeFrom||tools[r.tool[0]]===r.upgradeFrom)&&(!r.requiresSmithing||inventory[136]>0)}
+  function hasCraftingStation(station){return station==='table'?nearbyCraftTable():station==='smithing'?inventory[136]>0:station==='furnace'?false:true}
+  function recipeCanCraft(r){return gameMode==='survival'&&r.station!=='furnace'&&(r.station==='smithing'||craftTemplate(r)!==null)&&(!r.station||hasCraftingStation(r.station))&&Object.entries(r.cost).every(([key,n])=>amount(key)>=n)&&(!r.tool||toolLevels[tools[r.tool[0]]] < toolLevels[r.tool[1]])&&(!r.upgradeFrom||tools[r.tool[0]]===r.upgradeFrom)&&(!r.requiresSmithing||inventory[136]>0)}
   const ALL_RECIPES=[...RECIPES.map(r=>({...r,category:'Classic'})),...catalog.recipes];
 
   // Pocket crafting is always 2×2. A *placed* crafting table near the player opens 3×3.
@@ -3336,8 +3338,12 @@ body.in-nether #game-wrap{background:#290f19}
     $('craft-place-table').disabled=!tableItem;
   }
   function previewRecipe(recipe){
-    if(recipe.station==='furnace'||recipe.station==='smithing'){
-      if(!recipeCanCraft(recipe)){toast('Need '+(recipe.station==='furnace'?'a Furnace':'a Smithing Table')+' and ingredients');return}
+    if(recipe.station==='furnace'){
+      const hint='Smelting uses a placed Furnace: close Backpack, tap the Furnace, add input and fuel, then collect the timed output.';
+      toast(hint);$('craft-state').textContent=hint;return;
+    }
+    if(recipe.station==='smithing'){
+      if(!recipeCanCraft(recipe)){toast('Need a Smithing Table and ingredients');return}
       if(confirm('Use '+stationName(recipe.station)+' to make '+recipe.name+'?'))craft(recipe);return;
     }
     const plan=craftTemplate(recipe);
@@ -3396,7 +3402,7 @@ body.in-nether #game-wrap{background:#290f19}
       const b=document.createElement('button');b.type='button';b.className='recipe';b.disabled=!recipeCanCraft(r);
       const strong=document.createElement('strong');strong.textContent=r.name;
       const small=document.createElement('small');small.textContent=(r.station?'['+stationName(r.station)+'] ':'')+Object.entries(r.cost).map(([key,n])=>n+' '+itemLabel(key)).join(' + ')+(r.tip?' · '+r.tip:'');
-      b.append(strong,small);b.disabled=false;b.setAttribute('aria-label','Show crafting pattern for '+r.name);b.addEventListener('click',()=>previewRecipe(r));root.append(b);
+      b.append(strong,small);b.disabled=false;b.setAttribute('aria-label',(r.station==='furnace'?'Show furnace smelting instructions for ':'Show crafting pattern for ')+r.name);b.addEventListener('click',()=>previewRecipe(r));root.append(b);
     }
   }
   function renderGear(){

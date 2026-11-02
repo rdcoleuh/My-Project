@@ -978,6 +978,31 @@ async function go(browser,name,mobile){
     null,{timeout:8000});
   assert.equal(await page.locator('#craft-grid .craft-cell').count(),4,
     name+': removed remote workbench left a stale 3x3 crafting grid');
+  // Real browser check: the old instant-smelt recipe now provides machine guidance.
+  const smeltGuide=await page.evaluate(()=>{
+    const search=document.querySelector('#recipe-search');
+    const category=document.querySelector('#recipe-category');
+    const craftable=document.querySelector('#recipe-craftable');
+    if(!search||!category||!craftable)return {found:false};
+    category.value='All';craftable.checked=false;search.value='Smelt raw iron';
+    search.dispatchEvent(new Event('input',{bubbles:true}));
+    const button=[...document.querySelectorAll('#recipes button.recipe')]
+      .find(b=>b.textContent.includes('Smelt raw iron'));
+    if(!button)return {found:false};
+    button.click();
+    return {found:true,hint:document.querySelector('#craft-state')?.textContent||'',
+      label:button.getAttribute('aria-label')};
+  });
+  assert.ok(smeltGuide.found&&/Smelting uses a placed Furnace/.test(smeltGuide.hint)&&
+    /Show furnace smelting instructions/.test(smeltGuide.label),
+    name+': furnace recipe still routes to instant crafting: '+JSON.stringify(smeltGuide));
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-no-instant-recipe-synthetic.png':
+      'desktop-furnace-no-instant-recipe-synthetic.png'),animations:'disabled'});
+  await page.evaluate(()=>{
+    const search=document.querySelector('#recipe-search');
+    search.value='';search.dispatchEvent(new Event('input',{bubbles:true}));
+  });
   await page.waitForTimeout(950);
   await page.locator('#close-gear').click({force:true});
   await page.waitForTimeout(450);
