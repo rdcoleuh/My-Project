@@ -7,7 +7,7 @@ const uv=window.MineWorldHotbarUV;
 function paintCell(rgba,width,height,index){
  const rect=uv.slotRect(width,height,index);
  assert.ok(rect,'valid slot '+index);
- rgba[rect.x*4+3]=255; // top-edge border pixel
+ rgba[(rect.y*width+rect.x)*4+3]=255; // actual slot edge, not the shared outer frame
 }
 test('bordered and seamless 1x, 2x, 4x bars need alpha in all nine cells',()=>{
  for(const [nativeWidth,nativeHeight] of [[182,22],[180,20]]){
@@ -21,6 +21,23 @@ test('bordered and seamless 1x, 2x, 4x bars need alpha in all nine cells',()=>{
    assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),false);
   }
  }
+});
+test('a shared outer Java border cannot impersonate nine painted slots',()=>{
+ const width=182,height=22,pixels=new Uint8ClampedArray(width*height*4);
+ for(let x=0;x<width;x++){
+  pixels[x*4+3]=255;
+  pixels[((height-1)*width+x)*4+3]=255;
+ }
+ assert.equal(uv.hasVisibleAlpha(pixels),true);
+ assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),false,
+  'top and bottom frame alone leave every slot interior transparent');
+ for(let i=0;i<9;i++)paintCell(pixels,width,height,i);
+ assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),true,
+  'a thin independent outline in every slot is valid');
+ const blank=uv.slotRect(width,height,5);
+ pixels[(blank.y*width+blank.x)*4+3]=0;
+ assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),false,
+  'one blank interior still triggers procedural fallback');
 });
 test('opaque unrelated atlas pixels do not disguise blank cells',()=>{
  const width=182,height=22,pixels=new Uint8ClampedArray(width*height*4);
@@ -44,5 +61,5 @@ test('importer checks full sheet only for background, keeping numbered slot fall
  assert.ok(source.includes("visibleCandidate(attempt,candidateRect,kind==='hotbar'&&fill==='background')"));
  assert.ok(source.includes('candidate===legacyKey'));
  assert.ok(source.includes('sliced?window.MineWorldHotbarUV?.slotRect'));
- assert.ok(read('sw.js').includes('mineworld-6-174-hotbar-bar-coverage'));
+ assert.ok(read('sw.js').includes('mineworld-6-175-hotbar-interior-coverage'));
 });

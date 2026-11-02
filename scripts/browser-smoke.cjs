@@ -40,7 +40,8 @@ function generatedPng(height,channel,width=16,perColumn=false,alpha=255){
  const rows=Buffer.alloc(height*(1+width*4));
  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
   const pos=y*(1+width*4)+1+x*4;
-  rows[pos]=perColumn?(110+x)%255:110;rows[pos+1]=(channel+y*8)%255;rows[pos+2]=140;rows[pos+3]=alpha;
+  rows[pos]=perColumn?(110+x)%255:110;rows[pos+1]=(channel+y*8)%255;rows[pos+2]=140;
+   rows[pos+3]=typeof alpha==='function'?alpha(x,y,width,height):alpha;
  }
  return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),
   pngChunk('IHDR',ihdr),pngChunk('IDAT',deflateSync(rows)),pngChunk('IEND',Buffer.alloc(0))]);
@@ -82,7 +83,13 @@ function makeTestArchive(mode='full'){
   files=[['resource_pack/textures/ui/hotbar.png',
     generatedPng(invalid?20:bordered?22:20,120,invalid?20:bordered?182:180,true)]];
  }
- if(mode==='legacy-widgets'||mode==='legacy-widgets-hd')files=[
+ // A Java-style sheet with only its shared outer frame is NOT nine slots.
+  // Independent synthetic fixture: no player/Minecraft artwork is included.
+  if(mode==='outer-frame-only')files=[
+   ['resource_pack/textures/ui/hotbar.png',
+     generatedPng(22,120,182,false,(_x,y,_w,h)=>y===0||y===h-1?255:0)]
+  ];
+  if(mode==='legacy-widgets'||mode==='legacy-widgets-hd')files=[
   ['assets/minecraft/textures/gui/widgets.png',
     generatedPng(mode==='legacy-widgets-hd'?512:256,160,mode==='legacy-widgets-hd'?512:256,true)]
  ];
@@ -637,7 +644,25 @@ async function go(browser,name,mobile){
   await page.screenshot({path:path.join(screenshotDir,
     mobile?'mobile-transparent-hud-synthetic.png':'desktop-transparent-hud-synthetic.png'),
     animations:'disabled'});
-  // A separately supplied generic slot takes precedence over a sheet-derived
+  // The outer border alone used to count as all nine slots. A synthetic
+   // player-imported Java-style strip must now use procedural slot fallback.
+   await page.evaluate(async bytes=>{
+     await window.MineWorldLocalTextures.loadFile(new File(
+       [new Uint8Array(bytes)],'outer-frame-only-fixture.zip',{type:'application/zip'}));
+   },Array.from(makeTestArchive('outer-frame-only')));
+   assert.ok(await page.evaluate(async()=>{
+     const pack=window.MineWorldLocalTextures;
+     const background=await pack.hudIcon('hotbar','background');
+     const slots=await Promise.all(Array.from({length:9},(_,i)=>
+       pack.hudIcon('hotbar','slot'+i)));
+     return background===null&&slots.every(src=>src===null);
+   }),name+': shared outer hotbar border was mistaken for nine usable slots');
+   await page.waitForFunction(()=>
+     !document.querySelector('#hotbar')?.classList.contains('mw-pack-bar-image'),
+     null,{timeout:15000});
+   await page.screenshot({path:path.join(screenshotDir,
+     (mobile?'mobile-':'desktop-')+'outer-frame-hotbar-fallback.png'),animations:'disabled'});
+   // A separately supplied generic slot takes precedence over a sheet-derived
   // slot; explicit player artwork must not be silently replaced by the sheet.
   await page.evaluate(async bytes=>{
     const file=new File([new Uint8Array(bytes)],'generic-slot-fixture.zip',{type:'application/zip'});
