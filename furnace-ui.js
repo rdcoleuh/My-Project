@@ -184,8 +184,23 @@ function awardCollectedOutput(api,which,key,result){
  if(points)api.gainExperience(points);
  return points;
 }
+// Frequent timer redraws must not flood assistive technology.
+function furnaceAnnouncement(previous,machine){
+ if(!previous||!machine)return null;
+ const output=machine.output,qty=output?.qty||0,key=output?.key||null;
+ if(qty>0&&(key!==previous.outputKey||qty>previous.outputQty))
+  return {kind:'ready',key,quantity:qty};
+ if(previous.burn>0&&machine.burn<=0)return {kind:'fuel-out'};
+ if(previous.burn<=0&&machine.burn>0)return {kind:'burning'};
+ return null;
+}
+function furnaceAnnouncementState(machine){
+ return {burn:machine.burn,outputKey:machine.output?.key||null,
+  outputQty:machine.output?.qty||0};
+}
 function create(api){
  const engine=api.engine;let current=null,panel=null,drawClock=0;
+ let announceState=null,returnFocus=null;
  const iconCache=new Map();let iconPack=null,iconGeneration=null,iconEpoch=0;
  function slotArt(node,item){
   const pack=window.MineWorldLocalTextures||null,generation=pack?.generation??0;
@@ -217,6 +232,7 @@ function create(api){
    '.mw-furnace-workspace{display:grid;grid-template-columns:74px minmax(90px,1fr) 74px;align-items:center;justify-content:center;gap:14px;padding:14px;margin:12px 0;background:#18281c;border:2px solid #728365;border-radius:7px}'+
    '.mw-furnace-stack{display:flex;flex-direction:column;gap:12px}.mw-furnace-slot{box-sizing:border-box;width:70px;min-height:70px;margin:0;padding:6px 3px;cursor:pointer;touch-action:manipulation;font:inherit;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;background:#2a3029;border:3px solid #0d1b13;box-shadow:inset 2px 2px #131b14,inset -2px -2px #65715e;color:#e5e8dc;text-align:center;overflow:hidden}'+
    '.mw-furnace-slot:focus-visible{outline:3px solid #f7d56c;outline-offset:3px}.mw-furnace-slot.occupied{background:#384633;border-color:#a5b68b}.mw-furnace-slot span{font-family:monospace;font-size:20px;font-weight:900;line-height:1;white-space:nowrap}.mw-furnace-slot img{width:32px;height:32px;object-fit:contain;image-rendering:pixelated;image-rendering:crisp-edges}.mw-furnace-slot img[hidden]{display:none}.mw-furnace-slot small{font-size:11px;line-height:1.15;overflow-wrap:anywhere}.mw-furnace-meters{display:flex;flex-direction:column;gap:12px;min-width:0}.mw-furnace-meters label{font-size:12px;font-weight:700}.mw-furnace-meters progress{display:block;width:100%;height:14px;accent-color:#f3a33d;margin-top:5px}'+
+   '.mw-furnace-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}'+
    '@media(max-width:390px){.mw-furnace-workspace{grid-template-columns:64px minmax(70px,1fr) 64px;gap:7px;padding:8px}.mw-furnace-slot{width:62px;min-height:62px}.mw-furnace-modal{padding:12px}}';
   document.head.appendChild(style);
   panel=document.createElement('div');panel.id='mw-furnace-panel';panel.className='modal-backdrop hidden';
@@ -233,7 +249,7 @@ function create(api){
    '<button id="mw-furnace-put-input" type="button">Add 1</button><button id="mw-furnace-put-input-stack" type="button">Add stack</button><button id="mw-furnace-return-input-one" type="button">Take 1</button><button id="mw-furnace-return-input" type="button">Take input</button></div>'+
    '<div class="mw-furnace-row"><label>Fuel<select id="mw-furnace-fuel" aria-label="Furnace fuel"></select></label>'+
    '<button id="mw-furnace-put-fuel" type="button">Add 1</button><button id="mw-furnace-put-fuel-stack" type="button">Add stack</button><button id="mw-furnace-return-fuel-one" type="button">Take 1</button><button id="mw-furnace-return-fuel" type="button">Take fuel</button></div>'+
-   '<div id="mw-furnace-status" role="status" aria-live="polite"></div>'+
+   '<div id="mw-furnace-status" aria-live="off"></div>'+\n   '<div id="mw-furnace-announcement" class="mw-furnace-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>'+
    '<button id="mw-furnace-output-one" type="button" aria-label="Collect one smelted item">Collect 1</button>'+
    '<button id="mw-furnace-output" type="button">Collect output</button>'+
    '<button id="mw-furnace-close" type="button">Return to World</button></section>';
@@ -313,6 +329,13 @@ function create(api){
   el('mw-furnace-cook').value=Math.max(0,Math.min(100,Math.round(m.progress/window.MineWorldFurnace.KINDS[m.kind].cook*100)));
   el('mw-furnace-status').textContent='Input: '+fmt(m.input)+' · Fuel: '+fmt(m.fuel)+
    ' · Output: '+fmt(m.output)+' · Flame: '+Math.ceil(m.burn)+'s · Smelted: '+Math.round(m.progress/window.MineWorldFurnace.KINDS[m.kind].cook*100)+'%';
+  const event=furnaceAnnouncement(announceState,m);
+  announceState=furnaceAnnouncementState(m);
+  if(event){
+   el('mw-furnace-announcement').textContent=event.kind==='ready'?
+    'Smelting complete. '+fmt(m.output)+' ready in output slot.':
+    event.kind==='burning'?'Furnace fuel ignited.':'Furnace fuel exhausted.';
+  }
   el('mw-furnace-output-one').disabled=!m.output;
   el('mw-furnace-output').textContent='Collect output: '+fmt(m.output);
   el('mw-furnace-output').disabled=!m.output;
@@ -320,15 +343,22 @@ function create(api){
  function open(position,kind='furnace'){
   const machine=ensureStation(engine,api,position,kind);
   if(!machine)return false;
-  ensurePanel();current={...position};
+  ensurePanel();returnFocus=document.activeElement;announceState=null;
+  el('mw-furnace-announcement').textContent='';current={...position};
   const station=machine.kind;
   el('mw-furnace-title').textContent=station==='smoker'?'🍖 Smoker':station==='blast'?'⚒ Blast Furnace':'🔥 Furnace';
   el('mw-furnace-help').textContent='Add an ingredient and fuel. '+(station==='smoker'?'Food only':station==='blast'?'Ores and metals only':'All supported recipes')+'; one item takes '+window.MineWorldFurnace.KINDS[station].cook+' seconds. Tap a slot to add the selected item or collect output. Collect smelted output for experience. Take buttons return ingredients and fuel.';
 
   panel.classList.remove('hidden');api.onPause();render();el('mw-furnace-close').focus();return true;}
- function close(){if(!current)return;current=null;panel?.classList.add('hidden');api.onResume();}
+ function close(){
+  if(!current)return;
+  current=null;announceState=null;panel?.classList.add('hidden');api.onResume();
+  const target=returnFocus;returnFocus=null;
+  if(target?.isConnected&&typeof target.focus==='function')
+   target.focus({preventScroll:true});
+ }
  function tick(dt){if(!current)return;drawClock+=dt;if(drawClock>=.25){drawClock=0;render();}}
  return {open,close,tick,get isOpen(){return !!current;}};
 }
-window.MineWorldFurnaceUI=Object.freeze({create,ensureStation,syncSelect,resolveSlotIcon,planSlotGesture,smeltingReward,awardCollectedOutput,transfers:Object.freeze({deposit,withdraw,commitTransfer})});
+window.MineWorldFurnaceUI=Object.freeze({create,ensureStation,syncSelect,resolveSlotIcon,planSlotGesture,smeltingReward,awardCollectedOutput,furnaceAnnouncement,furnaceAnnouncementState,transfers:Object.freeze({deposit,withdraw,commitTransfer})});
 })();
