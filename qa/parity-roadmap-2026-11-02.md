@@ -10,7 +10,7 @@ This checklist describes **MineWorld's independently authored implementations**,
 | Three-slot furnace, smelting recipes, fuels, timers, persistence | `furnace-engine.js`, `furnace-ui.js` | Implemented; long survival-playthrough validation ongoing |
 | Crafting table and inventory interaction | `index.html`, inventory UI tests | Partially implemented; end-to-end recipe QA needed |
 | Deep Overworld Y=-64..319, sea 63 | `world-depth.js`, `world-chunks.js` | Experimental generator only; playable world still H=48, SEA=14 |
-| Deep caves, ores, bedrock, aquifers | `world-chunks.js`, `overworld-ores.js` | Deterministic preflight/tests; no live deep-world playthrough |
+| Deep caves, ores, bedrock, aquifers | `world-chunks.js`, `overworld-ores.js` | Deterministic preflight/tests, pocketed lava; no live deep-world playthrough |
 | Mob navigation, sight, attack, creeper fuse | `mob-ai-rules.js`, `mob-expansion.js` | Implemented in part; hands-on combat QA needed |
 | Mob skins, textures, animation | `mob-pixel-art.js`, `entity-texture-maps.js`, `mob-motion.js` | Partial; imported-pack and frame-by-frame visual QA needed |
 | Structures, Nether, End, final boss | `world-chunks.js`, `nether-world.js`, `end-world.js` | Progression unverified; no claimed final-boss victory |

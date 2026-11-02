@@ -62,3 +62,32 @@ test('legacy 48-layer cave and ore bytes are unchanged by opt-in deep aquifers',
  for(const block of legacy)hash=Math.imul(hash^block,16777619)>>>0;
  assert.equal(hash,0x77e00a1e);
 });
+
+test('deep lava occupies coherent pockets rather than every bottom cave opening',()=>{
+ world.setSeed(85721);
+ const chunk=world.generateChunk(opts);
+ let lava=0,dry=0;
+ for(let x=0;x<16;x++)for(let z=0;z<16;z++)for(let y=-60;y<=-54;y++){
+  const block=at(chunk,x,y,z);
+  if(block===66)lava++;
+  if(block===0)dry++;
+ }
+ assert.ok(lava>100,'bottom caves still contain meaningful lava hazards');
+ assert.ok(dry>30,'some deep cave passages stay open for exploration');
+ // The original generator filled every bottom-band opening with lava.
+ // A pocket field must create both hazards and traversable gaps.
+ assert.ok(lava>0&&dry>0);
+});
+test('deep lava pockets remain deterministic across neighboring chunk boundaries',()=>{
+ world.setSeed(85721);
+ const left=world.generateChunk({cx:313,cz:312,H:384,minY:-64,SEA:63});
+ const right=world.generateChunk({cx:314,cz:312,H:384,minY:-64,SEA:63});
+ let equal=0,total=0;
+ for(let z=0;z<16;z++)for(let y=-60;y<=-54;y++){
+  if((at(left,15,y,z)===66)===(at(right,0,y,z)===66))equal++;
+  total++;
+ }
+ assert.ok(equal/total>.85,'no artificial lava seam at the chunk border');
+ const again=world.generateChunk({cx:314,cz:312,H:384,minY:-64,SEA:63});
+ assert.deepEqual(Buffer.from(right),Buffer.from(again));
+});

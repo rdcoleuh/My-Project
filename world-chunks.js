@@ -194,6 +194,10 @@
      // Sample once per column, not per voxel, to keep mobile generation cheap.
      // Existing 48-layer saves skip this branch and remain byte-identical.
      const aquifer=deepCaverns?noise(x,z,72,612):0;
+     // Deep lava is a spatially coherent pocket field, not every carved
+     // cavity below Y=-54. A separate seed-dependent column sample keeps
+     // dry escape passages between lava pools without per-voxel noise work.
+     const lavaPocket=deepCaverns?noise(x,z,24,613):0;
      const waterTop=-38+Math.floor(Math.max(0,aquifer-.59)*20);
      const biome=BIOMES[zone(x,z)],top=terrainAt(x,z,SEA,H,minY);
      heights[dx*CHUNK+dz]=top;
@@ -217,7 +221,7 @@
          // Deep cave pockets hold water where a continuous aquifer field
          // crosses the cavity. Lava occupies exposed caves at Y <= -54.
          // Only carved cells receive fluids; bedrock and player edits win.
-         const fluid=deepCaverns&&y<=-54?66:
+         const fluid=deepCaverns&&y<=-54&&lavaPocket>.46?66:
            deepCaverns&&aquifer>.59&&y>-54&&y<=waterTop?7:0;
          put(x,y,z,fluid);
        }
