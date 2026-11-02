@@ -149,7 +149,14 @@ function createSectionNeighborhood(){
     const frame=snapshot(cx,cz,job);
     if(!frame||!canInstall(cx,cz,store,job,frame))return null;
     const plan=planner.plan(frame,options);
-    return canInstall(cx,cz,store,job,frame)?Object.freeze({snapshot:frame,plan}):null;
+    // Geometry generation is opt-in: normal mesh claims allocate no vertex
+    // buffers. A stale neighbor edit still prevents installation.
+    const requested=options?.geometry;
+    const geometry=requested?planner.buildTriangles(plan,{
+      ...(requested===true?{}:requested),originX:cx*16,originZ:cz*16
+    }):null;
+    return canInstall(cx,cz,store,job,frame)?
+      Object.freeze(geometry?{snapshot:frame,plan,geometry}:{snapshot:frame,plan}):null;
   }
   return Object.freeze({register,unregister,get:at,neighborsOf,set,applyEdits,
     worldToChunk,getWorld,setWorld,snapshot,canInstall,planMesh,size:()=>stores.size});

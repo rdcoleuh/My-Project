@@ -80,5 +80,101 @@ function unpack(packed,minY){
  return {x:packed&15,z:(packed>>>4)&15,localY:(packed>>>8)&15,
   y:minY+((packed>>>8)&15),face:(packed>>>12)&7,block:(packed>>>15)&255};
 }
-window.MineWorldSectionFaces=Object.freeze({FACE,plan,unpack});
+
+/*
+ * Opt-in bridge from packed exposed faces to the live renderer's interleaved
+ * [world xyz, shaded rgb, atlas uv] triangle layout (8 floats per vertex).
+ * No proprietary bitmap data or texture coordinates are embedded: callers
+ * supply the UV resolver for their player-imported atlas. This remains a
+ * staging API until the 384-layer chunk stream is wired into live WebGL.
+ * A per-section face budget prevents accidental multi-megabyte allocations
+ * on memory-constrained mobile devices.
+ */
+const QUADS=Object.freeze([
+  [[0,0,1],[0,1,1],[0,1,0],[0,0,0]], // west (-X)
+  [[1,0,0],[1,1,0],[1,1,1],[1,0,1]], // east (+X)
+  [[0,0,1],[0,0,0],[1,0,0],[1,0,1]], // down (-Y)
+  [[0,1,0],[0,1,1],[1,1,1],[1,1,0]], // up (+Y)
+  [[0,0,0],[0,1,0],[1,1,0],[1,0,0]], // north (-Z)
+  [[1,0,1],[1,1,1],[0,1,1],[0,0,1]]  // south (+Z)
+]);
+const FACE_SHADE=Object.freeze([.72,.72,.45,1,.80,.83]);
+const TRIANGLES=Object.freeze([0,1,2,0,2,3]);
+const CORNER_UV=Object.freeze([[0,0],[0,1],[1,1],[1,0]]);
+const CUBE=Object.freeze({left:0,right:1,bottom:0,top:1,front:0,back:1});
+function faceCorner(face,v){
+ const [x,y,z]=v;
+ let u,t;
+ if(face===3){u=x;t=z;}
+ else if(face===2){u=x;t=1-z;}
+ else if(face===1){u=1-z;t=1-y;}
+ else if(face===0){u=z;t=1-y;}
+ else if(face===5){u=1-x;t=1-y;}
+ else {u=x;t=1-y;}
+ return u?(t?2:3):(t?1:0);
+}
+function buildTriangles(plan,{originX=0,originZ=0,uvForFace,shapeForBlock,maxFaces=8192}={}){
+ if(!plan||Object.prototype.toString.call(plan.faces)!=='[object Uint32Array]'||
+    plan.chunkSize!==16||!Number.isSafeInteger(plan.minY)||
+    !Number.isSafeInteger(plan.maxY)||plan.maxY<plan.minY||
+    plan.maxY-plan.minY>=16||plan.faceCount!==plan.faces.length||
+    plan.faceCount<0||plan.faceCount>24576)
+  throw new RangeError('Invalid section face plan');
+ if(!Number.isSafeInteger(originX)||!Number.isSafeInteger(originZ)||
+    !Number.isSafeInteger(originX+16)||!Number.isSafeInteger(originZ+16))
+  throw new RangeError('Invalid section world origin');
+ if(!Number.isSafeInteger(maxFaces)||maxFaces<1||maxFaces>24576||
+    plan.faceCount>maxFaces)
+  throw new RangeError('Section geometry exceeds face budget');
+ if(uvForFace!==undefined&&typeof uvForFace!=='function'||
+    shapeForBlock!==undefined&&typeof shapeForBlock!=='function')
+  throw new TypeError('Expected section geometry callbacks');
+ // Validate the packed plan before allocating any GPU-bound buffers.
+ const decoded=[];
+ for(const packed of plan.faces){
+  const face=unpack(packed,plan.minY);
+  if(!face||face.face>5||face.block===0||face.y>plan.maxY)
+   throw new RangeError('Invalid packed section face');
+  decoded.push(face);
+ }
+ const out=new Float32Array(decoded.length*TRIANGLES.length*8);
+ const shapes=new Map();
+ let cursor=0;
+ for(const p of decoded){
+  let shape=shapes.get(p.block);
+  if(!shape){
+   shape=shapeForBlock?shapeForBlock(p.block):null;
+   if(shape==null)shape=CUBE;
+   const values=['left','right','bottom','top','front','back'].map(k=>shape[k]);
+   if(!values.every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=1)||
+      shape.left>shape.right||shape.bottom>shape.top||shape.front>shape.back)
+    throw new RangeError('Invalid section block shape');
+   shapes.set(p.block,shape);
+  }
+  const verts=QUADS[p.face];
+  const uv=verts.map(v=>{
+   const corner=faceCorner(p.face,v);
+   const pair=uvForFace?uvForFace(p.block,p.face,corner):CORNER_UV[corner];
+   if(!pair||pair.length!==2||![pair[0],pair[1]].every(n=>
+       typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=1))
+    throw new RangeError('Invalid player atlas UV');
+   return [pair[0],pair[1]];
+  });
+  for(const i of TRIANGLES){
+   const v=verts[i],point=uv[i];
+   out[cursor++]=originX+p.x+(v[0]?shape.right:shape.left);
+   out[cursor++]=p.y+(v[1]?shape.top:shape.bottom);
+   out[cursor++]=originZ+p.z+(v[2]?shape.back:shape.front);
+   out[cursor++]=FACE_SHADE[p.face];
+   out[cursor++]=FACE_SHADE[p.face];
+   out[cursor++]=FACE_SHADE[p.face];
+   out[cursor++]=point[0];out[cursor++]=point[1];
+  }
+ }
+ return Object.freeze({vertices:out,stride:8,vertexCount:decoded.length*6,
+  triangleCount:decoded.length*2,faceCount:decoded.length,
+  originX,originZ,minY:plan.minY,revision:plan.revision});
+}
+
+window.MineWorldSectionFaces=Object.freeze({FACE,plan,unpack,buildTriangles});
 })();
