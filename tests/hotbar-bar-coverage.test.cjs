@@ -17,7 +17,8 @@ test('bordered and seamless 1x, 2x, 4x bars need alpha in all nine cells',()=>{
    assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),false);
    for(let i=0;i<9;i++)paintCell(pixels,width,height,i);
    assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),true);
-   pixels[uv.slotRect(width,height,4).x*4+3]=0;
+   const cell=uv.slotRect(width,height,4);
+   pixels[(cell.y*width+cell.x)*4+3]=0;
    assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),false);
   }
  }
