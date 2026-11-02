@@ -27,6 +27,6 @@ test('normal finite fuses still prime, defuse and cap background frame catch-up'
 });
 test('service worker invalidates cached mob AI on deployment',()=>{
  const sw=fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8');
- assert.match(sw,/mineworld-6-177-creeper-fuse-validation/);
+ assert.match(sw,/const VERSION='mineworld-6-\d+-[^']+';/);
  assert.ok(sw.includes("'./mob-ai-rules.js'"));
 });

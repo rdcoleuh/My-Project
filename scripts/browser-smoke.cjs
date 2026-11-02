@@ -89,6 +89,11 @@ function makeTestArchive(mode='full'){
    ['resource_pack/textures/ui/hotbar.png',
      generatedPng(22,120,182,false,(_x,y,_w,h)=>y===0||y===h-1?255:0)]
   ];
+  // Original synthetic ZIP: one opaque pixel per cell is not a valid sheet.
+  if(mode==='sparse-bar')files=[
+   ['resource_pack/textures/ui/hotbar.png',
+     generatedPng(22,120,182,false,(x,y)=>y===1&&x>=1&&x<=161&&(x-1)%20===0?255:0)]
+  ];
   if(mode==='legacy-widgets'||mode==='legacy-widgets-hd')files=[
   ['assets/minecraft/textures/gui/widgets.png',
     generatedPng(mode==='legacy-widgets-hd'?512:256,160,mode==='legacy-widgets-hd'?512:256,true)]
@@ -662,6 +667,20 @@ async function go(browser,name,mobile){
      null,{timeout:15000});
    await page.screenshot({path:path.join(screenshotDir,
      (mobile?'mobile-':'desktop-')+'outer-frame-hotbar-fallback.png'),animations:'disabled'});
+   // Verify sparse player-import format fixtures fall back on both browsers.
+   await page.evaluate(async bytes=>{
+     await window.MineWorldLocalTextures.loadFile(new File(
+       [new Uint8Array(bytes)],'sparse-bar-synthetic.zip',{type:'application/zip'}));
+   },Array.from(makeTestArchive('sparse-bar')));
+   assert.ok(await page.evaluate(async()=>{
+     const pack=window.MineWorldLocalTextures;
+     const art=await Promise.all(['background',...Array.from({length:9},(_,i)=>'slot'+i)]
+       .map(fill=>pack.hudIcon('hotbar',fill)));
+     return art.every(src=>src===null)&&
+       !document.querySelector('#hotbar')?.classList.contains('mw-pack-bar-image');
+   }),name+': sparse imported bar suppressed procedural slot backgrounds');
+   await page.screenshot({path:path.join(screenshotDir,
+     (mobile?'mobile-':'desktop-')+'sparse-bar-hotbar-fallback.png'),animations:'disabled'});
    // A separately supplied generic slot takes precedence over a sheet-derived
   // slot; explicit player artwork must not be silently replaced by the sheet.
   await page.evaluate(async bytes=>{

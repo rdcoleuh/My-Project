@@ -4,10 +4,16 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
 const window={};vm.runInNewContext(read('hotbar-sprite-uv.js'),{window});
 const uv=window.MineWorldHotbarUV;
-function paintCell(rgba,width,height,index){
+function paintCell(rgba,width,height,index,filled=true){
  const rect=uv.slotRect(width,height,index);
  assert.ok(rect,'valid slot '+index);
- rgba[(rect.y*width+rect.x)*4+3]=255; // actual slot edge, not the shared outer frame
+ const thickness=rect.width/20;
+ for(let y=rect.y;y<rect.y+rect.height;y++)
+  for(let x=rect.x;x<rect.x+rect.width;x++){
+   const edge=x<rect.x+thickness||x>=rect.x+rect.width-thickness||
+     y<rect.y+thickness||y>=rect.y+rect.height-thickness;
+   rgba[(y*width+x)*4+3]=filled&&edge?255:0;
+  }
 }
 test('bordered and seamless 1x, 2x, 4x bars need alpha in all nine cells',()=>{
  for(const [nativeWidth,nativeHeight] of [[182,22],[180,20]]){
@@ -17,8 +23,7 @@ test('bordered and seamless 1x, 2x, 4x bars need alpha in all nine cells',()=>{
    assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),false);
    for(let i=0;i<9;i++)paintCell(pixels,width,height,i);
    assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),true);
-   const cell=uv.slotRect(width,height,4);
-   pixels[(cell.y*width+cell.x)*4+3]=0;
+   paintCell(pixels,width,height,4,false);
    assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),false);
   }
  }
@@ -35,10 +40,31 @@ test('a shared outer Java border cannot impersonate nine painted slots',()=>{
  for(let i=0;i<9;i++)paintCell(pixels,width,height,i);
  assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),true,
   'a thin independent outline in every slot is valid');
- const blank=uv.slotRect(width,height,5);
- pixels[(blank.y*width+blank.x)*4+3]=0;
+ paintCell(pixels,width,height,5,false);
  assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),false,
   'one blank interior still triggers procedural fallback');
+});
+test('sparse pixels fail while original outlined slots pass at native and HD scales',()=>{
+ for(const [w,h] of [[182,22],[180,20],[364,44],[360,40],[728,88]]){
+  const pixels=new Uint8ClampedArray(w*h*4);
+  for(let i=0;i<9;i++){
+   const r=uv.slotRect(w,h,i);
+   pixels[(r.y*w+r.x)*4+3]=255;
+  }
+  assert.equal(uv.hasCompleteBarAlpha(pixels,w,h),false);
+  for(let i=0;i<9;i++)paintCell(pixels,w,h,i);
+  assert.equal(uv.hasCompleteBarAlpha(pixels,w,h),true);
+ }
+});
+test('the five-percent threshold is enforced independently per slot',()=>{
+ const w=180,h=20,pixels=new Uint8ClampedArray(w*h*4);
+ for(let i=0;i<9;i++)paintCell(pixels,w,h,i);
+ paintCell(pixels,w,h,8,false);
+ const r=uv.slotRect(w,h,8);
+ for(let n=0;n<19;n++)pixels[(r.y*w+r.x+n)*4+3]=255;
+ assert.equal(uv.hasCompleteBarAlpha(pixels,w,h),false);
+ pixels[(r.y*w+r.x+19)*4+3]=255;
+ assert.equal(uv.hasCompleteBarAlpha(pixels,w,h),true);
 });
 test('opaque unrelated atlas pixels do not disguise blank cells',()=>{
  const width=182,height=22,pixels=new Uint8ClampedArray(width*height*4);

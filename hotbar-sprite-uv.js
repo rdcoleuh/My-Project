@@ -81,10 +81,10 @@ function hasVisibleAlpha(rgba){
  for(let i=3;i<rgba.length;i+=4)if(rgba[i]>0)return true;
  return false;
 }
-// Reject a partially transparent nine-cell background as a full bar.
-// Inspect each slot interior, including per-slot outlines. The shared outer
-// top/bottom border of a Java-style bar must not make nine empty slots appear
-// complete; such a pack falls back to MineWorld's original slot artwork.
+// Reject sparse nine-cell sheets, not just fully transparent cells. Require
+// 5% alpha coverage per slot: a native one-pixel outline still qualifies, but
+// nine stray pixels cannot suppress the independently drawn fallback slots.
+// Shared outer Java borders are excluded from the sampled slot interiors.
 function hasCompleteBarAlpha(rgba,width,height){
  if(!Number.isInteger(width)||!Number.isInteger(height)||
     width<1||height<1||width*height>1024*1024||
@@ -92,11 +92,12 @@ function hasCompleteBarAlpha(rgba,width,height){
  for(let i=0;i<9;i++){
   const cell=slotRect(width,height,i);
   if(!cell)return false;
-  let visible=false;
-  for(let y=cell.y;y<cell.y+cell.height&&!visible;y++)
-   for(let x=cell.x;x<cell.x+cell.width;x++)
-    if(rgba[(y*width+x)*4+3]>0){visible=true;break;}
-  if(!visible)return false;
+  const required=Math.ceil(cell.width*cell.height*.05);
+  let visible=0;
+  for(let y=cell.y;y<cell.y+cell.height&&visible<required;y++)
+   for(let x=cell.x;x<cell.x+cell.width&&visible<required;x++)
+    if(rgba[(y*width+x)*4+3]>0)visible++;
+  if(visible<required)return false;
  }
  return true;
 }
