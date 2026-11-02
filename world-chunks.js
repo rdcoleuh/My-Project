@@ -184,6 +184,9 @@
      const i=offset(x,y,z);if(!onlyAir||data[i]===0)data[i]=block;
    };
    const get=(x,y,z)=>within(x,y,z)?data[offset(x,y,z)]:0;
+   // Only the staged 384-layer profile gains wider deep cavern bands.
+   // Legacy saved worlds keep their exact historical cave layout.
+   const deepCaverns=H===384&&minY===-64;
    const heights=new Int16Array(CHUNK*CHUNK);
    for(let dx=0;dx<CHUNK;dx++)for(let dz=0;dz<CHUNK;dz++){
      const x=x0+dx,z=z0+dz;if(x>=maxX||z>=maxZ)continue;
@@ -200,7 +203,12 @@
      // A fast repeatable tunnel carve, bounded below surface and not through structures.
      for(let y=minY+4;y<Math.min(top-4,minY+H-6);y++){
        const cave=noise(x+y*1.8,z-y*1.7,23,610)*.7+noise(x-y*2.6,z+y*2.3,10,611)*.3;
-       if(cave>.745)put(x,y,z,0);
+       // Expand the existing continuous cave field near Y=-32, tapering
+       // smoothly to the old threshold at Y=-56 and Y=-8. No additional
+       // noise sampling, chunk-local randomness, or copyrighted assets.
+       const cavernBand=deepCaverns&&y>=-56&&y<=-8?
+         Math.max(0,1-Math.abs(y+32)/24):0;
+       if(cave>.745-.075*cavernBand)put(x,y,z,0);
      }
    }
    // Seeded mineral veins are distributed across depth bands and neighboring chunk edges.
