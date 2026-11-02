@@ -62,5 +62,6 @@ test('importer checks full sheet only for background, keeping numbered slot fall
  assert.ok(source.includes("visibleCandidate(attempt,candidateRect,kind==='hotbar'&&fill==='background')"));
  assert.ok(source.includes('candidate===legacyKey'));
  assert.ok(source.includes('sliced?window.MineWorldHotbarUV?.slotRect'));
- assert.ok(read('sw.js').includes('mineworld-6-176-safe-section-elevations'));
+ assert.match(read('sw.js'),/const VERSION='mineworld-[^']+';/,
+  'the importer must remain cached under a versioned service worker');
 });
