@@ -8,3 +8,6 @@ Add the generic MineWorld `block:25` → `glazedTerracotta` ten-second furnace r
 
 ## Verification plan and limitations
 Node regression tests cover recipe eligibility, timing, deep-Y save/reload, inventory conservation, catalog consistency and exploit prevention. Desktop/mobile Chrome smoke adds a placed-furnace cook, output collection and synthetic resource-pack screenshots; see GitHub Actions run for actual results. This is a generic uncolored glazed-terracotta item, not full dyed-terracotta color parity. The browser fixture is independently generated, not a user-owned Minecraft texture pack. The playable Overworld remains 48 layers; this change does not enable experimental deep terrain. Dedicated pre-fix browser video was not captured.
+
+## Browser smoke correction
+The first CI browser run failed because the new glazed-terracotta test furnace was placed at the existing cartography-table regression fixture's coordinates. The real furnace persisted as intended, making the cartography assertion detect a machine. Move the new test furnace one cell away and explicitly remove it after collecting output; retain the cartography assertion unchanged. Re-run the full desktop/mobile pipeline.

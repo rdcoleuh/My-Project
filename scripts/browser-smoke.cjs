@@ -1346,7 +1346,7 @@ async function go(browser,name,mobile){
   // The existing synthetic pack stays enabled while a real placed furnace
   // smelts terracotta through the three-slot UI on desktop and mobile Chrome.
   const glazeFixture=await page.evaluate(({x,y,z})=>{
-    const bridge=window.MineWorldBridge,W=bridge.getSnapshot().worldSize,bx=x+4;
+    const bridge=window.MineWorldBridge,W=bridge.getSnapshot().worldSize,bx=x+5;
     const id=(bx*W+z)*48+y;
     const granted=bridge.grantLoot('block:25',1)&&bridge.grantLoot('coal',1);
     const placed=bridge.remoteEdit(id,20);
@@ -1380,6 +1380,9 @@ async function go(browser,name,mobile){
     window.MineWorldBridge.getFurnaceState(x,y,z)?.output,glazeFixture),null,
     name+': glazed terracotta output could not be collected');
   await page.locator('#mw-furnace-close').click({force:true});
+  // Do not leave a furnace record at the cartography-table test location.
+  assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),glazeFixture.id),
+    true,name+': glazed terracotta furnace cleanup failed');
   // Smoker and blast furnace: real desktop/mobile placement, UI, recipe and cooking.
   for(const station of [
     {block:157,kind:'smoker',ingredient:'chicken',product:'cookedChicken',wrong:'rawIron',offset:2},
