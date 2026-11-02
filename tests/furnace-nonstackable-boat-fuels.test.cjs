@@ -58,8 +58,8 @@ test('old saved stacked boat fuel is preserved but cannot accept new deposits',(
 });
 test('desktop/mobile browser smoke captures synthetic boat fuel with imported fixture pack',()=>{
  const smoke=fs.readFileSync(path.join(root,'scripts/browser-smoke.cjs'),'utf8');
- assert.match(smoke,/grantLoot\\('boat',3\\)/);
- assert.match(smoke,/mobile-boat-fuel-capacity\\.png/);
- assert.match(smoke,/desktop-boat-fuel-capacity\\.png/);
- assert.match(smoke,/boats must be nonstackable furnace fuel/);
+ assert.ok(smoke.includes("grantLoot('boat',3)"));
+ assert.ok(smoke.includes('mobile-boat-fuel-capacity.png'));
+ assert.ok(smoke.includes('desktop-boat-fuel-capacity.png'));
+ assert.ok(smoke.includes('boats must be nonstackable furnace fuel'));
 });
