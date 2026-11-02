@@ -53,8 +53,12 @@ const blank=(p,kind='furnace')=>({kind,dimension:p.dimension,x:p.x,y:p.y,z:p.z,i
 const slot=s=>s&&key(s.key)&&Number.isInteger(s.qty)&&s.qty>0&&s.qty<=64?{key:s.key,qty:s.qty}:null;
 // Nonstackable fuel containers share one capacity contract with the UI.
 // Never reserve 64 buckets for a furnace slot that holds only one.
+// Lava buckets, boats and rafts are individually handled fuel items.
+// Do not truncate legacy saved stacks: old saves remain withdrawable and
+// consumable, but new UI/engine deposits cannot add to an overfull slot.
+const NONSTACKABLE_FUELS=new Set(['lavaBucket','boat','spruceBoat','cherryBoat','raft']);
 const slotCapacity=(which,item)=>!['input','fuel'].includes(which)?0:
- which==='fuel'&&item==='lavaBucket'?1:64;
+ which==='fuel'&&NONSTACKABLE_FUELS.has(item)?1:64;
 function create(){
  const machines=new Map();
  const get=p=>pos(p)?machines.get(id(p))||null:null;

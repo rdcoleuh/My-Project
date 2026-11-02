@@ -1126,6 +1126,29 @@ async function go(browser,name,mobile){
   await page.waitForFunction(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z)?.fuel===null,
     furnaceFixture,{timeout:8000});
+  // Synthetic boat fuel: native furnace buttons must not stack boats/rafts.
+  // The existing imported test texture pack remains enabled for this clip.
+  assert.equal(await page.evaluate(()=>window.MineWorldBridge.grantLoot('boat',3)),
+    true,name+': synthetic boat fuel fixture unavailable');
+  await page.waitForFunction(()=>[...document.querySelector('#mw-furnace-fuel')?.options||[]]
+    .some(option=>option.value==='boat'),null,{timeout:8000});
+  await page.locator('#mw-furnace-fuel').selectOption('boat');
+  assert.equal(await page.locator('#mw-furnace-put-fuel-stack').isDisabled(),true,
+    name+': boats must be nonstackable furnace fuel');
+  await page.locator('#mw-furnace-put-fuel').click({force:true});
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.fuel?.key==='boat',
+    furnaceFixture,{timeout:8000});
+  assert.equal((await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture)).fuel.qty,1,
+    name+': boat fuel slot must hold exactly one boat');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-boat-fuel-capacity.png':'desktop-boat-fuel-capacity.png'),
+    animations:'disabled'});
+  await page.locator('#mw-furnace-slot-fuel').click({force:true});
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.fuel===null,
+    furnaceFixture,{timeout:8000});
   await page.waitForFunction(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z)?.output?.key==='iron',
     furnaceFixture,{timeout:30000});
