@@ -81,5 +81,22 @@ function hasVisibleAlpha(rgba){
  for(let i=3;i<rgba.length;i+=4)if(rgba[i]>0)return true;
  return false;
 }
-window.MineWorldHotbarUV=Object.freeze({slotRect,legacyRect,legacyStatRect,shouldDeriveSlot,validSlotSprite,validStatSprite,hasVisibleAlpha});
+// Reject a partially transparent nine-cell background as a full bar.
+// Check each cell, including the top/bottom border for border-only packs.
+function hasCompleteBarAlpha(rgba,width,height){
+ if(!Number.isInteger(width)||!Number.isInteger(height)||
+    width<1||height<1||width*height>1024*1024||
+    !rgba||rgba.length!==width*height*4)return false;
+ for(let i=0;i<9;i++){
+  const cell=slotRect(width,height,i);
+  if(!cell)return false;
+  let visible=false;
+  for(let y=0;y<height&&!visible;y++)
+   for(let x=cell.x;x<cell.x+cell.width;x++)
+    if(rgba[(y*width+x)*4+3]>0){visible=true;break;}
+  if(!visible)return false;
+ }
+ return true;
+}
+window.MineWorldHotbarUV=Object.freeze({slotRect,legacyRect,legacyStatRect,shouldDeriveSlot,validSlotSprite,validStatSprite,hasVisibleAlpha,hasCompleteBarAlpha});
 })();

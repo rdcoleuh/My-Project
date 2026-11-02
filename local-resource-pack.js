@@ -1147,7 +1147,7 @@ function hudIcon(kind,fill){
   // A transparent authored sprite is not a valid candidate when a generic,
   // sheet-derived, or legacy replacement is available. Probe only the
   // requested atlas rectangle to bound temporary mobile canvas allocations.
-  const visibleCandidate=(sprite,crop=null)=>{
+  const visibleCandidate=(sprite,crop=null,requireCompleteBar=false)=>{
     if(typeof HTMLCanvasElement!=='function')return true;
     const width=crop?.width??sprite.width,height=crop?.height??sprite.height;
     if(!Number.isInteger(width)||!Number.isInteger(height)||
@@ -1159,8 +1159,10 @@ function hudIcon(kind,fill){
     context.imageSmoothingEnabled=false;
     if(crop)context.drawImage(sprite,crop.x,crop.y,crop.width,crop.height,0,0,width,height);
     else context.drawImage(sprite,0,0);
-    return window.MineWorldHotbarUV?.hasVisibleAlpha?.(
-      context.getImageData(0,0,width,height).data)??true;
+    const pixels=context.getImageData(0,0,width,height).data;
+    if(requireCompleteBar&&typeof window.MineWorldHotbarUV?.hasCompleteBarAlpha==='function')
+      return window.MineWorldHotbarUV.hasCompleteBarAlpha(pixels,width,height);
+    return window.MineWorldHotbarUV?.hasVisibleAlpha?.(pixels)??true;
   };
   const legacyKey='hud:hotbar:legacy-widgets';
   const slotCandidates=numberedSlot?
@@ -1200,7 +1202,7 @@ function hudIcon(kind,fill){
           else if(candidate==='hud:hotbar:background'){
             if(!window.MineWorldHotbarUV?.slotRect(attempt.width,attempt.height,0))continue;
           }else if(!window.MineWorldHotbarUV?.validSlotSprite(attempt.width,attempt.height))continue;
-          if(!visibleCandidate(attempt,candidateRect))continue;
+          if(!visibleCandidate(attempt,candidateRect,kind==='hotbar'&&fill==='background'))continue;
           image=attempt;rect=candidateRect;break;
         }catch(error){console.warn('Skipping damaged local hotbar candidate '+candidate,error);}
       }
