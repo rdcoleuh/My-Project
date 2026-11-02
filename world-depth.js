@@ -137,6 +137,9 @@ function sectionizeChunk({data,minY=0,height,chunkSize=16,sectionHeight=16}={}){
   if(Object.prototype.toString.call(data)!=='[object Uint8Array]'||
     ![minY,height,chunkSize,sectionHeight].every(Number.isSafeInteger)||
     height<1||chunkSize<1||sectionHeight<1||
+    // The exclusive upper bound is used by read() and section lookup.
+    // Reject imprecise elevations before they can alias adjacent voxels.
+    !Number.isSafeInteger(minY+height)||
     !Number.isSafeInteger(chunkSize*chunkSize*height)||
     data.length!==chunkSize*chunkSize*height)
     throw new RangeError('Invalid vertical chunk data or dimensions');
