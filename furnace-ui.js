@@ -199,6 +199,34 @@ function furnaceAnnouncementState(machine){
  return {burn:machine.burn,outputKey:machine.output?.key||null,
   outputQty:machine.output?.qty||0};
 }
+// Explain actual furnace blocking conditions without spamming the live region.
+function furnaceWorkState(machine){
+ if(!machine)return 'Furnace unavailable.';
+ if(!machine.input)return 'Add an ingredient to begin smelting.';
+ const api=window.MineWorldFurnace,product=api.RECIPES[machine.input.key];
+ if(!product||!api.canSmelt(machine.kind,machine.input.key))
+  return 'This ingredient cannot be smelted here. Take the input to change it.';
+ if(machine.output&&(machine.output.key!==product||machine.output.qty>=64))
+  return 'Output blocked. Collect the output before smelting can continue.';
+ if(machine.burn<=0&&(!machine.fuel||!api.FUEL[machine.fuel.key]))
+  return 'Add usable fuel to begin or resume smelting.';
+ if(machine.burn<=0&&machine.fuel.key==='lavaBucket'&&machine.fuel.qty!==1)
+  return 'Take excess lava buckets out of the fuel slot before ignition.';
+ const seconds=Math.max(0,Math.ceil(api.KINDS[machine.kind].cook-machine.progress));
+ return 'Smelting '+product+'. About '+seconds+' seconds until the next item.';
+}
+// A modal must not let keyboard users Tab into controls behind its backdrop.
+function containFurnaceTab(event,panel,active){
+ if(!panel||!(event?.key==='Tab'||event?.code==='Tab'))return false;
+ const controls=Array.from(panel.querySelectorAll('button:not([disabled]),select:not([disabled])'))
+  .filter(node=>!node.hidden);
+ if(!controls.length)return false;
+ const first=controls[0],last=controls[controls.length-1];
+ const target=!panel.contains(active)?(event.shiftKey?last:first):
+  event.shiftKey&&active===first?last:!event.shiftKey&&active===last?first:null;
+ if(!target)return false;
+ event.preventDefault();target.focus();return true;
+}
 function create(api){
  const engine=api.engine;let current=null,panel=null,drawClock=0;
  let announceState=null,returnFocus=null;
@@ -251,6 +279,7 @@ function create(api){
    '<div class="mw-furnace-row"><label>Fuel<select id="mw-furnace-fuel" aria-label="Furnace fuel"></select></label>'+
    '<button id="mw-furnace-put-fuel" type="button">Add 1</button><button id="mw-furnace-put-fuel-stack" type="button">Add stack</button><button id="mw-furnace-return-fuel-one" type="button">Take 1</button><button id="mw-furnace-return-fuel" type="button">Take fuel</button></div>'+
    '<div id="mw-furnace-status" aria-live="off"></div>'+
+   '<p id="mw-furnace-hint" aria-live="off"></p>'+
    '<div id="mw-furnace-announcement" class="mw-furnace-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>'+
    '<button id="mw-furnace-output-one" type="button" aria-label="Collect one smelted item">Collect 1</button>'+
    '<button id="mw-furnace-output" type="button">Collect output</button>'+
@@ -288,6 +317,7 @@ function create(api){
   el('mw-furnace-output-one').addEventListener('click',()=>take('output',1));
   el('mw-furnace-output').addEventListener('click',()=>take('output'));
   document.addEventListener('keydown',e=>{
+   if(current&&e.code==='Tab')containFurnaceTab(e,panel,document.activeElement);
    if(current&&e.code==='Escape'){e.preventDefault();e.stopImmediatePropagation();close();}
   },true);
  }
@@ -331,6 +361,7 @@ function create(api){
   el('mw-furnace-cook').value=Math.max(0,Math.min(100,Math.round(m.progress/window.MineWorldFurnace.KINDS[m.kind].cook*100)));
   el('mw-furnace-status').textContent='Input: '+fmt(m.input)+' · Fuel: '+fmt(m.fuel)+
    ' · Output: '+fmt(m.output)+' · Flame: '+Math.ceil(m.burn)+'s · Smelted: '+Math.round(m.progress/window.MineWorldFurnace.KINDS[m.kind].cook*100)+'%';
+  el('mw-furnace-hint').textContent=furnaceWorkState(m);
   const event=furnaceAnnouncement(announceState,m);
   announceState=furnaceAnnouncementState(m);
   if(event){
@@ -346,7 +377,7 @@ function create(api){
  function open(position,kind='furnace'){
   const machine=ensureStation(engine,api,position,kind);
   if(!machine)return false;
-  ensurePanel();returnFocus=document.activeElement;announceState=null;
+  ensurePanel();returnFocus=document.activeElement;announceState=null;drawClock=0;
   el('mw-furnace-announcement').textContent='';current={...position};
   const station=machine.kind;
   el('mw-furnace-title').textContent=station==='smoker'?'🍖 Smoker':station==='blast'?'⚒ Blast Furnace':'🔥 Furnace';
@@ -360,8 +391,12 @@ function create(api){
   if(target?.isConnected&&typeof target.focus==='function')
    target.focus({preventScroll:true});
  }
- function tick(dt){if(!current)return;drawClock+=dt;if(drawClock>=.25){drawClock=0;render();}}
+ function tick(dt){
+  if(!current||typeof dt!=='number'||!Number.isFinite(dt)||dt<=0)return;
+  drawClock+=Math.min(dt,1);
+  if(drawClock>=.25){drawClock%=.25;render();}
+ }
  return {open,close,tick,get isOpen(){return !!current;}};
 }
-window.MineWorldFurnaceUI=Object.freeze({create,ensureStation,syncSelect,resolveSlotIcon,planSlotGesture,smeltingReward,awardCollectedOutput,furnaceAnnouncement,furnaceAnnouncementState,transfers:Object.freeze({deposit,withdraw,commitTransfer})});
+window.MineWorldFurnaceUI=Object.freeze({create,ensureStation,syncSelect,resolveSlotIcon,planSlotGesture,smeltingReward,awardCollectedOutput,furnaceAnnouncement,furnaceAnnouncementState,furnaceWorkState,containFurnaceTab,transfers:Object.freeze({deposit,withdraw,commitTransfer})});
 })();

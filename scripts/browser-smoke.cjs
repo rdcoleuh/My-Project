@@ -1088,6 +1088,17 @@ async function go(browser,name,mobile){
   assert.equal(furnaceFixture.granted,true,name+': furnace fixture resources unavailable');
   assert.equal(furnaceFixture.placed,true,name+': furnace block fixture placement failed');
   assert.equal(furnaceFixture.opened,true,name+': furnace block interaction failed');
+  // Real desktop/mobile keyboard containment and recipe guidance with the
+  // independently generated imported texture fixture still active.
+  assert.match(await page.locator('#mw-furnace-hint').textContent(),/Add an ingredient/,
+    name+': empty furnace has no actionable guidance');
+  await page.locator('#mw-furnace-close').focus();
+  await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),'mw-furnace-slot-input',
+    name+': Tab escaped the furnace dialog');
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),'mw-furnace-close',
+    name+': Shift+Tab escaped the furnace dialog');
   for(const slot of ['input','fuel','output']){
     assert.equal(await page.locator('#mw-furnace-slot-'+slot).count(),1,
       name+': missing visible '+slot+' furnace slot');
@@ -1099,6 +1110,8 @@ async function go(browser,name,mobile){
   const loaded=await page.evaluate(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z),furnaceFixture);
   assert.equal(loaded?.input?.qty,2,name+': add-stack did not transfer both owned raw iron');
+  assert.match(await page.locator('#mw-furnace-hint').textContent(),/Add usable fuel/,
+    name+': unfueled furnace does not explain why it is stalled');
   assert.match(await page.locator('#mw-furnace-slot-input').getAttribute('aria-label'),/2 ×/,
     name+': furnace input slot did not announce stack count');
   // Exercise the actual touch-sized Take 1 button on desktop and mobile.
@@ -1142,6 +1155,11 @@ async function go(browser,name,mobile){
     null,{timeout:8000});
   assert.equal(await page.locator('#mw-furnace-slot-fuel').getAttribute('aria-label'),
     'Fuel slot: Empty',name+': blaze rod was not consumed when furnace ignited');
+  assert.match(await page.locator('#mw-furnace-hint').textContent(),/Smelting iron/,
+    name+': active furnace does not show current recipe progress');
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-guidance-synthetic.png':'desktop-furnace-guidance-synthetic.png'),
+    animations:'disabled'});
   await page.screenshot({path:path.join(screenshotDir,
     mobile?'mobile-furnace-blaze-fuel.png':'desktop-furnace-blaze-fuel.png'),
     animations:'disabled'});
