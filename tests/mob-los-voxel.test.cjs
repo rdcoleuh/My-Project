@@ -23,7 +23,7 @@ test('ray traversal ignores occupied endpoint, rejects invalid and distant targe
  assert.equal(ray(a(0),a(30),()=>true),false,'25-block sight limit');
  assert.equal(ray(a(0),a(1),null),false);
  assert.equal(ray(a(NaN),a(1),()=>true),false);
- assert.equal(ray(a(0),a(0),()=>true),false);
+ assert.equal(ray(a(0),a(0),()=>true),true,'coincident unobstructed targets are visible');
 });
 test('voxel traversal is bounded for long diagonal rays',()=>{
  let probes=0;
