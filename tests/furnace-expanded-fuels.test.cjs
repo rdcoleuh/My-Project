@@ -8,9 +8,9 @@ const api=ctx.window.MineWorldFurnace;
 const p={dimension:'overworld',x:420,y:-40,z:421};
 const copy=x=>JSON.parse(JSON.stringify(x));
 
-test('craftable logs, coal block, blaze rods, and boat variants have exact burn durations',()=>{
+test('coal block, blaze rods, and boat variants have exact burn durations',()=>{
  const cases={
-  'block:50':15,'block:116':800,blazeRod:120,
+  'block:116':800,blazeRod:120,
   boat:60,spruceBoat:60,cherryBoat:60,raft:60
  };
  for(const [fuel,seconds] of Object.entries(cases)){
@@ -57,7 +57,7 @@ test('coal-block fuel survives a save/restore without duplication or lost burn t
 
 test('unsupported inventory items cannot be consumed as furnace fuel',()=>{
  const f=api.create();
- for(const item of ['bucket','redstone','iron','netheriteScrap','constructor'])
+ for(const item of ['bucket','redstone','iron','netheriteScrap','block:50','constructor'])
   assert.equal(f.insert(p,'fuel',item,1),0,item);
  assert.equal(f.get(p),null);
 });

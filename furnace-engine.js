@@ -12,16 +12,16 @@ const RECIPES=Object.freeze({clay:'brick',rawIron:'iron',rawGold:'gold',rawCoppe
  'block:101':'coal','block:102':'iron','block:103':'copper','block:104':'gold',
  'block:105':'redstone','block:106':'lapis','block:107':'diamond','block:108':'emerald',
  'block:26':'block:9','block:57':'block:25',
- // Every independently registered log type produces charcoal, not only oak.
- // Planks remain fuels but are not smelting inputs.
+ // Every registered log type produces charcoal, not only oak.
+ // Netherrack (block 50) is neither a log nor a fuel; planks are fuel only.
  'block:15':'charcoal','block:30':'charcoal','block:32':'charcoal',
  'block:34':'charcoal','block:36':'charcoal','block:38':'charcoal',
- 'block:40':'charcoal','block:42':'charcoal','block:50':'charcoal'});
+ 'block:40':'charcoal','block:42':'charcoal'});
 const FUEL=Object.freeze({coal:80,charcoal:80,'block:5':15,'block:11':15,'block:52':15,sticks:5,bamboo:2.5,'block:15':15,'block:30':15,'block:32':15,'block:34':15,
  'block:36':15,'block:38':15,'block:40':15,'block:42':15,
  // Craftable MineWorld fuel blocks and inventory items; durations in seconds.
  // A coal block fuels 80 smelts, a blaze rod 12, and a boat/raft six.
- 'block:50':15,'block:116':800,blazeRod:120,lavaBucket:1000,
+ 'block:116':800,blazeRod:120,lavaBucket:1000,
  boat:60,spruceBoat:60,cherryBoat:60,raft:60,
  // Craftable wooden stations, wooden accessories and harvestable bamboo.
  // These are MineWorld inventory keys; the old bamboo item remains valid.
@@ -31,7 +31,7 @@ const FUEL=Object.freeze({coal:80,charcoal:80,'block:5':15,'block:11':15,'block:
 const COOK=10;
 const KINDS=Object.freeze({furnace:Object.freeze({cook:10}),smoker:Object.freeze({cook:5}),blast:Object.freeze({cook:5})});
 const FOOD=new Set(['raw','chicken','mutton','fish','potato','kelp']);
-const ORE=new Set(['rawIron','rawGold','rawCopper','ancientDebris',...Object.keys(RECIPES).filter(k=>/^block:/.test(k)&&!['block:4','block:5','block:15','block:26','block:30','block:32','block:34','block:36','block:38','block:40','block:42','block:44','block:50','block:57','block:61'].includes(k))]);
+const ORE=new Set(['rawIron','rawGold','rawCopper','ancientDebris',...Object.keys(RECIPES).filter(k=>/^block:/.test(k)&&!['block:4','block:5','block:15','block:26','block:30','block:32','block:34','block:36','block:38','block:40','block:42','block:44','block:57','block:61'].includes(k))]);
 const canSmelt=(kind,item)=>Object.hasOwn(RECIPES,item)&&(kind==='furnace'||kind==='smoker'&&FOOD.has(item)||kind==='blast'&&ORE.has(item));
 // Namespaced IDs may arrive in saves from future/custom resource-pack content.
 // Preserve them as inert, withdrawable stacks; only registered recipes/fuels run.

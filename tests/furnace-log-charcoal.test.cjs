@@ -6,9 +6,9 @@ const root=path.resolve(__dirname,'..'),ctx=vm.createContext({window:{}});
 vm.runInContext(fs.readFileSync(path.join(root,'furnace-engine.js'),'utf8'),ctx);
 const api=ctx.window.MineWorldFurnace;
 const p={dimension:'overworld',x:420,y:-38,z:421};
-const logs=[5,15,30,32,34,36,38,40,42,50];
+const logs=[5,15,30,32,34,36,38,40,42];
 
-test('all ten MineWorld logs cook into charcoal with exactly one fuel item',()=>{
+test('all nine registered MineWorld logs cook into charcoal with exactly one fuel item',()=>{
  for(const id of logs){
   const f=api.create(),key='block:'+id;
   assert.equal(f.insert(p,'input',key,1),1,key);
@@ -19,6 +19,37 @@ test('all ten MineWorld logs cook into charcoal with exactly one fuel item',()=>
   assert.equal(f.get(p).burn,5,key+' has five seconds of fuel remaining');
   assert.equal(f.get(p).fuel,null,key+' fuel consumed once');
  }
+});
+
+test('netherrack is not a charcoal ingredient or a fuel despite old log mapping',()=>{
+ const names=fs.readFileSync(path.join(root,'index.html'),'utf8');
+ assert.match(names,/['"]Netherrack['"]/,'block registry must identify netherrack');
+ assert.equal(api.RECIPES['block:50'],undefined);
+ assert.equal(api.FUEL['block:50'],undefined);
+ const f=api.create();
+ assert.equal(f.insert(p,'input','block:50',64),0);
+ assert.equal(f.insert(p,'fuel','block:50',64),0);
+ assert.equal(f.get(p),null,'invalid deposits must not create a station');
+ assert.equal(f.insert(p,'input','rawIron',1),1);
+ assert.equal(f.insert(p,'fuel','block:50',1),0);
+ assert.equal(f.tick(60).completed,0,'netherrack cannot smelt iron for free');
+ assert.equal(f.get(p).input.qty,1);
+});
+
+test('old saves containing netherrack keep their items but cannot burn or smelt them',()=>{
+ const f=api.create();
+ f.restore([{...p,input:{key:'block:50',qty:2},fuel:{key:'block:50',qty:3}}]);
+ assert.equal(f.tick(60).completed,0);
+ assert.equal(f.get(p).input.qty,2);
+ assert.equal(f.get(p).fuel.qty,3);
+ const g=api.create();g.restore(JSON.parse(JSON.stringify(f.snapshot())));
+ assert.equal(g.take(p,'input',64).qty,2);
+ assert.equal(g.take(p,'fuel',64).qty,3);
+ assert.equal(g.get(p).input,null);
+ assert.equal(g.get(p).fuel,null);
+ assert.equal(g.insert(p,'input','rawIron',1),1);
+ assert.equal(g.insert(p,'fuel','coal',1),1);
+ assert.equal(g.tick(10).completed,1,'restored furnace still smelts valid inputs');
 });
 
 test('planks remain usable fuel but cannot be cooked into charcoal',()=>{
