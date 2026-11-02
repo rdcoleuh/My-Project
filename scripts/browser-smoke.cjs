@@ -1459,6 +1459,11 @@ async function go(browser,name,mobile){
   await page.screenshot({path:path.join(screenshotDir,
     mobile?'mobile-furnace-dried-kelp-fuel-synthetic.png':
       'desktop-furnace-dried-kelp-fuel-synthetic.png'),animations:'disabled'});
+  // The engine can finish a cook between the UI's 250 ms redraws.
+  // Wait for the real collect control to become enabled before tapping.
+  await page.waitForFunction(()=>
+    document.querySelector('#mw-furnace-output-one')?.disabled===false,
+    null,{timeout:8000});
   await page.locator('#mw-furnace-output-one').click({force:true});
   assert.equal(await page.evaluate(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z)?.output,kelpFixture),null,
