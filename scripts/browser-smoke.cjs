@@ -1402,6 +1402,11 @@ async function go(browser,name,mobile){
     await page.screenshot({path:path.join(screenshotDir,
       (mobile?'mobile-':'desktop-')+'furnace-'+sample.slug+'-synthetic.png'),
       animations:'disabled'});
+    // The UI refreshes every 250ms. Clicking a still-disabled output button
+    // immediately after the engine finishes silently does nothing in Chrome.
+    await page.waitForFunction(()=>
+      document.querySelector('#mw-furnace-output-one')?.disabled===false,
+      null,{timeout:8000});
     await page.locator('#mw-furnace-output-one').click({force:true});
     assert.equal(await page.evaluate(({x,y,z})=>
       window.MineWorldBridge.getFurnaceState(x,y,z)?.output,glazeFixture),null,
