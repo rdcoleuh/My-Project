@@ -12,7 +12,9 @@
  add('Basics','Sticks',{[B(11)]:2},{sticks:4});
  add('Basics','Wooden Planks',{[B(5)]:1},{[B(11)]:4});
  for(const [wood,id] of [['Poplar',15],['Spruce',30],['Birch',32],['Acacia',34],['Jungle',36],['Mangrove',38],['Cherry',40],['Pale Oak',42]])add('Basics',wood+' Planks',{[B(id)]:1},{[B(11)]:4});
- add('Basics','Dark Planks',{[B(50)]:1},{[B(52)]:4});
+ // Netherrack (block 50) must never turn into wooden planks. Dark Planks
+ // remain placeable and saved, but crafting awaits a registered dark log.
+
  add('Basics','Torch',{coal:1,sticks:1},{torch:4});
  add('Basics','Charcoal',{[B(5)]:1,coal:1},{charcoal:1},furnace);
  add('Basics','Craft a Chest',{[B(11)]:8},{[B(119)]:1},table);
@@ -115,7 +117,7 @@
  add('Blocks','Gold Ingot',{goldNugget:9},{gold:1});
  add('Blocks','Iron Ingot',{ironNugget:9},{iron:1});
  add('Blocks','Quartz Pillar',{quartz:4},{quartzPillar:2},table);
- add('Blocks','Glazed Terracotta',{[B(25)]:1,dye:1},{glazedTerracotta:1},furnace);
+ add('Blocks','Glazed Terracotta',{[B(25)]:1,coal:1},{glazedTerracotta:1},furnace);
  add('Blocks','Flower Pot',{brick:3},{flowerPot:1},table);
  add('Blocks','Glass Pane',{[B(9)]:6},{glassPane:16},table);
  add('Blocks','Moss Carpet',{[B(46)]:2},{mossCarpet:3});

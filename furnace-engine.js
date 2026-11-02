@@ -8,6 +8,9 @@ const RECIPES=Object.freeze({clay:'brick',rawIron:'iron',rawGold:'gold',rawCoppe
  // Harvested cactus (block 44) cooks into MineWorld's generic dye item.
  // This is a regular-furnace recipe, not a metal/ore blast-furnace recipe.
  'block:44':'dye',
+ // MineWorld's generic glazed terracotta is fired from existing terracotta.
+ // No second dye input exists in the three-slot furnace; dye is not fuel.
+ 'block:25':'glazedTerracotta',
  'block:99':'diamond','block:100':'emerald',
  'block:101':'coal','block:102':'iron','block:103':'copper','block:104':'gold',
  'block:105':'redstone','block:106':'lapis','block:107':'diamond','block:108':'emerald',
@@ -31,7 +34,7 @@ const FUEL=Object.freeze({coal:80,charcoal:80,'block:5':15,'block:11':15,'block:
 const COOK=10;
 const KINDS=Object.freeze({furnace:Object.freeze({cook:10}),smoker:Object.freeze({cook:5}),blast:Object.freeze({cook:5})});
 const FOOD=new Set(['raw','chicken','mutton','fish','potato','kelp']);
-const ORE=new Set(['rawIron','rawGold','rawCopper','ancientDebris',...Object.keys(RECIPES).filter(k=>/^block:/.test(k)&&!['block:4','block:5','block:15','block:26','block:30','block:32','block:34','block:36','block:38','block:40','block:42','block:44','block:57','block:61'].includes(k))]);
+const ORE=new Set(['rawIron','rawGold','rawCopper','ancientDebris',...Object.keys(RECIPES).filter(k=>/^block:/.test(k)&&!['block:4','block:5','block:15','block:26','block:30','block:32','block:34','block:36','block:38','block:40','block:42','block:44','block:25','block:57','block:61'].includes(k))]);
 const canSmelt=(kind,item)=>Object.hasOwn(RECIPES,item)&&(kind==='furnace'||kind==='smoker'&&FOOD.has(item)||kind==='blast'&&ORE.has(item));
 // Namespaced IDs may arrive in saves from future/custom resource-pack content.
 // Preserve them as inert, withdrawable stacks; only registered recipes/fuels run.

@@ -1343,6 +1343,43 @@ async function go(browser,name,mobile){
     window.MineWorldBridge.getFurnaceState(x,y,z)?.output,bambooFixture),null,
     name+': bamboo-smelted iron could not be collected');
   await page.locator('#mw-furnace-close').click({force:true});
+  // The existing synthetic pack stays enabled while a real placed furnace
+  // smelts terracotta through the three-slot UI on desktop and mobile Chrome.
+  const glazeFixture=await page.evaluate(({x,y,z})=>{
+    const bridge=window.MineWorldBridge,W=bridge.getSnapshot().worldSize,bx=x+4;
+    const id=(bx*W+z)*48+y;
+    const granted=bridge.grantLoot('block:25',1)&&bridge.grantLoot('coal',1);
+    const placed=bridge.remoteEdit(id,20);
+    return {id,x:bx,y,z,granted,placed,opened:bridge.openFurnaceAt(bx,y,z)};
+  },bambooFixture);
+  assert.equal(glazeFixture.granted,true,name+': terracotta fixture could not be granted');
+  assert.equal(glazeFixture.placed,true,name+': glazed terracotta furnace placement failed');
+  assert.equal(glazeFixture.opened,true,name+': glazed terracotta furnace did not open');
+  await page.waitForFunction(()=>
+    [...document.querySelector('#mw-furnace-input').options].some(o=>o.value==='block:25'),
+    null,{timeout:8000});
+  await page.locator('#mw-furnace-input').selectOption('block:25');
+  await page.locator('#mw-furnace-put-input').click({force:true});
+  await page.locator('#mw-furnace-fuel').selectOption('coal');
+  await page.locator('#mw-furnace-put-fuel').click({force:true});
+  await page.waitForFunction(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.output?.key==='glazedTerracotta',
+    glazeFixture,{timeout:30000});
+  const glazed=await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z),glazeFixture);
+  assert.equal(glazed?.output?.qty,1,name+': furnace did not produce one glazed terracotta');
+  assert.equal(glazed?.input,null,name+': terracotta input was not consumed');
+  await page.waitForFunction(()=>
+    document.querySelector('#mw-furnace-output-one')?.disabled===false,
+    null,{timeout:8000});
+  await page.screenshot({path:path.join(screenshotDir,
+    mobile?'mobile-furnace-glazed-terracotta-synthetic.png':
+      'desktop-furnace-glazed-terracotta-synthetic.png'),animations:'disabled'});
+  await page.locator('#mw-furnace-output-one').click({force:true});
+  assert.equal(await page.evaluate(({x,y,z})=>
+    window.MineWorldBridge.getFurnaceState(x,y,z)?.output,glazeFixture),null,
+    name+': glazed terracotta output could not be collected');
+  await page.locator('#mw-furnace-close').click({force:true});
   // Smoker and blast furnace: real desktop/mobile placement, UI, recipe and cooking.
   for(const station of [
     {block:157,kind:'smoker',ingredient:'chicken',product:'cookedChicken',wrong:'rawIron',offset:2},
