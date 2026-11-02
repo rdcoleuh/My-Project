@@ -1379,6 +1379,34 @@ async function go(browser,name,mobile){
   assert.equal(await page.evaluate(({x,y,z})=>
     window.MineWorldBridge.getFurnaceState(x,y,z)?.output,glazeFixture),null,
     name+': glazed terracotta output could not be collected');
+  // Verify that sand and clay must cook in the real placed furnace, not
+  // instantly in the crafting grid. The synthetic imported pack remains on.
+  for(const sample of [
+    {input:'block:4',output:'block:9',slug:'glass'},
+    {input:'block:57',output:'block:25',slug:'terracotta'}
+  ]){
+    assert.equal(await page.evaluate(item=>window.MineWorldBridge.grantLoot(item,1),
+      sample.input),true,name+': '+sample.slug+' input could not be granted');
+    await page.waitForFunction(item=>
+      [...document.querySelector('#mw-furnace-input').options].some(o=>o.value===item),
+      sample.input,{timeout:8000});
+    await page.locator('#mw-furnace-input').selectOption(sample.input);
+    await page.locator('#mw-furnace-put-input').click({force:true});
+    await page.waitForFunction(({fixture,output})=>
+      window.MineWorldBridge.getFurnaceState(fixture.x,fixture.y,fixture.z)?.output?.key===output,
+      {fixture:glazeFixture,output:sample.output},{timeout:30000});
+    const cooked=await page.evaluate(({x,y,z})=>
+      window.MineWorldBridge.getFurnaceState(x,y,z),glazeFixture);
+    assert.equal(cooked?.output?.qty,1,name+': '+sample.slug+' smelt produced wrong quantity');
+    assert.equal(cooked?.input,null,name+': '+sample.slug+' input was not consumed');
+    await page.screenshot({path:path.join(screenshotDir,
+      (mobile?'mobile-':'desktop-')+'furnace-'+sample.slug+'-synthetic.png'),
+      animations:'disabled'});
+    await page.locator('#mw-furnace-output-one').click({force:true});
+    assert.equal(await page.evaluate(({x,y,z})=>
+      window.MineWorldBridge.getFurnaceState(x,y,z)?.output,glazeFixture),null,
+      name+': '+sample.slug+' output could not be collected');
+  }
   await page.locator('#mw-furnace-close').click({force:true});
   // Do not leave a furnace record at the cartography-table test location.
   assert.equal(await page.evaluate(id=>window.MineWorldBridge.remoteEdit(id,0),glazeFixture.id),

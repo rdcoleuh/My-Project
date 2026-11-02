@@ -64,5 +64,5 @@ test('desktop/mobile Chrome smoke verifies placed furnace with synthetic importe
  assert.match(smoke,/mobile-furnace-glazed-terracotta-synthetic\.png/);
  assert.ok(smoke.includes('bx=x+5'),'new furnace must not overlap cartography fixture');
  assert.match(smoke,/glazed terracotta furnace cleanup failed/);
- assert.match(read('sw.js'),/mineworld-6-169-glazed-terracotta-furnace/);
+ assert.match(read('sw.js'),/mineworld-6-170-glass-clay-furnace-only/);
 });

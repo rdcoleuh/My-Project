@@ -110,13 +110,18 @@
  add('Food','Sugar',{sugarCane:1},{sugar:1});
  add('Food','Bread from Flour',{wheat:3},{bread:1});
  // Building blocks: all outputs correspond to actual placeable MineWorld block indices.
- const blocks=[['Stone Bricks',{[B(3)]:4},53,4],['Cobblestone',{[B(3)]:1},61,1],['Sandstone',{[B(4)]:4},24,1],['Red Sand',{[B(26)]:1},26,1],['Brick Block',{brick:4},8,1],['Glass',{[B(4)]:1,coal:1},9,1],['Snow Block',{[B(21)]:4},21,1],['Packed Ice',{[B(22)]:9},23,1],['Terracotta',{[B(47)]:1,coal:1},25,1],['Prismarine',{[B(55)]:4},55,4],['Deepslate',{[B(58)]:4},58,4],['Nether Bricks',{[B(65)]:4},72,4],['Polished Blackstone',{[B(68)]:4},69,4],['End Stone Bricks',{[B(121)]:4},130,4],['Purpur Block',{[B(122)]:4},131,4],['Bone Block',{bone:9},86,1],['Quartz Block',{quartz:4},128,1],['Copper Block',{copper:9},113,1],['Diamond Block',{diamond:9},112,1],['Emerald Block',{emerald:9},111,1],['Iron Block',{iron:9},115,1],['Gold Block',{gold:9},114,1],['Coal Block',{coal:9},116,1],['Redstone Block',{redstone:9},117,1],['Lapis Block',{lapis:9},110,1],['Netherite Block',{netheriteIngot:9},135,1],['Redstone Lamp',{redstone:4,[B(10)]:1},109,1],['Shroomlight',{[B(79)]:2,[B(81)]:2},90,1]];
+ const blocks=[['Stone Bricks',{[B(3)]:4},53,4],['Cobblestone',{[B(3)]:1},61,1],['Sandstone',{[B(4)]:4},24,1],['Red Sand',{[B(26)]:1},26,1],['Brick Block',{brick:4},8,1],['Snow Block',{[B(21)]:4},21,1],['Packed Ice',{[B(22)]:9},23,1],['Prismarine',{[B(55)]:4},55,4],['Deepslate',{[B(58)]:4},58,4],['Nether Bricks',{[B(65)]:4},72,4],['Polished Blackstone',{[B(68)]:4},69,4],['End Stone Bricks',{[B(121)]:4},130,4],['Purpur Block',{[B(122)]:4},131,4],['Bone Block',{bone:9},86,1],['Quartz Block',{quartz:4},128,1],['Copper Block',{copper:9},113,1],['Diamond Block',{diamond:9},112,1],['Emerald Block',{emerald:9},111,1],['Iron Block',{iron:9},115,1],['Gold Block',{gold:9},114,1],['Coal Block',{coal:9},116,1],['Redstone Block',{redstone:9},117,1],['Lapis Block',{lapis:9},110,1],['Netherite Block',{netheriteIngot:9},135,1],['Redstone Lamp',{redstone:4,[B(10)]:1},109,1],['Shroomlight',{[B(79)]:2,[B(81)]:2},90,1]];
  for(const [name,cost,id,n] of blocks)add('Blocks',name,cost,{[B(id)]:n},table);
  add('Blocks','Iron Nuggets',{iron:1},{ironNugget:9});
  add('Blocks','Gold Nuggets',{gold:1},{goldNugget:9});
  add('Blocks','Gold Ingot',{goldNugget:9},{gold:1});
  add('Blocks','Iron Ingot',{ironNugget:9},{iron:1});
  add('Blocks','Quartz Pillar',{quartz:4},{quartzPillar:2},table);
+ // Smelting previews are guidance only. These outputs require a placed,
+ // fueled furnace and cannot be granted by the crafting-table UI.
+ // Clay block is 57; mud block 47 must never be a terracotta shortcut.
+ add('Blocks','Glass (smelt sand)',{[B(4)]:1,coal:1},{[B(9)]:1},furnace);
+ add('Blocks','Terracotta (fire clay)',{[B(57)]:1,coal:1},{[B(25)]:1},furnace);
  add('Blocks','Glazed Terracotta',{[B(25)]:1,coal:1},{glazedTerracotta:1},furnace);
  add('Blocks','Flower Pot',{brick:3},{flowerPot:1},table);
  add('Blocks','Glass Pane',{[B(9)]:6},{glassPane:16},table);
