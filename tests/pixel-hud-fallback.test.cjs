@@ -35,3 +35,16 @@ test('hotbar imports are sharp, selected remains visible without imported select
  assert.ok(s.includes('const flatBlock=/\\b(?:rail|torch'));
  assert.ok(!s.includes('const flatBlock=/\\\\b(?:rail|torch'));
 });
+
+test('malformed survival values cannot crash icon rendering or accessible labels',()=>{
+ const a=art();
+ const invalid=[Symbol('bad'),{valueOf(){throw Error('bad save');}},{[Symbol.toPrimitive](){throw Error('bad plugin');}}];
+ for(const value of invalid){
+  assert.equal(a.points(value),0);
+  assert.equal(a.slots(value).length,10);
+  assert.ok(a.slots(value).every(icon=>icon==='empty'));
+  assert.equal(a.description('heart',value),'heart: 0 of 20');
+ }
+ assert.equal(a.points(19),19);
+ assert.equal(a.slots(19).filter(x=>x==='half').length,1);
+});

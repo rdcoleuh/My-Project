@@ -49,7 +49,10 @@ function paint(kind,fill){
 }
 // One displayed half-icon represents one point of the 0-20 scale.
 function points(value){
- const number=Number(value);
+ // Malformed save/plugin values (Symbols or throwing valueOf hooks) must
+ // never crash the survival HUD during rendering.
+ let number;
+ try{number=Number(value);}catch{return 0;}
  return Number.isFinite(number)?Math.max(0,Math.min(20,Math.floor(number))):0;
 }
 function slots(value){
