@@ -70,3 +70,13 @@ test('mining swing repeats while digging, ends on release, and is independent of
  assert.ok(html.includes('const swing=Math.max(attackSwing,toolSwing)'));
  assert.ok(html.includes('const hit=window.MineWorldCombat.strike({'));
 });
+
+test('malformed imported animation angles cannot displace avatar geometry',()=>{
+ const a=animation(),args=['legL',.2,.3,.1,-.125,.25,.75,.25];
+ for(const invalid of [Infinity,-Infinity,NaN,'Infinity',{},null]){
+  const p=a.rotateLimb(...args,{legL:invalid});
+  assert.equal(p.y,.2);assert.equal(p.z,.3);
+ }
+ const valid=a.rotateLimb(...args,{legL:0.5});
+ assert.ok(Number.isFinite(valid.y)&&Number.isFinite(valid.z));
+});
