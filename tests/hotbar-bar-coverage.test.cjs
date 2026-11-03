@@ -93,3 +93,41 @@ test('importer checks full sheet only for background, keeping numbered slot fall
  assert.match(read('sw.js'),/const VERSION='mineworld-[^']+';/,
   'the importer must remain cached under a versioned service worker');
 });
+
+// A thin ONE-pixel native outline must remain valid at 4x/8x; requiring
+// five-percent fill rejects otherwise complete player-owned HD GUI artwork.
+test('single-source-pixel HD slot outlines are accepted without smoothing',()=>{
+ for(const [width,height] of [[728,88],[720,80],[1456,176],[1440,160]]){
+  const pixels=new Uint8ClampedArray(width*height*4);
+  for(let i=0;i<9;i++){
+   const r=uv.slotRect(width,height,i);
+   for(let x=r.x;x<r.x+r.width;x++){
+    pixels[(r.y*width+x)*4+3]=255;
+    pixels[((r.y+r.height-1)*width+x)*4+3]=255;
+   }
+   for(let y=r.y;y<r.y+r.height;y++){
+    pixels[(y*width+r.x)*4+3]=255;
+    pixels[(y*width+r.x+r.width-1)*4+3]=255;
+   }
+  }
+  assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),true);
+  const blank=uv.slotRect(width,height,5);
+  for(let y=blank.y;y<blank.y+blank.height;y++)
+   for(let x=blank.x;x<blank.x+blank.width;x++)
+    pixels[(y*width+x)*4+3]=0;
+  assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),false,
+   'one missing slot must restore the procedural bar');
+ }
+});
+test('HD scattered pixels cannot impersonate complete outlined slots',()=>{
+ const width=720,height=80,pixels=new Uint8ClampedArray(width*height*4);
+ for(let i=0;i<9;i++){
+  const r=uv.slotRect(width,height,i);
+  // Four corners and a handful of stray pixels do not make an outline.
+  for(const [x,y] of [[r.x,r.y],[r.x+r.width-1,r.y],
+    [r.x,r.y+r.height-1],[r.x+r.width-1,r.y+r.height-1],
+    [r.x+10,r.y+10],[r.x+20,r.y+20]])
+   pixels[(y*width+x)*4+3]=255;
+ }
+ assert.equal(uv.hasCompleteBarAlpha(pixels,width,height),false);
+});
