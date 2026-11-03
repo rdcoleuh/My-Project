@@ -52,7 +52,13 @@ function points(value){
  // Malformed save/plugin values (Symbols or throwing valueOf hooks) must
  // never crash the survival HUD during rendering.
  let number;
- try{number=Number(value);}catch{return 0;}
+ try{
+  // Accept numbers and legacy numeric strings, but not arrays, objects or
+  // booleans: coercing [20] or true could invent survival points from a
+  // malformed save or third-party stat adapter.
+  if(typeof value!=='number'&&typeof value!=='string')return 0;
+  number=Number(value);
+ }catch{return 0;}
  return Number.isFinite(number)?Math.max(0,Math.min(20,Math.floor(number))):0;
 }
 function slots(value){

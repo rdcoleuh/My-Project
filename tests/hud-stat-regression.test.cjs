@@ -36,3 +36,13 @@ test('original artwork has transparent backgrounds and independent half fill',()
  assert.deepEqual(Array.from(half.slice(left,left+4)),Array.from(full.slice(left,left+4)));
  assert.deepEqual(Array.from(half.slice(right,right+4)),Array.from(empty.slice(right,right+4)));
 });
+
+test('rejects coercible malformed stat containers without changing numeric save compatibility',()=>{
+ for(const value of [[20],{valueOf:()=>20},true,false,Symbol('health'),{toString(){throw Error('bad stat');}}]){
+  assert.equal(art.points(value),0);
+  assert.equal(art.slots(value).filter(icon=>icon!=='empty').length,0);
+ }
+ assert.equal(art.points('19'),19);
+ assert.equal(art.points(19),19);
+ assert.equal(art.description('Health',[20]),'Health: 0 of 20');
+});
