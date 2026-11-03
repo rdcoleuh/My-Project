@@ -43,7 +43,13 @@ test('corrupt slots remain rejected while valid unknown item keys survive',()=>{
   output:{key:'futureIngot',qty:65}}]);
  assert.equal(f.get(p).input,null);
  assert.equal(f.get(p).fuel,null);
- assert.equal(f.get(p).output,null);
+ assert.deepEqual(clone(f.get(p).output),{key:'futureIngot',qty:65},'bounded legacy overfilled stacks must survive restoration');
+ assert.equal(f.insert(p,'input','futureOre',1),0);
+ assert.equal(f.take(p,'output',64).qty,64,'legacy output can be withdrawn safely');
+ assert.equal(f.take(p,'output',64).qty,1);
+ f.restore([{...p,input:{key:'futureOre',qty:1000001},fuel:{key:'futureFuel',qty:1},output:{key:'futureIngot',qty:1.5}}]);
+ assert.equal(f.get(p).input,null,'unbounded stacks remain invalid');
+ assert.equal(f.get(p).output,null,'fractional stacks remain invalid');
  f.restore([{...p,input:{key:'futureOre',qty:1},fuel:{key:'futureFuel',qty:1}}]);
  assert.equal(f.insert(p,'input','futureOre',1),0,'unknown recipes are not accepted as new deposits');
  assert.equal(f.insert(p,'fuel','futureFuel',1),0,'unknown fuels are not accepted as new deposits');
