@@ -85,6 +85,30 @@ function hasVisibleAlpha(rgba){
 // 5% alpha coverage per slot: a native one-pixel outline still qualifies, but
 // nine stray pixels cannot suppress the independently drawn fallback slots.
 // Shared outer Java borders are excluded from the sampled slot interiors.
+// HD resource packs sometimes draw a crisp ONE-source-pixel border even at
+// 4x/8x resolution. Its coverage falls below five percent, although the
+// artwork is a complete usable slot. Accept only a continuous outline on
+// all four sides; scattered alpha pixels still fail closed to the fallback.
+function hasThinCellOutline(rgba,stride,cell){
+ const size=Math.min(cell.width,cell.height);
+ if(size<16)return false;
+ const inset=Math.min(2,Math.floor(size/40));
+ const side=(horizontal,leading)=>{
+  const length=horizontal?cell.width:cell.height;
+  let best=0;
+  for(let offset=0;offset<=inset;offset++){
+   let visible=0;
+   for(let i=0;i<length;i++){
+    const x=horizontal?cell.x+i:cell.x+(leading?offset:cell.width-1-offset);
+    const y=horizontal?cell.y+(leading?offset:cell.height-1-offset):cell.y+i;
+    if(rgba[(y*stride+x)*4+3]>0)visible++;
+   }
+   best=Math.max(best,visible);
+  }
+  return best>=Math.ceil(length*.75);
+ };
+ return side(true,true)&&side(true,false)&&side(false,true)&&side(false,false);
+}
 function hasCompleteBarAlpha(rgba,width,height){
  if(!Number.isInteger(width)||!Number.isInteger(height)||
     width<1||height<1||width*height>1024*1024||
@@ -97,7 +121,7 @@ function hasCompleteBarAlpha(rgba,width,height){
   for(let y=cell.y;y<cell.y+cell.height&&visible<required;y++)
    for(let x=cell.x;x<cell.x+cell.width&&visible<required;x++)
     if(rgba[(y*width+x)*4+3]>0)visible++;
-  if(visible<required)return false;
+  if(visible<required&&!hasThinCellOutline(rgba,width,cell))return false;
  }
  return true;
 }
