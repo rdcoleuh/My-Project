@@ -53,7 +53,9 @@ const pos=p=>p&&['overworld','nether','end'].includes(p.dimension)&&
   p.x>=-9999&&p.x<10000&&p.z>=-9999&&p.z<10000&&p.y>=-64&&p.y<=319;
 const id=p=>p.dimension+':'+p.x+','+p.y+','+p.z;
 const blank=(p,kind='furnace')=>({kind,dimension:p.dimension,x:p.x,y:p.y,z:p.z,input:null,fuel:null,output:null,burn:0,burnTotal:0,progress:0});
-const slot=s=>s&&key(s.key)&&Number.isInteger(s.qty)&&s.qty>0&&s.qty<=64?{key:s.key,qty:s.qty}:null;
+// Legacy worlds could save overfilled stacks. Preserve bounded, safe counts
+// for withdrawal; insert() still enforces normal slot capacities.
+const slot=s=>s&&key(s.key)&&Number.isSafeInteger(s.qty)&&s.qty>0&&s.qty<=1000000?{key:s.key,qty:s.qty}:null;
 // Nonstackable fuel containers share one capacity contract with the UI.
 // Never reserve 64 buckets for a furnace slot that holds only one.
 // Lava buckets, boats and rafts are individually handled fuel items.

@@ -17,6 +17,30 @@ test('mixed ingredients rejected; progress persists and block removal returns it
  assert.equal(g.get(p).output.key,'gold');
  assert.equal(g.remove(p).reduce((n,s)=>n+s.qty,0),64);
 });
+test('legacy overfilled furnace stacks survive save and can be withdrawn without accepting new deposits',()=>{
+ const f=api.create();
+ f.restore([{...p,input:{key:'rawIron',qty:90},fuel:{key:'coal',qty:70},output:{key:'iron',qty:75}}]);
+ const m=f.get(p);
+ assert.equal(m.input.qty,90);assert.equal(m.fuel.qty,70);assert.equal(m.output.qty,75);
+ assert.equal(f.insert(p,'input','rawIron',1),0);
+ assert.equal(f.insert(p,'fuel','coal',1),0);
+ const saved=JSON.parse(JSON.stringify(f.snapshot()));
+ const g=api.create();g.restore(saved);
+ assert.equal(g.get(p).input.qty,90);
+ assert.equal(g.get(p).fuel.qty,70);
+ assert.equal(g.get(p).output.qty,75);
+ assert.equal(g.tick(10).completed,0,'overfull output must block cooking');
+ assert.equal(g.take(p,'output',64).qty,64);
+ assert.equal(g.take(p,'output',64).qty,11);
+ assert.equal(g.take(p,'input',64).qty,64);
+ assert.equal(g.get(p).input.qty,26);
+});
+
+test('malformed and excessive legacy furnace quantities are still rejected',()=>{
+ const f=api.create();f.restore([{...p,input:{key:'rawIron',qty:1000001},fuel:{key:'coal',qty:1.5},output:{key:'iron',qty:Infinity}}]);
+ assert.equal(f.get(p).input,null);assert.equal(f.get(p).fuel,null);assert.equal(f.get(p).output,null);
+});
+
 test('restore sanitizes invalid slots, coordinates and progress',()=>{
  const f=api.create();f.restore([{dimension:'overworld',x:1,y:1,z:1,input:{key:'__proto__',qty:500},fuel:{key:'coal',qty:-5},progress:999,burn:-1}]);
  const m=f.get({dimension:'overworld',x:1,y:1,z:1});
