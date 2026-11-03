@@ -31,7 +31,9 @@ function miningSwing(elapsedMs,active=false){
 }
 function rotateLimb(name,py,pz,oy,oz,w,h,d,angles){
  if(!angles||!['legL','legR','armL','armR'].includes(name))return {y:py,z:pz};
- const angle=clamp(Number(angles[name])||0,-1.3,1.3);
+ const rawAngle=angles[name];
+ const numericAngle=typeof rawAngle==='number'?rawAngle:0;
+ const angle=clamp(Number.isFinite(numericAngle)?numericAngle:0,-1.3,1.3);
  const pivotY=oy+h,pivotZ=oz+d*.5;
  const dy=py-pivotY,dz=pz-pivotZ;
  return {y:pivotY+dy*Math.cos(angle)-dz*Math.sin(angle),
