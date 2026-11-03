@@ -80,3 +80,14 @@ test('malformed imported animation angles cannot displace avatar geometry',()=>{
  const valid=a.rotateLimb(...args,{legL:0.5});
  assert.ok(Number.isFinite(valid.y)&&Number.isFinite(valid.z));
 });
+
+test('very large finite animation clocks never produce nonfinite avatar coordinates',()=>{
+ const a=animation();
+ for(const time of [1e100,Number.MAX_VALUE,-Number.MAX_VALUE]){
+  for(const flags of [{moving:true},{moving:true,sprinting:true},{moving:false}]){
+   const p=a.pose({time,...flags});
+   for(const [key,value] of Object.entries(p))
+    assert.ok(Number.isFinite(value),key+' became nonfinite at '+time);
+  }
+ }
+});
