@@ -8,11 +8,13 @@ function pose({time=0,moving=false,sprinting=false,crouching=false,grounded=true
  const t=Number.isFinite(time)?time:0;
  const speed=sprinting?13.5:crouching?6.2:9.2;
  const amplitude=!grounded?.18:moving?(sprinting?.78:crouching?.28:.53):0;
- const phase=t*speed;
+ // Reduce the clock before multiplying: a finite but enormous elapsed time
+ // must not overflow into Infinity and poison limb transforms with NaN.
+ const phase=(t%(2*Math.PI/speed))*speed;
  const stride=Math.sin(phase)*amplitude;
  // In Java-like biped movement the opposite arm and leg swing together.
  // A small idle arm movement prevents rigid statue poses.
- const idle=moving?0:Math.sin(t*1.8)*.025;
+ const idle=moving?0:Math.sin((t%(2*Math.PI/1.8))*1.8)*.025;
  return Object.freeze({
   legL:stride,legR:stride===0?0:-stride,
   armL:-stride*.78+idle,armR:stride*.78-idle,
