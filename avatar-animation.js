@@ -4,7 +4,11 @@
 (()=>{
 'use strict';
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
-function pose({time=0,moving=false,sprinting=false,crouching=false,grounded=true}={}){
+function pose(options={}){
+ // Imported animation controllers may supply null while a skin is loading.
+ // Treat that as a resting pose instead of crashing the render loop.
+ const {time=0,moving=false,sprinting=false,crouching=false,grounded=true}=
+  options && typeof options==='object'?options:{};
  const t=Number.isFinite(time)?time:0;
  const speed=sprinting?13.5:crouching?6.2:9.2;
  const amplitude=!grounded?.18:moving?(sprinting?.78:crouching?.28:.53):0;

@@ -91,3 +91,13 @@ test('very large finite animation clocks never produce nonfinite avatar coordina
   }
  }
 });
+
+test('missing or null animation state safely produces a resting pose',()=>{
+ const a=animation();
+ for(const input of [undefined,null,0,false,'invalid']){
+  const p=a.pose(input);
+  assert.equal(p.legL,0);
+  assert.equal(p.legR,0);
+  for(const value of Object.values(p))assert.ok(Number.isFinite(value));
+ }
+});
