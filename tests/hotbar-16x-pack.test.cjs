@@ -49,3 +49,25 @@ test('disconnected alpha dashes cannot masquerade as thin HD slot borders',()=>{
  }
  assert.equal(uv.hasCompleteBarAlpha(rgba,width,height),false);
 });
+
+test('16x imported GUI sheets accept thin outlines inset by four source pixels',()=>{
+ const width=182*16,height=22*16;
+ const rgba=new Uint8ClampedArray(width*height*4);
+ for(let i=0;i<9;i++){
+  const r=uv.slotRect(width,height,i),inset=4;
+  for(let x=r.x+inset;x<r.x+r.width-inset;x++){
+   rgba[((r.y+inset)*width+x)*4+3]=255;
+   rgba[((r.y+r.height-1-inset)*width+x)*4+3]=255;
+  }
+  for(let y=r.y+inset;y<r.y+r.height-inset;y++){
+   rgba[(y*width+r.x+inset)*4+3]=255;
+   rgba[(y*width+r.x+r.width-1-inset)*4+3]=255;
+  }
+ }
+ assert.equal(uv.hasCompleteBarAlpha(rgba,width,height),true);
+ // Missing one inset border must still reject the incomplete imported bar.
+ const r=uv.slotRect(width,height,5);
+ for(let x=r.x;x<r.x+r.width;x++)
+  rgba[((r.y+4)*width+x)*4+3]=0;
+ assert.equal(uv.hasCompleteBarAlpha(rgba,width,height),false);
+});
