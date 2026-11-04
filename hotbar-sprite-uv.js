@@ -109,9 +109,11 @@ function hasThinCellOutline(rgba,stride,cell){
  };
  return side(true,true)&&side(true,false)&&side(false,true)&&side(false,false);
 }
+// Permit up to 16x player-owned GUI strips (182*16 by 22*16),
+// while bounding the alpha scan to four million pixels on mobile.
 function hasCompleteBarAlpha(rgba,width,height){
  if(!Number.isInteger(width)||!Number.isInteger(height)||
-    width<1||height<1||width*height>1024*1024||
+    width<1||height<1||width*height>4096*1024||
     !rgba||rgba.length!==width*height*4)return false;
  for(let i=0;i<9;i++){
   const cell=slotRect(width,height,i);
