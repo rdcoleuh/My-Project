@@ -21,7 +21,7 @@ test('furnaces at identical coordinates in separate dimensions remain independen
  const restored=api.create();
  restored.restore(copy(f.snapshot()));
  assert.deepEqual(positions.map(p=>restored.get(p).output.key),['iron','gold','copper']);
- assert.deepEqual(restored.remove(positions[1]).map(s=>s.key),['gold']);
+ assert.deepEqual(copy(restored.remove(positions[1]).map(s=>s.key)),['gold']);
  assert.equal(restored.get(positions[0]).output.key,'iron');
  assert.equal(restored.get(positions[2]).output.key,'copper');
 });
