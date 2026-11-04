@@ -92,7 +92,9 @@ function hasVisibleAlpha(rgba){
 function hasThinCellOutline(rgba,stride,cell){
  const size=Math.min(cell.width,cell.height);
  if(size<16)return false;
- const inset=Math.min(2,Math.floor(size/40));
+ // High-resolution packs may position a one-pixel border several native
+ // pixels inside the cell; search at most half a base texel (8 at 16x).
+ const inset=Math.min(8,Math.floor(size/40));
  const side=(horizontal,leading)=>{
   const length=horizontal?cell.width:cell.height;
   let best=0;
