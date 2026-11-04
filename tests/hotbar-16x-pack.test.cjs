@@ -31,3 +31,21 @@ test('oversized RGBA sheets remain rejected to bound mobile scan work',()=>{
  const width=4096,height=1025;
  assert.equal(uv.hasCompleteBarAlpha(new Uint8ClampedArray(4),width,height),false);
 });
+
+test('disconnected alpha dashes cannot masquerade as thin HD slot borders',()=>{
+ const width=182*8,height=22*8;
+ const rgba=new Uint8ClampedArray(width*height*4);
+ for(let i=0;i<9;i++){
+  const r=uv.slotRect(width,height,i);
+  // 80% coverage on each edge, but deliberately broken into short runs.
+  for(let x=0;x<r.width;x++)if(x%5!==0){
+   rgba[(r.y*width+r.x+x)*4+3]=255;
+   rgba[((r.y+r.height-1)*width+r.x+x)*4+3]=255;
+  }
+  for(let y=0;y<r.height;y++)if(y%5!==0){
+   rgba[((r.y+y)*width+r.x)*4+3]=255;
+   rgba[((r.y+y)*width+r.x+r.width-1)*4+3]=255;
+  }
+ }
+ assert.equal(uv.hasCompleteBarAlpha(rgba,width,height),false);
+});
