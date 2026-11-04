@@ -159,3 +159,30 @@ test('a suspended browser frame cannot smelt more than a full output stack',()=>
  assert.equal(f.get(p).input.qty,56);
  assert.equal(f.get(p).burn,0);
 });
+
+
+test('lava bucket returns an empty bucket without duplicating fuel on save/reload',()=>{
+ const f=api.create();
+ assert.equal(f.insert(p,'input','rawIron',2),2);
+ assert.equal(f.insert(p,'fuel','lavaBucket',2),1,'lava buckets cannot stack');
+ assert.equal(f.tick(10).completed,1);
+ assert.equal(f.get(p).fuel.key,'bucket');
+ assert.equal(f.get(p).burn,990);
+ const restored=api.create();restored.restore(JSON.parse(JSON.stringify(f.snapshot())));
+ assert.equal(restored.tick(10).completed,1);
+ assert.equal(restored.get(p).output.qty,2);
+ assert.equal(restored.take(p,'fuel',64).key,'bucket');
+ assert.equal(restored.insert(p,'fuel','coal',1),1,'fuel slot can be reused after bucket withdrawal');
+});
+
+test('smoker and blast furnace consume fuel at matching accelerated rate',()=>{
+ for(const [kind,ingredient,product] of [['smoker','chicken','cookedChicken'],['blast','rawIron','iron']]){
+  const f=api.create();f.ensure(p,kind);
+  assert.equal(f.insert(p,'input',ingredient,9),9);
+  assert.equal(f.insert(p,'fuel','coal',1),1);
+  assert.equal(f.tick(40).completed,8);
+  assert.equal(f.get(p).output.key,product);
+  assert.equal(f.get(p).burn,0);
+  assert.equal(f.tick(5).completed,0,'one coal must not smelt a ninth item');
+ }
+});
