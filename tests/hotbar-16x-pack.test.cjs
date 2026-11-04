@@ -92,3 +92,20 @@ test('opaque corner patches cannot suppress fallback for missing imported slots'
    rgba[(y*width+x)*4+3]=255;
  assert.equal(uv.hasCompleteBarAlpha(rgba,width,height),false);
 });
+
+test('dense disconnected dashed borders do not bypass coherent-outline validation',()=>{
+ const width=182*4,height=22*4,rgba=new Uint8ClampedArray(width*height*4);
+ for(let i=0;i<9;i++){
+  const r=uv.slotRect(width,height,i);
+  // A two-pixel thick broken frame exceeds the former five-percent threshold.
+  for(let x=0;x<r.width;x++)if(x%6!==0){
+   for(const y of [r.y,r.y+1,r.y+r.height-2,r.y+r.height-1])
+    rgba[(y*width+r.x+x)*4+3]=255;
+  }
+  for(let y=0;y<r.height;y++)if(y%6!==0){
+   for(const x of [r.x,r.x+1,r.x+r.width-2,r.x+r.width-1])
+    rgba[((r.y+y)*width+x)*4+3]=255;
+  }
+ }
+ assert.equal(uv.hasCompleteBarAlpha(rgba,width,height),false);
+});
