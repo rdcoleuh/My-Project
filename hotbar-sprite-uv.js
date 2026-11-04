@@ -97,13 +97,14 @@ function hasThinCellOutline(rgba,stride,cell){
   const length=horizontal?cell.width:cell.height;
   let best=0;
   for(let offset=0;offset<=inset;offset++){
-   let visible=0;
+   let run=0, longest=0;
    for(let i=0;i<length;i++){
     const x=horizontal?cell.x+i:cell.x+(leading?offset:cell.width-1-offset);
     const y=horizontal?cell.y+(leading?offset:cell.height-1-offset):cell.y+i;
-    if(rgba[(y*stride+x)*4+3]>0)visible++;
+    if(rgba[(y*stride+x)*4+3]>0){run++;longest=Math.max(longest,run);}
+    else run=0;
    }
-   best=Math.max(best,visible);
+   best=Math.max(best,longest);
   }
   return best>=Math.ceil(length*.75);
  };
