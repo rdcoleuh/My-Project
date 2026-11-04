@@ -56,15 +56,20 @@ test('sparse pixels fail while original outlined slots pass at native and HD sca
   assert.equal(uv.hasCompleteBarAlpha(pixels,w,h),true);
  }
 });
-test('the five-percent threshold is enforced independently per slot',()=>{
+test('every slot needs coherent artwork even when its alpha exceeds five percent',()=>{
  const w=180,h=20,pixels=new Uint8ClampedArray(w*h*4);
  for(let i=0;i<9;i++)paintCell(pixels,w,h,i);
  paintCell(pixels,w,h,8,false);
  const r=uv.slotRect(w,h,8);
- for(let n=0;n<19;n++)pixels[(r.y*w+r.x+n)*4+3]=255;
+ // A single top row reaches five percent, but is not a complete slot.
+ for(let n=0;n<r.width;n++)pixels[(r.y*w+r.x+n)*4+3]=255;
  assert.equal(uv.hasCompleteBarAlpha(pixels,w,h),false);
- pixels[(r.y*w+r.x+19)*4+3]=255;
+ // A complete outline restores this slot without changing the other eight.
+ paintCell(pixels,w,h,8);
  assert.equal(uv.hasCompleteBarAlpha(pixels,w,h),true);
+ // One missing slot must still invalidate the imported background.
+ paintCell(pixels,w,h,2,false);
+ assert.equal(uv.hasCompleteBarAlpha(pixels,w,h),false);
 });
 test('opaque unrelated atlas pixels do not disguise blank cells',()=>{
  const width=182,height=22,pixels=new Uint8ClampedArray(width*height*4);
