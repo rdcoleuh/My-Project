@@ -71,3 +71,24 @@ test('16x imported GUI sheets accept thin outlines inset by four source pixels',
   rgba[((r.y+4)*width+x)*4+3]=0;
  assert.equal(uv.hasCompleteBarAlpha(rgba,width,height),false);
 });
+
+test('opaque corner patches cannot suppress fallback for missing imported slots',()=>{
+ const width=182*4,height=22*4;
+ const rgba=new Uint8ClampedArray(width*height*4);
+ for(let i=0;i<9;i++){
+  const r=uv.slotRect(width,height,i);
+  for(let y=r.y;y<r.y+r.height;y++)
+   for(let x=r.x;x<r.x+r.width;x++)
+    rgba[(y*width+x)*4+3]=255;
+ }
+ assert.equal(uv.hasCompleteBarAlpha(rgba,width,height),true);
+ const r=uv.slotRect(width,height,3);
+ for(let y=r.y;y<r.y+r.height;y++)
+  for(let x=r.x;x<r.x+r.width;x++)
+   rgba[(y*width+x)*4+3]=0;
+ // More than 5% opaque pixels, but only in one corner of the slot.
+ for(let y=r.y;y<r.y+Math.ceil(r.height*.3);y++)
+  for(let x=r.x;x<r.x+Math.ceil(r.width*.3);x++)
+   rgba[(y*width+x)*4+3]=255;
+ assert.equal(uv.hasCompleteBarAlpha(rgba,width,height),false);
+});
