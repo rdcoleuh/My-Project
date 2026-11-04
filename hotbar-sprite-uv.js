@@ -134,7 +134,7 @@ function hasCompleteBarAlpha(rgba,width,height){
     }
   const spansCell=(maxX-minX+1)>=Math.ceil(cell.width*.6)&&
                   (maxY-minY+1)>=Math.ceil(cell.height*.6);
-  if((visible<required||!spansCell)&&!hasThinCellOutline(rgba,width,cell))return false;
+  // Sparse, widely scattered alpha can span the entire slot while still\n  // being unusable (for example a broken dashed frame). Require a coherent\n  // four-sided outline for low-coverage artwork; substantial fills remain valid.\n  if((visible<Math.max(required,Math.ceil(cell.width*cell.height*.20))||!spansCell)&&\n     !hasThinCellOutline(rgba,width,cell))return false;
  }
  return true;
 }
