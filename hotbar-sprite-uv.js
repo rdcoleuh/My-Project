@@ -122,11 +122,19 @@ function hasCompleteBarAlpha(rgba,width,height){
   const cell=slotRect(width,height,i);
   if(!cell)return false;
   const required=Math.ceil(cell.width*cell.height*.05);
-  let visible=0;
-  for(let y=cell.y;y<cell.y+cell.height&&visible<required;y++)
-   for(let x=cell.x;x<cell.x+cell.width&&visible<required;x++)
-    if(rgba[(y*width+x)*4+3]>0)visible++;
-  if(visible<required&&!hasThinCellOutline(rgba,width,cell))return false;
+  let visible=0,minX=cell.x+cell.width,maxX=cell.x-1;
+  let minY=cell.y+cell.height,maxY=cell.y-1;
+  // Count all visible texels: stopping at 5% would miss a small opaque
+  // corner patch that masquerades as a complete imported slot.
+  for(let y=cell.y;y<cell.y+cell.height;y++)
+   for(let x=cell.x;x<cell.x+cell.width;x++)
+    if(rgba[(y*width+x)*4+3]>0){
+     visible++;minX=Math.min(minX,x);maxX=Math.max(maxX,x);
+     minY=Math.min(minY,y);maxY=Math.max(maxY,y);
+    }
+  const spansCell=(maxX-minX+1)>=Math.ceil(cell.width*.6)&&
+                  (maxY-minY+1)>=Math.ceil(cell.height*.6);
+  if((visible<required||!spansCell)&&!hasThinCellOutline(rgba,width,cell))return false;
  }
  return true;
 }
