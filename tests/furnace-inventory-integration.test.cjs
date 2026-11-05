@@ -53,3 +53,22 @@ test('inventory capacity prevents output loss on collection',()=>{
  assert.equal(result.full,true);
  assert.equal(engine.get(p).output.qty,2);
 });
+
+test('deposit rolls back an inventory debit when the adapter throws after mutation',()=>{
+ const engine=engineApi.create(),pos={...p,x:41},bag=inventory({rawIron:2});
+ engine.ensure(pos);
+ const original=bag.change;
+ bag.change=(key,delta)=>{const result=original(key,delta);if(delta<0)throw Error('interrupted debit');return result;};
+ assert.throws(()=>deposit(engine,bag,pos,'input','rawIron',2),/interrupted debit/);
+ assert.equal(bag.count('rawIron'),2);
+ assert.equal(engine.get(pos).input,null);
+});
+test('withdraw rolls back a player credit when the adapter throws after mutation',()=>{
+ const engine=engineApi.create(),pos={...p,x:42},bag=inventory({iron:0});
+ engine.restore([{...pos,output:{key:'iron',qty:2}}]);
+ const original=bag.change;
+ bag.change=(key,delta)=>{const result=original(key,delta);if(delta>0)throw Error('interrupted credit');return result;};
+ assert.throws(()=>withdraw(engine,bag,pos,'output',2),/interrupted credit/);
+ assert.equal(bag.count('iron'),0);
+ assert.equal(engine.get(pos).output.qty,2);
+});
