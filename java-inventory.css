@@ -149,3 +149,24 @@
  #hotbar{max-width:calc(100vw - 54px)!important}
  #hotbar .hot-item{width:clamp(26px,calc((100vw - 83px)/9),43px)!important}
 }
+
+/* User-owned pack hooks. The pack loader may set these CSS custom properties
+   to validated local object URLs; absent values retain original pixel-art UI.
+   Avoid fetching any bundled proprietary artwork. */
+#hotbar .hot-item{
+  background-image:var(--mw-hotbar-slot-image,none)!important;
+  background-repeat:no-repeat!important;
+  background-position:center!important;
+  background-size:100% 100%!important;
+}
+#hotbar .hot-item.active{
+  background-image:var(--mw-hotbar-selected-image,var(--mw-hotbar-slot-image,none))!important;
+}
+#hotbar .hot-item .swatch img,
+#hotbar .hot-item .swatch canvas{
+  max-width:100%;max-height:100%;object-fit:contain;
+  image-rendering:pixelated!important;
+}
+@media(prefers-reduced-motion:reduce){
+  #hotbar .hot-item{transition:none!important}
+}
