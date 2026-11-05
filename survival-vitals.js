@@ -21,8 +21,8 @@
   // Never fetch remote artwork or embed third-party assets in the repository.
   function safeSprite(value) {
     if (typeof value !== 'string') return null;
-    if (/^blob:https?:\\/\\/[^\\s"'()]+$/.test(value) ||
-        /^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$/.test(value)) return value;
+    if (/^blob:https?:\/\/[^\s"'()]+$/.test(value) ||
+        /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/.test(value)) return value;
     return null;
   }
   function update(container, kind, points, sprites) {
@@ -35,7 +35,8 @@
     const signature = JSON.stringify(urls);
     // Skip DOM churn only if the displayed sprites and values are unchanged.
     if (container.dataset && container.dataset.value === String(value) &&
-        container.dataset.kind === safeKind && container.dataset.sprites === signature &&\n        container.children && container.children.length === 10) return true;
+        container.dataset.kind === safeKind && container.dataset.sprites === signature &&
+        container.children && container.children.length === 10) return true;
     const nodes = states.map((state, index) => {
       const icon = document.createElement('span');
       icon.className = 'mw-vital-icon mw-vital-' + safeKind + ' mw-vital-' + state;
@@ -51,7 +52,8 @@
     container.setAttribute('role', 'img');
     container.setAttribute('aria-label', (safeKind === 'health' ? 'Health' : 'Food') + ': ' + value + ' of 20');
     container.dataset.value = String(value);
-    container.dataset.kind = safeKind;\n    container.dataset.sprites = signature;
+    container.dataset.kind = safeKind;
+    container.dataset.sprites = signature;
     return true;
   }
   return { clampPoints, iconStates, safeSprite, update };
