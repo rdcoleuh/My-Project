@@ -10,3 +10,16 @@
 .mw-vital-hunger.mw-vital-half::after{clip-path:polygon(8% 8%,28% 0,52% 12%,52% 90%,38% 84%,20% 60%,0 36%)}
 @media(max-width:560px){.mw-vitals{gap:1px}.mw-vital-icon{flex-basis:12px;width:12px}}
 @media(forced-colors:active){.mw-vital-icon::before{background:CanvasText}.mw-vital-icon::after{background:Highlight}.mw-vital-empty::after{background:Canvas}}
+
+/* Optional player-imported sprites: the pack loader supplies validated object URLs.
+   Backgrounds remain procedural unless an imported sprite is explicitly provided. */
+.mw-vital-icon[data-imported-sprite="true"]::before,
+.mw-vital-icon[data-imported-sprite="true"]::after{content:none}
+.mw-vital-icon[data-imported-sprite="true"]{
+  background-image:var(--mw-vital-sprite,none);
+  background-repeat:no-repeat;
+  background-size:100% 100%;
+  image-rendering:pixelated;
+}
+/* Never hide the procedural fallback if the imported URL is unavailable. */
+.mw-vital-icon:not([data-imported-sprite="true"]){background-image:none}
