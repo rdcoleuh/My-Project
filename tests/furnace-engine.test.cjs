@@ -211,3 +211,28 @@ test('malformed saved burn timers cannot create free furnace fuel',()=>{
  assert.equal(f.tick(60).completed,1);
  assert.equal(f.tick(60).completed,0);
 });
+
+test('deep negative coordinates and dimensions isolate furnace inventories through save reload',()=>{
+ const f=api.create();
+ const overworld={dimension:'overworld',x:-1,y:-64,z:-1};
+ const nether={dimension:'nether',x:-1,y:-64,z:-1};
+ const neighbor={dimension:'overworld',x:0,y:-64,z:-1};
+ assert.equal(f.insert(overworld,'input','rawIron',2),2);
+ assert.equal(f.insert(overworld,'fuel','coal',1),1);
+ assert.equal(f.insert(nether,'input','rawGold',1),1);
+ assert.equal(f.insert(nether,'fuel','coal',1),1);
+ assert.equal(f.insert(neighbor,'input','rawCopper',1),1);
+ assert.equal(f.insert(neighbor,'fuel','coal',1),1);
+ assert.equal(f.tick(10).completed,3);
+ const saved=JSON.parse(JSON.stringify(f.snapshot()));
+ assert.equal(saved.length,3);
+ const restored=api.create();restored.restore(saved);
+ assert.equal(restored.get(overworld).output.key,'iron');
+ assert.equal(restored.get(nether).output.key,'gold');
+ assert.equal(restored.get(neighbor).output.key,'copper');
+ assert.equal(restored.take(overworld,'output',1).key,'iron');
+ assert.equal(restored.get(nether).output.qty,1,'another dimension must not be affected');
+ assert.equal(restored.get(neighbor).output.qty,1,'adjacent signed coordinate must not alias');
+ assert.equal(restored.get({...overworld,y:-65}),null);
+ assert.equal(restored.get({...overworld,y:320}),null);
+});
