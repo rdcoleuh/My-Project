@@ -22,6 +22,9 @@
     const document = container.ownerDocument;
     const safeKind = kind === 'hunger' ? 'hunger' : 'health';
     const value = clampPoints(points);
+    // Skip DOM churn during every animation frame when the displayed value is unchanged.
+    if (container.dataset && container.dataset.value === String(value) &&
+        container.dataset.kind === safeKind && container.children && container.children.length === 10) return true;
     const nodes = iconStates(value).map((state, index) => {
       const icon = document.createElement('span');
       icon.className = 'mw-vital-icon mw-vital-' + safeKind + ' mw-vital-' + state;
@@ -33,6 +36,7 @@
     container.setAttribute('role', 'img');
     container.setAttribute('aria-label', (safeKind === 'health' ? 'Health' : 'Food') + ': ' + value + ' of 20');
     container.dataset.value = String(value);
+    container.dataset.kind = safeKind;
     return true;
   }
   return { clampPoints, iconStates, update };
