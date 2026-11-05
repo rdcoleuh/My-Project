@@ -34,9 +34,17 @@
     const urls = states.map(state => safeSprite(sprites && sprites[state]));
     const signature = JSON.stringify(urls);
     // Skip DOM churn only if the displayed sprites and values are unchanged.
+    const label = (safeKind === 'health' ? 'Health' : 'Food') + ': ' + value + ' of 20';
+    // A UI framework or accessibility extension may alter the container's
+    // attributes without changing its children. Repair the label even on a
+    // no-repaint update so assistive technology never reads stale values.
     if (container.dataset && container.dataset.value === String(value) &&
         container.dataset.kind === safeKind && container.dataset.sprites === signature &&
-        container.children && container.children.length === 10) return true;
+        container.children && container.children.length === 10) {
+      container.setAttribute('role', 'img');
+      container.setAttribute('aria-label', label);
+      return true;
+    }
     const nodes = states.map((state, index) => {
       const icon = document.createElement('span');
       icon.className = 'mw-vital-icon mw-vital-' + safeKind + ' mw-vital-' + state;
@@ -50,7 +58,7 @@
     });
     container.replaceChildren(...nodes);
     container.setAttribute('role', 'img');
-    container.setAttribute('aria-label', (safeKind === 'health' ? 'Health' : 'Food') + ': ' + value + ' of 20');
+    container.setAttribute('aria-label', label);
     container.dataset.value = String(value);
     container.dataset.kind = safeKind;
     container.dataset.sprites = signature;
