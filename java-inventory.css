@@ -109,3 +109,43 @@
  .mw-java-shell .mw-java-top{grid-template-columns:34px 60px 34px}
  .mw-java-shell .mw-java-top .mw-java-craft{grid-column:1/-1}
 }
+
+/* Pixel-precise survival hotbar: original procedural fallback.
+   User-imported GUI art can override --mw-hotbar-slot-image and
+   --mw-hotbar-selected-image with validated local blob/data URLs. */
+#hotbar{
+  gap:0!important;padding:3px!important;border:3px solid #171717!important;
+  border-radius:0!important;background:#777c!important;
+  box-shadow:inset 2px 2px #e4e4e4,inset -2px -2px #333,0 3px 0 #111!important;
+  backdrop-filter:none!important;overflow:visible!important;
+}
+#hotbar .hot-item{
+  position:relative;width:clamp(34px,5.1vw,52px);height:clamp(44px,5.6vw,56px);
+  padding:3px 1px!important;gap:1px!important;min-width:0;
+  border:3px solid!important;border-color:#333 #dedede #dedede #333!important;
+  border-radius:0!important;background:#898989!important;
+  box-shadow:none!important;color:#fff!important;text-shadow:1px 1px #111;
+  image-rendering:pixelated;touch-action:manipulation;
+}
+#hotbar .hot-item.active{
+  z-index:1;border-color:#fff7c5!important;
+  outline:2px solid #202020;outline-offset:0;
+  box-shadow:inset 1px 1px #fff9d8,inset -1px -1px #fff9d8!important;
+  background:#b3b3a5!important;
+}
+#hotbar .hot-item:focus-visible{z-index:2;outline:3px solid #ffe17b;outline-offset:1px}
+#hotbar .hot-item .swatch,#hotbar .hot-item canvas,#hotbar .hot-item img{
+  image-rendering:pixelated!important;image-rendering:crisp-edges;
+}
+#hotbar .hot-item .swatch{position:relative;overflow:hidden}
+#hotbar .hot-item .swatch .mw-imported-swatch{image-rendering:pixelated!important}
+#hotbar .hot-item span{font:9px/1.1 monospace;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+#hotbar .hot-item small{color:#fff;text-shadow:1px 1px #111,-1px -1px #111}
+@media(pointer:coarse){
+ #hotbar .hot-item{height:48px!important;min-height:44px}
+ #hotbar .hot-item span{display:none}
+}
+@media(max-width:550px){
+ #hotbar{max-width:calc(100vw - 54px)!important}
+ #hotbar .hot-item{width:clamp(26px,calc((100vw - 83px)/9),43px)!important}
+}
