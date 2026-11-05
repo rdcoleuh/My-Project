@@ -1,0 +1,12 @@
+/* MineWorld original procedural survival icons. No bundled third-party artwork. */
+.mw-vitals{display:flex;align-items:center;gap:3px;min-width:0;pointer-events:none}
+.mw-vital-icon{position:relative;display:inline-block;flex:0 0 clamp(12px,1.45vw,19px);width:clamp(12px,1.45vw,19px);aspect-ratio:1;image-rendering:pixelated;--mw-vital-fill:#e64b4b}
+.mw-vital-hunger{--mw-vital-fill:#b77c3d}
+.mw-vital-icon::before,.mw-vital-icon::after{content:"";position:absolute;inset:1px;clip-path:polygon(15% 5%,35% 5%,50% 20%,65% 5%,85% 5%,100% 25%,100% 50%,50% 95%,0 50%,0 25%);background:#28201e}
+.mw-vital-icon::after{inset:3px;background:var(--mw-vital-fill);clip-path:polygon(15% 5%,35% 5%,50% 20%,65% 5%,85% 5%,100% 25%,100% 50%,50% 95%,0 50%,0 25%)}
+.mw-vital-empty::after{background:#595454}
+.mw-vital-half::after{clip-path:polygon(15% 5%,35% 5%,50% 20%,50% 95%,0 50%,0 25%)}
+.mw-vital-hunger::before,.mw-vital-hunger::after{clip-path:polygon(8% 8%,28% 0,52% 12%,80% 34%,95% 55%,85% 80%,62% 96%,38% 84%,20% 60%,0 36%)}
+.mw-vital-hunger.mw-vital-half::after{clip-path:polygon(8% 8%,28% 0,52% 12%,52% 90%,38% 84%,20% 60%,0 36%)}
+@media(max-width:560px){.mw-vitals{gap:1px}.mw-vital-icon{flex-basis:12px;width:12px}}
+@media(forced-colors:active){.mw-vital-icon::before{background:CanvasText}.mw-vital-icon::after{background:Highlight}.mw-vital-empty::after{background:Canvas}}
