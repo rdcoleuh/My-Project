@@ -186,3 +186,28 @@ test('smoker and blast furnace consume fuel at matching accelerated rate',()=>{
   assert.equal(f.tick(5).completed,0,'one coal must not smelt a ninth item');
  }
 });
+
+
+test('duplicate save records cannot overwrite the first furnace inventory',()=>{
+ const a={dimension:'overworld',x:41,y:-20,z:42};
+ const f=api.create();
+ f.restore([{...a,input:{key:'rawIron',qty:3},fuel:{key:'coal',qty:1}},
+            {...a,input:{key:'rawGold',qty:64},fuel:{key:'coal',qty:64}}]);
+ assert.equal(f.snapshot().length,1);
+ assert.equal(f.get(a).input.key,'rawIron');
+ assert.equal(f.get(a).input.qty,3);
+ assert.equal(f.tick(10).completed,1);
+ assert.equal(f.get(a).output.key,'iron');
+});
+
+test('malformed saved burn timers cannot create free furnace fuel',()=>{
+ const a={dimension:'overworld',x:42,y:-20,z:42};
+ const f=api.create();
+ f.restore([{...a,input:{key:'rawIron',qty:2},burn:1000}]);
+ assert.equal(f.get(a).burn,0);
+ assert.equal(f.tick(60).completed,0);
+ f.restore([{...a,input:{key:'rawIron',qty:2},burn:1000,burnTotal:10}]);
+ assert.equal(f.get(a).burn,10);
+ assert.equal(f.tick(60).completed,1);
+ assert.equal(f.tick(60).completed,0);
+});
