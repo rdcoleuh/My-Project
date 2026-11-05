@@ -1,0 +1,3 @@
+const test=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');const css=fs.readFileSync(path.join(__dirname,'..','survival-vitals.css'),'utf8');
+test('original full, half and empty icons have procedural fill rules',()=>{for(const name of ['mw-vital-icon','mw-vital-empty','mw-vital-half','mw-vital-hunger'])assert.ok(css.includes(name));assert.match(css,/\.mw-vital-half::after\s*\{clip-path:/);assert.match(css,/\.mw-vital-hunger\.mw-vital-half::after\s*\{clip-path:/)});
+test('HUD respects small screens and high contrast without external bitmap URLs',()=>{assert.match(css,/@media\(max-width:560px\)/);assert.match(css,/@media\(forced-colors:active\)/);assert.doesNotMatch(css,/url\s*\(/i);});
