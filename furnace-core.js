@@ -15,7 +15,11 @@ function tick(raw,steps=1){const s=state(raw);if(!Number.isSafeInteger(steps)||s
 for(let i=0;i<steps;i++){
 const possible=canSmelt(s);
 if(s.burn===0&&possible&&s.fuel&&fuelTicks(s.fuel.id)){
-const consumed=s.fuel.id;s.burn=FUELS[consumed];s.burnTotal=s.burn;s.fuel.count--;if(!s.fuel.count)s.fuel=consumed==='lava_bucket'?{id:'bucket',count:1}:null;
+const consumed=s.fuel.id;
+// Legacy saves may contain stacked lava buckets. Do not burn one and
+// silently discard its empty container; leave the stack withdrawable.
+if(consumed==='lava_bucket'&&s.fuel.count!==1)continue;
+s.burn=FUELS[consumed];s.burnTotal=s.burn;s.fuel.count--;if(!s.fuel.count)s.fuel=consumed==='lava_bucket'?{id:'bucket',count:1}:null;
 }
 const heated=s.burn>0;
 if(heated)s.burn--;
