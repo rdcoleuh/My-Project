@@ -47,5 +47,19 @@ const taken={id:existing.id,count:amount};
 existing.count-=amount;if(!existing.count){s[slot]=null;if(slot==='input')s.progress=0;}
 return {furnace:s,taken};
 }
-return {RECIPES,FUELS,SMELT_TICKS,state,canSmelt,tick,insert,extract};
+/* Versioned, JSON-safe furnace snapshots. Unknown future versions fail closed rather
+   than silently discarding items or timers from a newer save format. */
+const SAVE_VERSION=1;
+function serialize(raw){
+ const s=state(raw);
+ return {version:SAVE_VERSION,input:s.input,fuel:s.fuel,output:s.output,
+         burn:s.burn,burnTotal:s.burnTotal,progress:s.progress};
+}
+function deserialize(raw){
+ if(!raw||typeof raw!=='object'||Array.isArray(raw))return state({});
+ if(Object.prototype.hasOwnProperty.call(raw,'version')&&raw.version!==SAVE_VERSION)
+   throw new RangeError('Unsupported furnace save version');
+ return state(raw);
+}
+return {RECIPES,FUELS,SMELT_TICKS,SAVE_VERSION,state,canSmelt,tick,insert,extract,serialize,deserialize};
 });
