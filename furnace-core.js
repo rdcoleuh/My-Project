@@ -14,8 +14,9 @@ const possible=canSmelt(s);
 if(s.burn===0&&possible&&s.fuel&&FUELS[s.fuel.id]){
 s.burn=FUELS[s.fuel.id];s.burnTotal=s.burn;s.fuel.count--;if(!s.fuel.count)s.fuel=null;
 }
-if(s.burn>0)s.burn--;
-if(possible&&s.burn>0){s.progress++;if(s.progress>=SMELT_TICKS){const id=RECIPES[s.input.id];s.input.count--;if(!s.input.count)s.input=null;if(s.output)s.output.count++;else s.output={id,count:1};s.progress=0;}}
+const heated=s.burn>0;
+if(heated)s.burn--;
+if(possible&&heated){s.progress++;if(s.progress>=SMELT_TICKS){const id=RECIPES[s.input.id];s.input.count--;if(!s.input.count)s.input=null;if(s.output)s.output.count++;else s.output={id,count:1};s.progress=0;}}
 else s.progress=0;
 }return s;}
 return {RECIPES,FUELS,SMELT_TICKS,state,canSmelt,tick};
