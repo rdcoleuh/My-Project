@@ -10,7 +10,8 @@ for(const [fuel,ticks] of cases){
   const first=furnace.tick(start,1);
   assert.equal(first.burn,ticks-1);
   assert.equal(first.fuel,null);
-  const end=furnace.tick(first,ticks-1);
+  let end=first,remaining=ticks-1;
+  while(remaining>0){const step=Math.min(remaining,12000);end=furnace.tick(end,step);remaining-=step;}
   assert.equal(end.burn,0);
   assert.equal(end.output?.count||0,Math.floor(ticks/200));
  });
