@@ -2380,7 +2380,12 @@ body.in-nether #game-wrap{background:#290f19}
       const points=window.MineWorldHudArt?.points?.(value)??Math.max(0,Math.min(20,Math.floor(Number(value)||0)));
       const states=window.MineWorldHudArt?.slots?.(points);
       const signature=kind+':'+points+':'+(currentPack?.generation??-1);
-      if(!packChanged&&node.dataset.mwStatSignature===signature)return;
+      if(!packChanged&&node.dataset.mwStatSignature===signature){
+        // Restore accessibility metadata even when the visual icons are cached.
+        node.setAttribute('role','img');
+        node.setAttribute('aria-label',window.MineWorldHudArt?.description?.(kind,points)||kind+': '+points+' of 20');
+        return;
+      }
       node.dataset.mwStatSignature=signature;
       node.replaceChildren();
       node.setAttribute('role','img');
