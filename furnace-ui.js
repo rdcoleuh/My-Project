@@ -203,8 +203,12 @@ function furnaceAnnouncementState(machine){
 function furnaceWorkState(machine){
  if(!machine)return 'Furnace unavailable.';
  if(!machine.input)return 'Add an ingredient to begin smelting.';
- const api=window.MineWorldFurnace,product=api.RECIPES[machine.input.key];
- if(!product||!api.canSmelt(machine.kind,machine.input.key))
+ const api=window.MineWorldFurnace;
+ // Recipe identifiers can originate in saved worlds. Never resolve inherited
+ // Object keys (constructor, toString, etc.) as smelting products.
+ const key=machine.input.key;
+ const product=api&&Object.prototype.hasOwnProperty.call(api.RECIPES||{},key)?api.RECIPES[key]:null;
+ if(!product||!api.canSmelt(machine.kind,key))
   return 'This ingredient cannot be smelted here. Take the input to change it.';
  if(machine.output&&(machine.output.key!==product||machine.output.qty>=64))
   return 'Output blocked. Collect the output before smelting can continue.';
