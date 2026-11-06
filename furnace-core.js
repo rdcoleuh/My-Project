@@ -5,7 +5,7 @@ const RECIPES=Object.freeze({iron_ore:'iron_ingot',raw_iron:'iron_ingot',gold_or
 const FUELS=Object.freeze({coal:1600,charcoal:1600,planks:300,log:300,stick:100,wooden_pickaxe:200,lava_bucket:20000});
 const SMELT_TICKS=200;
 function stack(s){if(!s||typeof s!=='object'||typeof s.id!=='string'||!Number.isSafeInteger(s.count)||s.count<1||s.count>64)return null;return {id:s.id,count:s.count};}
-function state(raw){raw=raw||{};return {input:stack(raw.input),fuel:stack(raw.fuel),output:stack(raw.output),burn:nonnegative(raw.burn),burnTotal:nonnegative(raw.burnTotal),progress:nonnegative(raw.progress)};}
+function state(raw){raw=raw||{};return {input:stack(raw.input),fuel:stack(raw.fuel),output:stack(raw.output),burn:nonnegative(raw.burn),burnTotal:nonnegative(raw.burnTotal),progress:Math.min(SMELT_TICKS-1,nonnegative(raw.progress))};}
 function nonnegative(n){return Number.isSafeInteger(n)&&n>=0?n:0;}
 function canSmelt(s){const item=s.input&&RECIPES[s.input.id];return !!(item&&(!s.output||(s.output.id===item&&s.output.count<64)));}
 function tick(raw,steps=1){const s=state(raw);if(!Number.isSafeInteger(steps)||steps<0||steps>12000)throw new RangeError('Invalid furnace tick count');
