@@ -4,14 +4,16 @@
 const RECIPES=Object.freeze({iron_ore:'iron_ingot',raw_iron:'iron_ingot',gold_ore:'gold_ingot',raw_gold:'gold_ingot',sand:'glass',cobblestone:'stone',raw_beef:'cooked_beef',raw_porkchop:'cooked_porkchop',raw_chicken:'cooked_chicken',potato:'baked_potato',clay_ball:'brick',log:'charcoal'});
 const FUELS=Object.freeze({coal:1600,charcoal:1600,planks:300,log:300,stick:100,wooden_pickaxe:200,lava_bucket:20000});
 const SMELT_TICKS=200;
+function recipeFor(id){return Object.prototype.hasOwnProperty.call(RECIPES,id)?RECIPES[id]:null;}
+function fuelTicks(id){return Object.prototype.hasOwnProperty.call(FUELS,id)?FUELS[id]:0;}
 function stack(s){if(!s||typeof s!=='object'||typeof s.id!=='string'||!Number.isSafeInteger(s.count)||s.count<1||s.count>64)return null;return {id:s.id,count:s.count};}
 function state(raw){raw=raw||{};return {input:stack(raw.input),fuel:stack(raw.fuel),output:stack(raw.output),burn:nonnegative(raw.burn),burnTotal:nonnegative(raw.burnTotal),progress:Math.min(SMELT_TICKS-1,nonnegative(raw.progress))};}
 function nonnegative(n){return Number.isSafeInteger(n)&&n>=0?n:0;}
-function canSmelt(s){const item=s.input&&RECIPES[s.input.id];return !!(item&&(!s.output||(s.output.id===item&&s.output.count<64)));}
+function canSmelt(s){const item=s.input&&recipeFor(s.input.id);return !!(item&&(!s.output||(s.output.id===item&&s.output.count<64)));}
 function tick(raw,steps=1){const s=state(raw);if(!Number.isSafeInteger(steps)||steps<0||steps>12000)throw new RangeError('Invalid furnace tick count');
 for(let i=0;i<steps;i++){
 const possible=canSmelt(s);
-if(s.burn===0&&possible&&s.fuel&&FUELS[s.fuel.id]){
+if(s.burn===0&&possible&&s.fuel&&fuelTicks(s.fuel.id)){
 s.burn=FUELS[s.fuel.id];s.burnTotal=s.burn;s.fuel.count--;if(!s.fuel.count)s.fuel=null;
 }
 const heated=s.burn>0;
@@ -25,8 +27,8 @@ function insert(raw,slot,item){
 if(slot!=='input'&&slot!=='fuel')throw new RangeError('Furnace output is read-only');
 const s=state(raw), incoming=stack(item);
 if(!incoming)throw new TypeError('Invalid item stack');
-if(slot==='input'&&!RECIPES[incoming.id])return {furnace:s,remainder:incoming,moved:0};
-if(slot==='fuel'&&!FUELS[incoming.id])return {furnace:s,remainder:incoming,moved:0};
+if(slot==='input'&&!recipeFor(incoming.id))return {furnace:s,remainder:incoming,moved:0};
+if(slot==='fuel'&&!fuelTicks(incoming.id))return {furnace:s,remainder:incoming,moved:0};
 const existing=s[slot];
 if(existing&&existing.id!==incoming.id)return {furnace:s,remainder:incoming,moved:0};
 const moved=Math.min(incoming.count,64-(existing?existing.count:0));
