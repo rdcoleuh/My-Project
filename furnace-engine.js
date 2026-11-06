@@ -141,7 +141,12 @@ function create(){
      // One coal therefore smelts eight items in every station, not sixteen.
      // An older or malformed save can contain a stacked lava bucket.
      // Do not consume one and silently discard its empty container.
-     if(m.fuel.key==='lavaBucket'&&m.fuel.qty!==1)break;
+     if(m.fuel.key==='lavaBucket'&&m.fuel.qty!==1){
+      // Legacy overstacked containers must remain withdrawable, but cannot
+      // hold partially cooked ingredients at their old progress forever.
+      if(m.progress>0){m.progress=Math.max(0,m.progress-remaining*2);changed=true;}
+      break;
+     }
      const usedFuel=m.fuel.key;
      m.burn=m.burnTotal=FUEL[usedFuel]*(m.kind==='furnace'?1:0.5);
      if(!--m.fuel.qty)m.fuel=usedFuel==='lavaBucket'?{key:'bucket',qty:1}:null;
