@@ -15,7 +15,7 @@ function tick(raw,steps=1){const s=state(raw);if(!Number.isSafeInteger(steps)||s
 for(let i=0;i<steps;i++){
 const possible=canSmelt(s);
 if(s.burn===0&&possible&&s.fuel&&fuelTicks(s.fuel.id)){
-s.burn=FUELS[s.fuel.id];s.burnTotal=s.burn;s.fuel.count--;if(!s.fuel.count)s.fuel=null;
+const consumed=s.fuel.id;s.burn=FUELS[consumed];s.burnTotal=s.burn;s.fuel.count--;if(!s.fuel.count)s.fuel=consumed==='lava_bucket'?{id:'bucket',count:1}:null;
 }
 const heated=s.burn>0;
 if(heated)s.burn--;
@@ -32,7 +32,8 @@ if(slot==='input'&&!recipeFor(incoming.id))return {furnace:s,remainder:incoming,
 if(slot==='fuel'&&!fuelTicks(incoming.id))return {furnace:s,remainder:incoming,moved:0};
 const existing=s[slot];
 if(existing&&existing.id!==incoming.id)return {furnace:s,remainder:incoming,moved:0};
-const moved=Math.min(incoming.count,64-(existing?existing.count:0));
+const capacity=slot==='fuel'&&incoming.id==='lava_bucket'?1:64;
+const moved=Math.min(incoming.count,Math.max(0,capacity-(existing?existing.count:0)));
 if(moved){if(existing)existing.count+=moved;else {s[slot]={id:incoming.id,count:moved};if(slot==='input')s.progress=0;}}
 return {furnace:s,remainder:incoming.count===moved?null:{id:incoming.id,count:incoming.count-moved},moved};
 }
