@@ -40,7 +40,16 @@
     // no-repaint update so assistive technology never reads stale values.
     if (container.dataset && container.dataset.value === String(value) &&
         container.dataset.kind === safeKind && container.dataset.sprites === signature &&
-        container.children && container.children.length === 10) {
+        container.children && container.children.length === 10 &&
+        states.every((state, index) => {
+          const icon = container.children[index];
+          return icon &&
+            icon.className === 'mw-vital-icon mw-vital-' + safeKind + ' mw-vital-' + state &&
+            icon.dataset && icon.dataset.slot === String(index) &&
+            (icon.dataset.importedSprite === 'true') === Boolean(urls[index]) &&
+            (!urls[index] || (icon.style && icon.style.getPropertyValue &&
+              icon.style.getPropertyValue('--mw-vital-sprite') === 'url("' + urls[index] + '")'));
+        })) {
       container.setAttribute('role', 'img');
       container.setAttribute('aria-label', label);
       return true;
