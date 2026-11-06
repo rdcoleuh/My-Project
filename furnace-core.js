@@ -17,6 +17,7 @@ s.burn=FUELS[s.fuel.id];s.burnTotal=s.burn;s.fuel.count--;if(!s.fuel.count)s.fue
 const heated=s.burn>0;
 if(heated)s.burn--;
 if(possible&&heated){s.progress++;if(s.progress>=SMELT_TICKS){const id=RECIPES[s.input.id];s.input.count--;if(!s.input.count)s.input=null;if(s.output)s.output.count++;else s.output={id,count:1};s.progress=0;}}
+else if(!heated&&possible){s.progress=Math.max(0,s.progress-2);}
 else s.progress=0;
 }return s;}
 /* Atomic slot transfer: inventory UI can preview returned remainder without mutating its inputs. */
