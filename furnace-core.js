@@ -2,7 +2,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.MineWorldFurnace=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
 const RECIPES=Object.freeze({iron_ore:'iron_ingot',deepslate_iron_ore:'iron_ingot',raw_iron:'iron_ingot',gold_ore:'gold_ingot',deepslate_gold_ore:'gold_ingot',raw_gold:'gold_ingot',copper_ore:'copper_ingot',deepslate_copper_ore:'copper_ingot',raw_copper:'copper_ingot',ancient_debris:'netherite_scrap',sand:'glass',cobblestone:'stone',raw_beef:'cooked_beef',raw_porkchop:'cooked_porkchop',raw_chicken:'cooked_chicken',potato:'baked_potato',clay_ball:'brick',clay:'terracotta',stone:'smooth_stone',netherrack:'nether_brick',cactus:'green_dye',kelp:'dried_kelp',wet_sponge:'sponge',raw_mutton:'cooked_mutton',raw_rabbit:'cooked_rabbit',raw_cod:'cooked_cod',raw_salmon:'cooked_salmon',log:'charcoal'});
-const FUELS=Object.freeze({coal:1600,charcoal:1600,planks:300,log:300,stick:100,wooden_pickaxe:200,lava_bucket:20000,dried_kelp_block:4001});
+const FUELS=Object.freeze({coal:1600,charcoal:1600,planks:300,log:300,stick:100,wooden_pickaxe:200,lava_bucket:20000,dried_kelp_block:4000});
 const SMELT_TICKS=200;
 const MAX_BURN_TICKS=Math.max(...Object.values(FUELS));
 function recipeFor(id){return Object.prototype.hasOwnProperty.call(RECIPES,id)?RECIPES[id]:null;}
