@@ -204,6 +204,10 @@ function furnaceWorkState(machine){
  if(!machine)return 'Furnace unavailable.';
  if(!machine.input)return 'Add an ingredient to begin smelting.';
  const api=window.MineWorldFurnace;
+ // Corrupt or older saves may carry an unknown station kind. Avoid a
+ // missing KINDS lookup crashing the status panel during recovery.
+ if(!api?.KINDS||!Object.prototype.hasOwnProperty.call(api.KINDS,machine.kind))
+  return 'Unknown furnace type. Reopen or replace this station to repair it.';
  // Recipe identifiers can originate in saved worlds. Never resolve inherited
  // Object keys (constructor, toString, etc.) as smelting products.
  const key=machine.input.key;
