@@ -212,7 +212,7 @@ function furnaceWorkState(machine){
   return 'This ingredient cannot be smelted here. Take the input to change it.';
  if(machine.output&&(machine.output.key!==product||machine.output.qty>=64))
   return 'Output blocked. Collect the output before smelting can continue.';
- if(machine.burn<=0&&(!machine.fuel||!api.FUEL[machine.fuel.key]))
+ if(machine.burn<=0&&(!machine.fuel||!Object.prototype.hasOwnProperty.call(api.FUEL||{},machine.fuel.key)))
   return 'Add usable fuel to begin or resume smelting.';
  if(machine.burn<=0&&machine.fuel.key==='lavaBucket'&&machine.fuel.qty!==1)
   return 'Take excess lava buckets out of the fuel slot before ignition.';
