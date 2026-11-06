@@ -19,5 +19,28 @@ if(heated)s.burn--;
 if(possible&&heated){s.progress++;if(s.progress>=SMELT_TICKS){const id=RECIPES[s.input.id];s.input.count--;if(!s.input.count)s.input=null;if(s.output)s.output.count++;else s.output={id,count:1};s.progress=0;}}
 else s.progress=0;
 }return s;}
-return {RECIPES,FUELS,SMELT_TICKS,state,canSmelt,tick};
+/* Atomic slot transfer: inventory UI can preview returned remainder without mutating its inputs. */
+function insert(raw,slot,item){
+if(slot!=='input'&&slot!=='fuel')throw new RangeError('Furnace output is read-only');
+const s=state(raw), incoming=stack(item);
+if(!incoming)throw new TypeError('Invalid item stack');
+if(slot==='input'&&!RECIPES[incoming.id])return {furnace:s,remainder:incoming,moved:0};
+if(slot==='fuel'&&!FUELS[incoming.id])return {furnace:s,remainder:incoming,moved:0};
+const existing=s[slot];
+if(existing&&existing.id!==incoming.id)return {furnace:s,remainder:incoming,moved:0};
+const moved=Math.min(incoming.count,64-(existing?existing.count:0));
+if(moved){if(existing)existing.count+=moved;else s[slot]={id:incoming.id,count:moved};}
+return {furnace:s,remainder:incoming.count===moved?null:{id:incoming.id,count:incoming.count-moved},moved};
+}
+function extract(raw,slot,count=64){
+if(!['input','fuel','output'].includes(slot))throw new RangeError('Invalid furnace slot');
+if(!Number.isSafeInteger(count)||count<1||count>64)throw new RangeError('Invalid extraction count');
+const s=state(raw), existing=s[slot];
+if(!existing)return {furnace:s,taken:null};
+const amount=Math.min(count,existing.count);
+const taken={id:existing.id,count:amount};
+existing.count-=amount;if(!existing.count)s[slot]=null;
+return {furnace:s,taken};
+}
+return {RECIPES,FUELS,SMELT_TICKS,state,canSmelt,tick,insert,extract};
 });
