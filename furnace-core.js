@@ -4,10 +4,11 @@
 const RECIPES=Object.freeze({iron_ore:'iron_ingot',raw_iron:'iron_ingot',gold_ore:'gold_ingot',raw_gold:'gold_ingot',sand:'glass',cobblestone:'stone',raw_beef:'cooked_beef',raw_porkchop:'cooked_porkchop',raw_chicken:'cooked_chicken',potato:'baked_potato',clay_ball:'brick',log:'charcoal'});
 const FUELS=Object.freeze({coal:1600,charcoal:1600,planks:300,log:300,stick:100,wooden_pickaxe:200,lava_bucket:20000});
 const SMELT_TICKS=200;
+const MAX_BURN_TICKS=Math.max(...Object.values(FUELS));
 function recipeFor(id){return Object.prototype.hasOwnProperty.call(RECIPES,id)?RECIPES[id]:null;}
 function fuelTicks(id){return Object.prototype.hasOwnProperty.call(FUELS,id)?FUELS[id]:0;}
 function stack(s){if(!s||typeof s!=='object'||typeof s.id!=='string'||!Number.isSafeInteger(s.count)||s.count<1||s.count>64)return null;return {id:s.id,count:s.count};}
-function state(raw){raw=raw||{};return {input:stack(raw.input),fuel:stack(raw.fuel),output:stack(raw.output),burn:nonnegative(raw.burn),burnTotal:nonnegative(raw.burnTotal),progress:Math.min(SMELT_TICKS-1,nonnegative(raw.progress))};}
+function state(raw){raw=raw||{};const burn=Math.min(MAX_BURN_TICKS,nonnegative(raw.burn));const burnTotal=Math.max(burn,Math.min(MAX_BURN_TICKS,nonnegative(raw.burnTotal)));return {input:stack(raw.input),fuel:stack(raw.fuel),output:stack(raw.output),burn,burnTotal,progress:Math.min(SMELT_TICKS-1,nonnegative(raw.progress))};}
 function nonnegative(n){return Number.isSafeInteger(n)&&n>=0?n:0;}
 function canSmelt(s){const item=s.input&&recipeFor(s.input.id);return !!(item&&(!s.output||(s.output.id===item&&s.output.count<64)));}
 function tick(raw,steps=1){const s=state(raw);if(!Number.isSafeInteger(steps)||steps<0||steps>12000)throw new RangeError('Invalid furnace tick count');
