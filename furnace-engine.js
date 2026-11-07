@@ -248,14 +248,20 @@ function create(){
   const product=m.input&&canSmelt(m.kind,m.input.key)?RECIPES[m.input.key]:null;
   const outputBlocked=!!(product&&m.output&&
    (m.output.key!==product||m.output.qty>=64));
-  const fuelReady=!!(m.fuel&&Object.hasOwn(FUEL,m.fuel.key)&&
-   (!NONSTACKABLE_FUELS.has(m.fuel.key)||m.fuel.qty===1));
+  const fuelBlocked=!!(m.fuel&&NONSTACKABLE_FUELS.has(m.fuel.key)&&m.fuel.qty!==1);
+  const fuelReady=!!(m.fuel&&Object.hasOwn(FUEL,m.fuel.key)&&!fuelBlocked);
+  // UI consumers can distinguish a blocked output from a missing/invalid
+  // fuel stack without mutating the furnace or guessing from slot icons.
+  // Already-burning fuel remains usable even if the next fuel is invalid.
+  const canCook=!!(product&&!outputBlocked&&(m.burn>0||fuelReady));
+  const idleReason=!product?'no_recipe':outputBlocked?'output_blocked':
+   canCook?null:fuelBlocked?'invalid_fuel_stack':'no_fuel';
   return {kind:m.kind,dimension:m.dimension,x:m.x,y:m.y,z:m.z,
    input:slot(m.input),fuel:slot(m.fuel),output:slot(m.output),
-   progress,burn,product,outputBlocked,
+   progress,burn,product,outputBlocked,fuelBlocked,idleReason,
    cookSecondsRemaining:product&&!outputBlocked?Math.max(0,cook-m.progress):null,
    burnSecondsRemaining:Math.max(0,m.burn),
-   cooking:!!(product&&!outputBlocked&&(m.burn>0||fuelReady))};
+   cooking:canCook};
  }
  return {status,get,ensure,insert,take,tick,remove,snapshot,restore,canSmelt,migrateLegacyBlastBlocks,clear:()=>machines.clear()};
 }
