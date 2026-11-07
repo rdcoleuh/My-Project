@@ -275,7 +275,17 @@ function create(api){
   iconCache.get(key).then(src=>{
    // Ignore late images for a previous item or previous resource-pack generation.
    if(node.dataset.artStamp!==stamp||!src)return;
-   img.src=src;img.hidden=false;letters.hidden=true;
+   // A syntactically valid data URI can still contain corrupt PNG bytes.
+   // Keep the original text icon visible until the browser decodes it.
+   img.onload=()=>{
+    if(node.dataset.artStamp!==stamp)return;
+    img.hidden=false;letters.hidden=true;
+   };
+   img.onerror=()=>{
+    if(node.dataset.artStamp!==stamp)return;
+    img.hidden=true;letters.hidden=false;
+   };
+   img.src=src;
   }).catch(()=>{});
  }
  function el(id){return panel.querySelector('#'+id);}
