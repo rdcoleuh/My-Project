@@ -254,8 +254,13 @@ function create(){
   // fuel stack without mutating the furnace or guessing from slot icons.
   // Already-burning fuel remains usable even if the next fuel is invalid.
   const canCook=!!(product&&!outputBlocked&&(m.burn>0||fuelReady));
-  const idleReason=!product?'no_recipe':outputBlocked?'output_blocked':
-   canCook?null:fuelBlocked?'invalid_fuel_stack':'no_fuel';
+  // Distinguish an empty ingredient slot from an unsupported saved item,
+  // and an empty fuel slot from an unknown (but withdrawable) custom item.
+  // These stable reason codes let accessible UI explain a stalled station.
+  const idleReason=!m.input?'no_input':!product?'no_recipe':
+   outputBlocked?'output_blocked':canCook?null:
+   fuelBlocked?'invalid_fuel_stack':
+   m.fuel&&!Object.hasOwn(FUEL,m.fuel.key)?'invalid_fuel':'no_fuel';
   return {kind:m.kind,dimension:m.dimension,x:m.x,y:m.y,z:m.z,
    input:slot(m.input),fuel:slot(m.fuel),output:slot(m.output),
    progress,burn,product,outputBlocked,fuelBlocked,idleReason,
