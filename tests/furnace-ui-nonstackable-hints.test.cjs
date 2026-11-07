@@ -32,3 +32,16 @@ test('legacy overstacked boat does not block already burning fuel',()=>{
  engine.restore([{...p,kind:'furnace',input:{key:'rawIron',qty:1},fuel:{key:'boat',qty:2},burn:10,burnTotal:60}]);
  assert.match(hint(engine.get(p)),/Smelting iron/);
 });
+
+test('unknown saved fuel is explained without consuming it',()=>{
+ const engine=api.create();
+ engine.restore([{...p,kind:'furnace',input:{key:'rawIron',qty:1},fuel:{key:'oldCustomFuel',qty:3}}]);
+ assert.match(hint(engine.get(p)),/Unknown fuel item.*Take it/);
+ assert.equal(engine.tick(20).completed,0);
+ assert.equal(engine.get(p).fuel.qty,3);
+});
+test('empty fuel retains actionable add-fuel guidance',()=>{
+ const engine=api.create();
+ engine.restore([{...p,kind:'furnace',input:{key:'rawIron',qty:1}}]);
+ assert.match(hint(engine.get(p)),/Add usable fuel/);
+});
