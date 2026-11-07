@@ -61,3 +61,28 @@ test('UI does not claim recipes or cooking time for inert imported items',()=>{
  assert.equal(s.product,null);assert.equal(s.outputBlocked,false);
  assert.equal(s.cookSecondsRemaining,null);assert.equal(s.cooking,false);
 });
+
+test('status distinguishes missing fuel, blocked output and invalid legacy fuel',()=>{
+ const f=make();
+ f.restore([{...p,kind:'furnace',input:{key:'rawIron',qty:1}}]);
+ assert.equal(f.status(p).idleReason,'no_fuel');
+ assert.equal(f.status(p).fuelBlocked,false);
+ f.insert(p,'fuel','coal',1);
+ assert.equal(f.status(p).idleReason,null);
+ f.restore([{...p,kind:'furnace',input:{key:'rawIron',qty:1},
+  fuel:{key:'boat',qty:2}}]);
+ assert.equal(f.status(p).fuelBlocked,true);
+ assert.equal(f.status(p).idleReason,'invalid_fuel_stack');
+ f.restore([{...p,kind:'furnace',input:{key:'rawIron',qty:1},
+  fuel:{key:'coal',qty:1},output:{key:'gold',qty:1}}]);
+ assert.equal(f.status(p).idleReason,'output_blocked');
+});
+test('ongoing burn is valid even when next fuel is legacy-overstacked',()=>{
+ const f=make();
+ f.restore([{...p,kind:'furnace',input:{key:'rawIron',qty:1},
+  fuel:{key:'boat',qty:2},burn:4,burnTotal:60}]);
+ const s=f.status(p);
+ assert.equal(s.fuelBlocked,true);
+ assert.equal(s.cooking,true);
+ assert.equal(s.idleReason,null);
+});
