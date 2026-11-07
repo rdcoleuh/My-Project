@@ -139,9 +139,9 @@ function create(){
      }
      // Specialized stations cook twice as fast, but also burn fuel twice as fast.
      // One coal therefore smelts eight items in every station, not sixteen.
-     // An older or malformed save can contain a stacked lava bucket.
-     // Do not consume one and silently discard its empty container.
-     if(m.fuel.key==='lavaBucket'&&m.fuel.qty!==1){
+     // Older saves may contain stacked lava buckets, boats, or rafts.
+     // Never consume invalid nonstackable stacks; preserve them for withdrawal.
+     if(NONSTACKABLE_FUELS.has(m.fuel.key)&&m.fuel.qty!==1){
       // Legacy overstacked containers must remain withdrawable, but cannot
       // hold partially cooked ingredients at their old progress forever.
       if(m.progress>0){m.progress=Math.max(0,m.progress-remaining*2);changed=true;}
