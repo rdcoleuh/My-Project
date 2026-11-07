@@ -367,6 +367,12 @@ function create(api){
    node.classList.toggle('occupied',!!item);
    slotArt(node,item);
   }
+  // Specialized stations cook in five seconds, not ten. Keep the help and
+  // native progress controls meaningful for screen-reader and touch users.
+  const cookDuration=window.MineWorldFurnace.KINDS[m.kind].cook;
+  el('mw-furnace-help').textContent='Put an ingredient in the input slot and add fuel. One item takes '+cookDuration+' seconds to smelt.';
+  el('mw-furnace-flame').setAttribute('aria-valuetext',Math.ceil(m.burn)+' seconds of burning fuel remaining');
+  el('mw-furnace-cook').setAttribute('aria-valuetext',Math.max(0,Math.ceil(cookDuration-m.progress))+' seconds until the next smelt');
   el('mw-furnace-flame').value=m.burnTotal>0?Math.max(0,Math.min(100,Math.round(m.burn/m.burnTotal*100))):0;
   el('mw-furnace-cook').value=Math.max(0,Math.min(100,Math.round(m.progress/window.MineWorldFurnace.KINDS[m.kind].cook*100)));
   el('mw-furnace-status').textContent='Input: '+fmt(m.input)+' · Fuel: '+fmt(m.fuel)+
