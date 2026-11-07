@@ -266,6 +266,10 @@ function create(){
    progress,burn,product,outputBlocked,fuelBlocked,idleReason,
    cookSecondsRemaining:product&&!outputBlocked?Math.max(0,cook-m.progress):null,
    burnSecondsRemaining:Math.max(0,m.burn),
+   // Ready to smelt and actively burning are distinct states. A station
+   // with coal waiting in its fuel slot is ready, but not yet ignited.
+   // Keep the historical cooking flag for existing UI consumers.
+   burning:m.burn>0,readyToSmelt:canCook,
    cooking:canCook};
  }
  return {status,get,ensure,insert,take,tick,remove,snapshot,restore,canSmelt,migrateLegacyBlastBlocks,clear:()=>machines.clear()};
