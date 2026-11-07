@@ -11,7 +11,7 @@ const recipes={
 };
 for(const [ore,product] of Object.entries(recipes)){
  test(ore+' smelts into '+product,()=>{
-  assert.equal(furnace.recipeFor(ore),product);
+  assert.equal(furnace.RECIPES[ore],product);
   const result=furnace.tick({input:{id:ore,count:1},fuel:{id:'coal',count:1}},200);
   assert.deepEqual(result.output,{id:product,count:1});
   assert.equal(result.input,null);
