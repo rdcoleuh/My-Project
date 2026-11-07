@@ -37,7 +37,8 @@ if(slot==='input'&&!recipeFor(incoming.id))return {furnace:s,remainder:incoming,
 if(slot==='fuel'&&!fuelTicks(incoming.id))return {furnace:s,remainder:incoming,moved:0};
 const existing=s[slot];
 if(existing&&existing.id!==incoming.id)return {furnace:s,remainder:incoming,moved:0};
-const capacity=slot==='fuel'&&incoming.id==='lava_bucket'?1:64;
+const NONSTACKABLE_FUELS=new Set(['lava_bucket','boat','spruce_boat','cherry_boat','raft']);
+const capacity=slot==='fuel'&&NONSTACKABLE_FUELS.has(incoming.id)?1:64;
 const moved=Math.min(incoming.count,Math.max(0,capacity-(existing?existing.count:0)));
 if(moved){if(existing)existing.count+=moved;else {s[slot]={id:incoming.id,count:moved};if(slot==='input')s.progress=0;}}
 return {furnace:s,remainder:incoming.count===moved?null:{id:incoming.id,count:incoming.count-moved},moved};
