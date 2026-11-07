@@ -1,0 +1,50 @@
+'use strict';
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const source=fs.readFileSync(require.resolve('../furnace-engine.js'),'utf8');
+const sandbox={window:{}};
+vm.runInNewContext(source,sandbox,{filename:'furnace-engine.js'});
+const furnace=sandbox.window.MineWorldFurnace;
+const p={dimension:'overworld',x:34,y:-64,z:-19};
+test('furnace does not ignite fuel when output is incompatible',()=>{
+ const e=furnace.create();e.ensure(p,'furnace');
+ e.insert(p,'input','rawIron',1);e.insert(p,'fuel','coal',1);
+ const save=e.snapshot();save[0].output={key:'gold',qty:1};
+ e.restore(save);
+ const result=e.tick(20);
+ assert.equal(result.completed,0);
+ assert.equal(e.get(p).fuel.key,'coal');
+ assert.equal(e.get(p).burn,0);
+ assert.equal(e.get(p).input.qty,1);
+});
+test('furnace stops before consuming fuel when output stack is full',()=>{
+ const e=furnace.create();e.ensure(p,'furnace');
+ e.insert(p,'input','rawIron',2);e.insert(p,'fuel','coal',1);
+ const save=e.snapshot();save[0].output={key:'iron',qty:64};
+ e.restore(save);
+ assert.equal(e.tick(30).completed,0);
+ assert.equal(e.get(p).fuel.qty,1);
+ assert.equal(e.get(p).output.qty,64);
+});
+test('output withdrawal permits smelting to resume without duplicating inputs',()=>{
+ const e=furnace.create();e.ensure(p,'furnace');
+ e.insert(p,'input','rawIron',2);e.insert(p,'fuel','coal',1);
+ const save=e.snapshot();save[0].output={key:'iron',qty:64};
+ e.restore(save);e.tick(20);
+ assert.equal(e.take(p,'output',1).qty,1);
+ assert.equal(e.tick(20).completed,1);
+ assert.equal(e.get(p).output.qty,64);
+ assert.equal(e.get(p).input.qty,1);
+});
+test('deep-coordinate furnace persists its slots and cooking progress',()=>{
+ const e=furnace.create();e.ensure(p,'furnace');
+ e.insert(p,'input','rawGold',2);e.insert(p,'fuel','coal',1);e.tick(3);
+ const saved=JSON.parse(JSON.stringify(e.snapshot()));
+ const loaded=furnace.create();loaded.restore(saved);
+ assert.equal(loaded.get(p).progress,3);
+ assert.equal(loaded.tick(7).completed,1);
+ assert.equal(loaded.get(p).output.key,'gold');
+ assert.equal(loaded.get(p).input.qty,1);
+});
