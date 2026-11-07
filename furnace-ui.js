@@ -400,7 +400,7 @@ function create(api){
   // Specialized stations cook in five seconds, not ten. Keep the help and
   // native progress controls meaningful for screen-reader and touch users.
   const cookDuration=window.MineWorldFurnace.KINDS[m.kind].cook;
-  el('mw-furnace-help').textContent='Put an ingredient in the input slot and add fuel. One item takes '+cookDuration+' seconds to smelt.';
+  el('mw-furnace-help').textContent='Add an ingredient and fuel. '+(m.kind==='smoker'?'Food only':m.kind==='blast'?'Ores and metals only':'All supported recipes')+'; one item takes '+cookDuration+' seconds. Tap a slot to add the selected item or collect output. Shift adds a stack; Alt takes one. Collect output for experience.';
   const descriptions=furnaceProgressDescriptions(m,engine.status?.(current));
   el('mw-furnace-flame').setAttribute('aria-valuetext',descriptions.fuel);
   el('mw-furnace-cook').setAttribute('aria-valuetext',descriptions.cook);
