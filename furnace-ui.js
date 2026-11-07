@@ -240,6 +240,7 @@ function furnaceProgressDescriptions(machine,status){
  };
  const reason=status?.idleReason;
  const cook=reason&&Object.prototype.hasOwnProperty.call(reasons,reason)?reasons[reason]:
+  machine.burn<=0&&status?.readyToSmelt?'Ready to ignite: fuel and ingredient available':
   machine.burn<=0?'Smelting stopped: fuel is not burning':
   remaining+' seconds of cooking remaining';
  return {fuel,cook};
