@@ -225,6 +225,25 @@ function furnaceWorkState(machine){
  const seconds=Math.max(0,Math.ceil(api.KINDS[machine.kind].cook-machine.progress));
  return 'Smelting '+product+'. About '+seconds+' seconds until the next item.';
 }
+// Accessible progress must describe a stopped furnace accurately. A numeric
+// cook timer is not an ETA when input, output or fuel blocks progress.
+function furnaceProgressDescriptions(machine,status){
+ const remaining=Math.max(0,Math.ceil((window.MineWorldFurnace?.KINDS?.[machine.kind]?.cook||10)-machine.progress));
+ const fuel=machine.burn>0?Math.ceil(machine.burn)+' seconds of burning fuel remaining':'Fuel is not burning';
+ const reasons={
+  no_input:'Smelting stopped: input slot empty',
+  no_recipe:'Smelting stopped: unsupported ingredient',
+  output_blocked:'Smelting stopped: output slot blocked',
+  invalid_fuel_stack:'Smelting stopped: invalid nonstackable fuel stack',
+  invalid_fuel:'Smelting stopped: unsupported fuel',
+  no_fuel:'Smelting stopped: add fuel'
+ };
+ const reason=status?.idleReason;
+ const cook=reason&&Object.prototype.hasOwnProperty.call(reasons,reason)?reasons[reason]:
+  machine.burn<=0?'Smelting stopped: fuel is not burning':
+  remaining+' seconds of cooking remaining';
+ return {fuel,cook};
+}
 // A modal must not let keyboard users Tab into controls behind its backdrop.
 function containFurnaceTab(event,panel,active){
  if(!panel||!(event?.key==='Tab'||event?.code==='Tab'))return false;
@@ -371,8 +390,9 @@ function create(api){
   // native progress controls meaningful for screen-reader and touch users.
   const cookDuration=window.MineWorldFurnace.KINDS[m.kind].cook;
   el('mw-furnace-help').textContent='Put an ingredient in the input slot and add fuel. One item takes '+cookDuration+' seconds to smelt.';
-  el('mw-furnace-flame').setAttribute('aria-valuetext',Math.ceil(m.burn)+' seconds of burning fuel remaining');
-  el('mw-furnace-cook').setAttribute('aria-valuetext',Math.max(0,Math.ceil(cookDuration-m.progress))+' seconds until the next smelt');
+  const descriptions=furnaceProgressDescriptions(m,engine.status?.(current));
+  el('mw-furnace-flame').setAttribute('aria-valuetext',descriptions.fuel);
+  el('mw-furnace-cook').setAttribute('aria-valuetext',descriptions.cook);
   el('mw-furnace-flame').value=m.burnTotal>0?Math.max(0,Math.min(100,Math.round(m.burn/m.burnTotal*100))):0;
   el('mw-furnace-cook').value=Math.max(0,Math.min(100,Math.round(m.progress/window.MineWorldFurnace.KINDS[m.kind].cook*100)));
   el('mw-furnace-status').textContent='Input: '+fmt(m.input)+' · Fuel: '+fmt(m.fuel)+
@@ -427,5 +447,5 @@ function create(api){
  }
  return {open,close,tick,get isOpen(){return !!current;}};
 }
-window.MineWorldFurnaceUI=Object.freeze({create,ensureStation,syncSelect,resolveSlotIcon,planSlotGesture,smeltingReward,awardCollectedOutput,furnaceAnnouncement,furnaceAnnouncementState,furnaceWorkState,containFurnaceTab,transfers:Object.freeze({deposit,withdraw,commitTransfer})});
+window.MineWorldFurnaceUI=Object.freeze({create,ensureStation,syncSelect,resolveSlotIcon,planSlotGesture,smeltingReward,awardCollectedOutput,furnaceAnnouncement,furnaceAnnouncementState,furnaceWorkState,furnaceProgressDescriptions,containFurnaceTab,transfers:Object.freeze({deposit,withdraw,commitTransfer})});
 })();
