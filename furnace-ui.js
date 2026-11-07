@@ -216,8 +216,10 @@ function furnaceWorkState(machine){
   return 'This ingredient cannot be smelted here. Take the input to change it.';
  if(machine.output&&(machine.output.key!==product||machine.output.qty>=64))
   return 'Output blocked. Collect the output before smelting can continue.';
- if(machine.burn<=0&&(!machine.fuel||!Object.prototype.hasOwnProperty.call(api.FUEL||{},machine.fuel.key)))
+ if(machine.burn<=0&&!machine.fuel)
   return 'Add usable fuel to begin or resume smelting.';
+ if(machine.burn<=0&&!Object.prototype.hasOwnProperty.call(api.FUEL||{},machine.fuel.key))
+  return 'Unknown fuel item. Take it from the fuel slot and add supported fuel.';
  if(machine.burn<=0&&['lavaBucket','boat','spruceBoat','cherryBoat','raft'].includes(machine.fuel.key)&&machine.fuel.qty!==1)
   return 'Take excess nonstackable fuel out of the fuel slot before ignition.';
  const seconds=Math.max(0,Math.ceil(api.KINDS[machine.kind].cook-machine.progress));
