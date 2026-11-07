@@ -245,12 +245,17 @@ function create(){
   const cook=KINDS[m.kind].cook;
   const progress=Math.max(0,Math.min(1,m.progress/cook));
   const burn=m.burnTotal>0?Math.max(0,Math.min(1,m.burn/m.burnTotal)):0;
+  const product=m.input&&canSmelt(m.kind,m.input.key)?RECIPES[m.input.key]:null;
+  const outputBlocked=!!(product&&m.output&&
+   (m.output.key!==product||m.output.qty>=64));
+  const fuelReady=!!(m.fuel&&Object.hasOwn(FUEL,m.fuel.key)&&
+   (!NONSTACKABLE_FUELS.has(m.fuel.key)||m.fuel.qty===1));
   return {kind:m.kind,dimension:m.dimension,x:m.x,y:m.y,z:m.z,
    input:slot(m.input),fuel:slot(m.fuel),output:slot(m.output),
-   progress, burn, cooking:!!(m.input&&canSmelt(m.kind,m.input.key)&&
-    (!m.output||(m.output.key===RECIPES[m.input.key]&&m.output.qty<64))&&
-    (m.burn>0||m.fuel&&Object.hasOwn(FUEL,m.fuel.key)&&
-     (!NONSTACKABLE_FUELS.has(m.fuel.key)||m.fuel.qty===1)))};
+   progress,burn,product,outputBlocked,
+   cookSecondsRemaining:product&&!outputBlocked?Math.max(0,cook-m.progress):null,
+   burnSecondsRemaining:Math.max(0,m.burn),
+   cooking:!!(product&&!outputBlocked&&(m.burn>0||fuelReady))};
  }
  return {status,get,ensure,insert,take,tick,remove,snapshot,restore,canSmelt,migrateLegacyBlastBlocks,clear:()=>machines.clear()};
 }
