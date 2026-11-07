@@ -39,3 +39,25 @@ test('status progress is normalized for blast furnaces',()=>{
  fuel:{key:'coal',qty:1},progress:2.5,burn:10,burnTotal:40}]);
  assert.equal(f.status(p).progress,0.5);assert.equal(f.status(p).burn,0.25);
 });
+
+test('UI exposes exact remaining times and expected product',()=>{
+ const f=make();f.restore([{...p,kind:'furnace',input:{key:'rawIron',qty:2},
+ fuel:{key:'coal',qty:1},progress:3,burn:25,burnTotal:80}]);
+ const s=f.status(p);
+ assert.equal(s.product,'iron');assert.equal(s.outputBlocked,false);
+ assert.equal(s.cookSecondsRemaining,7);assert.equal(s.burnSecondsRemaining,25);
+});
+test('UI marks incompatible output as blocked without inventing cook time',()=>{
+ const f=make();f.restore([{...p,kind:'furnace',input:{key:'rawIron',qty:1},
+ output:{key:'gold',qty:1},fuel:{key:'coal',qty:1}}]);
+ const s=f.status(p);
+ assert.equal(s.product,'iron');assert.equal(s.outputBlocked,true);
+ assert.equal(s.cookSecondsRemaining,null);assert.equal(s.cooking,false);
+});
+test('UI does not claim recipes or cooking time for inert imported items',()=>{
+ const f=make();f.restore([{...p,kind:'furnace',input:{key:'custom:unknown_ore',qty:1},
+ fuel:{key:'coal',qty:1}}]);
+ const s=f.status(p);
+ assert.equal(s.product,null);assert.equal(s.outputBlocked,false);
+ assert.equal(s.cookSecondsRemaining,null);assert.equal(s.cooking,false);
+});
