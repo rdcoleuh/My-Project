@@ -4,6 +4,7 @@
 const RECIPES=Object.freeze({iron_ore:'iron_ingot',deepslate_iron_ore:'iron_ingot',raw_iron:'iron_ingot',gold_ore:'gold_ingot',deepslate_gold_ore:'gold_ingot',raw_gold:'gold_ingot',copper_ore:'copper_ingot',deepslate_copper_ore:'copper_ingot',raw_copper:'copper_ingot',diamond_ore:'diamond',deepslate_diamond_ore:'diamond',emerald_ore:'emerald',deepslate_emerald_ore:'emerald',lapis_ore:'lapis_lazuli',deepslate_lapis_ore:'lapis_lazuli',redstone_ore:'redstone',deepslate_redstone_ore:'redstone',nether_quartz_ore:'quartz',ancient_debris:'netherite_scrap',sand:'glass',red_sand:'glass',cobbled_deepslate:'deepslate',basalt:'smooth_basalt',sandstone:'smooth_sandstone',red_sandstone:'smooth_red_sandstone',chorus_fruit:'popped_chorus_fruit',sea_pickle:'lime_dye',cobblestone:'stone',raw_beef:'cooked_beef',raw_porkchop:'cooked_porkchop',raw_chicken:'cooked_chicken',potato:'baked_potato',clay_ball:'brick',clay:'terracotta',stone:'smooth_stone',netherrack:'nether_brick',cactus:'green_dye',kelp:'dried_kelp',wet_sponge:'sponge',raw_mutton:'cooked_mutton',raw_rabbit:'cooked_rabbit',raw_cod:'cooked_cod',raw_salmon:'cooked_salmon',log:'charcoal'});
 const FUELS=Object.freeze({coal:1600,charcoal:1600,planks:300,log:300,stick:100,wooden_pickaxe:200,wooden_axe:200,wooden_shovel:200,wooden_hoe:200,wooden_sword:200,sapling:100,bowl:100,bamboo:50,wooden_slab:150,crafting_table:300,chest:300,ladder:300,bookshelf:300,wooden_pressure_plate:300,wooden_button:100,wooden_door:200,wooden_trapdoor:300,wooden_fence:300,wooden_fence_gate:300,spruce_boat:1200,cherry_boat:1200,wooden_sign:200,wooden_hanging_sign:800,sign:200,boat:1200,raft:1200,blaze_rod:2400,coal_block:16000,lava_bucket:20000,dried_kelp_block:4000});
 const SMELT_TICKS=200;
+const NONSTACKABLE_FUELS=new Set(['lava_bucket','boat','spruce_boat','cherry_boat','raft']);
 const MAX_BURN_TICKS=Math.max(...Object.values(FUELS));
 function recipeFor(id){return Object.prototype.hasOwnProperty.call(RECIPES,id)?RECIPES[id]:null;}
 function fuelTicks(id){return Object.prototype.hasOwnProperty.call(FUELS,id)?FUELS[id]:0;}
@@ -18,7 +19,9 @@ if(s.burn===0&&possible&&s.fuel&&fuelTicks(s.fuel.id)){
 const consumed=s.fuel.id;
 // Legacy saves may contain stacked lava buckets. Do not burn one and
 // silently discard its empty container; leave the stack withdrawable.
-if(consumed!=='lava_bucket'||s.fuel.count===1){
+// Legacy saves can also contain overstacked boats/rafts. Keep these
+// nonstackable items withdrawable rather than consuming an invalid stack.
+if(!NONSTACKABLE_FUELS.has(consumed)||s.fuel.count===1){
 s.burn=FUELS[consumed];s.burnTotal=s.burn;s.fuel.count--;if(!s.fuel.count)s.fuel=consumed==='lava_bucket'?{id:'bucket',count:1}:null;
 }
 }
@@ -37,7 +40,6 @@ if(slot==='input'&&!recipeFor(incoming.id))return {furnace:s,remainder:incoming,
 if(slot==='fuel'&&!fuelTicks(incoming.id))return {furnace:s,remainder:incoming,moved:0};
 const existing=s[slot];
 if(existing&&existing.id!==incoming.id)return {furnace:s,remainder:incoming,moved:0};
-const NONSTACKABLE_FUELS=new Set(['lava_bucket','boat','spruce_boat','cherry_boat','raft']);
 const capacity=slot==='fuel'&&NONSTACKABLE_FUELS.has(incoming.id)?1:64;
 const moved=Math.min(incoming.count,Math.max(0,capacity-(existing?existing.count:0)));
 if(moved){if(existing)existing.count+=moved;else {s[slot]={id:incoming.id,count:moved};if(slot==='input')s.progress=0;}}
