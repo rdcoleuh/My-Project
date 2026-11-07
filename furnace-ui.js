@@ -218,8 +218,8 @@ function furnaceWorkState(machine){
   return 'Output blocked. Collect the output before smelting can continue.';
  if(machine.burn<=0&&(!machine.fuel||!Object.prototype.hasOwnProperty.call(api.FUEL||{},machine.fuel.key)))
   return 'Add usable fuel to begin or resume smelting.';
- if(machine.burn<=0&&machine.fuel.key==='lavaBucket'&&machine.fuel.qty!==1)
-  return 'Take excess lava buckets out of the fuel slot before ignition.';
+ if(machine.burn<=0&&['lavaBucket','boat','spruceBoat','cherryBoat','raft'].includes(machine.fuel.key)&&machine.fuel.qty!==1)
+  return 'Take excess nonstackable fuel out of the fuel slot before ignition.';
  const seconds=Math.max(0,Math.ceil(api.KINDS[machine.kind].cook-machine.progress));
  return 'Smelting '+product+'. About '+seconds+' seconds until the next item.';
 }
