@@ -371,7 +371,20 @@ function create(api){
   el('mw-furnace-cook').value=Math.max(0,Math.min(100,Math.round(m.progress/window.MineWorldFurnace.KINDS[m.kind].cook*100)));
   el('mw-furnace-status').textContent='Input: '+fmt(m.input)+' · Fuel: '+fmt(m.fuel)+
    ' · Output: '+fmt(m.output)+' · Flame: '+Math.ceil(m.burn)+'s · Smelted: '+Math.round(m.progress/window.MineWorldFurnace.KINDS[m.kind].cook*100)+'%';
-  el('mw-furnace-hint').textContent=furnaceWorkState(m);
+  // Use the engine's authoritative read-only diagnostics. A UI timer must
+  // never advance cooking or mutate saved slots just to explain a stall.
+  const state=engine.status?.(current);
+  const reasonText={
+   no_input:'Add an ingredient to begin smelting.',
+   no_recipe:'This ingredient cannot be smelted here. Take the input to change it.',
+   output_blocked:'Output blocked. Collect the output before smelting can continue.',
+   invalid_fuel_stack:'Take excess nonstackable fuel out of the fuel slot before ignition.',
+   invalid_fuel:'Unknown fuel item. Take it from the fuel slot and add supported fuel.',
+   no_fuel:'Add usable fuel to begin or resume smelting.'
+  };
+  const hint=state?.idleReason?reasonText[state.idleReason]:
+   state?.readyToSmelt?'Smelting '+state.product+'. About '+Math.ceil(state.cookSecondsRemaining)+' seconds until the next item.':null;
+  el('mw-furnace-hint').textContent=hint||furnaceWorkState(m);
   const event=furnaceAnnouncement(announceState,m);
   announceState=furnaceAnnouncementState(m);
   if(event){
