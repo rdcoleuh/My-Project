@@ -237,7 +237,22 @@ function create(){
    machines.set(id(m),m);
   }
  }
- return {get,ensure,insert,take,tick,remove,snapshot,restore,canSmelt,migrateLegacyBlastBlocks,clear:()=>machines.clear()};
+ // Read-only, JSON-safe station state for the three-slot UI. The renderer
+ // can show precise progress without mutating a save or advancing simulation.
+ // Percentages are clamped because legacy saves may contain unusual timers.
+ function status(p){
+  const m=get(p);if(!m)return null;
+  const cook=KINDS[m.kind].cook;
+  const progress=Math.max(0,Math.min(1,m.progress/cook));
+  const burn=m.burnTotal>0?Math.max(0,Math.min(1,m.burn/m.burnTotal)):0;
+  return {kind:m.kind,dimension:m.dimension,x:m.x,y:m.y,z:m.z,
+   input:slot(m.input),fuel:slot(m.fuel),output:slot(m.output),
+   progress, burn, cooking:!!(m.input&&canSmelt(m.kind,m.input.key)&&
+    (!m.output||(m.output.key===RECIPES[m.input.key]&&m.output.qty<64))&&
+    (m.burn>0||m.fuel&&Object.hasOwn(FUEL,m.fuel.key)&&
+     (!NONSTACKABLE_FUELS.has(m.fuel.key)||m.fuel.qty===1)))};
+ }
+ return {status,get,ensure,insert,take,tick,remove,snapshot,restore,canSmelt,migrateLegacyBlastBlocks,clear:()=>machines.clear()};
 }
 window.MineWorldFurnace=Object.freeze({create,RECIPES,FUEL,COOK,KINDS,canSmelt,slotCapacity});
 })();
