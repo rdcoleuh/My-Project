@@ -399,15 +399,18 @@ function create(api){
   }
   // Specialized stations cook in five seconds, not ten. Keep the help and
   // native progress controls meaningful for screen-reader and touch users.
-  const cookDuration=window.MineWorldFurnace.KINDS[m.kind].cook;
+  const station=window.MineWorldFurnace.KINDS?.[m.kind];
+  // Older/custom worlds may contain an unknown station kind. Keep the modal
+  // usable so players can withdraw items instead of crashing each redraw.
+  const cookDuration=Number.isFinite(station?.cook)&&station.cook>0?station.cook:10;
   el('mw-furnace-help').textContent='Add an ingredient and fuel. '+(m.kind==='smoker'?'Food only':m.kind==='blast'?'Ores and metals only':'All supported recipes')+'; one item takes '+cookDuration+' seconds. Tap a slot to add the selected item or collect output. Shift adds a stack; Alt takes one. Collect output for experience.';
   const descriptions=furnaceProgressDescriptions(m,engine.status?.(current));
   el('mw-furnace-flame').setAttribute('aria-valuetext',descriptions.fuel);
   el('mw-furnace-cook').setAttribute('aria-valuetext',descriptions.cook);
   el('mw-furnace-flame').value=m.burnTotal>0?Math.max(0,Math.min(100,Math.round(m.burn/m.burnTotal*100))):0;
-  el('mw-furnace-cook').value=Math.max(0,Math.min(100,Math.round(m.progress/window.MineWorldFurnace.KINDS[m.kind].cook*100)));
+  el('mw-furnace-cook').value=Math.max(0,Math.min(100,Math.round(m.progress/cookDuration*100)));
   el('mw-furnace-status').textContent='Input: '+fmt(m.input)+' · Fuel: '+fmt(m.fuel)+
-   ' · Output: '+fmt(m.output)+' · Flame: '+Math.ceil(m.burn)+'s · Smelted: '+Math.round(m.progress/window.MineWorldFurnace.KINDS[m.kind].cook*100)+'%';
+   ' · Output: '+fmt(m.output)+' · Flame: '+Math.ceil(m.burn)+'s · Smelted: '+Math.round(m.progress/cookDuration*100)+'%';
   // Use the engine's authoritative read-only diagnostics. A UI timer must
   // never advance cooking or mutate saved slots just to explain a stall.
   const state=engine.status?.(current);
