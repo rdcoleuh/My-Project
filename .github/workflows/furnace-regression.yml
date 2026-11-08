@@ -4,7 +4,10 @@ on:
     branches: [gh-pages]
     paths:
       - 'furnace-engine.js'
+      - 'furnace-core.js'
+      - 'index.html'
       - 'furnace-ui.js'
+      - 'furnace-station-integration.js'
       - 'tests/furnace-*.test.cjs'
       - '.github/workflows/furnace-regression.yml'
   workflow_dispatch:
