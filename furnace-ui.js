@@ -444,7 +444,7 @@ function create(api){
   el('mw-furnace-announcement').textContent='';current={...position};
   const station=machine.kind;
   el('mw-furnace-title').textContent=station==='smoker'?'🍖 Smoker':station==='blast'?'⚒ Blast Furnace':'🔥 Furnace';
-  el('mw-furnace-help').textContent='Add an ingredient and fuel. '+(station==='smoker'?'Food only':station==='blast'?'Ores and metals only':'All supported recipes')+'; one item takes '+window.MineWorldFurnace.KINDS[station].cook+' seconds. Tap a slot to add the selected item or collect output. Collect smelted output for experience. Take buttons return ingredients and fuel.';
+  el('mw-furnace-help').textContent='Add an ingredient and fuel. '+(station==='smoker'?'Food only':station==='blast'?'Ores and metals only':'All supported recipes')+'; one item takes '+(Number.isFinite(window.MineWorldFurnace.KINDS?.[station]?.cook)&&window.MineWorldFurnace.KINDS[station].cook>0?window.MineWorldFurnace.KINDS[station].cook:10)+' seconds. Tap a slot to add the selected item or collect output. Collect smelted output for experience. Take buttons return ingredients and fuel.';
 
   panel.classList.remove('hidden');api.onPause();render();el('mw-furnace-close').focus();return true;}
  function close(){
