@@ -1,0 +1,23 @@
+name: Furnace regression tests
+on:
+  push:
+    branches: [gh-pages]
+    paths:
+      - 'furnace-engine.js'
+      - 'furnace-ui.js'
+      - 'tests/furnace-*.test.cjs'
+      - '.github/workflows/furnace-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  furnace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run executable furnace regression suite
+        run: node --test tests/furnace-*.test.cjs
