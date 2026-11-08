@@ -223,7 +223,7 @@ function furnaceWorkState(machine){
    ?'Add usable fuel to begin or resume smelting.'
    :'Unknown fuel item. Take it from the fuel slot and add supported fuel.';
  if(machine.burn<=0&&['lavaBucket','boat','spruceBoat','cherryBoat','raft'].includes(machine.fuel.key)&&machine.fuel.qty!==1)
-  return machine.fuel.key==='lavaBucket'?'Take excess lava buckets out of the fuel slot before ignition.':'Take excess nonstackable fuel out of the fuel slot before ignition.';
+  return machine.fuel.key==='lavaBucket'?'Take excess nonstackable fuel (lava buckets) out of the fuel slot before ignition.':'Take excess nonstackable fuel out of the fuel slot before ignition.';
  const seconds=Math.max(0,Math.ceil(api.KINDS[machine.kind].cook-machine.progress));
  return 'Smelting '+product+'. About '+seconds+' seconds until the next item.';
 }
