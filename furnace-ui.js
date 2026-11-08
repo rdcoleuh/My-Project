@@ -219,7 +219,9 @@ function furnaceWorkState(machine){
  if(machine.burn<=0&&!machine.fuel)
   return 'Add usable fuel to begin or resume smelting.';
  if(machine.burn<=0&&!Object.prototype.hasOwnProperty.call(api.FUEL||{},machine.fuel.key))
-  return 'Unknown fuel item. Take it from the fuel slot and add supported fuel.';
+  return Object.prototype.hasOwnProperty.call(Object.prototype,machine.fuel.key)
+   ?'Add usable fuel to begin or resume smelting.'
+   :'Unknown fuel item. Take it from the fuel slot and add supported fuel.';
  if(machine.burn<=0&&['lavaBucket','boat','spruceBoat','cherryBoat','raft'].includes(machine.fuel.key)&&machine.fuel.qty!==1)
   return machine.fuel.key==='lavaBucket'?'Take excess lava buckets out of the fuel slot before ignition.':'Take excess nonstackable fuel out of the fuel slot before ignition.';
  const seconds=Math.max(0,Math.ceil(api.KINDS[machine.kind].cook-machine.progress));
