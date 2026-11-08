@@ -221,11 +221,10 @@ function create(){
     Math.max(0,Math.min(1000,r.burnTotal)):0;
    const remaining=typeof r.burn==='number'&&Number.isFinite(r.burn)?
     Math.max(0,Math.min(1000,r.burn)):0;
-   // If a legacy save has a valid positive total smaller than its remaining
-   // burn, preserve already-paid fuel rather than deleting the difference.
-   // Missing/zero totals still fail closed to avoid manufacturing free fuel.
-   m.burnTotal=total>0?Math.max(total,remaining):0;
-   m.burn=total>0?remaining:0;
+   // A corrupted remaining timer cannot exceed the recorded fuel duration.
+   // Keep the valid portion without inventing extra burning time.
+   m.burnTotal=total;
+   m.burn=Math.min(total,remaining);
    // A completed cook frame cannot be resumed at exactly COOK: tick would
    // otherwise take a zero-length step forever, leaving the furnace stuck.
    // Saved progress is a duration, never a string, boolean or array.
