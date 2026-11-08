@@ -9,7 +9,7 @@ const MAX_BURN_TICKS=Math.max(...Object.values(FUELS));
 function recipeFor(id){return Object.prototype.hasOwnProperty.call(RECIPES,id)?RECIPES[id]:null;}
 function fuelTicks(id){return Object.prototype.hasOwnProperty.call(FUELS,id)?FUELS[id]:0;}
 function stack(s){if(!s||typeof s!=='object'||typeof s.id!=='string'||!Number.isSafeInteger(s.count)||s.count<1||s.count>64)return null;return {id:s.id,count:s.count};}
-function state(raw){raw=raw||{};const burn=Math.min(MAX_BURN_TICKS,nonnegative(raw.burn));const burnTotal=Math.max(burn,Math.min(MAX_BURN_TICKS,nonnegative(raw.burnTotal)));return {input:stack(raw.input),fuel:stack(raw.fuel),output:stack(raw.output),burn,burnTotal,progress:Math.min(SMELT_TICKS-1,nonnegative(raw.progress))};}
+function state(raw){raw=raw||{};const burnTotal=Math.min(MAX_BURN_TICKS,nonnegative(raw.burnTotal));const burn=Math.min(burnTotal,nonnegative(raw.burn));return {input:stack(raw.input),fuel:stack(raw.fuel),output:stack(raw.output),burn,burnTotal,progress:Math.min(SMELT_TICKS-1,nonnegative(raw.progress))};}
 function nonnegative(n){return Number.isSafeInteger(n)&&n>=0?n:0;}
 function canSmelt(s){const item=s.input&&recipeFor(s.input.id);return !!(item&&(!s.output||(s.output.id===item&&s.output.count<64)));}
 function tick(raw,steps=1){const s=state(raw);if(!Number.isSafeInteger(steps)||steps<0||steps>12000)throw new RangeError('Invalid furnace tick count');
