@@ -20,4 +20,16 @@ jobs:
         with:
           node-version: '22'
       - name: Run executable furnace regression suite
-        run: node --test tests/furnace-*.test.cjs
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          node --test --test-reporter=tap tests/furnace-*.test.cjs 2>&1 | tee test-results/furnace-tap.log
+      - name: Upload furnace diagnostics even when tests fail
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: furnace-regression-${{ github.run_id }}
+          path: test-results/furnace-tap.log
+          if-no-files-found: warn
+          retention-days: 14
