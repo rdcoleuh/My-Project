@@ -32,3 +32,30 @@ test('restore preserves valid partial progress when output has room',()=>{
  assert.equal(e.get(p).output.qty,64);
  assert.equal(e.get(p).input.qty,1);
 });
+
+test('blocked output stays intact across save and reload, then smelts after withdrawal',()=>{
+ const e=engine();
+ e.restore([{...p,kind:'furnace',input:{key:'rawIron',qty:2},output:{key:'gold',qty:4},fuel:{key:'coal',qty:1},progress:9,burn:20,burnTotal:80}]);
+ const saved=JSON.parse(JSON.stringify(e.snapshot()));
+ const reloaded=engine();
+ reloaded.restore(saved);
+ assert.equal(reloaded.status(p).idleReason,'output_blocked');
+ assert.equal(reloaded.tick(10).completed,0);
+ assert.equal(reloaded.take(p,'output',64).qty,4);
+ assert.equal(reloaded.tick(10).completed,1);
+ assert.equal(reloaded.get(p).output.key,'iron');
+ assert.equal(reloaded.get(p).input.qty,1);
+});
+test('saved furnace at maximum world height retains inventory and timers',()=>{
+ const high={dimension:'overworld',x:-9999,y:319,z:9999};
+ const e=engine();
+ e.ensure(high,'furnace');
+ assert.equal(e.insert(high,'input','rawIron',1),1);
+ assert.equal(e.insert(high,'fuel','coal',1),1);
+ assert.equal(e.tick(4).completed,0);
+ const saved=JSON.parse(JSON.stringify(e.snapshot()));
+ const loaded=engine();loaded.restore(saved);
+ assert.equal(loaded.get(high).progress,4);
+ assert.equal(loaded.tick(6).completed,1);
+ assert.equal(loaded.take(high,'output',1).key,'iron');
+});
