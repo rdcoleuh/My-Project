@@ -23,10 +23,20 @@ test('smelting completes on the last available burning tick', () => {
   assert.equal(after.progress,0);
 });
 
-test('without fuel or stored burn progress does not advance', () => {
+test('without fuel, partial cooking cools rather than advancing', () => {
   const after = furnace.tick({
     input:{id:'sand',count:1}, burn:0, progress:199
   });
-  assert.equal(after.progress,0);
+  assert.equal(after.progress,197);
   assert.equal(after.output,null);
+});
+
+test('unfueled progress eventually cools completely without creating output', () => {
+  let state = {input:{id:'sand',count:1}, burn:0, progress:199};
+  for (let i=0; i<110; i++) {
+    state = furnace.tick(state);
+    assert.equal(state.output,null);
+  }
+  assert.equal(state.progress,0);
+  assert.deepEqual(state.input,{id:'sand',count:1});
 });
