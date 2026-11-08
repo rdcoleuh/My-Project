@@ -13,7 +13,10 @@ for(const [fuel,ticks] of cases){
   let end=first,remaining=ticks-1;
   while(remaining>0){const step=Math.min(remaining,12000);end=furnace.tick(end,step);remaining-=step;}
   assert.equal(end.burn,0);
-  // A furnace output stack cannot exceed 64; excess fuel may continue burning.\n  const expected=Math.min(64,Math.floor(ticks/200));\n  assert.equal(end.output?.count||0,expected);\n  assert.equal(end.input?.count||0,64-expected);
+  // A furnace output stack cannot exceed 64; excess fuel may continue burning.
+  const expected=Math.min(64,Math.floor(ticks/200));
+  assert.equal(end.output?.count||0,expected);
+  assert.equal(end.input?.count||0,64-expected);
  });
 }
 test('short-burning bamboo cannot finish a smelt by itself',()=>{
