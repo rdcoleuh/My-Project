@@ -234,7 +234,11 @@ function create(){
    const savedProgress=typeof r.progress==='number'&&Number.isFinite(r.progress)?
     r.progress:0;
    m.progress=Math.max(0,Math.min(KINDS[m.kind].cook,savedProgress));
-   if(m.progress>=KINDS[m.kind].cook||!m.input||!canSmelt(m.kind,m.input.key))m.progress=0;
+   // A restored output stack can belong to an older recipe or already be full.
+   // Do not display or carry stale partial progress into a blocked cook.
+   const expected=m.input&&canSmelt(m.kind,m.input.key)?RECIPES[m.input.key]:null;
+   if(m.progress>=KINDS[m.kind].cook||!expected||
+      m.output&&(m.output.key!==expected||m.output.qty>=64))m.progress=0;
    // A saved progress timer without any ingredient would otherwise grant
    // a newly inserted item free cooking time after a world reload.
    machines.set(id(m),m);
