@@ -73,3 +73,13 @@ test('visible hint is not a noisy live region and refresh timer rejects invalid 
  assert.match(uiSource,/drawClock%=\.25/);
  assert.match(uiSource,/announceState=null;drawClock=0/);
 });
+
+test('guidance tolerates older furnace API without slotCapacity',()=>{
+ const f=engine.create();
+ f.restore([{...p,kind:'furnace',input:{key:'rawIron',qty:1},fuel:{key:'coal',qty:1}}]);
+ const original=engine.slotCapacity;
+ try {
+  engine.slotCapacity=undefined;
+  assert.match(furnaceWorkState(f.get(p)),/Smelting iron/);
+ } finally {engine.slotCapacity=original;}
+});
