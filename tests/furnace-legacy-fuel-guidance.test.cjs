@@ -39,3 +39,8 @@ test('unsupported saved fuel remains withdrawable with a clear explanation', () 
   assert.match(guidance(machine({ key: 'customFuel', qty: 1 }),
     { idleReason: 'invalid_fuel' }), /Unknown fuel item.*Take it/i);
 });
+
+test('legacy stacked wooden tools receive nonstackable recovery guidance', () => {
+  assert.match(guidance(machine({ key: 'wooden_pickaxe', qty: 2 }),
+    { idleReason: 'invalid_fuel_stack' }), /excess nonstackable fuel/i);
+});
