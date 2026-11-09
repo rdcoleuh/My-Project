@@ -105,3 +105,24 @@ test('modal render guards optional furnace slotCapacity like deposits do',()=>{
  assert.match(uiSource,guarded);
  assert.doesNotMatch(uiSource,/const capacity=window\.MineWorldFurnace\.slotCapacity\(which,selected\);/);
 });
+
+test('registered wooden tool fuel IDs insert, smelt, and survive save restoration',()=>{
+ for(const item of ['wooden_pickaxe','wooden_axe','wooden_shovel','wooden_hoe','wooden_sword']){
+  const f=engine.create();
+  assert.equal(f.insert(p,'input','rawIron',1),1);
+  assert.equal(f.insert(p,'fuel',item,1),1,item);
+  assert.equal(f.insert(p,'fuel',item,1),0,'nonstackable '+item);
+  const saved=f.serialize();
+  const restored=engine.create();
+  restored.restore(saved);
+  assert.equal(restored.get(p).fuel.key,item);
+  assert.equal(restored.tick(10).completed,1,item);
+  assert.equal(restored.get(p).output.key,'iron');
+ }
+});
+test('unregistered underscore keys cannot enter furnace slots',()=>{
+ const f=engine.create();
+ assert.equal(f.insert(p,'fuel','unregistered_fuel',1),0);
+ f.restore([{...p,fuel:{key:'unregistered_fuel',qty:1}}]);
+ assert.equal(f.get(p).fuel,null);
+});
