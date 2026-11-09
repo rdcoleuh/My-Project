@@ -83,3 +83,18 @@ test('guidance tolerates older furnace API without slotCapacity',()=>{
   assert.match(furnaceWorkState(f.get(p)),/Smelting iron/);
  } finally {engine.slotCapacity=original;}
 });
+
+test('deposit tolerates older furnace API without slotCapacity and conserves inventory',()=>{
+ const position={dimension:'overworld',x:4,y:0,z:7};
+ let owned=3,slot=null;
+ const adapter={count(){return owned},change(_key,delta){owned+=delta;return delta}};
+ const station={get(){return {input:slot}},insert(_p,_which,key,qty){slot={key,qty};return qty}};
+ const original=engine.slotCapacity;
+ try{
+  engine.slotCapacity=undefined;
+  const moved=ctx.window.MineWorldFurnaceUI.transfers.deposit(station,adapter,position,'input','rawIron',2);
+  assert.equal(moved,2);
+  assert.equal(owned,1);
+  assert.equal(slot.qty,2);
+ }finally{engine.slotCapacity=original;}
+});
