@@ -11,7 +11,8 @@ function deposit(engine,api,position,which,item,limit){
  if(existing&&existing.key!==item)return 0;
  const owned=api.count(item);
  if(!Number.isInteger(owned)||owned<1)return 0;
- const capacity=window.MineWorldFurnace.slotCapacity(which,item);
+ const capacity=typeof window.MineWorldFurnace?.slotCapacity==='function'
+  ?window.MineWorldFurnace.slotCapacity(which,item):64;
  const quantity=Math.min(limit,owned,capacity-(existing?.qty||0));
  if(quantity<1)return 0;
  // Some inventory adapters throw *after* mutating their inventory.
