@@ -112,7 +112,7 @@ test('registered wooden tool fuel IDs insert, smelt, and survive save restoratio
   assert.equal(f.insert(p,'input','rawIron',1),1);
   assert.equal(f.insert(p,'fuel',item,1),1,item);
   assert.equal(f.insert(p,'fuel',item,1),0,'nonstackable '+item);
-  const saved=f.serialize();
+  const saved=f.snapshot();
   const restored=engine.create();
   restored.restore(saved);
   assert.equal(restored.get(p).fuel.key,item);
