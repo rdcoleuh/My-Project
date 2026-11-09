@@ -132,3 +132,24 @@ test('furnace engine parses as JavaScript before any gameplay loads',()=>{
  const source=fs.readFileSync(path.join(root,'furnace-engine.js'),'utf8');
  assert.doesNotThrow(()=>new vm.Script(source,{filename:'furnace-engine.js'}));
 });
+
+// Verify fuel is not duplicated across a save/load boundary mid-smelt.
+test('mid-cook save restores fuel and finishes exactly one output',()=>{
+ const station={dimension:'overworld',x:-7,y:-64,z:9};
+ const f=engine.create();
+ assert.equal(f.insert(station,'input','rawIron',2),2);
+ assert.equal(f.insert(station,'fuel','coal',1),1);
+ assert.equal(f.tick(4).completed,0);
+ const before=f.get(station);
+ assert.ok(before.progress>0&&before.progress<10);
+ assert.ok(before.burn>0&&before.burn<before.burnTotal);
+ const saved=JSON.parse(JSON.stringify(f.snapshot()));
+ const resumed=engine.create();resumed.restore(saved);
+ assert.equal(resumed.tick(6).completed,1);
+ assert.equal(resumed.get(station).output.qty,1);
+ assert.equal(resumed.get(station).input.qty,1);
+ assert.equal(resumed.tick(10).completed,1);
+ assert.equal(resumed.get(station).output.qty,2);
+ assert.equal(resumed.get(station).input,null);
+ assert.equal(resumed.get(station).fuel,null);
+});
