@@ -426,7 +426,11 @@ function create(api){
   };
   const hint=state?.idleReason?reasonText[state.idleReason]:
    state?.readyToSmelt?'Smelting '+state.product+'. About '+Math.ceil(state.cookSecondsRemaining)+' seconds until the next item.':null;
-  el('mw-furnace-hint').textContent=hint||furnaceWorkState(m);
+  // The generic status code intentionally stays stable for programmatic clients,
+  // but the visible hint must distinguish legacy stacked lava buckets from
+  // other invalid nonstackable fuels so players know how to recover them.
+  el('mw-furnace-hint').textContent=state?.idleReason==='invalid_fuel_stack'?
+   furnaceWorkState(m):hint||furnaceWorkState(m);
   const event=furnaceAnnouncement(announceState,m);
   announceState=furnaceAnnouncementState(m);
   if(event){
