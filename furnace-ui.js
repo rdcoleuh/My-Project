@@ -162,7 +162,8 @@ function planSlotGesture(which,slot,selected,owned,modifiers={}){
  // The gesture must obey the same capacity as the engine and Add buttons.
  // In particular, a full one-bucket fuel slot must withdraw on touch even
  // when the selected fuel is another lava bucket owned by the player.
- const capacity=window.MineWorldFurnace?.slotCapacity?.(which,selected)??64;
+ const capacity=typeof window.MineWorldFurnace?.slotCapacity==='function'
+  ?window.MineWorldFurnace.slotCapacity(which,selected):64;
  if(typeof selected==='string'&&selected&&Number.isSafeInteger(owned)&&owned>0&&
     (!slot||(slot.key===selected&&Number.isSafeInteger(slot.qty)&&slot.qty<capacity)))
   return {action:'deposit',item:selected,limit:shift?64:1};
