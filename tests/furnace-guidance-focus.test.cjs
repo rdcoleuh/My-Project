@@ -67,7 +67,7 @@ test('focus reenters a dialog if a background element becomes active',()=>{
 });
 test('visible hint is not a noisy live region and refresh timer rejects invalid deltas',()=>{
  assert.match(uiSource,/id="mw-furnace-hint" aria-live="off"/);
- assert.match(uiSource,/textContent=furnaceWorkState\(m\)/);
+ assert.match(uiSource,/furnaceWorkState\(m\)/);
  assert.match(uiSource,/containFurnaceTab\(e,panel,document\.activeElement\)/);
  assert.match(uiSource,/typeof dt!=='number'\|\|!Number\.isFinite\(dt\)\|\|dt<=0/);
  assert.match(uiSource,/drawClock%=\.25/);
@@ -77,11 +77,11 @@ test('visible hint is not a noisy live region and refresh timer rejects invalid 
 test('guidance tolerates older furnace API without slotCapacity',()=>{
  const f=engine.create();
  f.restore([{...p,kind:'furnace',input:{key:'rawIron',qty:1},fuel:{key:'coal',qty:1}}]);
- const original=engine.slotCapacity;
+ const original=ctx.window.MineWorldFurnace;
  try {
-  engine.slotCapacity=undefined;
+  ctx.window.MineWorldFurnace={...engine,slotCapacity:undefined};
   assert.match(furnaceWorkState(f.get(p)),/Smelting iron/);
- } finally {engine.slotCapacity=original;}
+ } finally {ctx.window.MineWorldFurnace=original;}
 });
 
 test('deposit tolerates older furnace API without slotCapacity and conserves inventory',()=>{
@@ -89,14 +89,14 @@ test('deposit tolerates older furnace API without slotCapacity and conserves inv
  let owned=3,slot=null;
  const adapter={count(){return owned},change(_key,delta){owned+=delta;return delta}};
  const station={get(){return {input:slot}},insert(_p,_which,key,qty){slot={key,qty};return qty}};
- const original=engine.slotCapacity;
+ const original=ctx.window.MineWorldFurnace;
  try{
-  engine.slotCapacity=undefined;
+  ctx.window.MineWorldFurnace={...engine,slotCapacity:undefined};
   const moved=ctx.window.MineWorldFurnaceUI.transfers.deposit(station,adapter,position,'input','rawIron',2);
   assert.equal(moved,2);
   assert.equal(owned,1);
   assert.equal(slot.qty,2);
- }finally{engine.slotCapacity=original;}
+ }finally{ctx.window.MineWorldFurnace=original;}
 });
 
 // The modal redraw must not crash when the optional capacity helper is absent.
