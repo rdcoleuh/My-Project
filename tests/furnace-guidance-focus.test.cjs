@@ -98,3 +98,10 @@ test('deposit tolerates older furnace API without slotCapacity and conserves inv
   assert.equal(slot.qty,2);
  }finally{engine.slotCapacity=original;}
 });
+
+// The modal redraw must not crash when the optional capacity helper is absent.
+test('modal render guards optional furnace slotCapacity like deposits do',()=>{
+ const guarded=/const capacity=typeof window\.MineWorldFurnace\?\.slotCapacity==='function'\s*\?window\.MineWorldFurnace\.slotCapacity\(which,selected\):64;/;
+ assert.match(uiSource,guarded);
+ assert.doesNotMatch(uiSource,/const capacity=window\.MineWorldFurnace\.slotCapacity\(which,selected\);/);
+});
