@@ -153,3 +153,17 @@ test('mid-cook save restores fuel and finishes exactly one output',()=>{
  assert.equal(resumed.get(station).input,null);
  assert.equal(resumed.get(station).fuel,null);
 });
+
+// Older saved worlds may load a furnace API without the optional slot helper.
+test('touch slot gestures tolerate missing or non-callable slotCapacity',()=>{
+ const original=ctx.window.MineWorldFurnace;
+ try{
+  for(const missing of [undefined,null,42]){
+   ctx.window.MineWorldFurnace={...engine,slotCapacity:missing};
+   const gesture=ctx.window.MineWorldFurnaceUI.planSlotGesture('fuel',null,'coal',2,{});
+   assert.equal(gesture.action,'deposit');
+   assert.equal(gesture.item,'coal');
+   assert.equal(gesture.limit,1);
+  }
+ }finally{ctx.window.MineWorldFurnace=original;}
+});
