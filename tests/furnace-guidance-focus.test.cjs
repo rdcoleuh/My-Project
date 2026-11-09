@@ -126,3 +126,9 @@ test('unregistered underscore keys cannot enter furnace slots',()=>{
  f.restore([{...p,fuel:{key:'unregistered_fuel',qty:1}}]);
  assert.equal(f.get(p).fuel,null);
 });
+
+// Guard against escaped newline sequences accidentally committed as JavaScript source.
+test('furnace engine parses as JavaScript before any gameplay loads',()=>{
+ const source=fs.readFileSync(path.join(root,'furnace-engine.js'),'utf8');
+ assert.doesNotThrow(()=>new vm.Script(source,{filename:'furnace-engine.js'}));
+});
