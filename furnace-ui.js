@@ -381,7 +381,8 @@ function create(api){
    const keys=Object.keys(options).filter(key=>(which==='fuel'||engine.canSmelt(m.kind,key))&&(totals[key]||m[which]?.key===key));
    syncSelect(select,keys,totals,key=>api.label(key),document);
    const selected=select.value;
-   const capacity=window.MineWorldFurnace.slotCapacity(which,selected);
+   const capacity=typeof window.MineWorldFurnace?.slotCapacity==='function'
+    ?window.MineWorldFurnace.slotCapacity(which,selected):64;
    const canAdd=!!selected&&!!totals[selected]&&
     (!m[which]||(m[which].key===selected&&m[which].qty<capacity));
    el('mw-furnace-put-'+which).disabled=!canAdd;
