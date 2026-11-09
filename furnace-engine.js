@@ -30,7 +30,9 @@ const FUEL=Object.freeze({coal:80,charcoal:80,'block:5':15,'block:11':15,'block:
  // These are MineWorld inventory keys; the old bamboo item remains valid.
  'block:45':2.5,'block:119':15,'block:155':15,'block:160':15,'block:168':15,
  ladder:15,fence:15,gate:15,door:10,trapdoor:15,sign:10,
- button:5,pressurePlate:15,bowl:5});
+ button:5,pressurePlate:15,bowl:5,
+ // Wooden tools are individually consumed as fuel, never stacked.
+ wooden_pickaxe:10,wooden_axe:10,wooden_shovel:10,wooden_hoe:10,wooden_sword:10});
 const COOK=10;
 const KINDS=Object.freeze({furnace:Object.freeze({cook:10}),smoker:Object.freeze({cook:5}),blast:Object.freeze({cook:5})});
 const FOOD=new Set(['raw','chicken','mutton','fish','potato','kelp']);
@@ -61,7 +63,8 @@ const slot=s=>s&&key(s.key)&&Number.isSafeInteger(s.qty)&&s.qty>0&&s.qty<=100000
 // Lava buckets, boats and rafts are individually handled fuel items.
 // Do not truncate legacy saved stacks: old saves remain withdrawable and
 // consumable, but new UI/engine deposits cannot add to an overfull slot.
-const NONSTACKABLE_FUELS=new Set(['lavaBucket','boat','spruceBoat','cherryBoat','raft']);
+const NONSTACKABLE_FUELS=new Set(['lavaBucket','boat','spruceBoat','cherryBoat','raft',
+ 'wooden_pickaxe','wooden_axe','wooden_shovel','wooden_hoe','wooden_sword']);
 const slotCapacity=(which,item)=>!['input','fuel'].includes(which)?0:
  which==='fuel'&&NONSTACKABLE_FUELS.has(item)?1:64;
 function create(){
