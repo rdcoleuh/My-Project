@@ -25,6 +25,13 @@ if(!canSmelt(s)){
  s.progress=0;
  return s;
 }
+// With no usable fuel and no paid heat, progress cools by two per tick.
+// Fast-forward that cooling without a per-tick loop, including legacy
+// overstacked nonstackable fuel that must not be silently consumed.
+if(s.burn===0&&(!s.fuel||!fuelTicks(s.fuel.id)||(NONSTACKABLE_FUELS.has(s.fuel.id)&&s.fuel.count!==1))){
+ s.progress=Math.max(0,s.progress-2*steps);
+ return s;
+}
 for(let i=0;i<steps;i++){
 const possible=canSmelt(s);
 if(s.burn===0&&possible&&s.fuel&&fuelTicks(s.fuel.id)){
