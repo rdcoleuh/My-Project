@@ -17,6 +17,14 @@ return s;}
 function nonnegative(n){return Number.isSafeInteger(n)&&n>=0?n:0;}
 function canSmelt(s){const item=s.input&&recipeFor(s.input.id);return !!(item&&(!s.output||(s.output.id===item&&s.output.count<64)));}
 function tick(raw,steps=1){const s=state(raw);if(!Number.isSafeInteger(steps)||steps<0||steps>12000)throw new RangeError('Invalid furnace tick count');
+// Idle or output-blocked stations have no cooking work. Advance only their
+// already-paid burn timer instead of running thousands of no-op iterations.
+// This preserves fuel accounting while reducing mobile main-thread work.
+if(!canSmelt(s)){
+ s.burn=Math.max(0,s.burn-steps);
+ s.progress=0;
+ return s;
+}
 for(let i=0;i<steps;i++){
 const possible=canSmelt(s);
 if(s.burn===0&&possible&&s.fuel&&fuelTicks(s.fuel.id)){
