@@ -45,15 +45,19 @@ test('old saved stacked boat fuel is preserved but cannot accept new deposits',(
  f.restore([{...p,kind:'furnace',input:{key:'rawIron',qty:20},fuel:{key:'boat',qty:3}}]);
  assert.equal(f.get(p).fuel.qty,3);
  assert.equal(f.insert(p,'fuel','boat',1),0);
- assert.equal(f.tick(10).completed,1);
- assert.equal(f.get(p).fuel.qty,2);
- assert.equal(f.get(p).burn,50);
+ assert.equal(f.tick(10).completed,0,'overstacked legacy boat fuel must not ignite');
+ assert.equal(f.get(p).fuel.qty,3,'no legacy fuel may disappear');
+ assert.equal(f.get(p).burn,0);
  const saved=JSON.parse(JSON.stringify(f.snapshot()));
  const restored=api.create();restored.restore(saved);
- assert.equal(restored.get(p).fuel.qty,2);
- assert.equal(restored.tick(60).completed,6);
+ assert.equal(restored.get(p).fuel.qty,3);
+ assert.equal(restored.tick(60).completed,0,'restored overstacked fuel stays inert');
+ assert.equal(restored.get(p).fuel.qty,3);
+ assert.equal(restored.take(p,'fuel',2).qty,2,'excess fuel remains withdrawable');
  assert.equal(restored.get(p).fuel.qty,1);
- assert.equal(restored.get(p).output.qty,7);
+ assert.equal(restored.tick(10).completed,1,'single remaining boat may now ignite');
+ assert.equal(restored.get(p).fuel,null);
+ assert.equal(restored.get(p).output.qty,1);
  assert.equal(restored.get(p).burn,50);
 });
 test('desktop/mobile browser smoke captures synthetic boat fuel with imported fixture pack',()=>{
