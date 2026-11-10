@@ -11,7 +11,9 @@ test('furnace has three labeled visual slots and independent live progress meter
   assert.ok(source.includes(id),'missing progress meter '+id);
  assert.match(source,/node\.setAttribute\('aria-label'/);
  assert.match(source,/m\.burn\/m\.burnTotal\*100/);
- assert.match(source,/m\.progress\/window\.MineWorldFurnace\.KINDS\[m\.kind\]\.cook\*100/);
+ // The renderer guards invalid station kinds before computing progress.
+ assert.ok(source.includes('const cookDuration=Number.isFinite(station?.cook)&&station.cook>0?station.cook:10;'));
+ assert.ok(source.includes('m.progress/cookDuration*100'));
 });
 test('furnace UI supports one item and a stack, without consuming more than owned',()=>{
  for(const name of ['input','fuel'])assert.ok(source.includes('mw-furnace-put-'+name+'-stack'));
