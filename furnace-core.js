@@ -49,6 +49,15 @@ if(heated)s.burn--;
 if(possible&&heated){s.progress++;if(s.progress>=SMELT_TICKS){const id=RECIPES[s.input.id];s.input.count--;if(!s.input.count)s.input=null;if(s.output)s.output.count++;else s.output={id,count:1};s.progress=0;}}
 else if(!heated&&possible){s.progress=Math.max(0,s.progress-2);}
 else s.progress=0;
+// Once the last paid heat tick is spent, an unfueled station can only
+// cool. Skip the remaining no-heat ticks without changing inventory.
+if(s.burn===0&&i+1<steps&&
+   (!s.fuel||!fuelTicks(s.fuel.id)||
+    (NONSTACKABLE_FUELS.has(s.fuel.id)&&s.fuel.count!==1))){
+ const remaining=steps-i-1;
+ s.progress=canSmelt(s)?Math.max(0,s.progress-2*remaining):0;
+ break;
+}
 }return s;}
 /* Atomic slot transfer: inventory UI can preview returned remainder without mutating its inputs. */
 function insert(raw,slot,item){
