@@ -26,5 +26,6 @@ test('malformed timer and stack values are normalized on restore',()=>{
  const valid=core.deserialize({version:1,input:{id:'sand',count:1},burn:300,burnTotal:10,progress:199});
  assert.equal(valid.burn,10,'remaining burn cannot exceed paid fuel total');
  assert.equal(valid.progress,199,'valid ingredient progress remains available');
- assert.equal(core.tick(valid,10).output,null,'ten paid ticks cannot complete 199 ticks of progress after cooling');
+ assert.deepEqual(core.tick(valid,1).output,{id:'glass',count:1},'one paid tick finishes a valid 199-tick cook');
+ assert.equal(core.tick({...valid,progress:0},10).output,null,'ten paid ticks cannot finish a fresh cook');
 });
