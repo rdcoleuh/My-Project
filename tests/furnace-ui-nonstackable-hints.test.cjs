@@ -16,7 +16,7 @@ for(const fuel of ['lavaBucket','boat','spruceBoat','cherryBoat','raft']){
   engine.restore([{...p,kind:'furnace',input:{key:'rawIron',qty:1},fuel:{key:fuel,qty:2}}]);
   const machine=engine.get(p);
   assert.equal(engine.status(p).idleReason,'invalid_fuel_stack');
-  assert.match(hint(machine),/Take excess nonstackable fuel/);
+  assert.match(hint(machine),/Take excess (?:nonstackable fuel|lava buckets|boats|rafts).*fuel slot/);
   assert.equal(engine.tick(20).completed,0);
   assert.equal(engine.get(p).fuel.qty,2);
  });
