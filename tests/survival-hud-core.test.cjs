@@ -49,3 +49,19 @@ test('render accepts player-local image URLs and rejects external remote images'
  assert.equal(root.children[0].children.filter(x=>x.classList.values.includes('mw-imported-icon')).length,10);
  assert.equal(root.children[1].children.filter(x=>x.classList.values.includes('mw-imported-icon')).length,0);
 });
+
+test('imported sprite URLs reject CSS injection and SVG data while accepting raster data',()=>{
+ class Node {
+  constructor(doc){this.ownerDocument=doc;this.children=[];this.classList={values:[],add:(...v)=>this.classList.values.push(...v)};this.style={};}
+  setAttribute(){} appendChild(n){this.children.push(n)} replaceChildren(){this.children=[]}
+ }
+ const doc={createElement(){return new Node(doc)}};const root=new Node(doc);
+ const attempts=['data:image/svg+xml;base64,PHN2Zz4=','blob:ok") ; color:red; /*','data:image/png;base64,QUJD','blob:local-valid'];
+ let index=0;
+ hud.render(root,20,20,()=>attempts[(index++)%attempts.length]);
+ const icons=root.children.flatMap(row=>row.children);
+ assert.equal(icons[0].classList.values.includes('mw-imported-icon'),false);
+ assert.equal(icons[1].classList.values.includes('mw-imported-icon'),false);
+ assert.equal(icons[2].classList.values.includes('mw-imported-icon'),true);
+ assert.equal(icons[3].classList.values.includes('mw-imported-icon'),true);
+});
