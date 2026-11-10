@@ -11,7 +11,8 @@ test('furnace snapshot survives JSON round trip with active burn and progress',(
 });
 test('legacy unversioned furnace save remains readable',()=>{
  assert.deepEqual(core.deserialize({input:{id:'sand',count:1},progress:17}).input,{id:'sand',count:1});
- assert.equal(core.deserialize({progress:17}).progress,17);
+ assert.equal(core.deserialize({progress:17}).progress,0,'orphan progress cannot grant a future ingredient free cooking');
+ assert.equal(core.deserialize({input:{id:'sand',count:1},progress:17}).progress,17,'valid legacy ingredient progress survives');
 });
 test('unknown future furnace version is rejected without data loss',()=>{
  assert.throws(()=>core.deserialize({version:2,input:{id:'sand',count:12}}),/Unsupported furnace save version/);
@@ -21,5 +22,9 @@ test('malformed timer and stack values are normalized on restore',()=>{
  assert.equal(restored.input,null);
  assert.equal(restored.burn,0);
  assert.equal(restored.burnTotal,0);
- assert.equal(restored.progress,199);
+ assert.equal(restored.progress,0,'invalid input must not retain almost-complete cooking');
+ const valid=core.deserialize({version:1,input:{id:'sand',count:1},burn:300,burnTotal:10,progress:199});
+ assert.equal(valid.burn,10,'remaining burn cannot exceed paid fuel total');
+ assert.equal(valid.progress,199,'valid ingredient progress remains available');
+ assert.equal(core.tick(valid,10).output,null,'ten paid ticks cannot complete 199 ticks of progress after cooling');
 });
