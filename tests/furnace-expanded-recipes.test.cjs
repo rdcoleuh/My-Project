@@ -9,8 +9,8 @@ for(const [input,output] of Object.entries({deepslate_iron_ore:'iron_ingot',deep
   assert.equal(result.input,null);
  });
 }
-test('dried kelp block provides 4001 burn ticks',()=>{
+test('dried kelp block provides 4000 burn ticks',()=>{
  const result=furnace.tick({input:{id:'sand',count:1},fuel:{id:'dried_kelp_block',count:1}},1);
- assert.equal(result.burn,4000);
+ assert.equal(result.burn,3999);
  assert.equal(result.progress,1);
 });
