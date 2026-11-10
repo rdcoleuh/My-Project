@@ -42,7 +42,8 @@ test('stackable coal and iron retain their original 64-item capacity',()=>{
 });
 test('mobile controls and browser smoke check nonstackable capacity',()=>{
  const ui=fs.readFileSync(path.join(__dirname,'..','furnace-ui.js'),'utf8');
- assert.match(ui,/const capacity=window\.MineWorldFurnace\.slotCapacity\(which,selected\)/);
+ assert.match(ui,/typeof window\.MineWorldFurnace\?\.slotCapacity==='function'/);
+ assert.match(ui,/window\.MineWorldFurnace\.slotCapacity\(which,selected\):64/);
  assert.match(ui,/m\[which\]\.qty<capacity/);
  assert.match(ui,/disabled=!canAdd\|\|capacity<=1/);
  const browser=fs.readFileSync(path.join(__dirname,'..','scripts/browser-smoke.cjs'),'utf8');
