@@ -43,11 +43,10 @@ const canSmelt=(kind,item)=>Object.hasOwn(RECIPES,item)&&(kind==='furnace'||kind
 const namespaced=k=>k.length<=192&&
  /^[a-z0-9][a-z0-9_.-]{0,63}:[a-z0-9_][a-z0-9_.-]*(?:\/[a-z0-9_][a-z0-9_.-]*)*$/.test(k)&&
  !k.startsWith('block:');
+// Permit safe legacy/custom underscore keys in restored, withdrawable stacks.
+// insert() separately requires registered recipes/fuels; unknown keys stay inert.
 const key=k=>typeof k==='string'&&!Object.hasOwn(Object.prototype,k)&&
- (/^[a-zA-Z][a-zA-Z0-9]*$/.test(k)||/^block:[1-9]\d{0,2}$/.test(k)||namespaced(k)||
- // Original MineWorld wooden-tool inventory IDs use underscores. Only accept
- // registered fuel keys here; do not loosen validation for arbitrary saves.
- (k.includes('_')&&Object.hasOwn(FUEL,k)));
+ (/^[a-zA-Z][a-zA-Z0-9_]{0,191}$/.test(k)||/^block:[1-9]\\d{0,2}$/.test(k)||namespaced(k));
 // Keep the legacy Y=0..47 range and permit future deep-world furnaces.
 // The future chunk stream supports negative X/Z. Bound furnace positions to
 // the same 10,000-block radius used by the current world, retaining all legacy
