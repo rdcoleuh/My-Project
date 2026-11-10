@@ -120,10 +120,13 @@ test('registered wooden tool fuel IDs insert, smelt, and survive save restoratio
   assert.equal(restored.get(p).output.key,'iron');
  }
 });
-test('unregistered underscore keys cannot enter furnace slots',()=>{
+test('unregistered underscore fuel cannot be inserted but restored items remain recoverable',()=>{
  const f=engine.create();
  assert.equal(f.insert(p,'fuel','unregistered_fuel',1),0);
  f.restore([{...p,fuel:{key:'unregistered_fuel',qty:1}}]);
+ assert.deepEqual(JSON.parse(JSON.stringify(f.get(p).fuel)),{key:'unregistered_fuel',qty:1});
+ assert.equal(f.status(p).idleReason,'no_input');
+ assert.equal(f.take(p,'fuel',1).key,'unregistered_fuel');
  assert.equal(f.get(p).fuel,null);
 });
 
