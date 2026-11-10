@@ -170,3 +170,26 @@ test('touch slot gestures tolerate missing or non-callable slotCapacity',()=>{
   }
  }finally{ctx.window.MineWorldFurnace=original;}
 });
+
+
+// World-height migration guard: absolute signed coordinates must not alias.
+test('furnace positions support deep and sky limits without corrupting legacy stations',()=>{
+ const f=engine.create();
+ const old={dimension:'overworld',x:7,y:14,z:9};
+ const deep={dimension:'overworld',x:7,y:-64,z:9};
+ const sky={dimension:'overworld',x:7,y:319,z:9};
+ for(const [position,item] of [[old,'rawIron'],[deep,'rawGold'],[sky,'rawCopper']]){
+  assert.equal(f.insert(position,'input',item,1),1);
+ }
+ assert.equal(f.insert({...deep,y:-65},'input','rawIron',1),0);
+ assert.equal(f.insert({...sky,y:320},'input','rawIron',1),0);
+ assert.equal(f.insert({...deep,x:-10000},'input','rawIron',1),0);
+ assert.equal(f.insert({...deep,z:10000},'input','rawIron',1),0);
+ const restored=engine.create();
+ restored.restore(JSON.parse(JSON.stringify(f.snapshot())));
+ assert.equal(restored.get(old).input.key,'rawIron');
+ assert.equal(restored.get(deep).input.key,'rawGold');
+ assert.equal(restored.get(sky).input.key,'rawCopper');
+ assert.equal(restored.get({...deep,y:-65}),null);
+ assert.equal(restored.snapshot().length,3);
+});
