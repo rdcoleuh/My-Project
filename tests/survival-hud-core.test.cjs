@@ -19,3 +19,33 @@ test('health and food have independent accessible labels',()=>{
  assert.equal(m.hearts.filter(x=>x==='half').length,1);
  assert.equal(m.hunger.filter(x=>x==='half').length,1);
 });
+
+test('render builds 20 accessible icons and falls back when pack lookup throws',()=>{
+ class Node {
+  constructor(tag,doc){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.attrs={};this.classList={values:[],add:(...v)=>this.classList.values.push(...v)};this.style={};}
+  setAttribute(k,v){this.attrs[k]=v;}
+  appendChild(n){this.children.push(n);}
+  replaceChildren(){this.children=[];}
+ }
+ const doc={createElement(tag){return new Node(tag,doc)}};
+ const root=new Node('div',doc);
+ const state=hud.render(root,5,19,()=>{throw Error('pack unavailable')});
+ assert.equal(state.health,5);
+ assert.equal(root.children.length,2);
+ assert.equal(root.children[0].children.length,10);
+ assert.equal(root.children[1].children.length,10);
+ assert.equal(root.children[0].attrs['aria-label'],'Health 5 of 20');
+ assert.equal(root.children[1].attrs['aria-label'],'Food 19 of 20');
+ assert.equal(root.children[0].children.filter(x=>x.classList.values.includes('mw-half')).length,1);
+ assert.equal(root.children[0].children.filter(x=>x.classList.values.includes('mw-imported-icon')).length,0);
+});
+test('render accepts player-local image URLs and rejects external remote images',()=>{
+ class Node {
+  constructor(doc){this.ownerDocument=doc;this.children=[];this.classList={values:[],add:(...v)=>this.classList.values.push(...v)};this.style={};}
+  setAttribute(){} appendChild(n){this.children.push(n)} replaceChildren(){this.children=[]}
+ }
+ const doc={createElement(){return new Node(doc)}};const root=new Node(doc);
+ hud.render(root,20,20,(kind)=>kind==='heart'?'blob:local-test':'https://example.com/remote.png');
+ assert.equal(root.children[0].children.filter(x=>x.classList.values.includes('mw-imported-icon')).length,10);
+ assert.equal(root.children[1].children.filter(x=>x.classList.values.includes('mw-imported-icon')).length,0);
+});
