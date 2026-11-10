@@ -193,3 +193,17 @@ test('furnace positions support deep and sky limits without corrupting legacy st
  assert.equal(restored.get({...deep,y:-65}),null);
  assert.equal(restored.snapshot().length,3);
 });
+
+// Unknown safe keys survive upgrades, but never become usable fuel or recipes.
+test('restored underscore IDs remain inert and unsafe keys are rejected',()=>{
+ const f=engine.create();
+ f.restore([{...p,input:{key:'custom_ingot',qty:2},fuel:{key:'custom_fuel',qty:3},output:{key:'__proto__',qty:1}}]);
+ assert.equal(f.get(p).input.key,'custom_ingot');
+ assert.equal(f.get(p).fuel.key,'custom_fuel');
+ assert.equal(f.get(p).output,null);
+ assert.equal(f.tick(60).completed,0);
+ assert.equal(f.insert(p,'fuel','custom_fuel',1),0);
+ assert.equal(f.insert(p,'input','custom_ingot',1),0);
+ assert.equal(f.take(p,'fuel',3).qty,3);
+ assert.equal(f.take(p,'input',2).qty,2);
+});
