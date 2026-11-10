@@ -1,0 +1,13 @@
+/* Original MineWorld HUD art. No third-party bitmap assets. */
+.mw-survival-hud{display:flex;justify-content:space-between;gap:12px;width:min(100%,510px);pointer-events:none}
+.mw-survival-row{display:flex;gap:2px;align-items:center;min-height:19px}
+.mw-survival-icon{display:inline-block;width:16px;height:16px;flex:0 0 16px;image-rendering:pixelated;background-size:100% 100%;background-repeat:no-repeat;position:relative;filter:drop-shadow(1px 2px 0 #111)}
+.mw-heart{clip-path:polygon(0 19%,13% 6%,38% 6%,50% 19%,62% 6%,87% 6%,100% 19%,100% 56%,50% 100%,0 56%);background:#4d171a}
+.mw-heart:before,.mw-hunger:before{content:'';position:absolute;inset:2px;background:#ec4a50;clip-path:inherit}
+.mw-heart.mw-half:before,.mw-hunger.mw-half:before{clip-path:inset(0 50% 0 0)}
+.mw-heart.mw-empty:before,.mw-hunger.mw-empty:before{display:none}
+.mw-hunger{clip-path:polygon(12% 12%,44% 0,72% 12%,91% 38%,100% 69%,76% 100%,37% 88%,0 56%);background:#463124}
+.mw-hunger:before{background:#d99a4c}
+.mw-imported-icon{clip-path:none;background-color:transparent}
+.mw-imported-icon:before{display:none}
+@media(max-width:550px){.mw-survival-hud{gap:5px}.mw-survival-row{gap:0}.mw-survival-icon{width:clamp(11px,3vw,16px);height:clamp(11px,3vw,16px);flex-basis:clamp(11px,3vw,16px)}}
