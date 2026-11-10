@@ -21,8 +21,9 @@ function render(container,health,food,resolveTexture){
    icon.setAttribute('aria-hidden','true');
    let url=null;
    if(typeof resolveTexture==='function'){try{url=resolveTexture(kind,value);}catch(_error){/* procedural fallback */}}
-   if(typeof url==='string'&&/^(blob:|data:image\/)/i.test(url)){
-    icon.style.backgroundImage='url("'+url.replace(/["\\\n\r]/g,'')+'")';
+   // Restrict imported art to local raster URLs; reject SVG data and CSS delimiters.
+   if(typeof url==='string'&&/^(?:blob:[^\\s"'()\\\\]+|data:image\\/(?:png|webp|gif|jpeg);base64,[A-Za-z0-9+/]+={0,2})$/i.test(url)){
+    icon.style.backgroundImage='url("'+url+'")';
     icon.classList.add('mw-imported-icon');
    }
    row.appendChild(icon);
