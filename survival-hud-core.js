@@ -30,9 +30,28 @@ function render(container,health,food,resolveTexture){
    let url=null;
    if(typeof resolveTexture==='function'){try{url=resolveTexture(kind,value);}catch(_error){/* procedural fallback */}}
    // Restrict imported art to local raster URLs; reject SVG data and CSS delimiters.
+   // Sprite descriptors use integer pixel coordinates in an imported raster atlas.
+   // The atlas is scaled to the 16px icon cell with nearest-neighbor CSS.
+   let sprite=null;
+   if(url&&typeof url==='object'){
+    sprite=url;url=sprite.url;
+   }
    if(isSafeLocalRasterURL(url)){
-    icon.style.backgroundImage='url("'+url+'")';
-    icon.classList.add('mw-imported-icon');
+    if(sprite){
+     const {x,y,width,height,atlasWidth,atlasHeight}=sprite;
+     const dims=[x,y,width,height,atlasWidth,atlasHeight];
+     if(!dims.every(Number.isSafeInteger)||x<0||y<0||width<=0||height<=0||
+        atlasWidth<=0||atlasHeight<=0||x+width>atlasWidth||y+height>atlasHeight){
+      url=null;
+     }else{
+      icon.style.backgroundSize=(atlasWidth/width*100)+'% '+(atlasHeight/height*100)+'%';
+      icon.style.backgroundPosition=(atlasWidth===width?0:x/(atlasWidth-width)*100)+'% '+(atlasHeight===height?0:y/(atlasHeight-height)*100)+'%';
+     }
+    }
+    if(url){
+     icon.style.backgroundImage='url("'+url+'")';
+     icon.classList.add('mw-imported-icon');
+    }
    }
    row.appendChild(icon);
   }
