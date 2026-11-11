@@ -7,10 +7,10 @@ function model(health,food){const h=normalize(health),f=normalize(food);return {
 
 // Only accept local raster images, never remote resources or SVG content.
 function isSafeLocalRasterURL(url){
- if(typeof url!=='string'||/[\\s\\\\"'()<>]/.test(url))return false;
- if(/^data:image\\/(?:png|webp|gif|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/i.test(url))return true;
+ if(typeof url!=='string'||/[\s\\"'()<>]/.test(url))return false;
+ if(/^data:image\/(?:png|webp|gif|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/i.test(url))return true;
  if(!url.startsWith('blob:'))return false;
- try { const parsed=new URL(url); return parsed.protocol==='blob:' && /^blob:(?:https?:\\/\\/[^/]+\\/|null\\/)[A-Za-z0-9._~-]+$/i.test(url); }
+ try { const parsed=new URL(url); return parsed.protocol==='blob:' && /^blob:(?:https?:\/\/[^/]+\/|null\/)[A-Za-z0-9._~-]+$/i.test(url); }
  catch(_error){return false;}
 }
 // Renders original CSS-drawn pixel icons; never embeds proprietary bitmap assets.
