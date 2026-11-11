@@ -45,7 +45,7 @@ test('render accepts player-local image URLs and rejects external remote images'
   setAttribute(){} appendChild(n){this.children.push(n)} replaceChildren(){this.children=[]}
  }
  const doc={createElement(){return new Node(doc)}};const root=new Node(doc);
- hud.render(root,20,20,(kind)=>kind==='heart'?'blob:local-test':'https://example.com/remote.png');
+ hud.render(root,20,20,(kind)=>kind==='heart'?'blob:https://example.test/01234567-89ab-4cde-8fab-0123456789ab':'https://example.com/remote.png');
  assert.equal(root.children[0].children.filter(x=>x.classList.values.includes('mw-imported-icon')).length,10);
  assert.equal(root.children[1].children.filter(x=>x.classList.values.includes('mw-imported-icon')).length,0);
 });
@@ -56,7 +56,7 @@ test('imported sprite URLs reject CSS injection and SVG data while accepting ras
   setAttribute(){} appendChild(n){this.children.push(n)} replaceChildren(){this.children=[]}
  }
  const doc={createElement(){return new Node(doc)}};const root=new Node(doc);
- const attempts=['data:image/svg+xml;base64,PHN2Zz4=','blob:ok") ; color:red; /*','data:image/png;base64,QUJD','blob:local-valid'];
+ const attempts=['data:image/svg+xml;base64,PHN2Zz4=','blob:ok") ; color:red; /*','data:image/png;base64,QUJD','blob:null/01234567-89ab-4cde-8fab-0123456789ab'];
  let index=0;
  hud.render(root,20,20,()=>attempts[(index++)%attempts.length]);
  const icons=root.children.flatMap(row=>row.children);
@@ -64,4 +64,12 @@ test('imported sprite URLs reject CSS injection and SVG data while accepting ras
  assert.equal(icons[1].classList.values.includes('mw-imported-icon'),false);
  assert.equal(icons[2].classList.values.includes('mw-imported-icon'),true);
  assert.equal(icons[3].classList.values.includes('mw-imported-icon'),true);
+});
+
+test('rejects malformed blob URLs and accepts local raster pack object URLs',()=>{
+ const check=hud.isSafeLocalRasterURL;
+ assert.equal(check('blob:https://example.test/01234567-89ab-4cde-8fab-0123456789ab'),true);
+ assert.equal(check('blob:null/01234567-89ab-4cde-8fab-0123456789ab'),true);
+ for(const value of ['blob:local-test','blob:ok s','blob:ok\\\\n','blob:https://example.test/a(1)','blob:https://example.test/a\\"b','https://example.test/asset.png','data:image/svg+xml;base64,PHN2Zz4='])assert.equal(check(value),false,value);
+ assert.equal(check('data:image/png;base64,QUJD'),true);
 });
