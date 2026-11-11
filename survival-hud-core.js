@@ -41,9 +41,11 @@ function render(container,health,food,resolveTexture){
      const {x,y,width,height,atlasWidth,atlasHeight}=sprite;
      const dims=[x,y,width,height,atlasWidth,atlasHeight];
      if(!dims.every(Number.isSafeInteger)||x<0||y<0||width<=0||height<=0||
-        atlasWidth<=0||atlasHeight<=0||x+width>atlasWidth||y+height>atlasHeight){
+        atlasWidth<=0||atlasHeight<=0||atlasWidth>16384||atlasHeight>16384||
+        x>atlasWidth-width||y>atlasHeight-height){
       url=null;
      }else{
+      // Cap imported atlas dimensions to keep CSS sizes finite and GPU-friendly.
       icon.style.backgroundSize=(atlasWidth/width*100)+'% '+(atlasHeight/height*100)+'%';
       icon.style.backgroundPosition=(atlasWidth===width?0:x/(atlasWidth-width)*100)+'% '+(atlasHeight===height?0:y/(atlasHeight-height)*100)+'%';
      }
